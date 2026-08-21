@@ -1,0 +1,69 @@
+name: 📍 Propose an event source
+description: Suggest a site, calendar or API that hendingar.no should import events from.
+title: "source: <region / site name>"
+labels: ["source-request"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping widen the map. Please skim
+        [docs/event-sources.md](https://github.com/Hendingar/hendingar.no/blob/main/docs/event-sources.md)
+        first — it explains what makes a source worth adding and how to check for a JSON API,
+        which usually turns a hard scraper into an easy one.
+
+        You do **not** need to answer everything. A URL and a region is already useful.
+  - type: input
+    id: url
+    attributes:
+      label: Source URL
+      placeholder: https://detskjer.sunnhordland.no/events
+    validations:
+      required: true
+  - type: input
+    id: region
+    attributes:
+      label: Region covered
+      description: Municipality, district or county — as specific as you can.
+      placeholder: Sunnhordland (Stord, Bømlo, Fitjar, Kvinnherad)
+    validations:
+      required: true
+  - type: dropdown
+    id: kind
+    attributes:
+      label: What kind of source is it?
+      options:
+        - Public JSON/REST API
+        - iCal / RSS feed
+        - Website, events rendered in the HTML
+        - Website, events loaded by JavaScript
+        - Not sure
+    validations:
+      required: true
+  - type: textarea
+    id: api
+    attributes:
+      label: Hidden JSON API, if you found one
+      description: |
+        Paste the endpoint and a sample response. The guide has a two-minute recipe for finding
+        these. This single field is the difference between a day of work and an hour of it.
+      render: shell
+  - type: input
+    id: volume
+    attributes:
+      label: Roughly how many events?
+      placeholder: ~115 upcoming
+  - type: checkboxes
+    id: permission
+    attributes:
+      label: Access checks
+      description: Best effort — say what you know and leave the rest.
+      options:
+        - label: "`/robots.txt` does not disallow the events pages"
+        - label: No login or paywall is needed to see the events
+        - label: I have checked the site's terms for a scraping/reuse clause
+        - label: I am connected to this source and could ask the owner directly
+  - type: textarea
+    id: notes
+    attributes:
+      label: Anything else
+      description: Recurring events? Multiple regions on the same platform? A contact who would welcome this? Known licensing constraints?

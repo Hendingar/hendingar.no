@@ -107,7 +107,11 @@ or event data for your own region.
 Priority areas for Phase 2: submission form and validation, map view with clustering, search
 and filter UI, event detail pages, and the moderation queue.
 
-Open an issue or PR at https://github.com/Hendingar/hendingar.no.
+Start here: **[CONTRIBUTING.md](CONTRIBUTING.md)**
+
+Know a local calendar we should be importing from? That's the single most useful thing you can
+contribute — see **[docs/event-sources.md](docs/event-sources.md)** and open a
+[source request](https://github.com/Hendingar/hendingar.no/issues/new?template=event-source.yml).
 
 ## Why these choices
 

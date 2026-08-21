@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: 📖 Guide — proposing an event source
+    url: https://github.com/Hendingar/hendingar.no/blob/main/docs/event-sources.md
+    about: Read this before proposing a site to import events from. It covers what makes a good source and how to check for a hidden JSON API.

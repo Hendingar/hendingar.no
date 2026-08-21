@@ -1,0 +1,58 @@
+name: 🔧 Technical feature request
+description: Propose a change to how hendingar.no works — app, API, importers, infrastructure.
+title: "feat: <short description>"
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        For proposing a **site to import events from**, use the
+        *Propose an event source* template instead.
+
+        Before writing: check the **What it does not do** section of the
+        [README](https://github.com/Hendingar/hendingar.no#what-it-does-not-do).
+        Ticketing, payments, ads, social features and pay-to-rank are permanent non-goals —
+        proposals in those areas will be closed regardless of how well they're argued.
+  - type: textarea
+    id: problem
+    attributes:
+      label: The problem
+      description: What can't someone do today? Describe the situation, not the solution.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed change
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Web app / UI
+        - Search, filtering or ranking
+        - Map and geocoding
+        - Event submission
+        - Importers / scrapers
+        - Agentic verification
+        - Moderation tooling
+        - Exports (RSS, iCal, API)
+        - Infrastructure / CI
+        - Accessibility
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+  - type: checkboxes
+    id: scope
+    attributes:
+      label: Scope check
+      options:
+        - label: This does not require payments, ads, or paid placement to work
+          required: true
+        - label: I would be willing to help implement this
