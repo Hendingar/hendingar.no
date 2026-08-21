@@ -39,14 +39,14 @@ Scope discipline is a feature. hendingar.no is deliberately **not**:
 Open submission invites spam, duplicates and junk. Rather than gate contributions behind
 accounts, incoming events run through an agent pipeline before they go live:
 
-| Check | What it does |
-| --- | --- |
-| Plausibility | Is this a real event, or spam / a test / an ad? |
-| Deduplication | Match against existing events across venue, time and title variants |
-| Normalisation | Resolve dates, times and recurrence into structured form |
-| Geocoding | Turn a venue name into coordinates; flag when it can't be placed |
-| Categorisation | Assign category and tags (concert, theatre, kulturhus, sports, …) |
-| Corroboration | Look for the event at its cited source URL |
+| Check          | What it does                                                        |
+| -------------- | ------------------------------------------------------------------- |
+| Plausibility   | Is this a real event, or spam / a test / an ad?                     |
+| Deduplication  | Match against existing events across venue, time and title variants |
+| Normalisation  | Resolve dates, times and recurrence into structured form            |
+| Geocoding      | Turn a venue name into coordinates; flag when it can't be placed    |
+| Categorisation | Assign category and tags (concert, theatre, kulturhus, sports, …)   |
+| Corroboration  | Look for the event at its cited source URL                          |
 
 High-confidence events publish immediately. Anything uncertain goes to a human moderation
 queue — the agent triages, people decide. Verification status is visible on every event, and
@@ -54,11 +54,11 @@ the agent's reasoning is auditable rather than a black box.
 
 ## Status
 
-| Phase | | |
-| --- | --- | --- |
-| **1 — Hello World** | ✅ Done | SvelteKit + TypeScript, serverless on Scaleway, PostgreSQL, Woodpecker CI/CD |
-| **2 — MVP** | 🚧 Now | Submission form, listing + map view, search & filtering, categories, agentic verification |
-| **3 — Community** | ⏳ Planned | Optional accounts, moderation tooling, RSS/iCal, notifications |
+| Phase               |            |                                                                                           |
+| ------------------- | ---------- | ----------------------------------------------------------------------------------------- |
+| **1 — Hello World** | ✅ Done    | SvelteKit + TypeScript, serverless on Scaleway, PostgreSQL, Woodpecker CI/CD              |
+| **2 — MVP**         | 🚧 Now     | Submission form, listing + map view, search & filtering, categories, agentic verification |
+| **3 — Community**   | ⏳ Planned | Optional accounts, moderation tooling, RSS/iCal, notifications                            |
 
 Pilot region: Norway — Bergen, Haugalandet, Sunnhordland — then outward across the EU.
 
@@ -70,7 +70,7 @@ Two areas we may build, on one condition — never as a commercial offering:
   running a village concert; only worth building if it stays free for everyone.
 - **Event visibility** — curation, editorial picks, highlighting what a community cares about.
 
-The line is not *whether* these exist but *how they are obtained*: earned or given, never bought.
+The line is not _whether_ these exist but _how they are obtained_: earned or given, never bought.
 No pay-to-rank, no sponsored placement, no paid tier that unlocks them. If a feature only makes
 sense with a price attached, it doesn't belong here.
 
@@ -133,4 +133,4 @@ community-owned by construction.
 
 ---
 
-*hendingar* = "events" in Norwegian — nynorsk, to be precise. 🇳🇴
+_hendingar_ = "events" in Norwegian — nynorsk, to be precise. 🇳🇴

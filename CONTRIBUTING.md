@@ -5,12 +5,12 @@ you don't need permission to start.
 
 ## Where things go
 
-| I want to… | Do this |
-| --- | --- |
+| I want to…                           | Do this                                                                                                                                                               |
+| ------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Suggest a site to import events from | [Propose an event source](https://github.com/Hendingar/hendingar.no/issues/new?template=event-source.yml) — read [docs/event-sources.md](docs/event-sources.md) first |
-| Request a technical change | [Feature request](https://github.com/Hendingar/hendingar.no/issues/new?template=feature-request.yml) |
-| Report something broken | [Bug report](https://github.com/Hendingar/hendingar.no/issues/new?template=bug-report.yml) |
-| Ask a question | Open a blank issue |
+| Request a technical change           | [Feature request](https://github.com/Hendingar/hendingar.no/issues/new?template=feature-request.yml)                                                                  |
+| Report something broken              | [Bug report](https://github.com/Hendingar/hendingar.no/issues/new?template=bug-report.yml)                                                                            |
+| Ask a question                       | Open a blank issue                                                                                                                                                    |
 
 ## Before you propose a feature
 

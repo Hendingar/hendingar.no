@@ -1,0 +1,8 @@
+pnpm-lock.yaml
+package-lock.json
+**/.svelte-kit/
+**/build/
+**/dist/
+**/static/
+packages/core/migrations/
+.claude/skills/

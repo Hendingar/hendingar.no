@@ -1,0 +1,11 @@
+packages:
+  - app
+  - packages/*
+  - importers/*
+
+allowBuilds:
+  esbuild: set this to true or false
+
+# pnpm 11 reads settings from here, not from package.json.
+onlyBuiltDependencies:
+  - esbuild

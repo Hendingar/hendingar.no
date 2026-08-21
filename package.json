@@ -1,0 +1,27 @@
+{
+	"name": "hendingar",
+	"private": true,
+	"type": "module",
+	"packageManager": "pnpm@11.20.0",
+	"engines": {
+		"node": ">=22"
+	},
+	"scripts": {
+		"dev": "pnpm --filter @hendingar/app dev",
+		"build": "pnpm -r build",
+		"verify": "pnpm run typecheck && pnpm run lint && pnpm run test",
+		"typecheck": "pnpm -r --stream typecheck",
+		"lint": "prettier --check . && pnpm -r --stream lint",
+		"test": "pnpm -r --stream test",
+		"test:e2e": "pnpm --filter @hendingar/app test:e2e",
+		"format": "prettier --write .",
+		"db:generate": "pnpm --filter @hendingar/core db:generate",
+		"db:migrate": "pnpm --filter @hendingar/core db:migrate",
+		"db:reset": "pnpm --filter @hendingar/core db:reset",
+		"db:seed": "pnpm --filter @hendingar/core db:seed"
+	},
+	"devDependencies": {
+		"prettier": "^3.4.2",
+		"prettier-plugin-svelte": "^3.3.3"
+	}
+}

@@ -1,7 +1,7 @@
 # Proposing an event source
 
 hendingar.no grows in two ways: people submit individual events, and we import from places that
-already collect them — local newspaper calendars, municipal *kva skjer* pages, venue sites,
+already collect them — local newspaper calendars, municipal _kva skjer_ pages, venue sites,
 festival programmes.
 
 The second is how a new region goes from empty to useful overnight. If you know a site like that,
@@ -13,7 +13,7 @@ the work faster.
 
 - **Local and specific.** A district calendar beats a national one. We're trying to surface the
   pub concert, not the arena tour.
-- **Openly readable.** No login, no paywall, no *click to reveal*. If a human needs an account to
+- **Openly readable.** No login, no paywall, no _click to reveal_. If a human needs an account to
   see the events, we don't import them.
 - **Structured, or at least consistent.** An API or feed is ideal. Failing that, a page where
   every event looks the same is fine. A hand-written prose page listing this week's events in a
@@ -70,8 +70,8 @@ curl -s 'https://detskjer.sunnhordland.no/api/events'
 `ctaUrl`. No HTML parsing required. That discovery is tracked in
 [the Sunnhordland importer issue](https://github.com/Hendingar/hendingar.no/labels/scraper).
 
-Worth knowing: that site runs on **Innocode's "bestevent"** platform, white-labelled as *Det
-skjer* for Polaris Media's local titles. So the same importer likely unlocks a dozen Norwegian
+Worth knowing: that site runs on **Innocode's "bestevent"** platform, white-labelled as _Det
+skjer_ for Polaris Media's local titles. So the same importer likely unlocks a dozen Norwegian
 regions at once. **If you spot a source that looks like a white-label of something we already
 support, say so** — it's usually a config entry rather than a new scraper.
 

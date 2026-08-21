@@ -1,7 +1,7 @@
 name: 🔧 Technical feature request
 description: Propose a change to how hendingar.no works — app, API, importers, infrastructure.
-title: "feat: <short description>"
-labels: ["enhancement"]
+title: 'feat: <short description>'
+labels: ['enhancement']
 body:
   - type: markdown
     attributes:

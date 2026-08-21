@@ -1,0 +1,34 @@
+{
+	"name": "@hendingar/core",
+	"version": "0.0.0",
+	"private": true,
+	"type": "module",
+	"exports": {
+		"./schema": "./src/schema.ts",
+		"./taxonomy": "./src/taxonomy.ts",
+		"./validation": "./src/validation.ts",
+		"./db": "./src/db.ts"
+	},
+	"scripts": {
+		"typecheck": "tsc --noEmit",
+		"lint": "eslint .",
+		"test": "vitest run",
+		"db:generate": "drizzle-kit generate",
+		"db:migrate": "drizzle-kit migrate",
+		"db:reset": "drizzle-kit drop --config drizzle.config.ts || true && drizzle-kit migrate",
+		"db:seed": "node --experimental-strip-types scripts/seed.ts"
+	},
+	"dependencies": {
+		"drizzle-orm": "^0.44.0",
+		"postgres": "^3.4.5",
+		"zod": "^4.0.0"
+	},
+	"devDependencies": {
+		"@types/node": "^22.10.0",
+		"drizzle-kit": "^0.31.0",
+		"eslint": "^9.17.0",
+		"typescript": "^5.7.0",
+		"typescript-eslint": "^8.19.0",
+		"vitest": "^3.0.0"
+	}
+}

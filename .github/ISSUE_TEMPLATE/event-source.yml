@@ -1,7 +1,7 @@
 name: 📍 Propose an event source
 description: Suggest a site, calendar or API that hendingar.no should import events from.
-title: "source: <region / site name>"
-labels: ["source-request"]
+title: 'source: <region / site name>'
+labels: ['source-request']
 body:
   - type: markdown
     attributes:
@@ -58,7 +58,7 @@ body:
       label: Access checks
       description: Best effort — say what you know and leave the rest.
       options:
-        - label: "`/robots.txt` does not disallow the events pages"
+        - label: '`/robots.txt` does not disallow the events pages'
         - label: No login or paywall is needed to see the events
         - label: I have checked the site's terms for a scraping/reuse clause
         - label: I am connected to this source and could ask the owner directly
