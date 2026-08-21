@@ -3,9 +3,8 @@ packages:
   - packages/*
   - importers/*
 
+# pnpm 11 requires an explicit decision per package with a build script; an undecided one makes
+# `pnpm install` exit 1 (ERR_PNPM_IGNORED_BUILDS), which fails CI before any check runs.
+# esbuild's postinstall links the platform binary that vitest and vite need.
 allowBuilds:
-  esbuild: set this to true or false
-
-# pnpm 11 reads settings from here, not from package.json.
-onlyBuiltDependencies:
-  - esbuild
+  esbuild: true

@@ -80,14 +80,18 @@ This scaffold is on **SvelteKit `3.0.0-next`**, which differs from most training
 posts. Concretely:
 
 - **There is no `svelte.config.js`.** Config lives in the `sveltekit()` plugin in `app/vite.config.ts`.
-- **`$lib` does not exist here — it is `#lib`.** Node subpath imports, mapped in `app/package.json`.
-  Write `import { db } from '#lib/server/db'` with no extension.
+- **`$lib` does not exist here.** There is a `#lib` subpath mapping, but it only works for
+  **assets** (`import favicon from '#lib/assets/favicon.svg'`). It cannot address TypeScript
+  modules: `moduleResolution` is `bundler` and `rewriteRelativeImportExtensions` is on, so an
+  extensionless `#lib/x` doesn't resolve and a non-relative `#lib/x.ts` is a hard error. **Use
+  relative imports for code** (`./server/db`, `../lib/events.remote`) — which is what the scaffold
+  itself does.
 - **`$env/*` does not exist here.** Environment variables are declared in `app/src/env.ts` via
   `defineEnvVars`, with a Standard Schema validator, and imported from `$app/env/private` (or
   `$app/env/public`). They are validated at startup, so a bad `DATABASE_URL` fails by name
   immediately. Adding a variable means editing `src/env.ts` — nothing reads `process.env` directly.
-- `app/src/lib/index.ts` must stay empty. It exists only to back the bare `#lib` specifier; import
-  from `#lib/<module>` instead (CLAUDE.md rule 5).
+- `app/src/lib/index.ts` must stay empty. It exists only to back the bare `#lib` specifier — do not
+  grow it into a barrel (rule 5).
 - Unit tests are split into two vitest projects: `server` (node) and `client` (real browser via
   Playwright). `pnpm verify` runs only `server`, to stay hermetic and fast. Component tests are
   `*.svelte.spec.ts` and run under `pnpm test:unit`.

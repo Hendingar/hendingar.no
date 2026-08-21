@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { listEvents } from '#lib/events.remote';
+	import { listEvents } from '../lib/events.remote';
 	import { categoryLabel } from '@hendingar/core/taxonomy';
 
 	const upcoming = listEvents({ limit: 20 });

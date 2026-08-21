@@ -41,8 +41,7 @@
 	},
 	"imports": {
 		"#lib": "./src/lib/index.js",
-		"#lib/*.svelte": "./src/lib/*.svelte",
-		"#lib/*": "./src/lib/*.js"
+		"#lib/*": "./src/lib/*"
 	},
 	"dependencies": {
 		"@hendingar/core": "workspace:*",

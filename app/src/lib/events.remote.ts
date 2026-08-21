@@ -2,7 +2,7 @@ import { form, query } from '$app/server';
 import { and, asc, eq, gte } from 'drizzle-orm';
 import { events, venues } from '@hendingar/core/schema';
 import { eventQuerySchema, eventSubmissionSchema } from '@hendingar/core/validation';
-import { db } from '#lib/server/db';
+import { db } from './server/db';
 
 /**
  * The client↔server boundary, typed end to end.
