@@ -31,9 +31,6 @@ Scope discipline is a feature. hendingar.no is deliberately **not**:
 - **A social network** — no follows, no feeds, no engagement metrics, no notifications designed
   to pull you back in.
 - **An ad platform** — no ads, no tracking, no data sales. Ever.
-- **A promotion tool** — no boosting, no sponsored placement, no pay-to-rank. Ranking is
-  relevance and proximity, full stop.
-- **A venue CRM or event-management suite** — no attendee lists, no check-in, no seating.
 - **A walled garden** — accounts stay optional, and everything is exportable. Leaving is easy
   by design.
 
@@ -64,6 +61,18 @@ the agent's reasoning is auditable rather than a black box.
 | **3 — Community** | ⏳ Planned | Optional accounts, moderation tooling, RSS/iCal, notifications |
 
 Pilot region: Norway — Bergen, Haugalandet, Sunnhordland — then outward across the EU.
+
+### Under consideration
+
+Two areas we may build, on one condition — never as a commercial offering:
+
+- **Organiser tooling** — attendee lists, check-in, capacity and seating. Useful to the volunteer
+  running a village concert; only worth building if it stays free for everyone.
+- **Event visibility** — curation, editorial picks, highlighting what a community cares about.
+
+The line is not *whether* these exist but *how they are obtained*: earned or given, never bought.
+No pay-to-rank, no sponsored placement, no paid tier that unlocks them. If a feature only makes
+sense with a price attached, it doesn't belong here.
 
 ## Tech stack
 
