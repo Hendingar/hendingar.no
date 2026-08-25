@@ -10,7 +10,7 @@ export default defineConfig({
 		// but the server still refuses to boot without a well-formed value.
 		env: {
 			DATABASE_URL:
-				process.env.DATABASE_URL ?? 'postgres://hendingar:hendingar@localhost:5432/hendingar'
+				process.env.DATABASE_URL ?? 'postgres://hendingar:hendingar@localhost:5433/hendingar'
 		}
 	},
 	testMatch: '**/*.e2e.{ts,js}',

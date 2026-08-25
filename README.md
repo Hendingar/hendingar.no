@@ -85,19 +85,30 @@ maintainable by volunteers.
 
 ## Development
 
-Requires Node.js 20+, pnpm 8+, Docker Desktop, and OpenTofu for infrastructure work.
+Requires Node.js 22+, pnpm 11+, and Apple's [`container`](https://github.com/apple/container)
+(`brew install container`) for the local database — no Docker.
 
 ```bash
 git clone https://github.com/Hendingar/hendingar.no
-cd hendingar.no/app
+cd hendingar.no
 pnpm install
 
-cp .env.local.example .env.local   # then set DATABASE_URL
-pnpm dev                           # http://localhost:5173
+pnpm db:up          # starts Postgres+PostGIS, and creates .env on first run
+pnpm db:migrate
+pnpm db:seed        # a couple of events to look at
+
+pnpm dev            # http://localhost:5173
+pnpm verify         # typecheck, lint, test — run this before opening a PR
 ```
 
-Infrastructure deploys via `source .env.scaleway && ./infrautils/deploy-infra.sh`.
-See `spec.md` for the full deployment guide.
+Postgres listens on **5433**, not 5432, because 5432 is so often already taken and the collision
+shows up as a baffling authentication error against someone else's database.
+
+Useful: `pnpm db:psql`, `pnpm db:logs`, `pnpm db:reset` (wipes and re-migrates; refuses to run
+against anything that isn't localhost).
+
+Architectural decisions are recorded in [`docs/decisions/`](docs/decisions/) — worth a skim before
+proposing a change to the stack. `CLAUDE.md` is the working contract for both humans and agents.
 
 ## Contributing
 

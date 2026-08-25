@@ -1,6 +1,6 @@
 /**
  * Seeds a local database with enough data to develop against.
- *   docker compose up -d && pnpm db:reset && pnpm db:seed
+ *   pnpm db:up && pnpm db:migrate && pnpm db:seed
  */
 import { createDb } from '../src/db.ts';
 import { events, sources, venues } from '../src/schema.ts';

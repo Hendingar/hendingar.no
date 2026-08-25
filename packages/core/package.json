@@ -15,8 +15,7 @@
 		"test": "vitest run",
 		"db:generate": "drizzle-kit generate",
 		"db:migrate": "drizzle-kit migrate",
-		"db:reset": "drizzle-kit drop --config drizzle.config.ts || true && drizzle-kit migrate",
-		"db:seed": "node --experimental-strip-types scripts/seed.ts"
+		"db:seed": "node --env-file-if-exists=../../.env --experimental-strip-types scripts/seed.ts"
 	},
 	"dependencies": {
 		"drizzle-orm": "^0.44.0",

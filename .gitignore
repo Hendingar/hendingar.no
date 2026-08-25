@@ -8,3 +8,6 @@ dist/
 test-results/
 playwright-report/
 *.tsbuildinfo
+
+# symlink to the root .env, created by scripts/db.sh
+app/.env

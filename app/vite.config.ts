@@ -4,6 +4,8 @@ import adapter from '@sveltejs/adapter-node';
 import { sveltekit } from '@sveltejs/kit/vite';
 
 export default defineConfig({
+	// One .env for the whole workspace, at the repo root. `pnpm db:up` creates it.
+	envDir: '..',
 	plugins: [
 		sveltekit({
 			compilerOptions: {

@@ -17,8 +17,13 @@
 		"format": "prettier --write .",
 		"db:generate": "pnpm --filter @hendingar/core db:generate",
 		"db:migrate": "pnpm --filter @hendingar/core db:migrate",
-		"db:reset": "pnpm --filter @hendingar/core db:reset",
-		"db:seed": "pnpm --filter @hendingar/core db:seed"
+		"db:reset": "./scripts/db.sh reset && pnpm run db:migrate",
+		"db:seed": "pnpm --filter @hendingar/core db:seed",
+		"db:up": "./scripts/db.sh up",
+		"db:down": "./scripts/db.sh down",
+		"db:logs": "./scripts/db.sh logs",
+		"db:psql": "./scripts/db.sh psql",
+		"db:url": "./scripts/db.sh url"
 	},
 	"devDependencies": {
 		"prettier": "^3.4.2",

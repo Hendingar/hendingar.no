@@ -14,9 +14,11 @@ pnpm verify        # typecheck (incl. svelte-check) → lint → test. Exits non
 Nothing else is evidence — not "it looks right", not a passing subset of tests.
 
 ```bash
-docker compose up -d && pnpm db:reset && pnpm db:seed   # known-good database from nothing
-pnpm dev                                                # http://localhost:5173
-pnpm test:e2e                                           # Playwright, headless
+pnpm db:up && pnpm db:migrate && pnpm db:seed   # known-good database from nothing
+pnpm dev                                        # http://localhost:5173
+pnpm test:e2e                                   # Playwright, headless
+pnpm db:psql                                    # a shell in the database
+pnpm db:reset                                   # wipe and re-migrate (local only; it refuses otherwise)
 ```
 
 ## Layout
@@ -104,6 +106,9 @@ mode here.
 
 - TypeScript `strict`. Tabs, single quotes, 100 columns (`pnpm format`).
 - UnoCSS with design tokens. Prefer a token or a shortcut over a pile of arbitrary values.
-- Timestamps: store `timestamptz`, and **preserve source offsets** on import — Norwegian event
-  times carry `+01:00`/`+02:00` and normalising to UTC loses information users notice.
+- Timestamps: store `timestamptz`, which records an **instant** — it does not retain the source's
+  written offset, and cannot. `2026-09-12T20:00:00+02:00` and `18:00Z` are the same row. That is
+  correct, but it means the wall-clock time a user should see is only recoverable with a timezone:
+  keep one on the venue (`Europe/Oslo` for the pilot) and format with it. Never format an event
+  time in the server's or browser's local zone — that silently shifts concerts by an hour.
 - Every imported event keeps a link to its source. We are an index, not a replacement.
