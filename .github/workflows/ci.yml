@@ -30,6 +30,25 @@ jobs:
 
   e2e:
     runs-on: ubuntu-latest
+    # The e2e suite asserts server-rendered events and a /health endpoint that touches the
+    # database, so it needs a real Postgres. Locally that's Apple `container` (ADR 0006); on Linux
+    # CI a service container is the equivalent.
+    services:
+      postgres:
+        image: postgis/postgis:17-3.5
+        env:
+          POSTGRES_USER: hendingar
+          POSTGRES_PASSWORD: hendingar
+          POSTGRES_DB: hendingar
+        ports:
+          - 5433:5432
+        options: >-
+          --health-cmd "pg_isready -U hendingar -d hendingar"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgres://hendingar:hendingar@localhost:5433/hendingar
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -38,6 +57,8 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - run: pnpm db:migrate
+      - run: pnpm db:seed
       - run: pnpm --filter @hendingar/app test:e2e:install
       - run: pnpm test:e2e
       - uses: actions/upload-artifact@v4

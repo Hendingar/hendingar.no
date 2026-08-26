@@ -64,6 +64,13 @@ export const venues = pgTable(
 		municipality: text('municipality'),
 		latitude: doublePrecision('latitude'),
 		longitude: doublePrecision('longitude'),
+		/**
+		 * IANA zone, e.g. `Europe/Oslo`. Required, not optional: `starts_at` is a timestamptz and
+		 * therefore an *instant*, so the wall-clock time a visitor should see is only recoverable
+		 * with a zone. Formatting in the server's or the browser's zone silently shifts concerts —
+		 * a 20:00 Helsinki gig renders as 19:00 if you assume Oslo. See CLAUDE.md.
+		 */
+		timezone: text('timezone').notNull().default('Europe/Oslo'),
 		geocodeStatus: geocodeStatusEnum('geocode_status').notNull().default('pending'),
 		geocodedAt: timestamp('geocoded_at', { withTimezone: true })
 	},

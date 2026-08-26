@@ -207,18 +207,28 @@ az role assignment create \
 
 This is inherent, not a bug — the grant target doesn't exist until the first run creates it.
 
-| Run | What happens                                                                                                                       |
-| --- | ---------------------------------------------------------------------------------------------------------------------------------- |
-| 1   | Infrastructure converges, image builds in ACR, migrations apply. **"Deploy application" fails** — the app cannot pull from ACR yet |
-| —   | Run the `AcrPull` command above                                                                                                    |
-| 2   | Everything passes; the app serves the image                                                                                        |
+| Run | What happens                                                                                                                 |
+| --- | ---------------------------------------------------------------------------------------------------------------------------- |
+| 1   | Platform converges, image builds in ACR, migrations apply. **"Deploy application" fails** — the app cannot pull from ACR yet |
+| —   | Run the `AcrPull` command above                                                                                              |
+| 2   | Everything passes; the app serves the image                                                                                  |
 
 Steady state after that is a single run per push.
 
+The smoke test asserts `/health` reports a reachable database **and** that the page contains
+rendered content. A status-code check was not enough: the app serves 200 with the database
+unreachable, so a wrong password would have shipped as a green deploy.
+
 ### Notes on the design
 
-- **`useAcr` defaults to `false`.** Container Apps validates registry access at deploy time, so the
-  first pass uses a public placeholder image. Pass 2 flips it to `true`.
+- **Two templates, deliberately.** `infra/main.bicep` is the platform (identity, ACR, Log
+  Analytics, Container Apps environment, Postgres); `infra/app.bicep` is the Container App alone.
+  They used to be one file, and because the workflow's first pass omitted the image parameter, ARM
+  re-applied the template default — a public placeholder image — on every deploy, serving
+  Microsoft's quickstart page for several minutes until the second pass restored it. Split, a
+  platform converge can never change what the app is running, and `containerImage` in `app.bicep`
+  has **no default**, so a deploy cannot silently roll the app back.
+
 - **`az acr build` builds inside the registry**, so the runner needs no registry data-plane rights.
   Contributor is sufficient.
 - **The Postgres firewall allows Azure services only.** A GitHub runner is not one, so the migration

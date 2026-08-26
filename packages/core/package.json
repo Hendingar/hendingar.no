@@ -7,7 +7,8 @@
 		"./schema": "./src/schema.ts",
 		"./taxonomy": "./src/taxonomy.ts",
 		"./validation": "./src/validation.ts",
-		"./db": "./src/db.ts"
+		"./db": "./src/db.ts",
+		"./datetime": "./src/datetime.ts"
 	},
 	"scripts": {
 		"typecheck": "tsc --noEmit",

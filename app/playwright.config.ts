@@ -13,7 +13,9 @@ export default defineConfig({
 				process.env.DATABASE_URL ?? 'postgres://hendingar:hendingar@localhost:5433/hendingar'
 		}
 	},
+	testDir: 'e2e',
 	testMatch: '**/*.e2e.{ts,js}',
+	use: { baseURL: 'http://localhost:4173' },
 	reporter: process.env.CI ? [['github'], ['html', { open: 'never' }]] : 'list',
 	forbidOnly: !!process.env.CI
 });

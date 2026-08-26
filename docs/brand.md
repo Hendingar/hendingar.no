@@ -65,9 +65,29 @@ not leak visitor IPs to a third party for a typeface.
 
 ### Sizing against the container, not the viewport
 
-Display type is sized in `cqw` (container query units), not `vw`. This was learned the hard way: the
-hero headline at `19vw` overflowed its column badly on desktop while looking fine on mobile, because
-the column is far narrower than the screen. `ch` units don't constrain an expanded face either.
+Display type is sized in `cqw` (container query units), not `vw`, and there is deliberately **no
+shared `--step-huge`/`--step-big` token** — each display element declares its own size against its
+own container, which must therefore carry `container-type: inline-size`.
+
+This was learned twice. First the hero headline at `19vw` overflowed its column on desktop while
+looking fine on mobile. Then, after only the hero was converted, the remaining `vw` steps clipped
+the CTA heading and the `/hendingar` title at 320px — the same bug at the other end of the range.
+`ch` units don't constrain an expanded face either.
+
+Two guards now exist so it cannot silently return:
+
+- `.display` carries `overflow-wrap: break-word`. At 125% width a capital glyph advances ~0.92em,
+  so a 12-character Norwegian compound inks ~340px inside a 280px column. An ugly break is
+  strictly better than text escaping the viewport, which is a WCAG 1.4.10 failure.
+- An e2e test asserts zero horizontal overflow at 320px on both pages.
+
+### Hover and focus pairings
+
+| Pair                                             | Ratio  |
+| ------------------------------------------------ | ------ |
+| `.btn:hover` — navy-900 on peach-hi              | 9.6:1  |
+| focus ring — peach-hi on navy-800                | 8.47:1 |
+| focus ring on inverted bands — navy-900 on peach | 9.09:1 |
 
 ## Poster vocabulary
 

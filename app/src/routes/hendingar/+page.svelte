@@ -1,78 +1,35 @@
 <script lang="ts">
+	import EventList from '../../lib/components/EventList.svelte';
 	import { listEvents } from '../../lib/events.remote';
-	import { categoryLabel } from '@hendingar/core/taxonomy';
 
-	const upcoming = listEvents({ limit: 100 });
+	// See UpcomingPreview: top-level await so the list is in the server-rendered HTML.
+	const events = await listEvents({ limit: 100 });
 </script>
 
 <svelte:head>
 	<title>Alle hendingar — hendingar.no</title>
 </svelte:head>
 
-<main class="shell">
+<div class="shell list">
 	<p class="label">Full liste</p>
-	<h1 class="display">Alle hendingar</h1>
+	<h1 class="display list__h">Alle hendingar</h1>
 
-	{#if upcoming.error}
-		<p>Kunne ikkje laste hendingar.</p>
-	{:else if upcoming.loading}
-		<p>Lastar…</p>
-	{:else if upcoming.current}
-		{#if upcoming.current.length === 0}
-			<p>Ingen hendingar enno.</p>
-		{:else}
-			<ul>
-				{#each upcoming.current as event (event.id)}
-					<li>
-						<strong>{event.title}</strong>
-						<span>{categoryLabel(event.category)}</span>
-						{#if event.venueName}<span>{event.venueName}</span>{/if}
-						<time datetime={event.startsAt.toISOString()}>
-							{event.startsAt.toLocaleString('nn-NO', { timeZone: 'Europe/Oslo' })}
-						</time>
-					</li>
-				{/each}
-			</ul>
-		{/if}
-	{/if}
+	<!-- headingLevel 2 so each event title nests under this page's h1. Previously the titles were
+	     <strong>, which left a 100-item list with no headings to navigate by. -->
+	<EventList {events} headingLevel={2} />
 
 	<p><a href="/">Tilbake</a></p>
-</main>
+</div>
 
 <style>
-	main {
+	.list {
 		padding-block: var(--section-y);
+		container-type: inline-size;
 	}
-	h1 {
-		font-size: var(--step-huge);
+	.list__h {
+		/* cqw floors low enough to survive a 320px viewport — the old clamp floor of 2.75rem
+		   clipped the final letter of this heading. */
+		font-size: clamp(1.75rem, 13cqw, 7rem);
 		margin-block: 0.5rem 2rem;
-	}
-	ul {
-		list-style: none;
-		padding: 0;
-		display: grid;
-		gap: 0;
-	}
-	li {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 0.75rem 1.25rem;
-		align-items: baseline;
-		padding-block: 1rem;
-		border-block-start: var(--rule) solid var(--peach-line);
-	}
-	strong {
-		font-family: var(--font-display);
-		font-weight: 900;
-		font-stretch: 115%;
-		text-transform: uppercase;
-		font-size: var(--step-mid);
-	}
-	span,
-	time {
-		font-size: var(--step-micro);
-		letter-spacing: 0.2em;
-		text-transform: uppercase;
-		color: var(--peach-dim);
 	}
 </style>

@@ -26,14 +26,29 @@ need_runtime() {
 running() { container ls --format json 2>/dev/null | grep -q "\"$NAME\"" ; }
 exists()  { container ls --all --format json 2>/dev/null | grep -q "\"$NAME\"" ; }
 
-# `reset` and `down --wipe` destroy data. Refuse unless DATABASE_URL is clearly local, so that an
-# agent (or a tired human) with a staging URL exported cannot nuke something real.
+# `reset` and `down --wipe` destroy data. Two guards, because the obvious one is not enough.
 assert_local() {
-  local url="${DATABASE_URL:-$LOCAL_URL}"
-  case "$url" in
-    *@localhost:*|*@127.0.0.1:*|*@0.0.0.0:*) : ;;
-    *) die "refusing to destroy data: DATABASE_URL does not point at localhost ($url)" ;;
+  # 1. The volume we are about to delete must be OURS. The wipe targets $VOLUME, but the old
+  #    version of this check inspected DATABASE_URL — a different thing entirely, so
+  #    `DB_VOLUME=other-project-pgdata ./scripts/db.sh reset` sailed straight through and destroyed
+  #    an unrelated project's database.
+  case "$VOLUME" in
+    hendingar-*) : ;;
+    *) die "refusing to delete volume '$VOLUME': not a hendingar-* volume" ;;
   esac
+
+  # 2. If DATABASE_URL is set, it must resolve to a loopback host. A substring match cannot tell a
+  #    local socket from an SSH tunnel, so parse the host and compare it explicitly. This still
+  #    cannot detect `ssh -L 5433:prod:5432` — nothing local can — which is why guard 1 exists and
+  #    why the wipe only ever removes a hendingar-* volume.
+  if [ -n "${DATABASE_URL:-}" ]; then
+    local host
+    host=$(printf '%s' "$DATABASE_URL" | sed -E 's|^[a-z]+://[^@]*@||; s|[:/].*$||; s|^\[||; s|\]$||')
+    case "$host" in
+      localhost|127.0.0.1|0.0.0.0|::1) : ;;
+      *) die "refusing to destroy data: DATABASE_URL host '$host' is not loopback" ;;
+    esac
+  fi
 }
 
 wait_ready() {
@@ -79,15 +94,29 @@ up() {
 
 down() {
   need_runtime
-  exists || { echo "$NAME does not exist"; return 0; }
-  container stop "$NAME" >/dev/null 2>&1 || true
-  container rm "$NAME" >/dev/null 2>&1 || true
-  if [ "${1:-}" = "--wipe" ]; then
-    assert_local
-    container volume rm "$VOLUME" >/dev/null 2>&1 || true
-    echo "$NAME removed, volume $VOLUME wiped"
+  local wipe="${1:-}"
+
+  # The wipe must happen even when the container is already gone: a volume outlives its container,
+  # so returning early here made `db:down` followed by `db:reset` silently reuse the old data —
+  # migrations then no-op and you debug a state you thought you had destroyed.
+  if exists; then
+    container stop "$NAME" >/dev/null 2>&1 || true
+    container rm "$NAME" >/dev/null 2>&1 || true
+    echo "$NAME removed"
   else
-    echo "$NAME removed (volume $VOLUME kept)"
+    echo "$NAME does not exist"
+  fi
+
+  if [ "$wipe" = "--wipe" ]; then
+    assert_local
+    if container volume inspect "$VOLUME" >/dev/null 2>&1; then
+      container volume rm "$VOLUME" >/dev/null 2>&1 || true
+      echo "volume $VOLUME wiped"
+    else
+      echo "volume $VOLUME did not exist"
+    fi
+  else
+    echo "volume $VOLUME kept"
   fi
 }
 

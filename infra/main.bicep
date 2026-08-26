@@ -13,18 +13,8 @@ param postgresAdminUser string = 'hendingar'
 @secure()
 param postgresAdminPassword string
 
-@description('Container image to run. The first deploy uses a public placeholder because the registry is empty; the workflow updates this once an image exists.')
-param containerImage string = 'mcr.microsoft.com/k8se/quickstart:latest'
-
 @description('Cheapest burstable tier. See ADR 0007 for why this is not serverless.')
 param postgresSku string = 'Standard_B1ms'
-
-@description('''
-Wire the Container App to pull from our ACR. Must stay false on the very first deploy: the registry
-is empty and the runtime identity has no AcrPull yet, and Container Apps validates registry access
-at deploy time. Flip to true once an image exists and the grant is in place — see infra/BOOTSTRAP.md.
-''')
-param useAcr bool = false
 
 var suffix = uniqueString(resourceGroup().id)
 var acrName = 'acr${appName}${suffix}'
@@ -36,6 +26,12 @@ var tags = {
   env: env
   iac: 'bicep'
 }
+
+// This template is the PLATFORM only — it deliberately does not contain the Container App.
+// They used to live together, and because the workflow's first pass omitted the image parameter,
+// every deploy re-applied the template's default (a public placeholder image) and rewrote the live
+// app to Microsoft's quickstart page for several minutes until the second pass restored it.
+// Separating them means a platform converge can never touch what the app is running.
 
 // Runtime workload identity. Referenced by the Container App, and granted AcrPull separately —
 // role assignments are deliberately NOT in this template because the CI principal only has
@@ -152,75 +148,10 @@ resource containerEnv 'Microsoft.App/managedEnvironments@2024-03-01' = {
   }
 }
 
-resource app 'Microsoft.App/containerApps@2024-03-01' = {
-  name: 'ca-${appName}-${env}'
-  location: location
-  tags: tags
-  identity: {
-    type: 'UserAssigned'
-    userAssignedIdentities: {
-      '${runtimeIdentity.id}': {}
-    }
-  }
-  properties: {
-    managedEnvironmentId: containerEnv.id
-    configuration: {
-      ingress: {
-        external: true
-        targetPort: 8080
-        transport: 'auto'
-        allowInsecure: false
-      }
-      registries: useAcr
-        ? [
-            {
-              server: acr.properties.loginServer
-              identity: runtimeIdentity.id
-            }
-          ]
-        : []
-      secrets: [
-        {
-          name: 'database-url'
-          // uriComponent so a password containing +, / or = cannot corrupt the URL.
-          value: 'postgres://${postgresAdminUser}:${uriComponent(postgresAdminPassword)}@${postgres.properties.fullyQualifiedDomainName}:5432/${dbName}?sslmode=require'
-        }
-      ]
-    }
-    template: {
-      containers: [
-        {
-          name: appName
-          image: containerImage
-          resources: {
-            cpu: json('0.25')
-            memory: '0.5Gi'
-          }
-          env: [
-            {
-              name: 'DATABASE_URL'
-              secretRef: 'database-url'
-            }
-            {
-              name: 'PORT'
-              value: '8080'
-            }
-          ]
-        }
-      ]
-      scale: {
-        // Scales to zero. The app costs nothing when idle; the database does not (ADR 0007).
-        minReplicas: 0
-        maxReplicas: 2
-      }
-    }
-  }
-}
-
 output acrName string = acr.name
 output acrLoginServer string = acr.properties.loginServer
-output containerAppName string = app.name
-output appUrl string = 'https://${app.properties.configuration.ingress.fqdn}'
 output postgresFqdn string = postgres.properties.fullyQualifiedDomainName
+output postgresAdminUserOut string = postgresAdminUser
+output managedEnvironmentId string = containerEnv.id
+output runtimeIdentityId string = runtimeIdentity.id
 output runtimeIdentityPrincipalId string = runtimeIdentity.properties.principalId
-output runtimeIdentityResourceId string = runtimeIdentity.id

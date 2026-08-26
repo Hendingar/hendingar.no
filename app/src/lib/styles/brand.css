@@ -29,13 +29,15 @@
 	--font-display: 'Archivo Variable', 'Archivo', system-ui, sans-serif;
 	--font-mono: 'Space Mono', ui-monospace, 'SF Mono', monospace;
 
-	/* Fluid display scale. clamp() so the poster energy survives a phone. */
-	--step-mega: clamp(4rem, 19vw, 17rem);
-	--step-huge: clamp(2.75rem, 9vw, 7rem);
-	--step-big: clamp(2rem, 5vw, 3.75rem);
-	--step-mid: clamp(1.375rem, 2.6vw, 2rem);
+	/*
+	 * Fluid scale. Display sizes are NOT here on purpose: they are declared per component in `cqw`
+	 * so they track their own column. A shared `vw`-based step is what overflowed the hero on
+	 * desktop and clipped the CTA at 320px — the same bug at both ends of the range.
+	 * See docs/brand.md.
+	 */
+	--step-mid: clamp(1.25rem, 2.6vw, 2rem);
 	--step-body: clamp(1rem, 1.1vw, 1.125rem);
-	--step-micro: 0.6875rem;
+	--step-micro: clamp(0.75rem, 0.8vw, 0.8125rem);
 
 	/* --- rhythm --- */
 	--rule: 1px;
@@ -87,10 +89,29 @@ body {
 	letter-spacing: -0.02em;
 	text-transform: uppercase;
 	margin: 0;
+	/*
+	 * Safety net, not a design choice. At 125% width a capital glyph advances ~0.92em, so a
+	 * 12-character Norwegian compound inks far wider than its own box implies — "Lokalsamfunn"
+	 * measured 340px inside a 280px column. Clipping text off the viewport is a WCAG 1.4.10
+	 * failure; an ugly break is not. This only engages when a single word truly cannot fit.
+	 */
+	overflow-wrap: break-word;
 }
 
 .display--slant {
 	font-style: italic;
+}
+
+/* Named steps down from the maximum. Before these existed, components declared six different
+   font-stretch values between 108% and 125% with no way to tell which was canonical. */
+.display--md {
+	font-weight: 900;
+	font-stretch: 112%;
+}
+
+.display--sm {
+	font-weight: 800;
+	font-stretch: 108%;
 }
 
 /* Outline type, as counterpoint to the solid mass. */
@@ -132,6 +153,61 @@ body {
 	border: 0;
 	border-top: var(--rule) solid var(--peach-line);
 	margin: 0;
+}
+
+/* Buttons. A primitive, not a page detail — the submission form, filter UI and detail pages all
+   need these, and scoped inside one route's <style> they were invisible to every other file. */
+.btn {
+	display: inline-block;
+	font-family: var(--font-mono);
+	font-size: var(--step-micro);
+	font-weight: 700;
+	letter-spacing: 0.22em;
+	text-transform: uppercase;
+	text-decoration: none;
+	padding: 1.05em 1.6em;
+	border: var(--rule-fat) solid var(--peach);
+	color: var(--peach);
+}
+
+.btn--solid {
+	background: var(--peach);
+	color: var(--navy-900);
+}
+
+.btn--invert {
+	background: var(--navy-900);
+	color: var(--peach);
+	border-color: var(--navy-900);
+}
+
+.btn--invert-ghost {
+	color: var(--navy-900);
+	border-color: var(--navy-900);
+}
+
+/* navy-900 on peach-hi = 9.6:1 */
+.btn:hover {
+	background: var(--peach-hi);
+	color: var(--navy-900);
+	border-color: var(--peach-hi);
+}
+
+.btn--invert:hover,
+.btn--invert-ghost:hover {
+	background: var(--navy-900);
+	color: var(--peach-hi);
+	border-color: var(--navy-900);
+}
+
+/* Shared by the "does not" fineprint and the importer note. */
+.fineprint {
+	margin-block-start: 1.5rem;
+	font-size: 0.8125rem;
+	line-height: 1.7;
+	color: var(--peach-dim);
+	border-inline-start: var(--rule-fat) solid var(--peach-line);
+	padding-inline-start: 1rem;
 }
 
 /* Segmented progress pills. */
