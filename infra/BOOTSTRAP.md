@@ -225,3 +225,35 @@ Steady state after that is a single run per push.
   step opens a rule for the runner's IP and removes it in a `trap ... EXIT` — including on failure.
 - **No role assignments in the Bicep**, deliberately: the deploying principal cannot create them, so
   including any would make every deploy fail.
+
+## Live (2026-08-26)
+
+Bootstrap complete. The dev environment is up:
+
+**https://ca-hendingar-dev.whitewave-5f5b53f5.swedencentral.azurecontainerapps.io**
+
+|               |                                                                           |
+| ------------- | ------------------------------------------------------------------------- |
+| Container App | `ca-hendingar-dev` — scales to zero                                       |
+| Registry      | `acrhendingarqr5hsiu33zals`                                               |
+| Postgres      | `psql-hendingar-dev-qr5hsiu33zals.postgres.database.azure.com` (17, B1ms) |
+| PostGIS       | **allow-listed** — `azure.extensions = POSTGIS`, source `user-override`   |
+
+Verified independently of the workflow's own smoke test: HTTP 200 over valid TLS, and the page
+renders the _empty-state_ branch (`Ingen hendingar enno.`). That empty state is the meaningful
+signal — it means the remote function reached Postgres and got zero rows. A failed connection would
+have rendered the error branch instead.
+
+The database has migrations applied but no data. Seeding is deliberately not done here; the
+Sunnhordland importer (#3) is what should populate it.
+
+### Fixes the bootstrap needed, for the next project
+
+1. **OIDC subject uses immutable IDs**, not org/repo names — see the gotcha section above.
+2. **`az postgres flexible-server firewall-rule`** takes `--server-name` for the server and `--name`
+   for the rule. There is no `--rule-name`.
+3. **The Docker build needs a placeholder `DATABASE_URL`.** `defineEnvVars` validation runs while
+   SvelteKit analyses routes at build time, not only at startup. The variable is non-static, so the
+   placeholder is not baked into the bundle.
+4. **`AcrPull` can only be granted after the first deploy**, because the identity and registry don't
+   exist until then. Hence the documented two-run bootstrap.

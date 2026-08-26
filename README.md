@@ -76,12 +76,19 @@ sense with a price attached, it doesn't belong here.
 
 ## Tech stack
 
-**App:** SvelteKit 2.x (TypeScript) · UnoCSS · open-source mapping (MapLibre-class, TBD)
-**Infra:** Scaleway Serverless Containers · Serverless SQL (PostgreSQL) · OpenTofu · Woodpecker CI
+**App:** SvelteKit (TypeScript, strict) · remote functions for all client↔server calls · UnoCSS ·
+open-source mapping (MapLibre-class, still undecided)
+**Data:** PostgreSQL + PostGIS · Drizzle for schema, types and migrations · Zod validation shared
+between the app and the importers
+**Infra:** Azure Container Apps (scales to zero) · Azure Database for PostgreSQL Flexible Server ·
+Azure Container Registry · Bicep · GitHub Actions with OIDC — no stored cloud credentials
 
-Chosen for cost and independence: serverless keeps a community project running on
-pay-per-use, EU hosting keeps data under GDPR, and minimal dependencies keep it
-maintainable by volunteers.
+Chosen for cost, independence and — unusually — for how quickly the codebase can tell you that
+you're wrong, since much of this is built with coding agents. One command (`pnpm verify`) is the
+whole truth; types cross every boundary; each fact has exactly one source. The reasoning behind each
+choice is in [`docs/decisions/`](docs/decisions/).
+
+Infrastructure for development is sponsored by **Nordlo**.
 
 ## Development
 
