@@ -43,7 +43,21 @@ infrastructure openly rather than as an implicit dependency.
 - [x] Confirmed empirically that the operator **cannot** write role assignments —
       `AuthorizationFailed` on `Microsoft.Authorization/roleAssignments/write`
 
-## Blocked on a subscription Owner
+## Owner grant — DONE (2026-08-26)
+
+Gaute ran it. Verified present at the RG scope:
+
+```
+Role Based Access Control Administrator  e5771006-519b-487e-bc52-7c6f0e53e7aa
+  /subscriptions/7bcda9cc-633e-4b98-8c36-926f9d181bb0/resourceGroups/rg-hendingar-swc-dev
+```
+
+Scoped to the resource group only, as requested — nothing wider.
+
+<details>
+<summary>The message that was sent (kept for the next project)</summary>
+
+### Blocked on a subscription Owner
 
 One grant. Send this:
 
@@ -75,7 +89,12 @@ One grant. Send this:
 > offers aren't covered by sponsorship credits. If it registers, we get genuinely serverless
 > Postgres; if it fails, that confirms the limitation and we stop looking.
 
+</details>
+
 ## After the grant — operator runs
+
+**Status: outstanding.** The CI identity still has no role assignment on the RG — verified
+2026-08-26. Until this runs, `azure/login` will authenticate but any deploy will fail authorization.
 
 ```bash
 SUB=7bcda9cc-633e-4b98-8c36-926f9d181bb0
@@ -114,7 +133,10 @@ KV_ID=$(az resource list -g "$RG" --resource-type Microsoft.KeyVault/vaults --qu
 - The Azure-native serverless Postgres is **Neon**, via Azure Native ISV Integration. The
   `Neon.Postgres` provider namespace is **not available** on this subscription. Same for
   `Microsoft.CosmosDB`, `Aiven.Aiven`, Timescale. Most likely because Marketplace/ISV offers are not
-  covered by sponsorship credits — see the Owner message above for a one-command test.
+  covered by sponsorship credits.
+- **Re-checked 2026-08-26 after the Owner grant: `Neon` namespace still unavailable.** So either the
+  registration wasn't attempted or it failed. Treat the sponsorship/Marketplace limitation as very
+  likely real, and decide the database on that basis rather than waiting on it.
 
 This matters because Container Apps scale to zero but a Flexible Server does not, so the database
 becomes the standing cost and the permanent draw on shared credits. Decision pending in #2.
