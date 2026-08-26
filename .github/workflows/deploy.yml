@@ -1,0 +1,138 @@
+name: Deploy (dev)
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'app/**'
+      - 'packages/**'
+      - 'infra/**'
+      - 'Dockerfile'
+      - '.github/workflows/deploy.yml'
+
+concurrency:
+  group: deploy-dev
+  cancel-in-progress: false
+
+permissions:
+  id-token: write # OIDC federated credential — no stored Azure credentials
+  contents: read
+
+env:
+  RG: rg-hendingar-swc-dev
+  APP: hendingar
+  ENV_NAME: dev
+
+# Prerequisites, both one-time (see infra/BOOTSTRAP.md):
+#   1. secret POSTGRES_ADMIN_PASSWORD is set
+#   2. the runtime identity id-hendingar has AcrPull on the resource group — the CI principal is
+#      only Contributor, and Contributor cannot create role assignments
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: azure/login@v2
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      # Pass 1: converge the infrastructure and learn the generated registry name. useAcr and
+      # containerImage keep their defaults here, so this works even on a completely empty
+      # resource group where no image exists yet.
+      - name: Deploy infrastructure
+        id: infra
+        run: |
+          az deployment group create \
+            --resource-group "$RG" \
+            --name "infra-${{ github.run_id }}" \
+            --template-file infra/main.bicep \
+            --parameters appName="$APP" env="$ENV_NAME" \
+              postgresAdminPassword="${{ secrets.POSTGRES_ADMIN_PASSWORD }}" \
+            --query properties.outputs -o json > outputs.json
+          {
+            echo "acr_name=$(jq -r .acrName.value outputs.json)"
+            echo "acr_login_server=$(jq -r .acrLoginServer.value outputs.json)"
+            echo "app_name=$(jq -r .containerAppName.value outputs.json)"
+            echo "app_url=$(jq -r .appUrl.value outputs.json)"
+            echo "pg_fqdn=$(jq -r .postgresFqdn.value outputs.json)"
+          } >> "$GITHUB_OUTPUT"
+
+      # Built inside ACR, so the runner needs no registry data-plane rights at all.
+      - name: Build image in ACR
+        run: |
+          az acr build \
+            --registry "${{ steps.infra.outputs.acr_name }}" \
+            --image "hendingar:${{ github.sha }}" \
+            --image "hendingar:latest" \
+            --file Dockerfile .
+
+      # The Postgres firewall allows Azure services only, and a GitHub runner is not one.
+      # Open a rule for this runner, migrate, then always remove it.
+      - name: Apply database migrations
+        env:
+          PGHOST: ${{ steps.infra.outputs.pg_fqdn }}
+        run: |
+          PG_SERVER="${PGHOST%%.*}"
+          RULE="gh-runner-${{ github.run_id }}"
+          cleanup() {
+            az postgres flexible-server firewall-rule delete \
+              --resource-group "$RG" --name "$PG_SERVER" --rule-name "$RULE" --yes \
+              >/dev/null 2>&1 || true
+          }
+          trap cleanup EXIT
+
+          RUNNER_IP=$(curl -fsS https://api.ipify.org)
+          az postgres flexible-server firewall-rule create \
+            --resource-group "$RG" --name "$PG_SERVER" --rule-name "$RULE" \
+            --start-ip-address "$RUNNER_IP" --end-ip-address "$RUNNER_IP" >/dev/null
+
+          corepack enable
+          pnpm install --frozen-lockfile
+
+          # Build the URL in python so special characters in the password are percent-encoded
+          # rather than silently breaking the connection string.
+          DATABASE_URL=$(PW="${{ secrets.POSTGRES_ADMIN_PASSWORD }}" PGHOST="$PGHOST" python3 -c \
+            'import os,urllib.parse as u; print("postgres://hendingar:%s@%s:5432/hendingar?sslmode=require" % (u.quote(os.environ["PW"], safe=""), os.environ["PGHOST"]))')
+          export DATABASE_URL
+          pnpm db:migrate
+
+      # Pass 2: same template, now pointing the app at the image we just built.
+      - name: Deploy application
+        run: |
+          az deployment group create \
+            --resource-group "$RG" \
+            --name "app-${{ github.run_id }}" \
+            --template-file infra/main.bicep \
+            --parameters appName="$APP" env="$ENV_NAME" useAcr=true \
+              postgresAdminPassword="${{ secrets.POSTGRES_ADMIN_PASSWORD }}" \
+              containerImage="${{ steps.infra.outputs.acr_login_server }}/hendingar:${{ github.sha }}" \
+            --query properties.provisioningState -o tsv
+
+      - name: Smoke test
+        run: |
+          URL="${{ steps.infra.outputs.app_url }}"
+          for i in $(seq 1 30); do
+            code=$(curl -s -o /dev/null -w '%{http_code}' "$URL" || true)
+            echo "attempt $i: $code"
+            if [ "$code" = "200" ]; then echo "$URL is up"; exit 0; fi
+            sleep 10
+          done
+          echo "::error::$URL did not return 200"
+          az containerapp logs show --name "${{ steps.infra.outputs.app_name }}" \
+            --resource-group "$RG" --tail 50 --type console || true
+          exit 1
+
+      - name: Summary
+        if: always()
+        run: |
+          {
+            echo "### Deploy (dev)"
+            echo ""
+            echo "- App: ${{ steps.infra.outputs.app_url }}"
+            echo "- Image: \`hendingar:${{ github.sha }}\`"
+            echo "- Postgres: \`${{ steps.infra.outputs.pg_fqdn }}\`"
+          } >> "$GITHUB_STEP_SUMMARY"

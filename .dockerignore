@@ -1,0 +1,13 @@
+**/node_modules
+**/.svelte-kit
+**/build
+**/dist
+**/.env
+**/.env.local
+.git
+.github
+docs
+infra
+playwright-report
+test-results
+*.md
