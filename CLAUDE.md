@@ -105,7 +105,12 @@ mode here.
 ## Conventions
 
 - TypeScript `strict`. Tabs, single quotes, 100 columns (`pnpm format`).
-- UnoCSS with design tokens. Prefer a token or a shortcut over a pile of arbitrary values.
+- **Styling: tokens in `app/src/lib/styles/brand.css`**, consumed as CSS custom properties. No
+  colour literals in components. UnoCSS is still listed in the README as intended, but is not
+  installed — the design is bespoke poster layout that utility classes wouldn't shorten, so it was
+  not worth the machinery yet. Read `docs/brand.md` before touching visual design; it records the
+  measured contrast ratios, why display type is sized in `cqw` rather than `vw`, and the rule that
+  rotated text is decorative only.
 - Timestamps: store `timestamptz`, which records an **instant** — it does not retain the source's
   written offset, and cannot. `2026-09-12T20:00:00+02:00` and `18:00Z` are the same row. That is
   correct, but it means the wall-clock time a user should see is only recoverable with a timezone:
