@@ -80,14 +80,14 @@ jobs:
           RULE="gh-runner-${{ github.run_id }}"
           cleanup() {
             az postgres flexible-server firewall-rule delete \
-              --resource-group "$RG" --name "$PG_SERVER" --rule-name "$RULE" --yes \
+              --resource-group "$RG" --server-name "$PG_SERVER" --name "$RULE" --yes \
               >/dev/null 2>&1 || true
           }
           trap cleanup EXIT
 
           RUNNER_IP=$(curl -fsS https://api.ipify.org)
           az postgres flexible-server firewall-rule create \
-            --resource-group "$RG" --name "$PG_SERVER" --rule-name "$RULE" \
+            --resource-group "$RG" --server-name "$PG_SERVER" --name "$RULE" \
             --start-ip-address "$RUNNER_IP" --end-ip-address "$RUNNER_IP" >/dev/null
 
           corepack enable
