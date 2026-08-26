@@ -36,19 +36,25 @@ infrastructure openly rather than as an implicit dependency.
 
 - [x] `az group create` → `rg-hendingar-swc-dev`, tagged
 - [x] `az identity create` → `id-hendingar-cicd`
-- [x] `az identity federated-credential create` → `gh-main`, subject
-      `repo:Hendingar@319351136/hendingar.no@1340698357:ref:refs/heads/main`
-
-      **Gotcha worth remembering.** GitHub presents an *immutable* subject claim here — numeric org
-          and repo IDs, not names. The obvious `repo:Hendingar/hendingar.no:ref:refs/heads/main` was
-          rejected with `AADSTS700213: No matching federated identity record found`. The fix is to use
-          exactly the subject the error message quotes back at you. The immutable form is actually more
-          robust — it survives an org or repo rename — but it is not what the docs example shows.
-
+- [x] `az identity federated-credential create` → `gh-main` (subject below)
 - [x] GitHub repo variables set: `AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID`
       (non-secret identifiers, for `azure/login` OIDC)
 - [x] Confirmed empirically that the operator **cannot** write role assignments —
       `AuthorizationFailed` on `Microsoft.Authorization/roleAssignments/write`
+
+### Gotcha: the OIDC subject claim uses immutable IDs
+
+The federated credential subject is:
+
+```
+repo:Hendingar@319351136/hendingar.no@1340698357:ref:refs/heads/main
+```
+
+GitHub presents an **immutable** subject claim here — numeric org and repo IDs, not names. The
+obvious `repo:Hendingar/hendingar.no:ref:refs/heads/main` from the docs was rejected with
+`AADSTS700213: No matching federated identity record found`. Use exactly the subject the error
+message quotes back at you. The immutable form is the better one anyway — it survives an org or repo
+rename — but it is not what the documentation example shows.
 
 ## Owner grant — DONE (2026-08-26)
 
