@@ -20,12 +20,19 @@ cd services/verifier && ruff check . && ruff format --check . && pytest -q
 Nothing else is evidence — not "it looks right", not a passing subset of tests.
 
 ```bash
-pnpm db:up && pnpm db:migrate && pnpm db:seed   # known-good database from nothing
-pnpm dev                                        # http://localhost:5173
-pnpm test:e2e                                   # Playwright, headless
-pnpm db:psql                                    # a shell in the database
-pnpm db:reset                                   # wipe and re-migrate (local only; it refuses otherwise)
+pnpm db:bootstrap  # up + migrate + seed + ingest. A database that looks like production
+pnpm dev           # http://localhost:5173
+pnpm test:e2e      # Playwright, headless
+pnpm db:psql       # a shell in the database
+pnpm db:reset      # wipe and re-migrate (local only; it refuses otherwise)
+pnpm ingest        # fetch Det skjer Sunnhordland — RUN THIS AFTER ANY RESET
 ```
+
+**`db:seed` alone is not a representative database.** The four seeded events carry no poster
+images, so a seed-only front page shows generated fallback patterns where production shows real
+posters. That looks exactly like a rendering regression and has already been mistaken for one.
+`pnpm db:bootstrap` exists so the full picture is one command; after a `db:reset`, run
+`pnpm ingest`.
 
 ## Layout
 

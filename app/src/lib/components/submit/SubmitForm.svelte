@@ -168,7 +168,7 @@
 			</p>
 			<p class="field">
 				<label for="ctaUrl">Billettar <span class="field__opt">valfritt</span></label>
-				<input id="ctaUrl" {...f.ctaUrl.as('url')} placeholder="https://" />
+				<input id="ctaUrl" {...f.ctaUrl.as('url')} />
 				{#each f.ctaUrl.issues() ?? [] as issue (issue.message)}
 					<span class="field__error">{issue.message}</span>
 				{/each}
@@ -177,7 +177,7 @@
 				<label for="sourceUrl">
 					Lenkje til kjelde <span class="field__opt">valfritt, men hjelper</span>
 				</label>
-				<input id="sourceUrl" {...f.sourceUrl.as('url')} placeholder="https://" />
+				<input id="sourceUrl" {...f.sourceUrl.as('url')} />
 				<span class="field__hint">
 					Ei side som omtalar hendinga. Vi lenkjer alltid tilbake til kjelda, og ei lenkje gjer at
 					kontrollen kan stadfeste hendinga i staden for å gjette.
