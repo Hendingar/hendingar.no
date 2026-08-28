@@ -1,4 +1,5 @@
 <script lang="ts">
+	import UpcomingByDay from '../lib/components/landing/UpcomingByDay.svelte';
 	import Hero from '../lib/components/landing/Hero.svelte';
 	import ManifestBand from '../lib/components/landing/ManifestBand.svelte';
 	import ClaimsSplit from '../lib/components/landing/ClaimsSplit.svelte';
@@ -14,6 +15,15 @@
 		content="Open kjeldekode for lokale hendingar i Europa. Gratis, utan reklame, utan innlåsing."
 	/>
 </svelte:head>
+
+<!-- What is on today comes first: someone arriving wants the answer, not the manifesto. The
+     brand statement follows underneath. -->
+<svelte:boundary>
+	<UpcomingByDay />
+	{#snippet failed()}
+		<section class="shell"><p>Kunne ikkje laste hendingar.</p></section>
+	{/snippet}
+</svelte:boundary>
 
 <Hero />
 <ManifestBand />

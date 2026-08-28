@@ -47,7 +47,17 @@ app/src/lib/
   server/                server-only. Never importable from the client
   events.remote.ts       the one client↔server boundary
 app/e2e/                 Playwright specs
+
+importers/<source>/      one deterministic importer per source
+  src/api.ts               upstream schema + paginator. Validates every response
+  src/map.ts               PURE upstream -> our shape. No I/O, no clock, no randomness
+  src/ingest.ts            orchestration, upsert, and the ingest_runs row
+  test/fixtures/           committed real responses. No test touches the network
 ```
+
+**Every importer run writes an `ingest_runs` row**, including failures. That table is what
+`/datasamling` renders — the page can only say a source is collected because a run says so. If you
+add an importer, record its runs the same way or it will be invisible when it silently stops.
 
 A style rule used by more than one route belongs in `brand.css`, not in a route's `<style>`.
 Scoped in a component, the next agent cannot see it and writes a second one.

@@ -22,6 +22,7 @@
 		<p class="fineprint">
 			Importørar er derimot heilt deterministiske — ingen språkmodell hentar data. Oppdikta
 			hendingar er verre enn ingen hendingar.
+			<a href="/datasamling">Sjå kva vi hentar inn, og når →</a>
 		</p>
 	</div>
 </section>

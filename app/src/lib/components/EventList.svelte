@@ -38,6 +38,11 @@
 		grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr));
 		gap: var(--gutter);
 	}
+	/* Grid and flex children default to min-width:auto, which lets long content push the track
+	   wider than its column. This is the single most common source of sideways scroll. */
+	.cards > li {
+		min-inline-size: 0;
+	}
 	.empty {
 		font-family: var(--font-display);
 		font-weight: 800;

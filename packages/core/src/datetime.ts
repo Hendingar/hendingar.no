@@ -65,6 +65,41 @@ export function formatEventTime(
 	return formatter(timeZone || DEFAULT_TIME_ZONE, style).format(instant);
 }
 
+const DAY: Intl.DateTimeFormatOptions = { weekday: 'long', day: 'numeric', month: 'long' };
+
+/**
+ * Heading for a day group: "I dag", "I morgon", or a spelled-out date.
+ *
+ * Takes calendar dates as `YYYY-MM-DD` strings already resolved in the relevant zone, rather than
+ * instants — grouping by day is a calendar question, and re-deriving the day from an instant here
+ * would reintroduce exactly the timezone bug this module exists to prevent.
+ */
+export function formatDayLabel(localDate: string, todayLocalDate: string): string {
+	if (localDate === todayLocalDate) return 'I dag';
+
+	const [y, m, d] = localDate.split('-').map(Number);
+	const [ty, tm, td] = todayLocalDate.split('-').map(Number);
+	if (y == null || m == null || d == null || ty == null || tm == null || td == null) {
+		return localDate;
+	}
+	// Noon UTC, so the label can never slip a day through an offset.
+	const date = new Date(Date.UTC(y, m - 1, d, 12));
+	const tomorrow = new Date(Date.UTC(ty, tm - 1, td, 12));
+	tomorrow.setUTCDate(tomorrow.getUTCDate() + 1);
+	if (date.getTime() === tomorrow.getTime()) return 'I morgon';
+
+	return new Intl.DateTimeFormat(DATE_LOCALE, { ...DAY, timeZone: 'UTC' }).format(date);
+}
+
+/** Time only — the day is already carried by the group heading. */
+export function formatEventClock(instant: Date, timeZone: string | null | undefined): string {
+	return new Intl.DateTimeFormat(DATE_LOCALE, {
+		hour: '2-digit',
+		minute: '2-digit',
+		timeZone: timeZone || DEFAULT_TIME_ZONE
+	}).format(instant);
+}
+
 /** Machine-readable value for `<time datetime>`. Always the instant, in UTC. */
 export function machineDateTime(instant: Date): string {
 	return instant.toISOString();

@@ -75,6 +75,12 @@ skjer_ for Polaris Media's local titles. So the same importer likely unlocks a d
 regions at once. **If you spot a source that looks like a white-label of something we already
 support, say so** — it's usually a config entry rather than a new scraper.
 
+## What we already collect
+
+Live status — every source, its method, its schedule, and what the last run actually did:
+**[/datasamling](https://ca-hendingar-dev.whitewave-5f5b53f5.swedencentral.azurecontainerapps.io/datasamling)**.
+Check there before proposing a source, in case it is already covered.
+
 ## How we import
 
 Importers are **deterministic**: fetch, parse, map to our schema, done. No language models in the
