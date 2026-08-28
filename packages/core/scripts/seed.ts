@@ -7,7 +7,7 @@
  */
 import { eq } from 'drizzle-orm';
 import { createDb } from '../src/db.ts';
-import { events, sources, venues } from '../src/schema.ts';
+import { events, ingestRuns, sources, venues } from '../src/schema.ts';
 
 const url = process.env.DATABASE_URL;
 if (!url) {
@@ -31,11 +31,24 @@ const [source] = await db
 		name: 'Det skjer Sunnhordland',
 		url: 'https://detskjer.sunnhordland.no/events',
 		region: 'Sunnhordland',
-		attribution: 'Det skjer Sunnhordland'
+		attribution: 'Det skjer Sunnhordland',
+		// Registered here too, so /datasamling has a coherent source to describe on a machine that
+		// has only ever run the seed — a developer's laptop, or CI.
+		kind: 'json-api',
+		endpoint: 'https://detskjer.sunnhordland.no/api/events',
+		scheduleCron: '0 5 * * *',
+		trusted: true,
+		lastRunAt: new Date()
 	})
 	.onConflictDoUpdate({
 		target: sources.slug,
-		set: { name: 'Det skjer Sunnhordland' }
+		set: {
+			name: 'Det skjer Sunnhordland',
+			kind: 'json-api',
+			endpoint: 'https://detskjer.sunnhordland.no/api/events',
+			scheduleCron: '0 5 * * *',
+			trusted: true
+		}
 	})
 	.returning();
 
@@ -121,11 +134,41 @@ await db
 	])
 	.onConflictDoNothing({ target: [events.sourceId, events.externalId] });
 
+/*
+ * A little run history, so the status board has something to render locally and in CI.
+ *
+ * `trigger: 'seed'` rather than 'schedule' — these did not happen, and the board must never let
+ * fabricated history pass for the real thing.
+ */
+const seedRuns = [2, 1, 0].map((daysAgo) => ({
+	sourceId: source.id,
+	startedAt: daysFromNow(-daysAgo, 5),
+	finishedAt: daysFromNow(-daysAgo, 5, 1),
+	status: 'success' as const,
+	trigger: 'seed',
+	fetched: 126,
+	created: daysAgo === 2 ? 105 : 0,
+	updated: 0,
+	unchanged: daysAgo === 2 ? 0 : 105,
+	rejected: 0,
+	durationMs: 3000 + daysAgo * 120,
+	message: null
+}));
+
+const [existingRun] = await db
+	.select({ id: ingestRuns.id })
+	.from(ingestRuns)
+	.where(eq(ingestRuns.sourceId, source.id))
+	.limit(1);
+if (!existingRun) await db.insert(ingestRuns).values(seedRuns);
+
 const [{ count } = { count: 0 }] = await db
 	.select({ count: events.id })
 	.from(events)
 	.where(eq(events.status, 'published'))
 	.limit(1);
 
-console.log(`seeded: 1 source, 2 venues, 4 events (published sample id ${count})`);
+console.log(
+	`seeded: 1 source, 2 venues, 4 events, ${existingRun ? 0 : seedRuns.length} runs (sample id ${count})`
+);
 process.exit(0);
