@@ -18,10 +18,42 @@ test('the form is server-rendered, with every required field', async ({ request 
 	expect(html).toContain('Fem kontrollar');
 });
 
-test('the photo shortcut is hidden when no verifier is configured', async ({ request }) => {
+test('both submission modes are in the server-rendered HTML', async ({ request }) => {
 	const html = await (await request.get('/send-inn')).text();
-	// E2E runs without VERIFIER_URL. A dead camera button is worse than no camera button.
-	expect(html).not.toContain('class="capture frame');
+	// The tabs are a radio group switched by CSS, not JavaScript. Both panels must therefore be
+	// present and the form must be reachable with scripting off — fake tabs would hide it entirely.
+	expect(html).toMatch(/id="mode-skjema"[^>]*checked/);
+	expect(html).toContain('id="mode-bilete"');
+	expect(html).toContain('class="capture frame');
+	expect(html).toContain('<form method="POST"');
+	// The upload affordances are stated, not just implied by a camera button.
+	expect(html).toContain('lime inn eit skjermbilete');
+	expect(html).toContain('Facebook-hending');
+});
+
+test('switching to the photo tab swaps which panel is visible', async ({ page }) => {
+	await page.goto('/send-inn');
+	const capture = page.locator('.capture');
+	const form = page.locator('form.form');
+	await expect(form).toBeVisible();
+	await expect(capture).toBeHidden();
+
+	await page.getByText('Med bilete', { exact: true }).click();
+	await expect(capture).toBeVisible();
+	await expect(form).toBeHidden();
+
+	await page.getByText('Med skjema', { exact: true }).click();
+	await expect(form).toBeVisible();
+});
+
+test('the file input accepts a library pick, not only the camera', async ({ page }) => {
+	await page.goto('/send-inn');
+	await page.getByText('Med bilete', { exact: true }).click();
+	const input = page.locator('.capture input[type="file"]');
+	await expect(input).toHaveAttribute('accept', 'image/*');
+	// capture="environment" would open the rear camera directly on a phone, making it impossible
+	// to pick an existing screenshot of a Facebook event — half the point of this panel.
+	await expect(input).not.toHaveAttribute('capture', /.*/);
 });
 
 test('an incomplete submission is rejected in the browser, not by the server', async ({ page }) => {

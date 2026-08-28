@@ -19,6 +19,15 @@ from .config import Config
 
 _TOKEN_SCOPE = "https://cognitiveservices.azure.com/.default"
 
+# Sampling policy, applied to every call this service makes.
+#
+# Both of our uses are transcription or adjudication, not writing: reading an event out of an image
+# and judging whether a record is plausible. Neither benefits from variety, and both are stored and
+# shown to people — a verdict that flips between identical runs is not a verdict. So sampling is
+# pinned off. The seed value is arbitrary; that it does not change is the point.
+TEMPERATURE = 0.0
+SEED = 20260828
+
 log = logging.getLogger(__name__)
 
 

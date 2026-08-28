@@ -1,6 +1,8 @@
 """Rule-based checks are pure functions, so they test without Azure or a network."""
 
+import json
 from datetime import UTC, datetime, timedelta
+from typing import ClassVar
 
 import pytest
 
@@ -123,3 +125,96 @@ class TestPipeline:
 def test_confidence_is_bounded(verdict_field):
     result = check_normalisation(_request())
     assert 0 <= getattr(result, verdict_field) <= 100
+
+
+class _RecordingClient:
+    """Captures the kwargs of the one call it expects, and returns a valid strict-schema reply."""
+
+    def __init__(self, payload: str):
+        self.calls: list[dict] = []
+        self._payload = payload
+
+        outer = self
+
+        class _Completions:
+            async def create(self, **kwargs):
+                outer.calls.append(kwargs)
+
+                class _Msg:
+                    content = outer._payload
+
+                class _Choice:
+                    finish_reason = "stop"
+                    message = _Msg()
+
+                class _Completion:
+                    choices: ClassVar[list] = [_Choice()]
+
+                return _Completion()
+
+        class _Chat:
+            completions = _Completions()
+
+        self.chat = _Chat()
+
+
+class _RecordingFactory:
+    model = "stub-deployment"
+
+    def __init__(self, payload: str):
+        self.recorded = _RecordingClient(payload)
+
+    def client(self):
+        return self.recorded
+
+
+class TestSamplingIsPinned:
+    """Extraction is transcription and verdicts are stored and shown; neither may vary run to run.
+
+    Asserted rather than trusted because the default is temperature 1.0 — dropping these two
+    kwargs is a silent change with no failing test and no visible symptom until two people read
+    the same poster and get different drafts.
+    """
+
+    async def test_extraction_pins_temperature_and_seed(self):
+        from verifier.extract import extract_poster
+        from verifier.llm import SEED, TEMPERATURE
+        from verifier.models import ExtractRequest
+
+        payload = json.dumps(
+            {
+                "title": "Konsert",
+                "description": None,
+                "category": "musikk",
+                "date": "2027-01-01",
+                "start_time": "20:00",
+                "end_time": None,
+                "venue_name": "Stord kulturhus",
+                "municipality": None,
+                "organizer_name": None,
+                "ticket_url": None,
+                "confidence": 90,
+                "unreadable": [],
+                "note": "Lese frå plakaten.",
+            }
+        )
+        factory = _RecordingFactory(payload)
+        await extract_poster(
+            factory,  # type: ignore[arg-type]
+            ExtractRequest(image_base64="A" * 200, media_type="image/jpeg", today="2026-08-28"),
+        )
+        (call,) = factory.recorded.calls
+        assert call["temperature"] == TEMPERATURE == 0.0
+        assert call["seed"] == SEED
+        assert call["response_format"]["json_schema"]["strict"] is True
+
+    async def test_judging_pins_temperature_and_seed(self):
+        from verifier.llm import SEED, TEMPERATURE
+        from verifier.verify import check_plausibility
+
+        payload = json.dumps({"verdict": "pass", "confidence": 88, "reasoning": "Ser ekte ut."})
+        factory = _RecordingFactory(payload)
+        await check_plausibility(factory, _request())  # type: ignore[arg-type]
+        (call,) = factory.recorded.calls
+        assert call["temperature"] == TEMPERATURE == 0.0
+        assert call["seed"] == SEED

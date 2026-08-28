@@ -16,7 +16,7 @@
 	<title>Send inn ei hending — hendingar.no</title>
 	<meta
 		name="description"
-		content="Legg til ei hending på hendingar.no. Ta bilete av ein plakat, eller fyll ut skjemaet. Alle innsendingar går gjennom fem opne kontrollar."
+		content="Legg til ei hending på hendingar.no. Ta bilete av ein plakat eller ei Facebook-hending, eller fyll ut skjemaet. Alle innsendingar går gjennom fem opne kontrollar."
 	/>
 </svelte:head>
 
@@ -27,8 +27,9 @@
 		<span class="hero__line hero__line--slant">noko som skjer?</span>
 	</h1>
 	<p class="hero__lede">
-		Ta eit bilete av plakaten, eller skriv det inn sjølv. Du treng ingen konto. Vi lenkjer alltid
-		tilbake til kjelda — vi tek ikkje over hendinga di.
+		Ta eit bilete av plakaten — eller av ei Facebook-hending på skjermen — og få eit ferdig utfylt
+		forslag. Eller skriv det inn sjølv. Du treng ingen konto, og vi lenkjer alltid tilbake til
+		kjelda.
 	</p>
 </section>
 

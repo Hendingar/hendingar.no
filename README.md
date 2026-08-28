@@ -57,10 +57,15 @@ stored as rejected, so a wrong call is recoverable and repeat spam has something
 Every check's verdict, confidence and reasoning is stored and shown to the submitter, in Nynorsk.
 The reasoning is the product, not a debug log.
 
-**Two ways to submit.** Photograph a poster and we read it into the form for you — you review and
-correct it before anything is sent, and the photo is downscaled in your browser, stripped of
-location data, read once and never stored. Or fill the form in yourself; it works without
-JavaScript.
+**Two ways to submit.** Upload an image — a poster on a noticeboard, a screenshot of a Facebook
+event, an advert in the paper — and we read the event out of it and hand you a filled-in
+suggestion. You review and correct it before anything is sent, and the image is downscaled in your
+browser, stripped of location data, read once and never stored. Or fill the form in yourself; it
+works without JavaScript.
+
+Extraction is transcription, not writing, so it is pinned as close to deterministic as the API
+allows: temperature 0, a fixed seed, and a strict JSON schema. Two people photographing the same
+poster should get the same suggestion.
 
 **No API keys anywhere.** The one service that calls a model runs on its own managed identity
 against an account with key authentication disabled. See

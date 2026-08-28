@@ -182,6 +182,15 @@ Use `formatEventTime` from `@hendingar/core/datetime`. Two reasons, both measure
 - **A `timestamptz` is an instant, not a wall clock.** Always format with the venue's `timezone`.
   Assuming Oslo renders a 20:00 Helsinki concert as 19:00.
 
+### A component rule on a bare element beats brand.css
+
+Svelte rewrites `input { … }` to `input.svelte-hash { … }` — specificity (0,1,1), which outranks a
+shared single-class utility like `.visually-hidden` at (0,1,0). A component that styles an element
+type therefore silently overrides `brand.css` for every such element inside it, including ones it
+never meant to touch. This gave two visually-hidden radios `inline-size: 100%` and pushed
+`/send-inn` 25px past the viewport at 320px. **Select on a wrapper class** (`.field input`), not on
+the element type.
+
 ### Display type is sized in `cqw`, never `vw`
 
 A shared `vw` step overflowed the hero on desktop and clipped the CTA at 320px — the same bug at

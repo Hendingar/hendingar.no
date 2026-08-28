@@ -11,7 +11,7 @@ import logging
 import re
 from datetime import datetime, timedelta
 
-from .llm import LlmClientFactory
+from .llm import SEED, TEMPERATURE, LlmClientFactory
 from .models import CheckResult, VerifyRequest, VerifyResponse
 
 log = logging.getLogger(__name__)
@@ -165,6 +165,10 @@ async def _judge(factory: LlmClientFactory, check: str, prompt: str) -> CheckRes
     completion = await client.chat.completions.create(
         model=factory.model,
         max_completion_tokens=500,
+        # Same reasoning as extraction: a verdict that flips between runs on identical input is
+        # not a verdict. We store the reasoning and show it to people, so it has to be stable.
+        temperature=TEMPERATURE,
+        seed=SEED,
         messages=[{"role": "system", "content": SYSTEM}, {"role": "user", "content": prompt}],
         response_format={
             "type": "json_schema",

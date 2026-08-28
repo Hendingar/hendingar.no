@@ -11,10 +11,11 @@ export default defineConfig({
 		env: {
 			DATABASE_URL:
 				process.env.DATABASE_URL ?? 'postgres://hendingar:hendingar@localhost:5433/hendingar',
-			// Pinned empty, not inherited: the submission specs assert both the no-verifier UI and
-			// the degraded verdict. A developer with VERIFIER_URL set locally would otherwise get
-			// different results from CI.
-			VERIFIER_URL: ''
+			// A closed port, not empty and not inherited. Set, so the photo tab renders and the
+			// two-panel markup is under test; unreachable, so every submission takes the degraded
+			// path to the human queue. A developer with a real VERIFIER_URL locally would
+			// otherwise get different results from CI.
+			VERIFIER_URL: 'http://127.0.0.1:9'
 		}
 	},
 	testDir: 'e2e',
