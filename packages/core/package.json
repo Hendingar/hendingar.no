@@ -10,7 +10,8 @@
 		"./db": "./src/db.ts",
 		"./datetime": "./src/datetime.ts",
 		"./schedule": "./src/schedule.ts",
-		"./verification": "./src/verification.ts"
+		"./verification": "./src/verification.ts",
+		"./recurrence": "./src/recurrence.ts"
 	},
 	"scripts": {
 		"typecheck": "tsc --noEmit",

@@ -1,0 +1,18 @@
+{
+	"description": "Printed poster, recurring weekly with no date. Tests that a stated weekday recurrence does not become an invented single date.",
+	"source": "supplied by Tor, 2026-08-28",
+	"today": "2026-08-28",
+	"expect": {
+		"title": { "contains": "komle" },
+		"category": { "equals": "mat-og-drikke" },
+		"date": { "isNull": true },
+		"recurrence.freq": { "equals": "weekly" },
+		"recurrence.weekdays": { "equals": [4] },
+		"recurrence.until": { "isNull": true },
+		"start_time": { "equals": "12:00" },
+		"end_time": { "equals": "17:00" },
+		"venue_name": { "contains": "vertshuset" },
+		"municipality": { "contains": "bømlo" },
+		"confidence": { "atLeast": 60 }
+	}
+}

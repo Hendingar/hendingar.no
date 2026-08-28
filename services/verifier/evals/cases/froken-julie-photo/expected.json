@@ -1,0 +1,12 @@
+{
+	"description": "A promotional photograph with no text at all. Negative case: the only correct answer is a refusal. Kept because inventing an event from a stock photo is the most damaging failure this service can have.",
+	"source": "Det skjer Sunnhordland poster for Frøken Julie, event 205444",
+	"today": "2026-08-28",
+	"expect": {
+		"title": { "isNull": true },
+		"date": { "isNull": true },
+		"start_time": { "isNull": true },
+		"venue_name": { "isNull": true },
+		"confidence": { "atMost": 20 }
+	}
+}

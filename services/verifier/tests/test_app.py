@@ -20,6 +20,7 @@ def _client() -> TestClient:
         openai_endpoint="https://example.invalid/",
         openai_chat_model="stub-deployment",
         azure_client_id=None,
+        azure_tenant_id=None,
         log_level="WARNING",
         request_timeout_seconds=5,
     )

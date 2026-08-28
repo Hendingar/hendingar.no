@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { CATEGORY_SLUGS } from './taxonomy.ts';
 import { VERIFICATION_VERDICTS } from './verification.ts';
+import { RECURRENCE_FREQUENCIES, WEEKDAYS } from './recurrence.ts';
 
 /**
  * Validation lives here so ONE schema serves every boundary: remote-function arguments, importer
@@ -70,6 +71,27 @@ export type EventQuery = z.infer<typeof eventQuerySchema>;
  * than a blank field a human fills in. `confidence` and `unreadable` exist so the UI can show what
  * the extraction is unsure about instead of presenting guesses as facts.
  */
+/**
+ * A repetition stated on the image instead of a date.
+ *
+ * This exists because leaving it out caused hallucination rather than only losing information:
+ * with nowhere to record "every Thursday", the model wrote a concrete date — and chose the wrong
+ * weekday. Measured in services/verifier/evals/cases/komle-vertshuset.
+ */
+export const extractedRecurrenceSchema = z.object({
+	freq: z.enum(RECURRENCE_FREQUENCIES),
+	interval: z.number().int().min(1).max(52).default(1),
+	weekdays: z.array(z.literal(WEEKDAYS)).default([]),
+	nth: z.number().int().min(-1).max(5).nullable().default(null),
+	until: z
+		.string()
+		.regex(/^\d{4}-\d{2}-\d{2}$/, 'must be YYYY-MM-DD')
+		.nullable()
+		.default(null)
+});
+
+export type ExtractedRecurrence = z.infer<typeof extractedRecurrenceSchema>;
+
 export const extractedEventSchema = z.object({
 	title: z.string().nullable(),
 	description: z.string().nullable(),
@@ -88,6 +110,8 @@ export const extractedEventSchema = z.object({
 		.string()
 		.regex(/^\d{2}:\d{2}$/, 'must be HH:MM')
 		.nullable(),
+	/** Set instead of `date` when the image states a repetition. */
+	recurrence: extractedRecurrenceSchema.nullable().default(null),
 	venueName: z.string().nullable(),
 	municipality: z.string().nullable(),
 	organizerName: z.string().nullable(),

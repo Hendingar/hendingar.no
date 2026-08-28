@@ -28,6 +28,10 @@ class Config:
     # Pins the user-assigned managed identity when running in Container Apps. Unset locally,
     # where DefaultAzureCredential picks up `az login`.
     azure_client_id: str | None
+    # Which Entra tenant to get a token from. Only matters locally, and only for people signed in
+    # to more than one: `az login` has a single active tenant, and a token from the wrong one is a
+    # 401 that says nothing useful about the cause.
+    azure_tenant_id: str | None
     log_level: str
     # Requests that take longer than this are abandoned; the caller degrades rather than hangs.
     request_timeout_seconds: float
@@ -45,6 +49,7 @@ def load_config() -> Config:
         openai_endpoint=os.environ["AZURE_OPENAI_ENDPOINT"],
         openai_chat_model=os.environ["AZURE_OPENAI_CHAT_MODEL"],
         azure_client_id=os.getenv("AZURE_CLIENT_ID"),
+        azure_tenant_id=os.getenv("AZURE_TENANT_ID"),
         log_level=os.getenv("LOG_LEVEL", "INFO"),
         request_timeout_seconds=float(os.getenv("REQUEST_TIMEOUT_SECONDS", "60")),
     )

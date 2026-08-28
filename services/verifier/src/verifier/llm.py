@@ -12,7 +12,7 @@ build a fresh client per call and reuse the *credential*, which caches and refre
 
 import logging
 
-from azure.identity import DefaultAzureCredential, ManagedIdentityCredential
+from azure.identity import AzureCliCredential, DefaultAzureCredential, ManagedIdentityCredential
 from openai import AsyncOpenAI
 
 from .config import Config
@@ -31,10 +31,18 @@ SEED = 20260828
 log = logging.getLogger(__name__)
 
 
-def get_credential(client_id: str | None = None):
-    """Pin the user-assigned managed identity in Azure; fall back to `az login` locally."""
+def get_credential(client_id: str | None = None, tenant_id: str | None = None):
+    """Pin the user-assigned managed identity in Azure; fall back to `az login` locally.
+
+    `tenant_id` exists for local development only. `az login` has one active tenant, and anyone
+    signed in to several will otherwise get a token for whichever subscription happens to be
+    selected — which fails as a bare 401 with no hint that the tenant is the problem. Naming the
+    tenant makes it work regardless of which subscription is active in the CLI.
+    """
     if client_id:
         return ManagedIdentityCredential(client_id=client_id)
+    if tenant_id:
+        return AzureCliCredential(tenant_id=tenant_id)
     return DefaultAzureCredential()
 
 
@@ -43,7 +51,9 @@ class LlmClientFactory:
 
     def __init__(self, config: Config, credential=None) -> None:
         self._config = config
-        self._credential = credential or get_credential(config.azure_client_id)
+        self._credential = credential or get_credential(
+            config.azure_client_id, config.azure_tenant_id
+        )
 
     @property
     def model(self) -> str:

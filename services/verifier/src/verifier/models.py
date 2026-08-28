@@ -40,6 +40,25 @@ class ExtractRequest(BaseModel):
     today: str = Field(description="YYYY-MM-DD, local date where the poster was photographed")
 
 
+class ExtractedRecurrence(BaseModel):
+    """A stated repetition: "torsdager", "kvar tysdag", "første måndag i månaden".
+
+    This field exists because omitting it caused hallucination, not merely lost information. With
+    nowhere to put "every Thursday", the model put a concrete date in `date` — and picked the wrong
+    weekday. A schema that cannot express what the image says forces a guess.
+    """
+
+    freq: Literal["daily", "weekly", "monthly"]
+    interval: int = Field(default=1, ge=1, le=52, description="Every N periods; 2 = annakvar")
+    weekdays: list[int] = Field(
+        default_factory=list, description="1=Monday … 7=Sunday. Empty for daily."
+    )
+    nth: int | None = Field(
+        default=None, description="Monthly only: 1-5, or -1 for the last of the month"
+    )
+    until: str | None = Field(default=None, description="YYYY-MM-DD, last date, if stated")
+
+
 class ExtractedEvent(BaseModel):
     """Everything is nullable except confidence and the notes.
 
@@ -53,6 +72,10 @@ class ExtractedEvent(BaseModel):
     date: str | None = Field(default=None, description="YYYY-MM-DD, local at the venue")
     start_time: str | None = Field(default=None, description="HH:MM, 24-hour, local")
     end_time: str | None = None
+    recurrence: ExtractedRecurrence | None = Field(
+        default=None,
+        description="Set INSTEAD of date when the image states a repetition rather than one date",
+    )
     venue_name: str | None = None
     municipality: str | None = None
     organizer_name: str | None = None

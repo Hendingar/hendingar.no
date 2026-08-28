@@ -28,6 +28,14 @@ Reglar:
 - Skriv berre av det som faktisk står i biletet. Gjett aldri, og finn aldri opp felt.
 - Manglar eit felt, la det stå tomt og før det opp i `unreadable`.
 - Relative datoar ("laurdag 14.", "i morgon") skal reknast ut frå datoen du får oppgitt som i dag.
+- Står det ei gjentaking i staden for ein dato ("torsdager", "kvar tysdag", "første måndag i
+  månaden"), fyll ut `recurrence` og la `date` stå tom. Ikkje finn opp ein einskild dato for eit
+  arrangement som gjentar seg — det er feil svar, sjølv om datoen er plausibel.
+- Er det både ein dato og ei gjentaking, fyll ut begge.
+- Vekedagar i `recurrence.weekdays`: 1 = måndag, 7 = sundag.
+- Er staden namngitt slik at han inneheld ein norsk kommune ("Vertshuset Bømlo"), fyll ut
+  `municipality` med kommunen i tillegg til `venue_name`. Det er avskrift, ikkje gjetting. Står det
+  ingen stad i biletet, la begge stå tomme — finn aldri opp ein stad.
 - Klokkeslett i 24-timarsformat. Er berre starttid oppgitt, la sluttid stå tom.
 - Er det fleire arrangement i biletet, ta det som er tydelegast presentert som hovudsaka.
 - Ignorer navigasjon, reklame, kommentarar, «liker»-tal og anna krom rundt sjølve arrangementet.
@@ -40,15 +48,32 @@ Kategoriar: musikk, teater, utstilling, sport, mote, kyrkjeliv, festival, litter
 show, mat-og-drikke, dans, marknad, konferanse, kurs, anna."""
 
 
-def _schema() -> dict:
-    """JSON Schema for the structured response.
+def _harden(node: dict) -> None:
+    """Apply strict-mode rules to an object schema and everything nested inside it.
 
-    Derived from the Pydantic model, then adjusted for the strict-mode rules the API enforces:
-    every property required (nullable instead of optional) and `additionalProperties: false`.
+    Strict mode requires every property to be listed in `required` and `additionalProperties:
+    false` — on nested objects too, not just the root. Pydantic emits neither, and it hoists nested
+    models into `$defs`, which are reached through `$ref` and so need hardening in place.
     """
+    if node.get("type") == "object" and "properties" in node:
+        node["additionalProperties"] = False
+        node["required"] = list(node["properties"].keys())
+    for key in ("properties", "$defs"):
+        for child in node.get(key, {}).values():
+            if isinstance(child, dict):
+                _harden(child)
+    for child in node.get("anyOf", []):
+        if isinstance(child, dict):
+            _harden(child)
+    items = node.get("items")
+    if isinstance(items, dict):
+        _harden(items)
+
+
+def _schema() -> dict:
+    """JSON Schema for the structured response, hardened for strict mode."""
     schema = ExtractedEvent.model_json_schema()
-    schema["additionalProperties"] = False
-    schema["required"] = list(schema.get("properties", {}).keys())
+    _harden(schema)
     return schema
 
 
