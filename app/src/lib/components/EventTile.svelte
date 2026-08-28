@@ -1,10 +1,10 @@
 <script lang="ts">
 	import { categoryLabel } from '@hendingar/core/taxonomy';
-	import { formatEventTime, machineDateTime } from '@hendingar/core/datetime';
+	import { formatEventClock, machineDateTime } from '@hendingar/core/datetime';
 	import EventThumb from './EventThumb.svelte';
-	import type { TodayEvent } from '../events.remote';
+	import type { UpcomingEvent } from '../events.remote';
 
-	let { event }: { event: TodayEvent } = $props();
+	let { event }: { event: UpcomingEvent } = $props();
 </script>
 
 <article class="tile frame">
@@ -12,9 +12,12 @@
 
 	<div class="tile__body">
 		<p class="tile__top">
-			{#if event.isToday}
-				<span class="today">I dag</span>
-			{/if}
+			<span class="time">
+				<span class="visually-hidden">Klokka </span>
+				<time datetime={machineDateTime(event.startsAt)}>
+					{formatEventClock(event.startsAt, event.venueTimeZone)}
+				</time>
+			</span>
 			<span class="label"
 				><span class="visually-hidden">Kategori: </span>{categoryLabel(event.category)}</span
 			>
@@ -22,16 +25,9 @@
 
 		<h3 class="display display--md tile__t">{event.title}</h3>
 
-		<p class="tile__meta">
-			{#if event.venueName}
-				<span><span class="visually-hidden">Stad: </span>{event.venueName}</span>
-				<span aria-hidden="true"> · </span>
-			{/if}
-			<span class="visually-hidden">Tid: </span>
-			<time datetime={machineDateTime(event.startsAt)}>
-				{formatEventTime(event.startsAt, event.venueTimeZone)}
-			</time>
-		</p>
+		{#if event.venueName}
+			<p class="tile__meta"><span class="visually-hidden">Stad: </span>{event.venueName}</p>
+		{/if}
 	</div>
 </article>
 
@@ -57,7 +53,7 @@
 		gap: 0.5rem;
 		margin: 0;
 	}
-	.today {
+	.time {
 		font-family: var(--font-mono);
 		font-size: var(--step-micro);
 		font-weight: 700;

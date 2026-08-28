@@ -138,17 +138,27 @@ describe('event mapping', () => {
 		if (!isFailure(mapped)) expect(mapped.startsAt.toISOString()).toBe('2026-09-12T18:00:00.000Z');
 	});
 
-	it('never carries a poster whose rights are unverified', () => {
+	it('carries the poster URL and records the rights flag separately', () => {
 		const raw = {
 			...firstEvent(),
 			imageRightsVerified: false,
 			posterUrls: ['https://example.com/poster.jpg']
 		};
 		const mapped = mapEvent(raw);
-		if (!isFailure(mapped)) expect(mapped.posterUrl).toBeNull();
+		if (!isFailure(mapped)) {
+			// Hotlinked, never copied onto our infrastructure.
+			expect(mapped.posterUrl).toBe('https://example.com/poster.jpg');
+			// The flag is preserved so a future policy can act on it.
+			expect(mapped.posterRightsVerified).toBe(false);
+		}
 
 		const ok = mapEvent({ ...raw, imageRightsVerified: true });
-		if (!isFailure(ok)) expect(ok.posterUrl).toBe('https://example.com/poster.jpg');
+		if (!isFailure(ok)) expect(ok.posterRightsVerified).toBe(true);
+	});
+
+	it('still refuses a poster that is not an http url', () => {
+		const mapped = mapEvent({ ...firstEvent(), posterUrls: ['javascript:alert(1)'] });
+		if (!isFailure(mapped)) expect(mapped.posterUrl).toBeNull();
 	});
 
 	it('drops records the source has not approved', () => {

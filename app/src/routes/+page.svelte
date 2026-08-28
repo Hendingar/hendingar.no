@@ -1,5 +1,5 @@
 <script lang="ts">
-	import TodayGrid from '../lib/components/landing/TodayGrid.svelte';
+	import UpcomingByDay from '../lib/components/landing/UpcomingByDay.svelte';
 	import Hero from '../lib/components/landing/Hero.svelte';
 	import ManifestBand from '../lib/components/landing/ManifestBand.svelte';
 	import ClaimsSplit from '../lib/components/landing/ClaimsSplit.svelte';
@@ -19,7 +19,7 @@
 <!-- What is on today comes first: someone arriving wants the answer, not the manifesto. The
      brand statement follows underneath. -->
 <svelte:boundary>
-	<TodayGrid />
+	<UpcomingByDay />
 	{#snippet failed()}
 		<section class="shell"><p>Kunne ikkje laste hendingar.</p></section>
 	{/snippet}

@@ -1,6 +1,6 @@
 import { form, query } from '$app/server';
 import { z } from 'zod';
-import { and, asc, desc, eq, gte, lte, or, sql } from 'drizzle-orm';
+import { and, asc, eq, gte, lte, or, sql } from 'drizzle-orm';
 import { events, organizers, venues } from '@hendingar/core/schema';
 import { eventQuerySchema, eventSubmissionSchema } from '@hendingar/core/validation';
 import { db } from './server/db';
@@ -58,13 +58,10 @@ export const listEvents = query(
 export type EventSummary = Awaited<ReturnType<typeof listEvents>>[number];
 
 /**
- * The front-page grid: what is on today, topped up with the nearest upcoming events so the grid is
- * never half empty on a quiet Tuesday.
- *
- * "Today" is evaluated in the VENUE's timezone, in SQL. Doing it in JS against the server's clock
- * would put a 23:00 Helsinki concert on the wrong day for anyone reading from Norway.
+ * The front-page listing: the nearest events, in order, each carrying the calendar day it falls on
+ * at its own venue so the page can group by date.
  */
-export const listToday = query(z.number().int().min(1).max(24).default(6), async (limit) => {
+export const listUpcoming = query(z.number().int().min(1).max(60).default(24), async (limit) => {
 	const rows = await db()
 		.select({
 			id: events.id,
@@ -76,28 +73,43 @@ export const listToday = query(z.number().int().min(1).max(24).default(6), async
 			venueTimeZone: venues.timezone,
 			municipality: venues.municipality,
 			posterUrl: events.posterUrl,
-			isToday: sql<boolean>`
-				(${events.startsAt} at time zone coalesce(${venues.timezone}, 'Europe/Oslo'))::date
-				= (now() at time zone coalesce(${venues.timezone}, 'Europe/Oslo'))::date
-			`.as('is_today')
+			/*
+			 * The calendar day AT THE VENUE, resolved in SQL. Grouping by day is a calendar
+			 * question, not an instant one — deriving it in JS from the server's clock would put a
+			 * late Helsinki concert in the wrong group for a reader in Norway.
+			 *
+			 * greatest(starts_at, now()) so a multi-day exhibition that opened last week is grouped
+			 * under TODAY, where a visitor can actually go to it, rather than under a heading dated
+			 * before the page they are reading.
+			 */
+			localDate: sql<string>`
+				to_char(
+					greatest(${events.startsAt}, now())
+						at time zone coalesce(${venues.timezone}, 'Europe/Oslo'),
+					'YYYY-MM-DD'
+				)
+			`.as('local_date'),
+			todayLocalDate: sql<string>`
+				to_char(now() at time zone coalesce(${venues.timezone}, 'Europe/Oslo'), 'YYYY-MM-DD')
+			`.as('today_local_date')
 		})
 		.from(events)
 		.leftJoin(venues, eq(events.venueId, venues.id))
 		.where(
 			and(
 				eq(events.status, 'published'),
-				// Still-running events count as on today.
+				// Still-running events belong to today.
 				or(gte(events.startsAt, new Date()), gte(events.endsAt, new Date()))
 			)
 		)
-		// Today first, then soonest. Ordering in SQL keeps the grid stable between renders.
-		.orderBy(desc(sql`is_today`), asc(events.startsAt))
+		// Order by the same effective instant the grouping uses, so groups stay contiguous.
+		.orderBy(sql`greatest(${events.startsAt}, now())`, asc(events.startsAt))
 		.limit(limit);
 
 	return rows;
 });
 
-export type TodayEvent = Awaited<ReturnType<typeof listToday>>[number];
+export type UpcomingEvent = Awaited<ReturnType<typeof listUpcoming>>[number];
 
 /**
  * Anyone can submit an event — no account required (README non-goals: not a walled garden).

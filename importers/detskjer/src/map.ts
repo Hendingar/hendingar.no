@@ -155,11 +155,15 @@ export function mapEvent(input: UpstreamEvent): MappedEvent | MapFailure {
 		organizerSlug: input.organizerSlug?.trim() || null,
 		ctaUrl: safeUrl(input.ctaUrl),
 		/*
-		 * Only carry a poster when the upstream says the rights are verified. Re-hosting or even
-		 * hotlinking an image whose rights are unknown is the kind of thing that gets a community
-		 * project a letter, and the flag is right there in the payload.
+		 * We store the poster URL and hotlink it from the source's own CDN — we never copy the file
+		 * onto our infrastructure.
+		 *
+		 * `imageRightsVerified` is false for every record this source returns, which in practice
+		 * means the publisher does not use the field rather than that the rights are absent. The
+		 * flag is still recorded per event so a future policy can act on it, and so the honest
+		 * state is visible rather than inferred.
 		 */
-		posterUrl: input.imageRightsVerified ? safeUrl(input.posterUrls[0] ?? null) : null,
+		posterUrl: safeUrl(input.posterUrls[0] ?? null),
 		posterRightsVerified: input.imageRightsVerified,
 		sourceUrl: `https://detskjer.sunnhordland.no/events/${input.eventSlug}`
 	};

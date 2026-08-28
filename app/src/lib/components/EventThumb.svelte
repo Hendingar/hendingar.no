@@ -21,9 +21,14 @@
 	// render, and a screenshot test stays stable.
 	const variant = $derived(id % 4);
 	const rotation = $derived((id % 7) * 13);
+
+	// Posters are hotlinked from the source's CDN. A third party can reorganise or remove a file at
+	// any time, so a broken image must degrade to the generated tile rather than to a broken icon.
+	let posterFailed = $state(false);
+	const showPoster = $derived(Boolean(posterUrl) && !posterFailed);
 </script>
 
-{#if posterUrl}
+{#if showPoster}
 	<img
 		class="thumb"
 		src={posterUrl}
@@ -32,6 +37,8 @@
 		decoding="async"
 		width="400"
 		height="225"
+		referrerpolicy="no-referrer"
+		onerror={() => (posterFailed = true)}
 	/>
 {:else}
 	<div class="thumb thumb--generated" role="img" aria-label={`Illustrasjon for ${title}`}>
