@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { CATEGORIES } from '@hendingar/core/taxonomy';
+	import { formatTimeDigits } from '@hendingar/core/datetime';
 	import type { ExtractedEvent } from '@hendingar/core/validation';
 	import { submitEvent } from '../../submit.remote';
 	import PhotoCapture from './PhotoCapture.svelte';
@@ -23,6 +24,18 @@
 	 */
 	let mode = $state<'form' | 'photo'>('form');
 	let intro: HTMLElement | undefined = $state();
+
+	/**
+	 * Keep the time fields in 24-hour form.
+	 *
+	 * A text input rather than `type="time"`: the native control renders in the *browser's* locale,
+	 * so an English-locale browser showed "04:30 PM" on a Nynorsk form and nothing in HTML or CSS
+	 * can override it. Formatting on input means a numeric keypad is enough — typing 1930 or 930
+	 * both land correctly, so we lose the native clock picker but never the 24-hour clock.
+	 */
+	function onTimeInput(field: typeof f.startTime, value: string) {
+		field.set(formatTimeDigits(value));
+	}
 
 	function prefill(draft: ExtractedEvent) {
 		method = 'photo';
@@ -168,14 +181,35 @@
 				</p>
 				<p class="field">
 					<label for="startTime">Startar</label>
-					<input id="startTime" {...f.startTime.as('time')} required />
+					<input
+						id="startTime"
+						{...f.startTime.as('text')}
+						required
+						inputmode="numeric"
+						maxlength="5"
+						placeholder="19:30"
+						autocomplete="off"
+						pattern="([01][0-9]|2[0-3]):[0-5][0-9]"
+						title="Klokkeslett på 24-timarsform, til dømes 19:30"
+						oninput={(e) => onTimeInput(f.startTime, e.currentTarget.value)}
+					/>
 					{#each f.startTime.issues() ?? [] as issue (issue.message)}
 						<span class="field__error">{issue.message}</span>
 					{/each}
 				</p>
 				<p class="field">
 					<label for="endTime">Sluttar <span class="field__opt">valfritt</span></label>
-					<input id="endTime" {...f.endTime.as('time')} />
+					<input
+						id="endTime"
+						{...f.endTime.as('text')}
+						inputmode="numeric"
+						maxlength="5"
+						placeholder="19:30"
+						autocomplete="off"
+						pattern="([01][0-9]|2[0-3]):[0-5][0-9]"
+						title="Klokkeslett på 24-timarsform, til dømes 19:30"
+						oninput={(e) => onTimeInput(f.endTime, e.currentTarget.value)}
+					/>
 					{#each f.endTime.issues() ?? [] as issue (issue.message)}
 						<span class="field__error">{issue.message}</span>
 					{/each}

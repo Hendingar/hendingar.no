@@ -11,7 +11,8 @@
 		"./datetime": "./src/datetime.ts",
 		"./schedule": "./src/schedule.ts",
 		"./verification": "./src/verification.ts",
-		"./recurrence": "./src/recurrence.ts"
+		"./recurrence": "./src/recurrence.ts",
+		"./slug": "./src/slug.ts"
 	},
 	"scripts": {
 		"typecheck": "tsc --noEmit",

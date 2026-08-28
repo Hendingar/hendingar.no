@@ -3,6 +3,7 @@ import {
 	DATE_LOCALE,
 	DEFAULT_TIME_ZONE,
 	formatEventTime,
+	formatTimeDigits,
 	machineDateTime,
 	zonedWallClockToInstant
 } from '../src/datetime.ts';
@@ -107,5 +108,39 @@ describe('zonedWallClockToInstant', () => {
 
 	it('rejects nonsense rather than producing an Invalid Date', () => {
 		expect(() => zonedWallClockToInstant('ikkje ein dato', '20:00', 'Europe/Oslo')).toThrow();
+	});
+});
+
+describe('formatTimeDigits', () => {
+	it('builds a 24-hour clock from a two-digit hour', () => {
+		expect(formatTimeDigits('1')).toBe('1');
+		expect(formatTimeDigits('19')).toBe('19');
+		expect(formatTimeDigits('193')).toBe('19:3');
+		expect(formatTimeDigits('1930')).toBe('19:30');
+	});
+
+	it('treats a leading 3-9 as a single-digit hour', () => {
+		// There is no 30:00, so 9-3-0 can only mean 09:30. Without this a numeric keypad user
+		// typing 930 would get "90:3".
+		expect(formatTimeDigits('9')).toBe('9');
+		expect(formatTimeDigits('93')).toBe('09:3');
+		expect(formatTimeDigits('930')).toBe('09:30');
+		expect(formatTimeDigits('7')).toBe('7');
+		expect(formatTimeDigits('700')).toBe('07:00');
+	});
+
+	it('ignores anything that is not a digit, so re-typing over a colon works', () => {
+		expect(formatTimeDigits('19:30')).toBe('19:30');
+		expect(formatTimeDigits('19:3')).toBe('19:3');
+		expect(formatTimeDigits('kl 19.30')).toBe('19:30');
+	});
+
+	it('never exceeds four digits', () => {
+		expect(formatTimeDigits('193045')).toBe('19:30');
+	});
+
+	it('returns empty for empty input, so the field can be cleared', () => {
+		expect(formatTimeDigits('')).toBe('');
+		expect(formatTimeDigits('abc')).toBe('');
 	});
 });

@@ -37,7 +37,8 @@ test('clicking a filter updates the URL, the heading and the list', async ({ pag
 	await page.goto('/hendingar');
 	const before = await page.locator('article.tile').count();
 
-	await page.getByRole('link', { name: /^Teater/ }).click();
+	const filters = page.getByRole('navigation', { name: 'Filtrer på kategori' });
+	await filters.getByRole('link', { name: /^Teater/ }).click();
 	await page.waitForURL(/kategori=teater/);
 
 	await expect(page.locator('h1')).toHaveText(/teater/i);
@@ -46,7 +47,10 @@ test('clicking a filter updates the URL, the heading and the list', async ({ pag
 	expect(after).toBeLessThan(before);
 
 	// The active chip is marked structurally, not by colour alone.
-	await expect(page.getByRole('link', { name: /^Teater/ })).toHaveAttribute('aria-current', 'page');
+	await expect(filters.getByRole('link', { name: /^Teater/ })).toHaveAttribute(
+		'aria-current',
+		'page'
+	);
 });
 
 test('the filter only offers categories that have events', async ({ page }) => {

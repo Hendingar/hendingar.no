@@ -1,7 +1,8 @@
+import { error } from '@sveltejs/kit';
 import { query } from '$app/server';
 import { z } from 'zod';
 import { and, asc, count, eq, gte, lte, or, sql } from 'drizzle-orm';
-import { events, venues } from '@hendingar/core/schema';
+import { events, organizers, sources, venues, verifications } from '@hendingar/core/schema';
 import { eventQuerySchema } from '@hendingar/core/validation';
 import { categoryLabel } from '@hendingar/core/taxonomy';
 import { db } from './server/db';
@@ -149,3 +150,66 @@ export const listUpcoming = query(z.number().int().min(1).max(60).default(24), a
 });
 
 export type UpcomingEvent = Awaited<ReturnType<typeof listUpcoming>>[number];
+
+/**
+ * One event, with everything needed to render a page for it.
+ *
+ * Published only. An event awaiting review has a URL that resolves to nothing, deliberately: the
+ * queue is not a preview channel, and a `pending` event is one we have not vouched for.
+ *
+ * The verification rows come along because the README promises the reasoning is auditable rather
+ * than a black box, and the event's own page is the only place a reader would look for it.
+ */
+export const getEvent = query(z.number().int().positive(), async (id) => {
+	const database = db();
+
+	const [row] = await database
+		.select({
+			id: events.id,
+			title: events.title,
+			description: events.description,
+			category: events.category,
+			startsAt: events.startsAt,
+			endsAt: events.endsAt,
+			posterUrl: events.posterUrl,
+			ctaUrl: events.ctaUrl,
+			sourceUrl: events.sourceUrl,
+			submissionMethod: events.submissionMethod,
+			verificationNotes: events.verificationNotes,
+			venueName: venues.name,
+			venueAddress: venues.address,
+			venueMunicipality: venues.municipality,
+			venueLatitude: venues.latitude,
+			venueLongitude: venues.longitude,
+			venueTimeZone: venues.timezone,
+			organizerName: organizers.name,
+			sourceName: sources.name,
+			sourceAttribution: sources.attribution,
+			sourceSiteUrl: sources.url
+		})
+		.from(events)
+		.leftJoin(venues, eq(events.venueId, venues.id))
+		.leftJoin(organizers, eq(events.organizerId, organizers.id))
+		.leftJoin(sources, eq(events.sourceId, sources.id))
+		.where(and(eq(events.id, id), eq(events.status, 'published')))
+		.limit(1);
+
+	if (!row) error(404, 'Fann ikkje hendinga');
+
+	const checks = await database
+		.select({
+			check: verifications.check,
+			verdict: verifications.verdict,
+			confidence: verifications.confidence,
+			reasoning: verifications.reasoning,
+			deterministic: verifications.deterministic,
+			model: verifications.model
+		})
+		.from(verifications)
+		.where(eq(verifications.eventId, id))
+		.orderBy(asc(verifications.id));
+
+	return { ...row, checks };
+});
+
+export type EventDetail = Awaited<ReturnType<typeof getEvent>>;

@@ -159,3 +159,25 @@ export function zonedWallClockToInstant(
 	const secondPass = naive - zoneOffsetMs(new Date(firstPass), timeZone);
 	return new Date(secondPass);
 }
+
+/**
+ * Format keystrokes into a 24-hour `HH:MM` as the person types.
+ *
+ * `<input type="time">` renders in the *browser's* locale, not the page's, and nothing in HTML or
+ * CSS can override that — an English-locale browser shows "04:30 PM" on a Nynorsk form. Every
+ * displayed time elsewhere is pinned to nb-NO (see the formatter above); the native input was the
+ * one place we could not pin, so the form uses a text field and this function.
+ *
+ * Pure, so the fiddly part is testable: a leading digit of 3 or more cannot begin a two-digit hour
+ * (there is no 30:00), so "930" means 09:30 while "1930" means 19:30. Without that rule a person
+ * typing 9-3-0 on a numeric keypad gets "90:3".
+ */
+export function formatTimeDigits(raw: string): string {
+	const digits = raw.replace(/\D/g, '').slice(0, 4);
+	if (digits.length <= 1) return digits;
+
+	const singleDigitHour = digits[0]! >= '3';
+	const hour = singleDigitHour ? `0${digits[0]}` : digits.slice(0, 2);
+	const minutes = digits.slice(singleDigitHour ? 1 : 2, singleDigitHour ? 3 : 4);
+	return minutes.length > 0 ? `${hour}:${minutes}` : hour;
+}

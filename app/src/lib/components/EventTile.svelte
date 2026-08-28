@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { categoryLabel } from '@hendingar/core/taxonomy';
+	import { eventPath } from '@hendingar/core/slug';
 	import { formatEventClock, machineDateTime } from '@hendingar/core/datetime';
 	import EventThumb from './EventThumb.svelte';
 	import type { UpcomingEvent } from '../events.remote';
@@ -23,7 +24,15 @@
 			>
 		</p>
 
-		<h3 class="display display--md tile__t">{event.title}</h3>
+		<!--
+			The link is on the title, with a stretched overlay making the whole tile clickable.
+			One link per tile, named by the title: wrapping the entire card would fold the time,
+			category and venue into the link's accessible name, and a separate "read more" would
+			give every tile the same meaningless name.
+		-->
+		<h3 class="display display--md tile__t">
+			<a class="tile__link" href={eventPath(event.id, event.title)}>{event.title}</a>
+		</h3>
 
 		{#if event.venueName}
 			<p class="tile__meta"><span class="visually-hidden">Stad: </span>{event.venueName}</p>
@@ -33,12 +42,33 @@
 
 <style>
 	.tile {
+		position: relative;
 		display: grid;
 		grid-template-rows: auto 1fr;
 		block-size: 100%;
 		min-inline-size: 0;
 		container-type: inline-size;
 		background: var(--navy-900);
+	}
+	.tile__link {
+		color: inherit;
+		text-decoration: none;
+	}
+	/* The overlay is on the link, not the article, so the hit area and the focus ring agree. */
+	.tile__link::after {
+		content: '';
+		position: absolute;
+		inset: 0;
+	}
+	.tile:hover .tile__link {
+		color: var(--peach-hi);
+	}
+	.tile:has(.tile__link:focus-visible) {
+		outline: 2px solid var(--peach);
+		outline-offset: 2px;
+	}
+	.tile__link:focus-visible {
+		outline: none;
 	}
 	.tile__body {
 		padding: 0.85rem 0.9rem 1rem;

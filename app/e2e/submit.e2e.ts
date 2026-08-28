@@ -94,3 +94,20 @@ test('the page is reachable from the site navigation', async ({ page }) => {
 	await expect(page).toHaveURL(/\/send-inn$/);
 	await expect(page.getByRole('heading', { level: 1 })).toContainText('Veit du om');
 });
+
+test('the time fields are 24-hour, whatever the browser locale', async ({ page }) => {
+	await page.goto('/send-inn');
+	// Not `type="time"`: the native control renders in the browser's locale, so an English-locale
+	// browser showed "04:30 PM" on a Nynorsk form and no attribute can override it.
+	await expect(page.locator('#startTime')).not.toHaveAttribute('type', 'time');
+
+	await page.locator('#startTime').click();
+	await page.keyboard.type('1930');
+	await expect(page.locator('#startTime')).toHaveValue('19:30');
+
+	// A leading 3-9 cannot begin a two-digit hour, so 930 means 09:30 — otherwise a numeric
+	// keypad user typing 9-3-0 would get "90:3".
+	await page.locator('#endTime').click();
+	await page.keyboard.type('930');
+	await expect(page.locator('#endTime')).toHaveValue('09:30');
+});
