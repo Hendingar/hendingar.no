@@ -7,7 +7,33 @@
 		onextract
 	}: { enabled?: boolean; onextract: (draft: ExtractedEvent) => void } = $props();
 
-	let phase = $state<'idle' | 'reading' | 'error'>('idle');
+	/**
+	 * Extraction takes three to fifteen seconds and used to show nothing at all, so the honest
+	 * reading of the page was that upload was broken. The stages are real — shrink in the browser,
+	 * upload, read — so they are reported rather than faked with a percentage we cannot know.
+	 */
+	let phase = $state<'idle' | 'shrinking' | 'reading' | 'error'>('idle');
+	let elapsed = $state(0);
+	let ticker: ReturnType<typeof setInterval> | undefined;
+
+	const STAGE_TEXT: Record<'shrinking' | 'reading', string> = {
+		shrinking: 'Krympar biletet i nettlesaren din…',
+		reading: 'Les biletet. Dette tek vanlegvis 5–15 sekund.'
+	};
+
+	const busy = $derived(phase === 'shrinking' || phase === 'reading');
+
+	function startTimer() {
+		elapsed = 0;
+		clearInterval(ticker);
+		// An elapsed count, because a bar that only animates cannot distinguish slow from stuck.
+		ticker = setInterval(() => (elapsed += 1), 1000);
+	}
+
+	function stopTimer() {
+		clearInterval(ticker);
+		ticker = undefined;
+	}
 	let message = $state('');
 	let preview = $state<string | null>(null);
 	let dragging = $state(false);
@@ -74,11 +100,13 @@
 			message = 'Det må vere eit bilete. Prøv ein JPEG eller PNG.';
 			return;
 		}
-		phase = 'reading';
+		phase = 'shrinking';
 		message = '';
+		startTimer();
 		try {
 			const { base64, mediaType } = await downscale(file);
 			preview = `data:${mediaType};base64,${base64}`;
+			phase = 'reading';
 
 			// The photographer's local date, so "laurdag 14." resolves to the right year.
 			const today = new Date().toLocaleDateString('sv-SE'); // sv-SE renders as YYYY-MM-DD
@@ -96,6 +124,8 @@
 			phase = 'error';
 			message =
 				error instanceof Error ? error.message : 'Noko gjekk gale med biletet. Prøv skjemaet.';
+		} finally {
+			stopTimer();
 		}
 	}
 </script>
@@ -155,24 +185,25 @@
 				}}
 			/>
 
-			<button
-				class="btn btn--solid"
-				type="button"
-				onclick={() => input?.click()}
-				disabled={phase === 'reading'}
-			>
-				{phase === 'reading' ? 'Les biletet…' : 'Ta bilete eller last opp'}
+			<button class="btn btn--solid" type="button" onclick={() => input?.click()} disabled={busy}>
+				{busy ? 'Arbeider…' : 'Ta bilete eller last opp'}
 			</button>
 
 			<p class="capture__drop">Du kan òg dra ei fil hit, eller lime inn eit skjermbilete.</p>
 
-			<p class="capture__status" aria-live="polite">
-				{#if phase === 'reading'}
-					Les biletet. Dette tek nokre sekund.
-				{:else if message}
-					{message}
-				{/if}
-			</p>
+			{#if busy}
+				<div class="prog">
+					<!-- Indeterminate: we know which stage we are in, never how long the model will
+					     take, and a fake percentage that stalls at 90% is worse than no percentage. -->
+					<div class="prog__bar" role="progressbar" aria-label="Les biletet"></div>
+					<p class="prog__text" aria-live="polite">
+						{STAGE_TEXT[phase as 'shrinking' | 'reading']}
+						<span class="prog__t">{elapsed}s</span>
+					</p>
+				</div>
+			{:else if message}
+				<p class="capture__status" aria-live="polite">{message}</p>
+			{/if}
 
 			<ul class="capture__works">
 				<li>Plakat på ein oppslagstavle</li>
@@ -221,6 +252,50 @@
 		min-block-size: 1.4em;
 		font-size: 0.875rem;
 		color: var(--peach-dim);
+	}
+	.prog {
+		display: grid;
+		gap: 0.4rem;
+		inline-size: min(100%, 26rem);
+	}
+	.prog__bar {
+		block-size: 4px;
+		background: var(--peach-ghost);
+		overflow: hidden;
+		position: relative;
+	}
+	.prog__bar::after {
+		content: '';
+		position: absolute;
+		inset-block: 0;
+		inline-size: 40%;
+		background: var(--peach);
+		animation: slide 1.4s ease-in-out infinite;
+	}
+	@keyframes slide {
+		from {
+			transform: translateX(-100%);
+		}
+		to {
+			transform: translateX(250%);
+		}
+	}
+	/* Respect a stated preference: the bar still shows progress exists, without the motion. */
+	@media (prefers-reduced-motion: reduce) {
+		.prog__bar::after {
+			animation: none;
+			inline-size: 100%;
+			opacity: 0.5;
+		}
+	}
+	.prog__text {
+		margin: 0;
+		font-family: var(--font-mono);
+		font-size: 0.8125rem;
+		color: var(--peach-dim);
+	}
+	.prog__t {
+		opacity: 0.7;
 	}
 	.capture__off {
 		margin: 0;

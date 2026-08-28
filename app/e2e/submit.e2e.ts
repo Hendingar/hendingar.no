@@ -14,8 +14,8 @@ test('the form is server-rendered, with every required field', async ({ request 
 	for (const field of ['title', 'category', 'date', 'startTime', 'venueName', 'method']) {
 		expect(html).toMatch(new RegExp(`name="${field}/`));
 	}
-	// The five checks are explained on the page itself, not just after submitting.
-	expect(html).toContain('Fem kontrollar');
+	// What happens next is stated on the page, not only after submitting.
+	expect(html).toContain('Ein agent sjekkar');
 });
 
 test('both submission modes are in the server-rendered HTML', async ({ request }) => {

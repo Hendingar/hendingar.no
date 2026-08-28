@@ -277,8 +277,7 @@
 				{submitEvent.pending > 0 ? 'Kontrollerer…' : 'Send inn hendinga'}
 			</button>
 			<p class="form__fine fineprint">
-				Innsendinga går gjennom fem kontrollar. Er noko usikkert, går ho til eit menneske — ikkje i
-				søpla.
+				Ein agent sjekkar innsendinga. Er noko uklart, ser eit menneske på henne.
 			</p>
 		</div>
 	</form>
