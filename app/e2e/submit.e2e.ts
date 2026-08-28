@@ -20,6 +20,11 @@ test('the form is server-rendered, with every required field', async ({ request 
 
 test('both submission modes are in the server-rendered HTML', async ({ request }) => {
 	const html = await (await request.get('/send-inn')).text();
+	// Unconditional, whatever the configuration. Gating the photo tab on VERIFIER_URL made the
+	// upload entry point vanish with nothing to explain it — the page looked like it had never
+	// offered upload at all.
+	expect(html).toContain('Med skjema');
+	expect(html).toContain('Med bilete');
 	// The tabs are a radio group switched by CSS, not JavaScript. Both panels must therefore be
 	// present and the form must be reachable with scripting off — fake tabs would hide it entirely.
 	expect(html).toMatch(/id="mode-skjema"[^>]*checked/);

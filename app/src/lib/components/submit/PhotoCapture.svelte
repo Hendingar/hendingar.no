@@ -2,13 +2,18 @@
 	import { extractFromPhoto } from '../../submit.remote';
 	import type { ExtractedEvent } from '@hendingar/core/validation';
 
-	let { onextract }: { onextract: (draft: ExtractedEvent) => void } = $props();
+	let {
+		enabled = true,
+		onextract
+	}: { enabled?: boolean; onextract: (draft: ExtractedEvent) => void } = $props();
 
 	let phase = $state<'idle' | 'reading' | 'error'>('idle');
 	let message = $state('');
 	let preview = $state<string | null>(null);
 	let dragging = $state(false);
-	let input: HTMLInputElement;
+	// $state, not a plain let: the input now lives inside an {#if}, so bind:this reassigns it
+	// after mount and a non-reactive binding would leave the button clicking nothing.
+	let input = $state<HTMLInputElement | undefined>();
 	let panel: HTMLElement | undefined = $state();
 
 	/** Longest edge of the image we send. A poster is legible well below phone-camera resolution. */
@@ -45,7 +50,7 @@
 	 * it a paste into the description field would kick off an extraction.
 	 */
 	function handlePaste(event: ClipboardEvent) {
-		if (!panel?.offsetParent) return;
+		if (!enabled || !panel?.offsetParent) return;
 		const file = Array.from(event.clipboardData?.files ?? []).find((f) =>
 			f.type.startsWith('image/')
 		);
@@ -56,6 +61,7 @@
 
 	function handleDrop(event: DragEvent) {
 		dragging = false;
+		if (!enabled) return;
 		const file = Array.from(event.dataTransfer?.files ?? []).find((f) =>
 			f.type.startsWith('image/')
 		);
@@ -104,6 +110,7 @@
 	class="capture frame"
 	class:capture--dragging={dragging}
 	ondragover={(e) => {
+		if (!enabled) return;
 		e.preventDefault();
 		dragging = true;
 	}}
@@ -122,52 +129,62 @@
 			eit forslag til ferdig utfylt hending, som du sjekkar før noko blir sendt.
 		</p>
 
-		<!--
-			No `capture` attribute, deliberately. `capture="environment"` opens the rear camera
-			directly on a phone, which makes it impossible to pick a screenshot already in the
-			photo library — and a screenshotted Facebook event is half the point of this panel.
-			Without it the native picker offers both the camera and the library.
-		-->
-		<input
-			bind:this={input}
-			class="visually-hidden"
-			type="file"
-			accept="image/*"
-			onchange={(e) => {
-				const file = e.currentTarget.files?.[0];
-				if (file) handle(file);
-			}}
-		/>
+		{#if !enabled}
+			<!-- Say what is off and what still works. Someone who came here to upload a picture needs
+			     to know the form is not a consolation prize but the same submission, through the same
+			     checks. Vanishing silently taught them the feature did not exist. -->
+			<p class="capture__off">
+				Bilettolking er ikkje slått på i dette miljøet, så opplasting er mellombels av. Send inn med
+				skjemaet — det går same vegen, gjennom dei same fem kontrollane.
+			</p>
+		{:else}
+			<!--
+				No `capture` attribute, deliberately. `capture="environment"` opens the rear camera
+				directly on a phone, which makes it impossible to pick a screenshot already in the
+				photo library — and a screenshotted Facebook event is half the point of this panel.
+				Without it the native picker offers both the camera and the library.
+			-->
+			<input
+				bind:this={input}
+				class="visually-hidden"
+				type="file"
+				accept="image/*"
+				onchange={(e) => {
+					const file = e.currentTarget.files?.[0];
+					if (file) handle(file);
+				}}
+			/>
 
-		<button
-			class="btn btn--solid"
-			type="button"
-			onclick={() => input.click()}
-			disabled={phase === 'reading'}
-		>
-			{phase === 'reading' ? 'Les biletet…' : 'Ta bilete eller last opp'}
-		</button>
+			<button
+				class="btn btn--solid"
+				type="button"
+				onclick={() => input?.click()}
+				disabled={phase === 'reading'}
+			>
+				{phase === 'reading' ? 'Les biletet…' : 'Ta bilete eller last opp'}
+			</button>
 
-		<p class="capture__drop">Du kan òg dra ei fil hit, eller lime inn eit skjermbilete.</p>
+			<p class="capture__drop">Du kan òg dra ei fil hit, eller lime inn eit skjermbilete.</p>
 
-		<p class="capture__status" aria-live="polite">
-			{#if phase === 'reading'}
-				Les biletet. Dette tek nokre sekund.
-			{:else if message}
-				{message}
-			{/if}
-		</p>
+			<p class="capture__status" aria-live="polite">
+				{#if phase === 'reading'}
+					Les biletet. Dette tek nokre sekund.
+				{:else if message}
+					{message}
+				{/if}
+			</p>
 
-		<ul class="capture__works">
-			<li>Plakat på ein oppslagstavle</li>
-			<li>Skjermbilete av ei Facebook-hending</li>
-			<li>Annonse i avisa</li>
-		</ul>
+			<ul class="capture__works">
+				<li>Plakat på ein oppslagstavle</li>
+				<li>Skjermbilete av ei Facebook-hending</li>
+				<li>Annonse i avisa</li>
+			</ul>
 
-		<p class="capture__fine">
-			Biletet blir krympa i nettlesaren din før det blir sendt, og posisjonsdata i biletet blir
-			fjerna. Vi lagrar ikkje biletet — det blir lese éin gong og kasta.
-		</p>
+			<p class="capture__fine">
+				Biletet blir krympa i nettlesaren din før det blir sendt, og posisjonsdata i biletet blir
+				fjerna. Vi lagrar ikkje biletet — det blir lese éin gong og kasta.
+			</p>
+		{/if}
 	</div>
 
 	{#if preview}
@@ -204,6 +221,11 @@
 		min-block-size: 1.4em;
 		font-size: 0.875rem;
 		color: var(--peach-dim);
+	}
+	.capture__off {
+		margin: 0;
+		max-inline-size: 52ch;
+		color: var(--peach-hi);
 	}
 	.capture--dragging {
 		border-color: var(--peach);

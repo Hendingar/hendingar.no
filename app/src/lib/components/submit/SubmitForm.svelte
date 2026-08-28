@@ -56,42 +56,44 @@
 	/>
 {/if}
 
-{#if photoEnabled}
-	<div class="modes">
-		<!-- The radios must be siblings of the panels for the `:checked ~ .panel` rules to reach
-		     them, so they sit here rather than inside the bar they visually belong to. -->
-		<input
-			class="visually-hidden"
-			type="radio"
-			id="mode-skjema"
-			name="submit-mode"
-			value="form"
-			bind:group={mode}
-		/>
-		<input
-			class="visually-hidden"
-			type="radio"
-			id="mode-bilete"
-			name="submit-mode"
-			value="photo"
-			bind:group={mode}
-		/>
+<!--
+	The tabs are unconditional. Hiding the photo entry point when no verifier is configured made
+	half the page's purpose invisible with nothing to explain the absence — someone looking for
+	"upload a picture" simply could not find it. The panel now says why it is unavailable instead
+	of disappearing, which is the difference between a degraded feature and a missing one.
+-->
+<div class="modes">
+	<!-- The radios must be siblings of the panels for the `:checked ~ .panel` rules to reach
+	     them, so they sit here rather than inside the bar they visually belong to. -->
+	<input
+		class="visually-hidden"
+		type="radio"
+		id="mode-skjema"
+		name="submit-mode"
+		value="form"
+		bind:group={mode}
+	/>
+	<input
+		class="visually-hidden"
+		type="radio"
+		id="mode-bilete"
+		name="submit-mode"
+		value="photo"
+		bind:group={mode}
+	/>
 
-		<div class="modes__bar">
-			<label class="mode" for="mode-skjema">Med skjema</label>
-			<label class="mode" for="mode-bilete">Med bilete</label>
-		</div>
-
-		<div class="panel panel--photo">
-			<PhotoCapture onextract={prefill} />
-		</div>
-		<div class="panel panel--form">
-			{@render formPanel()}
-		</div>
+	<div class="modes__bar">
+		<label class="mode" for="mode-skjema">Med skjema</label>
+		<label class="mode" for="mode-bilete">Med bilete</label>
 	</div>
-{:else}
-	{@render formPanel()}
-{/if}
+
+	<div class="panel panel--photo">
+		<PhotoCapture enabled={photoEnabled} onextract={prefill} />
+	</div>
+	<div class="panel panel--form">
+		{@render formPanel()}
+	</div>
+</div>
 
 {#snippet formPanel()}
 	<form {...submitEvent} class="form frame">
