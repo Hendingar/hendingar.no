@@ -1,17 +1,28 @@
 /**
  * Seeds a local database with enough data to develop against.
  *   pnpm db:up && pnpm db:migrate && pnpm db:seed
+ *
+ * Idempotent: safe to run repeatedly. Dates are relative to now, because hardcoded 2026 dates
+ * silently produce an empty homepage once they pass — `listEvents` only returns the future.
  */
+import { eq } from 'drizzle-orm';
 import { createDb } from '../src/db.ts';
 import { events, sources, venues } from '../src/schema.ts';
 
 const url = process.env.DATABASE_URL;
 if (!url) {
-	console.error('DATABASE_URL is not set. Copy .env.example to .env.');
+	console.error('DATABASE_URL is not set. Run `pnpm db:up` (it creates .env from .env.example).');
 	process.exit(1);
 }
 
 const db = createDb(url);
+
+function daysFromNow(days: number, hour: number, minutes = 0): Date {
+	const d = new Date();
+	d.setDate(d.getDate() + days);
+	d.setHours(hour, minutes, 0, 0);
+	return d;
+}
 
 const [source] = await db
 	.insert(sources)
@@ -21,6 +32,10 @@ const [source] = await db
 		url: 'https://detskjer.sunnhordland.no/events',
 		region: 'Sunnhordland',
 		attribution: 'Det skjer Sunnhordland'
+	})
+	.onConflictDoUpdate({
+		target: sources.slug,
+		set: { name: 'Det skjer Sunnhordland' }
 	})
 	.returning();
 
@@ -32,34 +47,85 @@ const [venue] = await db
 		municipality: 'Stord',
 		latitude: 59.7789,
 		longitude: 5.4986,
+		timezone: 'Europe/Oslo',
 		geocodeStatus: 'resolved',
 		geocodedAt: new Date()
 	})
+	.onConflictDoUpdate({ target: venues.slug, set: { municipality: 'Stord' } })
 	.returning();
 
-if (!source || !venue) throw new Error('seed failed: insert returned no row');
+// A second venue outside CET, so the timezone handling is exercised by the seed rather than
+// only in a test. Formatting in a hardcoded Oslo would show this an hour early.
+const [helsinki] = await db
+	.insert(venues)
+	.values({
+		name: 'Kulttuuritalo',
+		slug: 'kulttuuritalo',
+		municipality: 'Helsinki',
+		latitude: 60.1908,
+		longitude: 24.9412,
+		timezone: 'Europe/Helsinki',
+		geocodeStatus: 'resolved',
+		geocodedAt: new Date()
+	})
+	.onConflictDoUpdate({ target: venues.slug, set: { municipality: 'Helsinki' } })
+	.returning();
 
-await db.insert(events).values([
-	{
-		sourceId: source.id,
-		externalId: 'seed-1',
-		title: 'Konsert på Den Blå Time',
-		category: 'musikk',
-		startsAt: new Date('2026-09-12T20:00:00+02:00'),
-		endsAt: new Date('2026-09-12T23:30:00+02:00'),
-		venueId: venue.id,
-		status: 'published'
-	},
-	{
-		sourceId: source.id,
-		externalId: 'seed-2',
-		title: 'Teater: Ein draum om hausten',
-		category: 'teater',
-		startsAt: new Date('2026-09-20T19:00:00+02:00'),
-		venueId: venue.id,
-		status: 'published'
-	}
-]);
+if (!source || !venue || !helsinki) throw new Error('seed failed: insert returned no row');
 
-console.log('seeded 1 source, 1 venue, 2 events');
+await db
+	.insert(events)
+	.values([
+		{
+			sourceId: source.id,
+			externalId: 'seed-1',
+			title: 'Konsert på Den Blå Time',
+			category: 'musikk',
+			startsAt: daysFromNow(3, 20),
+			endsAt: daysFromNow(3, 23, 30),
+			venueId: venue.id,
+			status: 'published'
+		},
+		{
+			sourceId: source.id,
+			externalId: 'seed-2',
+			title: 'Teater: Ein draum om hausten',
+			category: 'teater',
+			startsAt: daysFromNow(11, 19),
+			endsAt: daysFromNow(11, 21),
+			venueId: venue.id,
+			status: 'published'
+		},
+		{
+			sourceId: source.id,
+			externalId: 'seed-3',
+			title: 'Kvöldkonsertti Helsingissä',
+			category: 'musikk',
+			startsAt: daysFromNow(6, 20),
+			endsAt: daysFromNow(6, 22),
+			venueId: helsinki.id,
+			status: 'published'
+		},
+		{
+			// Started already, still running — must remain visible. Regression guard for the bug
+			// where `gte(startsAt, now)` hid events for their whole duration.
+			sourceId: source.id,
+			externalId: 'seed-4',
+			title: 'Utstilling: Havet og oss',
+			category: 'utstilling',
+			startsAt: daysFromNow(-2, 10),
+			endsAt: daysFromNow(9, 18),
+			venueId: venue.id,
+			status: 'published'
+		}
+	])
+	.onConflictDoNothing({ target: [events.sourceId, events.externalId] });
+
+const [{ count } = { count: 0 }] = await db
+	.select({ count: events.id })
+	.from(events)
+	.where(eq(events.status, 'published'))
+	.limit(1);
+
+console.log(`seeded: 1 source, 2 venues, 4 events (published sample id ${count})`);
 process.exit(0);

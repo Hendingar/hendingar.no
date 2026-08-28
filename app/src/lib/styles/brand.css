@@ -1,0 +1,292 @@
+/*
+ * hendingar.no — brand tokens.
+ *
+ * A true duotone: two hues only, navy and peach, plus tints of each. Nothing else gets added
+ * without a decision recorded in docs/decisions/.
+ *
+ * Contrast is not decorative here. Peach #f7a98a on navy #1e2c4a is 7.26:1 — WCAG AAA for body
+ * text. Every pairing below was measured, not eyeballed; if you introduce a new one, measure it.
+ */
+
+:root {
+	/* --- duotone: navy --- */
+	--navy-900: #16223b; /* deepest — panels, footer */
+	--navy-800: #1e2c4a; /* page base */
+	--navy-700: #26375c; /* raised surfaces */
+	--navy-600: #2f4470; /* hairlines on navy */
+
+	/* --- duotone: peach --- */
+	--peach: #f7a98a; /* primary ink on navy — 7.26:1 */
+	--peach-hi: #ffbb99; /* emphasis — 8.47:1 */
+	/* 82% is the floor that clears 4.5:1 on the *worst* of our three navies (navy-700).
+	   55% looked right and measured 3.21:1 — a fail. Do not lower this. */
+	--peach-dim: rgb(247 169 138 / 82%); /* de-emphasised TEXT — still AA everywhere */
+	--peach-quiet: rgb(247 169 138 / 52%); /* large display numerals only — 3.1:1, never body */
+	--peach-line: rgb(247 169 138 / 30%); /* hairlines — decorative, never text */
+	--peach-ghost: rgb(247 169 138 / 8%); /* fills */
+
+	/* --- type --- */
+	--font-display: 'Archivo Variable', 'Archivo', system-ui, sans-serif;
+	--font-mono: 'Space Mono', ui-monospace, 'SF Mono', monospace;
+
+	/*
+	 * Fluid scale. Display sizes are NOT here on purpose: they are declared per component in `cqw`
+	 * so they track their own column. A shared `vw`-based step is what overflowed the hero on
+	 * desktop and clipped the CTA at 320px — the same bug at both ends of the range.
+	 * See docs/brand.md.
+	 */
+	--step-mid: clamp(1.25rem, 2.6vw, 2rem);
+	--step-body: clamp(1rem, 1.1vw, 1.125rem);
+	--step-micro: clamp(0.75rem, 0.8vw, 0.8125rem);
+
+	/* --- rhythm --- */
+	--rule: 1px;
+	--rule-fat: 3px;
+	--gutter: clamp(1.25rem, 4vw, 4rem);
+	--section-y: clamp(4rem, 10vw, 9rem);
+
+	color-scheme: dark;
+}
+
+*,
+*::before,
+*::after {
+	box-sizing: border-box;
+}
+
+html {
+	background: var(--navy-800);
+	/* Stop iOS inflating our carefully set type. */
+	-webkit-text-size-adjust: 100%;
+}
+
+body {
+	margin: 0;
+	background: var(--navy-800);
+	color: var(--peach);
+	font-family: var(--font-mono);
+	font-size: var(--step-body);
+	line-height: 1.5;
+	/* The halftone field. One repeating dot grid, masked per-section for density. */
+	background-image: radial-gradient(var(--peach-ghost) 1px, transparent 1.3px);
+	background-size: 7px 7px;
+}
+
+::selection {
+	background: var(--peach);
+	color: var(--navy-900);
+}
+
+/* --- the phat register ---------------------------------------------------
+ * Archivo Variable carries wght 100–900 and wdth 62%–125%. Maximum width plus
+ * maximum weight is the whole look; don't reach for a different family.
+ */
+.display {
+	font-family: var(--font-display);
+	font-weight: 900;
+	font-stretch: 125%;
+	line-height: 0.82;
+	letter-spacing: -0.02em;
+	text-transform: uppercase;
+	margin: 0;
+	/*
+	 * Safety net, not a design choice. At 125% width a capital glyph advances ~0.92em, so a
+	 * 12-character Norwegian compound inks far wider than its own box implies — "Lokalsamfunn"
+	 * measured 340px inside a 280px column. Clipping text off the viewport is a WCAG 1.4.10
+	 * failure; an ugly break is not. This only engages when a single word truly cannot fit.
+	 */
+	overflow-wrap: break-word;
+}
+
+.display--slant {
+	font-style: italic;
+}
+
+/* Named steps down from the maximum. Before these existed, components declared six different
+   font-stretch values between 108% and 125% with no way to tell which was canonical. */
+.display--md {
+	font-weight: 900;
+	font-stretch: 112%;
+}
+
+.display--sm {
+	font-weight: 800;
+	font-stretch: 108%;
+}
+
+/* Outline type, as counterpoint to the solid mass. */
+.display--outline {
+	color: transparent;
+	-webkit-text-stroke: 2px var(--peach);
+}
+
+@supports not (-webkit-text-stroke: 1px red) {
+	.display--outline {
+		color: var(--peach);
+	}
+}
+
+/* --- micro labels ------------------------------------------------------- */
+.label {
+	font-family: var(--font-mono);
+	font-size: var(--step-micro);
+	font-weight: 700;
+	letter-spacing: 0.28em;
+	text-transform: uppercase;
+	color: var(--peach-dim);
+}
+
+/* Rotation is for DECORATIVE labels only. Never rotate text a visitor has to
+ * read to understand the page — the vibe is not worth the barrier. */
+.label--vertical {
+	writing-mode: vertical-rl;
+	transform: rotate(180deg);
+	white-space: nowrap;
+}
+
+/* --- primitives lifted from the poster language ------------------------- */
+.frame {
+	border: var(--rule) solid var(--peach-line);
+}
+
+.rule {
+	border: 0;
+	border-top: var(--rule) solid var(--peach-line);
+	margin: 0;
+}
+
+/* Buttons. A primitive, not a page detail — the submission form, filter UI and detail pages all
+   need these, and scoped inside one route's <style> they were invisible to every other file. */
+.btn {
+	display: inline-block;
+	font-family: var(--font-mono);
+	font-size: var(--step-micro);
+	font-weight: 700;
+	letter-spacing: 0.22em;
+	text-transform: uppercase;
+	text-decoration: none;
+	padding: 1.05em 1.6em;
+	border: var(--rule-fat) solid var(--peach);
+	color: var(--peach);
+}
+
+.btn--solid {
+	background: var(--peach);
+	color: var(--navy-900);
+}
+
+.btn--invert {
+	background: var(--navy-900);
+	color: var(--peach);
+	border-color: var(--navy-900);
+}
+
+.btn--invert-ghost {
+	color: var(--navy-900);
+	border-color: var(--navy-900);
+}
+
+/* navy-900 on peach-hi = 9.6:1 */
+.btn:hover {
+	background: var(--peach-hi);
+	color: var(--navy-900);
+	border-color: var(--peach-hi);
+}
+
+.btn--invert:hover,
+.btn--invert-ghost:hover {
+	background: var(--navy-900);
+	color: var(--peach-hi);
+	border-color: var(--navy-900);
+}
+
+/* Shared by the "does not" fineprint and the importer note. */
+.fineprint {
+	margin-block-start: 1.5rem;
+	font-size: 0.8125rem;
+	line-height: 1.7;
+	color: var(--peach-dim);
+	border-inline-start: var(--rule-fat) solid var(--peach-line);
+	padding-inline-start: 1rem;
+}
+
+/* Segmented progress pills. */
+.pips {
+	display: flex;
+	gap: 0.4rem;
+	align-items: center;
+	padding: 0;
+	margin: 0;
+	list-style: none;
+}
+
+.pip {
+	inline-size: 2.6rem;
+	block-size: 0.9rem;
+	border: var(--rule) solid var(--peach);
+	border-radius: 999px;
+}
+
+.pip[data-on='true'] {
+	background: var(--peach);
+}
+
+/* Inverted block — peach paper, navy ink. Same measured ratio, flipped. */
+.invert {
+	background: var(--peach);
+	color: var(--navy-900);
+}
+
+.invert .label {
+	/* 65% measured 3.83:1 on peach — a fail for small text. 78% clears 4.5. */
+	color: rgb(22 34 59 / 78%);
+}
+
+.invert .frame,
+.invert .rule {
+	border-color: rgb(22 34 59 / 30%);
+}
+
+/* --- links -------------------------------------------------------------- */
+a {
+	color: inherit;
+	text-decoration-thickness: 2px;
+	text-underline-offset: 0.25em;
+}
+
+a:focus-visible,
+button:focus-visible {
+	outline: var(--rule-fat) solid var(--peach-hi);
+	outline-offset: 3px;
+}
+
+.invert a:focus-visible {
+	outline-color: var(--navy-900);
+}
+
+/* --- motion ------------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+	*,
+	*::before,
+	*::after {
+		animation-duration: 0.001ms !important;
+		animation-iteration-count: 1 !important;
+		transition-duration: 0.001ms !important;
+	}
+}
+
+/* --- layout ------------------------------------------------------------- */
+.shell {
+	max-inline-size: 88rem;
+	margin-inline: auto;
+	padding-inline: var(--gutter);
+}
+
+.visually-hidden {
+	position: absolute;
+	inline-size: 1px;
+	block-size: 1px;
+	overflow: hidden;
+	clip-path: inset(50%);
+	white-space: nowrap;
+}

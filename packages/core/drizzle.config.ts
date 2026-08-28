@@ -1,8 +1,12 @@
+import { fileURLToPath } from 'node:url';
 import { defineConfig } from 'drizzle-kit';
 
-// Node 26 built-in; no dotenv dependency. `pnpm db:up` creates .env from .env.example.
+// Node built-in; no dotenv dependency. `pnpm db:up` creates .env from .env.example.
+// fileURLToPath, not URL.pathname — pathname is percent-encoded, so a checkout under
+// "~/Dev Projects/" or any path containing å resolves to a file that doesn't exist, and the
+// catch below turns that into a misleading "DATABASE_URL is not set".
 try {
-	process.loadEnvFile(new URL('../../.env', import.meta.url).pathname);
+	process.loadEnvFile(fileURLToPath(new URL('../../.env', import.meta.url)));
 } catch {
 	// no .env — fall through to the check below, which reports it properly
 }

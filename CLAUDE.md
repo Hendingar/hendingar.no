@@ -33,6 +33,25 @@ docs/decisions/     ADRs — read before re-opening a settled question
 This is a **fullstack monolith on purpose**. See `docs/decisions/0001-fullstack-monolith.md`.
 Don't propose splitting the frontend from the backend; the reasoning is recorded there.
 
+## Where things go
+
+There was no component directory and no stated rule, so the landing page grew to 660 lines and the
+event card was written twice. The convention now:
+
+```
+app/src/lib/
+  components/            reusable across routes — EventCard, EventList, SiteFooter
+  components/landing/    single-use sections owned by `/`
+  content/               copy as named, typed data — not string arrays inside layout code
+  styles/brand.css       tokens AND cross-route primitives (.btn, .display--*, .fineprint)
+  server/                server-only. Never importable from the client
+  events.remote.ts       the one client↔server boundary
+app/e2e/                 Playwright specs
+```
+
+A style rule used by more than one route belongs in `brand.css`, not in a route's `<style>`.
+Scoped in a component, the next agent cannot see it and writes a second one.
+
 ## Rules
 
 1. **`packages/core` is the only place** schema, taxonomy and validation live. If you find yourself
@@ -102,10 +121,40 @@ When in doubt about Svelte 5 or SvelteKit API, use the MCP `list-sections` / `ge
 tools rather than recalling — this area has changed recently and confidently-wrong is the failure
 mode here.
 
+### Data must reach the server-rendered HTML
+
+**Use top-level `await` in `<script>`, never a query's `.loading` flag.** A remote query's
+`loading` is always true during SSR, and a `<svelte:boundary>` `pending` snippet renders whenever
+the boundary is first created — which on the server is always. Both put a placeholder in the HTML
+and ship zero data, which on an event-discovery site means crawlers and no-JS visitors see
+"Lastar…" and nothing else. `await` at the top of the script suspends the component so SvelteKit
+waits for it. Put a boundary with only a `failed` snippet around the component if you need an
+error path.
+
+### Never call `toLocaleString` directly
+
+Use `formatEventTime` from `@hendingar/core/datetime`. Two reasons, both measured:
+
+- **`nn-NO` does not exist in browser ICU.** Node resolves it; Chromium returns `[]` from
+  `supportedLocalesOf` and silently falls back to the _visitor's_ locale, so an English browser
+  renders `9/12/2026` for 12 September. Server and client then disagree on the same row.
+- **A `timestamptz` is an instant, not a wall clock.** Always format with the venue's `timezone`.
+  Assuming Oslo renders a 20:00 Helsinki concert as 19:00.
+
+### Display type is sized in `cqw`, never `vw`
+
+A shared `vw` step overflowed the hero on desktop and clipped the CTA at 320px — the same bug at
+both ends. Size display text against its own container. `ch` does not constrain an expanded face.
+
 ## Conventions
 
 - TypeScript `strict`. Tabs, single quotes, 100 columns (`pnpm format`).
-- UnoCSS with design tokens. Prefer a token or a shortcut over a pile of arbitrary values.
+- **Styling: tokens in `app/src/lib/styles/brand.css`**, consumed as CSS custom properties. No
+  colour literals in components. UnoCSS is still listed in the README as intended, but is not
+  installed — the design is bespoke poster layout that utility classes wouldn't shorten, so it was
+  not worth the machinery yet. Read `docs/brand.md` before touching visual design; it records the
+  measured contrast ratios, why display type is sized in `cqw` rather than `vw`, and the rule that
+  rotated text is decorative only.
 - Timestamps: store `timestamptz`, which records an **instant** — it does not retain the source's
   written offset, and cannot. `2026-09-12T20:00:00+02:00` and `18:00Z` are the same row. That is
   correct, but it means the wall-clock time a user should see is only recoverable with a timezone:

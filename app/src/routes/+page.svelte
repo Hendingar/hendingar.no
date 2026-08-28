@@ -1,35 +1,30 @@
 <script lang="ts">
-	import { listEvents } from '../lib/events.remote';
-	import { categoryLabel } from '@hendingar/core/taxonomy';
-
-	const upcoming = listEvents({ limit: 20 });
+	import Hero from '../lib/components/landing/Hero.svelte';
+	import ManifestBand from '../lib/components/landing/ManifestBand.svelte';
+	import ClaimsSplit from '../lib/components/landing/ClaimsSplit.svelte';
+	import VerifyPipeline from '../lib/components/landing/VerifyPipeline.svelte';
+	import UpcomingPreview from '../lib/components/landing/UpcomingPreview.svelte';
+	import CallToAction from '../lib/components/landing/CallToAction.svelte';
 </script>
 
 <svelte:head>
-	<title>hendingar.no</title>
+	<title>hendingar.no — alt som skjer, der du er</title>
+	<meta
+		name="description"
+		content="Open kjeldekode for lokale hendingar i Europa. Gratis, utan reklame, utan innlåsing."
+	/>
 </svelte:head>
 
-<h1>Kva skjer?</h1>
-
-{#if upcoming.error}
-	<p>Kunne ikkje laste hendingar.</p>
-{:else if upcoming.loading}
-	<p>Lastar…</p>
-{:else if upcoming.current}
-	{#if upcoming.current.length === 0}
-		<p>Ingen hendingar enno.</p>
-	{:else}
-		<ul>
-			{#each upcoming.current as event (event.id)}
-				<li>
-					<strong>{event.title}</strong>
-					<span>{categoryLabel(event.category)}</span>
-					{#if event.venueName}<span>{event.venueName}</span>{/if}
-					<time datetime={event.startsAt.toISOString()}>
-						{event.startsAt.toLocaleString('nn-NO', { timeZone: 'Europe/Oslo' })}
-					</time>
-				</li>
-			{/each}
-		</ul>
-	{/if}
-{/if}
+<Hero />
+<ManifestBand />
+<ClaimsSplit />
+<VerifyPipeline />
+<!-- Boundary with only a `failed` snippet: no `pending`, because a pending snippet would be
+     what the server renders. -->
+<svelte:boundary>
+	<UpcomingPreview />
+	{#snippet failed()}
+		<section class="shell"><p>Kunne ikkje laste hendingar.</p></section>
+	{/snippet}
+</svelte:boundary>
+<CallToAction />

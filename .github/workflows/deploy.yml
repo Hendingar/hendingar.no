@@ -2,14 +2,12 @@ name: Deploy (dev)
 
 on:
   workflow_dispatch:
-  push:
+  # Gated on CI rather than triggered by push: a merge that breaks `pnpm verify` must not reach
+  # the running environment just because the smoke test happens to pass.
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
     branches: [main]
-    paths:
-      - 'app/**'
-      - 'packages/**'
-      - 'infra/**'
-      - 'Dockerfile'
-      - '.github/workflows/deploy.yml'
 
 concurrency:
   group: deploy-dev
@@ -24,12 +22,14 @@ env:
   APP: hendingar
   ENV_NAME: dev
 
-# Prerequisites, both one-time (see infra/BOOTSTRAP.md):
+# One-time prerequisites (see infra/BOOTSTRAP.md):
 #   1. secret POSTGRES_ADMIN_PASSWORD is set
-#   2. the runtime identity id-hendingar has AcrPull on the resource group — the CI principal is
-#      only Contributor, and Contributor cannot create role assignments
+#   2. the runtime identity id-hendingar has AcrPull — the CI principal is only Contributor, and
+#      Contributor cannot create role assignments
 jobs:
   deploy:
+    # workflow_run fires on failure too; only deploy green commits.
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -40,91 +40,128 @@ jobs:
           tenant-id: ${{ vars.AZURE_TENANT_ID }}
           subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
 
-      # Pass 1: converge the infrastructure and learn the generated registry name. useAcr and
-      # containerImage keep their defaults here, so this works even on a completely empty
-      # resource group where no image exists yet.
-      - name: Deploy infrastructure
+      # Platform only. This template contains no Container App, so converging it can never change
+      # what the live app is running.
+      - name: Deploy platform
         id: infra
         run: |
           az deployment group create \
             --resource-group "$RG" \
-            --name "infra-${{ github.run_id }}" \
+            --name "platform-${{ github.run_id }}" \
             --template-file infra/main.bicep \
             --parameters appName="$APP" env="$ENV_NAME" \
               postgresAdminPassword="${{ secrets.POSTGRES_ADMIN_PASSWORD }}" \
             --query properties.outputs -o json > outputs.json
-          {
-            echo "acr_name=$(jq -r .acrName.value outputs.json)"
-            echo "acr_login_server=$(jq -r .acrLoginServer.value outputs.json)"
-            echo "app_name=$(jq -r .containerAppName.value outputs.json)"
-            echo "app_url=$(jq -r .appUrl.value outputs.json)"
-            echo "pg_fqdn=$(jq -r .postgresFqdn.value outputs.json)"
-          } >> "$GITHUB_OUTPUT"
+          for k in acrName acrLoginServer postgresFqdn postgresAdminUserOut managedEnvironmentId runtimeIdentityId; do
+            echo "$k=$(jq -r ".$k.value" outputs.json)" >> "$GITHUB_OUTPUT"
+          done
 
       # Built inside ACR, so the runner needs no registry data-plane rights at all.
       - name: Build image in ACR
         run: |
           az acr build \
-            --registry "${{ steps.infra.outputs.acr_name }}" \
+            --registry "${{ steps.infra.outputs.acrName }}" \
             --image "hendingar:${{ github.sha }}" \
             --image "hendingar:latest" \
             --file Dockerfile .
 
       # The Postgres firewall allows Azure services only, and a GitHub runner is not one.
-      # Open a rule for this runner, migrate, then always remove it.
-      - name: Apply database migrations
-        env:
-          PGHOST: ${{ steps.infra.outputs.pg_fqdn }}
+      - name: Open firewall for this runner
+        id: fw
         run: |
-          PG_SERVER="${PGHOST%%.*}"
-          RULE="gh-runner-${{ github.run_id }}"
-          cleanup() {
-            az postgres flexible-server firewall-rule delete \
-              --resource-group "$RG" --server-name "$PG_SERVER" --name "$RULE" --yes \
-              >/dev/null 2>&1 || true
-          }
-          trap cleanup EXIT
-
+          PG_SERVER="${{ steps.infra.outputs.postgresFqdn }}"
+          PG_SERVER="${PG_SERVER%%.*}"
+          echo "server=$PG_SERVER" >> "$GITHUB_OUTPUT"
           RUNNER_IP=$(curl -fsS https://api.ipify.org)
           az postgres flexible-server firewall-rule create \
-            --resource-group "$RG" --server-name "$PG_SERVER" --name "$RULE" \
+            --resource-group "$RG" --server-name "$PG_SERVER" \
+            --name "gh-runner-${{ github.run_id }}" \
             --start-ip-address "$RUNNER_IP" --end-ip-address "$RUNNER_IP" >/dev/null
 
+      - name: Apply database migrations
+        env:
+          PGHOST: ${{ steps.infra.outputs.postgresFqdn }}
+          PGUSER: ${{ steps.infra.outputs.postgresAdminUserOut }}
+        run: |
           corepack enable
           pnpm install --frozen-lockfile
-
-          # Build the URL in python so special characters in the password are percent-encoded
-          # rather than silently breaking the connection string.
-          DATABASE_URL=$(PW="${{ secrets.POSTGRES_ADMIN_PASSWORD }}" PGHOST="$PGHOST" python3 -c \
-            'import os,urllib.parse as u; print("postgres://hendingar:%s@%s:5432/hendingar?sslmode=require" % (u.quote(os.environ["PW"], safe=""), os.environ["PGHOST"]))')
+          # Build the URL in python so special characters in the password are percent-encoded, and
+          # take the username from the deployment output rather than hardcoding it.
+          DATABASE_URL=$(PW="${{ secrets.POSTGRES_ADMIN_PASSWORD }}" python3 -c \
+            'import os,urllib.parse as u; print("postgres://%s:%s@%s:5432/hendingar?sslmode=require" % (u.quote(os.environ["PGUSER"], safe=""), u.quote(os.environ["PW"], safe=""), os.environ["PGHOST"]))')
           export DATABASE_URL
           pnpm db:migrate
 
-      # Pass 2: same template, now pointing the app at the image we just built.
+      # A separate always() step, not a bash `trap`: an EXIT trap does not run on SIGKILL, which is
+      # what a cancelled run or a runner timeout delivers. A leaked rule leaves a recycled public
+      # runner IP allowed against the database.
+      - name: Close firewall
+        if: always() && steps.fw.outputs.server != ''
+        run: |
+          az postgres flexible-server firewall-rule delete \
+            --resource-group "$RG" --server-name "${{ steps.fw.outputs.server }}" \
+            --name "gh-runner-${{ github.run_id }}" --yes >/dev/null 2>&1 || true
+          # Sweep anything an earlier killed run left behind.
+          for stale in $(az postgres flexible-server firewall-rule list \
+                --resource-group "$RG" --server-name "${{ steps.fw.outputs.server }}" \
+                --query "[?starts_with(name,'gh-runner-')].name" -o tsv); do
+            echo "removing stale rule $stale"
+            az postgres flexible-server firewall-rule delete \
+              --resource-group "$RG" --server-name "${{ steps.fw.outputs.server }}" \
+              --name "$stale" --yes >/dev/null 2>&1 || true
+          done
+
       - name: Deploy application
+        id: app
         run: |
           az deployment group create \
             --resource-group "$RG" \
             --name "app-${{ github.run_id }}" \
-            --template-file infra/main.bicep \
-            --parameters appName="$APP" env="$ENV_NAME" useAcr=true \
+            --template-file infra/app.bicep \
+            --parameters appName="$APP" env="$ENV_NAME" \
+              containerImage="${{ steps.infra.outputs.acrLoginServer }}/hendingar:${{ github.sha }}" \
+              acrLoginServer="${{ steps.infra.outputs.acrLoginServer }}" \
+              managedEnvironmentId="${{ steps.infra.outputs.managedEnvironmentId }}" \
+              runtimeIdentityId="${{ steps.infra.outputs.runtimeIdentityId }}" \
+              postgresFqdn="${{ steps.infra.outputs.postgresFqdn }}" \
+              postgresAdminUser="${{ steps.infra.outputs.postgresAdminUserOut }}" \
               postgresAdminPassword="${{ secrets.POSTGRES_ADMIN_PASSWORD }}" \
-              containerImage="${{ steps.infra.outputs.acr_login_server }}/hendingar:${{ github.sha }}" \
-            --query properties.provisioningState -o tsv
+            --query properties.outputs -o json > app-outputs.json
+          echo "url=$(jq -r .appUrl.value app-outputs.json)" >> "$GITHUB_OUTPUT"
+          echo "name=$(jq -r .containerAppName.value app-outputs.json)" >> "$GITHUB_OUTPUT"
 
+      # Asserts real behaviour, not just a 200. /health touches the database, and the page must
+      # actually contain rendered content — the app serves 200 with the database unreachable, so a
+      # status-code check reported success for a broken deployment.
       - name: Smoke test
         run: |
-          URL="${{ steps.infra.outputs.app_url }}"
+          URL="${{ steps.app.outputs.url }}"
+          ok=0
           for i in $(seq 1 30); do
-            code=$(curl -s -o /dev/null -w '%{http_code}' "$URL" || true)
-            echo "attempt $i: $code"
-            if [ "$code" = "200" ]; then echo "$URL is up"; exit 0; fi
+            health=$(curl -s --max-time 15 "$URL/health" || true)
+            if printf '%s' "$health" | grep -q '"database":"ok"'; then
+              echo "health ok on attempt $i"
+              ok=1
+              break
+            fi
+            echo "attempt $i: $health"
             sleep 10
           done
-          echo "::error::$URL did not return 200"
-          az containerapp logs show --name "${{ steps.infra.outputs.app_name }}" \
-            --resource-group "$RG" --tail 50 --type console || true
-          exit 1
+          if [ "$ok" -ne 1 ]; then
+            echo "::error::$URL/health never reported a reachable database"
+            az containerapp logs show --name "${{ steps.app.outputs.name }}" \
+              --resource-group "$RG" --tail 50 --type console || true
+            exit 1
+          fi
+
+          body=$(curl -fsS --max-time 20 "$URL/")
+          for needle in 'Kva skjer' 'id="innhald"'; do
+            printf '%s' "$body" | grep -q "$needle" || {
+              echo "::error::response did not contain '$needle' — the app is up but not rendering"
+              exit 1
+            }
+          done
+          echo "content ok"
 
       - name: Summary
         if: always()
@@ -132,7 +169,7 @@ jobs:
           {
             echo "### Deploy (dev)"
             echo ""
-            echo "- App: ${{ steps.infra.outputs.app_url }}"
+            echo "- App: ${{ steps.app.outputs.url }}"
             echo "- Image: \`hendingar:${{ github.sha }}\`"
-            echo "- Postgres: \`${{ steps.infra.outputs.pg_fqdn }}\`"
+            echo "- Postgres: \`${{ steps.infra.outputs.postgresFqdn }}\`"
           } >> "$GITHUB_STEP_SUMMARY"
