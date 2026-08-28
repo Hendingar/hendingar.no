@@ -1,5 +1,6 @@
 import {
 	boolean,
+	date,
 	doublePrecision,
 	index,
 	integer,
@@ -11,6 +12,7 @@ import {
 	uniqueIndex
 } from 'drizzle-orm/pg-core';
 import { CATEGORY_SLUGS } from './taxonomy.ts';
+import { RECURRENCE_FREQUENCIES } from './recurrence.ts';
 import { VERIFICATION_CHECKS, VERIFICATION_VERDICTS } from './verification.ts';
 
 /** Derived from taxonomy.ts — never write this list out by hand. */
@@ -168,6 +170,43 @@ export const organizers = pgTable('organizers', {
 	avatarUrl: text('avatar_url')
 });
 
+export const recurrenceFreqEnum = pgEnum('recurrence_freq', RECURRENCE_FREQUENCIES);
+
+/**
+ * A repeating event's rule. One row per series; the occurrences are rows in `events`.
+ *
+ * Occurrences are materialised rather than expanded at query time because every listing is
+ * `starts_at >= now()` grouped by day, and expanding on read would mean rewriting all of them and
+ * losing the index. See docs/decisions/0009-recurring-events.md and `src/recurrence.ts`.
+ *
+ * The time fields are a wall clock and a zone, not an instant: "torsdager kl 12" is 12:00 local on
+ * both sides of a DST change, which is an hour apart in UTC. Storing an instant here and adding
+ * seven days per occurrence is the classic way to get that wrong.
+ */
+export const eventSeries = pgTable('event_series', {
+	id: serial('id').primaryKey(),
+	freq: recurrenceFreqEnum('freq').notNull(),
+	/** Every N periods. 2 with `weekly` is "annakvar veke". */
+	interval: integer('interval').notNull().default(1),
+	/** ISO weekdays, 1 = Monday. Empty for `daily`. */
+	weekdays: integer('weekdays').array().notNull().default([]),
+	/** Monthly only: which occurrence of the weekday, or -1 for the last. */
+	nth: integer('nth'),
+	/** First local date the series can occur on, and the anchor the interval counts from. */
+	anchorDate: date('anchor_date', { mode: 'string' }).notNull(),
+	/** Last local date, inclusive. Null means open-ended, capped by the horizon. */
+	until: date('until', { mode: 'string' }),
+	startTime: text('start_time').notNull(),
+	endTime: text('end_time'),
+	timezone: text('timezone').notNull().default('Europe/Oslo'),
+	/**
+	 * How far occurrences have been written. The top-up job reads this rather than counting rows,
+	 * so an open-ended series extends without re-expanding what already exists.
+	 */
+	materialisedThrough: date('materialised_through', { mode: 'string' }),
+	createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
+});
+
 export const events = pgTable(
 	'events',
 	{
@@ -190,6 +229,13 @@ export const events = pgTable(
 
 		venueId: integer('venue_id').references(() => venues.id),
 		organizerId: integer('organizer_id').references(() => organizers.id),
+		/**
+		 * Set when this event is one occurrence of a series. Null for a one-off.
+		 *
+		 * Every listing query stays untouched: an occurrence is an ordinary event that happens to
+		 * have siblings, which is the whole point of materialising rather than expanding on read.
+		 */
+		seriesId: integer('series_id').references(() => eventSeries.id, { onDelete: 'cascade' }),
 
 		/** Outbound ticket link. We never sell tickets — see README non-goals. */
 		ctaUrl: text('cta_url'),
@@ -218,6 +264,8 @@ export const events = pgTable(
 	},
 	(t) => [
 		uniqueIndex('events_source_external_idx').on(t.sourceId, t.externalId),
+		// Makes materialising idempotent: topping up a series can never double-write a day.
+		uniqueIndex('events_series_starts_at_idx').on(t.seriesId, t.startsAt),
 		index('events_starts_at_idx').on(t.startsAt),
 		index('events_status_starts_at_idx').on(t.status, t.startsAt)
 	]

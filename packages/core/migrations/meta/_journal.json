@@ -43,6 +43,13 @@
       "when": 1787923740959,
       "tag": "0005_sweet_vulcan",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1787925299053,
+      "tag": "0006_parched_gladiator",
+      "breakpoints": true
     }
   ]
 }

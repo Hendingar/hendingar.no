@@ -168,6 +168,29 @@ export const eventFormSchema = z
 			.max(2000)
 			.optional()
 			.or(z.literal('').transform(() => undefined)),
+		/**
+		 * Does it repeat, and how.
+		 *
+		 * A select rather than a checkbox plus a frequency: remote form schemas require every
+		 * boolean to be optional (an unchecked box sends nothing), and "nei" as an explicit value
+		 * avoids the whole question. `date` remains the FIRST occurrence either way.
+		 */
+		repeats: z.enum(['nei', ...RECURRENCE_FREQUENCIES]).default('nei'),
+		/** ISO weekdays as strings, because that is what checkbox inputs post. */
+		repeatWeekdays: z
+			.array(z.enum(WEEKDAYS.map(String) as [string, ...string[]]))
+			.optional()
+			.default([]),
+		/** Monthly only: which occurrence of the weekday, or -1 for the last. */
+		repeatNth: z
+			.enum(['1', '2', '3', '4', '5', '-1'])
+			.optional()
+			.or(z.literal('').transform(() => undefined)),
+		repeatUntil: z
+			.string()
+			.regex(/^\d{4}-\d{2}-\d{2}$/, 'dato må vere ÅÅÅÅ-MM-DD')
+			.optional()
+			.or(z.literal('').transform(() => undefined)),
 		/** Provenance, so /datasamling can report how events actually arrive. */
 		method: z.enum(['form', 'photo']).default('form'),
 		/** IANA zone the wall-clock time is in. Defaults to the pilot region. */
@@ -176,6 +199,18 @@ export const eventFormSchema = z
 	.refine((v) => !v.endTime || v.endTime > v.startTime, {
 		message: 'sluttid må vere etter starttid',
 		path: ['endTime']
+	})
+	.refine((v) => v.repeats !== 'weekly' || (v.repeatWeekdays?.length ?? 0) > 0, {
+		message: 'vel minst éin vekedag',
+		path: ['repeatWeekdays']
+	})
+	.refine((v) => v.repeats !== 'monthly' || (v.repeatWeekdays?.length ?? 0) > 0, {
+		message: 'vel vekedagen det gjeld',
+		path: ['repeatWeekdays']
+	})
+	.refine((v) => !v.repeatUntil || v.repeatUntil >= v.date, {
+		message: 'sluttdato må vere etter første dato',
+		path: ['repeatUntil']
 	});
 
 export type EventForm = z.infer<typeof eventFormSchema>;

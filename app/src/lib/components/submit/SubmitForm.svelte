@@ -1,6 +1,13 @@
 <script lang="ts">
 	import { CATEGORIES } from '@hendingar/core/taxonomy';
 	import { formatTimeDigits } from '@hendingar/core/datetime';
+	import {
+		WEEKDAY_NAMES,
+		WEEKDAYS,
+		describeRecurrence,
+		expandRecurrence,
+		type Weekday
+	} from '@hendingar/core/recurrence';
 	import type { ExtractedEvent } from '@hendingar/core/validation';
 	import { submitEvent } from '../../submit.remote';
 	import PhotoCapture from './PhotoCapture.svelte';
@@ -44,21 +51,67 @@
 		mode = 'form';
 		intro?.focus();
 		unreadable = draft.unreadable;
+
+		/*
+		 * A recurring poster states a rule and no date, so `date` came back empty on a required
+		 * field: the poster read perfectly and the form was still a dead end. Fill the rule in and
+		 * compute the first matching date from today, so there is something to submit. The
+		 * expansion is pure, so it runs here in the browser.
+		 */
+		let firstDate = draft.date ?? undefined;
+		if (draft.recurrence) {
+			const today = new Date().toLocaleDateString('sv-SE'); // sv-SE renders as YYYY-MM-DD
+			const [next] = expandRecurrence({
+				recurrence: draft.recurrence,
+				anchorDate: draft.date ?? today,
+				startTime: draft.startTime ?? '12:00',
+				from: today,
+				to: `${Number(today.slice(0, 4)) + 1}${today.slice(4)}`,
+				limit: 1
+			});
+			firstDate ??= next?.localDate;
+		}
 		// Only overwrite with what was actually read. A null from the model is "I could not tell",
 		// not "clear the box the person already typed in".
 		f.set({
 			title: draft.title ?? undefined,
 			description: draft.description ?? undefined,
 			category: draft.category ?? undefined,
-			date: draft.date ?? undefined,
+			date: firstDate,
 			startTime: draft.startTime ?? undefined,
 			endTime: draft.endTime ?? undefined,
 			venueName: draft.venueName ?? undefined,
 			municipality: draft.municipality ?? undefined,
 			organizerName: draft.organizerName ?? undefined,
-			ctaUrl: draft.ticketUrl ?? undefined
+			ctaUrl: draft.ticketUrl ?? undefined,
+			repeats: draft.recurrence?.freq ?? 'nei',
+			repeatWeekdays: draft.recurrence?.weekdays.map(String) ?? [],
+			// Narrowed to the option values the select offers, so an out-of-range nth from the model
+			// is dropped rather than written into a field that cannot hold it.
+			repeatNth: NTH_VALUES.find((v) => v === String(draft.recurrence?.nth ?? '')),
+			repeatUntil: draft.recurrence?.until ?? undefined
 		});
 	}
+
+	const NTH_VALUES = ['1', '2', '3', '4', '5', '-1'] as const;
+
+	const repeating = $derived(Boolean(f.repeats.value()) && f.repeats.value() !== 'nei');
+
+	/** Live echo of the chosen rule, so nobody has to reason about checkboxes in their head. */
+	const repeatSummary = $derived.by(() => {
+		const repeats = f.repeats.value();
+		if (!repeats || repeats === 'nei') return null;
+		const weekdays = (f.repeatWeekdays.value() ?? []).map(Number).filter(Boolean) as Weekday[];
+		if (repeats !== 'daily' && weekdays.length === 0) return null;
+		const nth = f.repeatNth.value();
+		return describeRecurrence({
+			freq: repeats as 'daily' | 'weekly' | 'monthly',
+			interval: 1,
+			weekdays,
+			nth: nth ? Number(nth) : null,
+			until: (f.repeatUntil.value() as string) || null
+		});
+	});
 </script>
 
 {#if submitEvent.result}
@@ -173,7 +226,7 @@
 			<p class="group__hint">Dato og klokkeslett i lokal tid, slik dei er oppgitte.</p>
 			<div class="grid">
 				<p class="field">
-					<label for="date">Dato</label>
+					<label for="date">{repeating ? 'Første dato' : 'Dato'}</label>
 					<input id="date" {...f.date.as('date')} required />
 					{#each f.date.issues() ?? [] as issue (issue.message)}
 						<span class="field__error">{issue.message}</span>
@@ -214,6 +267,73 @@
 						<span class="field__error">{issue.message}</span>
 					{/each}
 				</p>
+			</div>
+		</fieldset>
+
+		<fieldset class="group">
+			<legend class="group__legend">Gjentaking</legend>
+			<p class="group__hint">
+				Skjer det fleire gonger? Ein plakat som seier «torsdager» er ei gjentaking, ikkje ein dato.
+			</p>
+			<div class="grid">
+				<p class="field">
+					<label for="repeats">Skjer det fleire gonger?</label>
+					<select id="repeats" {...f.repeats.as('select')}>
+						<option value="nei">Nei, éin gong</option>
+						<option value="weekly">Kvar veke</option>
+						<option value="monthly">Kvar månad</option>
+						<option value="daily">Kvar dag</option>
+					</select>
+				</p>
+
+				{#if repeating && f.repeats.value() !== 'daily'}
+					<fieldset class="days field--wide">
+						<legend>Vekedagar</legend>
+						<div class="days__row">
+							{#each WEEKDAYS as day (day)}
+								<label class="day">
+									<input {...f.repeatWeekdays.as('checkbox', String(day))} />
+									<span>{WEEKDAY_NAMES[day].slice(0, 3)}</span>
+								</label>
+							{/each}
+						</div>
+						{#each f.repeatWeekdays.issues() ?? [] as issue (issue.message)}
+							<span class="field__error">{issue.message}</span>
+						{/each}
+					</fieldset>
+				{/if}
+
+				{#if f.repeats.value() === 'monthly'}
+					<p class="field">
+						<label for="repeatNth">Kva veke i månaden</label>
+						<select id="repeatNth" {...f.repeatNth.as('select')}>
+							<option value="1">Første</option>
+							<option value="2">Andre</option>
+							<option value="3">Tredje</option>
+							<option value="4">Fjerde</option>
+							<option value="-1">Siste</option>
+						</select>
+					</p>
+				{/if}
+
+				{#if repeating}
+					<p class="field">
+						<label for="repeatUntil">Til og med <span class="field__opt">valfritt</span></label>
+						<input id="repeatUntil" {...f.repeatUntil.as('date')} />
+						<span class="field__hint">
+							Står det ingen sluttdato, lagrar vi eit halvår framover.
+						</span>
+						{#each f.repeatUntil.issues() ?? [] as issue (issue.message)}
+							<span class="field__error">{issue.message}</span>
+						{/each}
+					</p>
+				{/if}
+
+				{#if repeatSummary}
+					<p class="repeat__echo field--wide">
+						Blir lagra som: <strong>{repeatSummary}</strong>
+					</p>
+				{/if}
 			</div>
 		</fieldset>
 
@@ -452,6 +572,62 @@
 	.field textarea[aria-invalid='true'] {
 		border-color: var(--peach);
 		border-inline-start-width: var(--rule-fat);
+	}
+	.days {
+		border: 0;
+		margin: 0;
+		padding: 0;
+		min-inline-size: 0;
+	}
+	.days legend {
+		font-family: var(--font-mono);
+		font-size: var(--step-micro);
+		letter-spacing: 0.16em;
+		text-transform: uppercase;
+		color: var(--peach-dim);
+		padding: 0;
+		margin-block-end: 0.35rem;
+	}
+	.days__row {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.35rem;
+	}
+	.day {
+		position: relative;
+		display: inline-flex;
+		align-items: center;
+		gap: 0.35em;
+		font-family: var(--font-mono);
+		font-size: var(--step-micro);
+		text-transform: uppercase;
+		letter-spacing: 0.1em;
+		border: var(--rule) solid var(--peach-line);
+		padding: 0.5em 0.7em;
+		cursor: pointer;
+	}
+	.day:has(input:checked) {
+		background: var(--peach);
+		color: var(--navy-900);
+		border-color: var(--peach);
+	}
+	.day:has(input:focus-visible) {
+		outline: 2px solid var(--peach);
+		outline-offset: 2px;
+	}
+	.day input {
+		/* The label carries the visual state; the box only needs to stay operable and focusable. */
+		position: absolute;
+		inset: 0;
+		opacity: 0;
+		margin: 0;
+		cursor: pointer;
+	}
+	.repeat__echo {
+		margin: 0;
+		font-family: var(--font-mono);
+		font-size: 0.8125rem;
+		color: var(--peach-hi);
 	}
 	.form__foot {
 		padding: clamp(1rem, 3vw, 1.75rem);

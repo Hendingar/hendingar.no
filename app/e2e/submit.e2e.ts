@@ -111,3 +111,57 @@ test('the time fields are 24-hour, whatever the browser locale', async ({ page }
 	await page.keyboard.type('930');
 	await expect(page.locator('#endTime')).toHaveValue('09:30');
 });
+
+test('the recurrence fields appear only when something repeats', async ({ page }) => {
+	await page.goto('/send-inn');
+	await expect(page.locator('#repeats')).toHaveValue('nei');
+	await expect(page.locator('.days')).toBeHidden();
+	await expect(page.locator('label[for="date"]')).toHaveText(/^dato$/i);
+
+	await page.locator('#repeats').selectOption('weekly');
+	await expect(page.locator('.days')).toBeVisible();
+	// The date field is the FIRST occurrence once a rule is set, and says so.
+	await expect(page.locator('label[for="date"]')).toHaveText(/første dato/i);
+
+	await page.locator('.day').filter({ hasText: 'tor' }).click();
+	// The rule is echoed in words, so nobody has to reason about checkboxes in their head.
+	await expect(page.locator('.repeat__echo')).toContainText('kvar torsdag');
+});
+
+test('a weekly submission is stored as many dates, not one', async ({ page }) => {
+	await page.goto('/send-inn');
+	await page.locator('#title').fill('E2E vekentleg quiz');
+	await page.locator('#category').selectOption('anna');
+	await page.locator('#date').fill('2027-03-04'); // a Thursday
+	await page.locator('#startTime').click();
+	await page.keyboard.type('1900');
+	await page.locator('#venueName').fill('Kaikanten');
+	await page.locator('#repeats').selectOption('weekly');
+	await page.locator('.day').filter({ hasText: 'tor' }).click();
+
+	await page.getByRole('button', { name: /Send inn hendinga/ }).click();
+	const verdict = page.locator('.verdict');
+	await expect(verdict).toBeVisible();
+	// The summary states how many dates were written — a series that silently stored one row would
+	// look identical to a working one without this.
+	await expect(verdict.locator('.verdict__summary')).toContainText(/\d+ datoar/);
+	await expect(verdict.locator('.verdict__summary')).toContainText('kvar torsdag');
+});
+
+test('a rule that matches no dates is refused rather than stored empty', async ({ page }) => {
+	await page.goto('/send-inn');
+	await page.locator('#title').fill('E2E umogleg gjentaking');
+	await page.locator('#category').selectOption('anna');
+	await page.locator('#date').fill('2027-03-04'); // Thursday
+	await page.locator('#startTime').click();
+	await page.keyboard.type('1900');
+	await page.locator('#venueName').fill('Kaikanten');
+	await page.locator('#repeats').selectOption('weekly');
+	await page.locator('.day').filter({ hasText: 'tor' }).click();
+	// Until the day before the first occurrence: the rule can never fire.
+	await page.locator('#repeatUntil').fill('2027-03-03');
+
+	await page.getByRole('button', { name: /Send inn hendinga/ }).click();
+	// Caught by the schema, before anything is written.
+	await expect(page.locator('.field__error')).toContainText(/sluttdato/i);
+});

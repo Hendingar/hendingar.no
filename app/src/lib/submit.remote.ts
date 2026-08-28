@@ -1,9 +1,16 @@
 import { command, form, query } from '$app/server';
 import { z } from 'zod';
 import { and, eq, gte, lte } from 'drizzle-orm';
-import { events, organizers, venues, verifications } from '@hendingar/core/schema';
+import { eventSeries, events, organizers, venues, verifications } from '@hendingar/core/schema';
 import { eventFormSchema } from '@hendingar/core/validation';
 import { zonedWallClockToInstant } from '@hendingar/core/datetime';
+import {
+	HORIZON_WEEKS,
+	describeRecurrence,
+	expandRecurrence,
+	type Recurrence,
+	type Weekday
+} from '@hendingar/core/recurrence';
 import { db } from './server/db';
 import { extractPoster, verifierEnabled, verifyEvent } from './server/verifier';
 
@@ -60,6 +67,29 @@ function slugify(value: string): string {
 		.replace(/[^a-z0-9]+/g, '-')
 		.replace(/^-+|-+$/g, '')
 		.slice(0, 120);
+}
+
+/** The local date `weeks` ahead of `from`, as YYYY-MM-DD. Pure date arithmetic, no timezone. */
+function localDatePlusWeeks(from: string, weeks: number): string {
+	const [y, m, d] = from.split('-').map(Number);
+	const stamp = Date.UTC(y!, m! - 1, d!) + weeks * 7 * 86_400_000;
+	return new Date(stamp).toISOString().slice(0, 10);
+}
+
+function toRecurrence(submission: {
+	repeats: string;
+	repeatWeekdays?: string[];
+	repeatNth?: string;
+	repeatUntil?: string;
+}): Recurrence | null {
+	if (submission.repeats === 'nei') return null;
+	return {
+		freq: submission.repeats as Recurrence['freq'],
+		interval: 1,
+		weekdays: (submission.repeatWeekdays ?? []).map(Number) as Weekday[],
+		nth: submission.repeatNth ? Number(submission.repeatNth) : null,
+		until: submission.repeatUntil ?? null
+	};
 }
 
 export const submitEvent = form(eventFormSchema, async (submission) => {
@@ -148,23 +178,79 @@ export const submitEvent = form(eventFormSchema, async (submission) => {
 				? ('rejected' as const)
 				: ('pending' as const);
 
-	const [created] = await database
+	/*
+	 * A repeating submission becomes a series plus one row per occurrence inside the horizon.
+	 *
+	 * The occurrences are ordinary events, so every listing, the day grouping, deduplication and
+	 * the iCal feed keep working untouched. The alternative — one row plus expansion at query time
+	 * — would mean rewriting every listing query. See docs/decisions/0009-recurring-events.md.
+	 */
+	const recurrence = toRecurrence(submission);
+	let seriesId: number | undefined;
+	let occurrences = [{ startsAt, endsAt }];
+
+	if (recurrence) {
+		const horizonEnd = localDatePlusWeeks(submission.date, HORIZON_WEEKS);
+		const expanded = expandRecurrence({
+			recurrence,
+			anchorDate: submission.date,
+			startTime: submission.startTime,
+			endTime: submission.endTime ?? null,
+			timeZone: submission.timeZone,
+			from: submission.date,
+			to: horizonEnd
+		});
+
+		// A rule that matches nothing is a rule the person got wrong, not an empty series to store.
+		if (expanded.length === 0) {
+			return {
+				status: 'pending' as const,
+				recommendation: 'review' as const,
+				summary: 'Gjentakinga traff ingen datoar. Sjekk vekedag og første dato, og prøv igjen.',
+				checks: verdict.checks
+			};
+		}
+
+		const [series] = await database
+			.insert(eventSeries)
+			.values({
+				freq: recurrence.freq,
+				interval: recurrence.interval,
+				weekdays: recurrence.weekdays,
+				nth: recurrence.nth,
+				anchorDate: submission.date,
+				until: recurrence.until,
+				startTime: submission.startTime,
+				endTime: submission.endTime ?? null,
+				timezone: submission.timeZone,
+				materialisedThrough: horizonEnd
+			})
+			.returning({ id: eventSeries.id });
+		seriesId = series?.id;
+		occurrences = expanded.map((o) => ({ startsAt: o.startsAt, endsAt: o.endsAt }));
+	}
+
+	const inserted = await database
 		.insert(events)
-		.values({
-			title: submission.title,
-			description: submission.description,
-			category: submission.category,
-			startsAt,
-			endsAt,
-			venueId: venue?.id,
-			organizerId,
-			sourceUrl: submission.sourceUrl,
-			ctaUrl: submission.ctaUrl,
-			status,
-			submissionMethod: submission.method,
-			verificationNotes: verdict.summary
-		})
+		.values(
+			occurrences.map((occurrence) => ({
+				title: submission.title,
+				description: submission.description,
+				category: submission.category,
+				startsAt: occurrence.startsAt,
+				endsAt: occurrence.endsAt,
+				venueId: venue?.id,
+				organizerId,
+				seriesId,
+				sourceUrl: submission.sourceUrl,
+				ctaUrl: submission.ctaUrl,
+				status,
+				submissionMethod: submission.method,
+				verificationNotes: verdict.summary
+			}))
+		)
 		.returning({ id: events.id });
+	const created = inserted[0];
 
 	if (created) {
 		// Store every check, including the ones that passed. The README promises the reasoning is
@@ -185,7 +271,9 @@ export const submitEvent = form(eventFormSchema, async (submission) => {
 	return {
 		status,
 		recommendation: verdict.recommendation,
-		summary: verdict.summary,
+		summary: recurrence
+			? `${verdict.summary} Lagra som ${describeRecurrence(recurrence)} — ${inserted.length} datoar dei neste ${HORIZON_WEEKS} vekene.`
+			: verdict.summary,
 		checks: verdict.checks
 	};
 });
