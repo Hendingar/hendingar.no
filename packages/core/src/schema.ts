@@ -202,6 +202,16 @@ export const events = pgTable(
 		verificationNotes: text('verification_notes'),
 		/** How this event arrived. */
 		submissionMethod: submissionMethodEnum('submission_method').notNull().default('import'),
+		/**
+		 * When the review agent last looked at this event.
+		 *
+		 * This is what distinguishes the two very different meanings `pending` used to carry:
+		 * `pending` with a null `reviewedAt` is waiting for the agent, and `pending` with one set
+		 * has been through the agent and escalated to a person. Expressing it this way rather than
+		 * adding an `escalated` status keeps the enum — and every query that filters on it —
+		 * unchanged, and records *when* the escalation happened, which a status cannot.
+		 */
+		reviewedAt: timestamp('reviewed_at', { withTimezone: true }),
 
 		createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 		updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow()
