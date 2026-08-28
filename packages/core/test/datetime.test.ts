@@ -3,7 +3,8 @@ import {
 	DATE_LOCALE,
 	DEFAULT_TIME_ZONE,
 	formatEventTime,
-	machineDateTime
+	machineDateTime,
+	zonedWallClockToInstant
 } from '../src/datetime.ts';
 
 describe('formatEventTime', () => {
@@ -63,5 +64,48 @@ describe('formatEventTime', () => {
 describe('machineDateTime', () => {
 	it('emits a valid datetime attribute value for the instant', () => {
 		expect(machineDateTime(new Date('2026-09-12T20:00:00+02:00'))).toBe('2026-09-12T18:00:00.000Z');
+	});
+});
+
+describe('zonedWallClockToInstant', () => {
+	it('turns a poster time into the right instant in winter (CET, +01:00)', () => {
+		expect(zonedWallClockToInstant('2026-01-15', '20:00', 'Europe/Oslo').toISOString()).toBe(
+			'2026-01-15T19:00:00.000Z'
+		);
+	});
+
+	it('and in summer (CEST, +02:00)', () => {
+		expect(zonedWallClockToInstant('2026-07-15', '20:00', 'Europe/Oslo').toISOString()).toBe(
+			'2026-07-15T18:00:00.000Z'
+		);
+	});
+
+	it('handles a different zone entirely', () => {
+		expect(zonedWallClockToInstant('2026-07-15', '20:00', 'Europe/Helsinki').toISOString()).toBe(
+			'2026-07-15T17:00:00.000Z'
+		);
+	});
+
+	/**
+	 * The case a single-pass offset lookup gets wrong: an evening the day before a spring-forward,
+	 * where the naive UTC guess lands on the far side of the transition.
+	 */
+	it('is correct either side of a DST transition', () => {
+		// Norway springs forward 2026-03-29 at 02:00 local.
+		expect(zonedWallClockToInstant('2026-03-28', '23:30', 'Europe/Oslo').toISOString()).toBe(
+			'2026-03-28T22:30:00.000Z'
+		);
+		expect(zonedWallClockToInstant('2026-03-29', '12:00', 'Europe/Oslo').toISOString()).toBe(
+			'2026-03-29T10:00:00.000Z'
+		);
+	});
+
+	it('round-trips through the formatter', () => {
+		const instant = zonedWallClockToInstant('2026-07-15', '20:00', 'Europe/Oslo');
+		expect(formatEventTime(instant, 'Europe/Oslo')).toContain('20:00');
+	});
+
+	it('rejects nonsense rather than producing an Invalid Date', () => {
+		expect(() => zonedWallClockToInstant('ikkje ein dato', '20:00', 'Europe/Oslo')).toThrow();
 	});
 });

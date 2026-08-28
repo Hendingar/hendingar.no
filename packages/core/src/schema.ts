@@ -11,6 +11,7 @@ import {
 	uniqueIndex
 } from 'drizzle-orm/pg-core';
 import { CATEGORY_SLUGS } from './taxonomy.ts';
+import { VERIFICATION_CHECKS, VERIFICATION_VERDICTS } from './verification.ts';
 
 /** Derived from taxonomy.ts — never write this list out by hand. */
 export const categoryEnum = pgEnum('category', CATEGORY_SLUGS);
@@ -36,6 +37,19 @@ export const ingestRunStatusEnum = pgEnum('ingest_run_status', [
 	'partial', // finished, but some records were rejected
 	'failed'
 ]);
+
+/** How an event entered the system. Shown on the event, so provenance is never a guess. */
+export const submissionMethodEnum = pgEnum('submission_method', [
+	'import', // a deterministic importer
+	'form', // a human filled in the form
+	'photo' // a human photographed a poster and confirmed the extraction
+]);
+
+/** The verification pipeline's stages — names and labels live in ./verification.ts (rule 1). */
+export const verificationCheckEnum = pgEnum('verification_check', VERIFICATION_CHECKS);
+
+/** `uncertain` is the one that matters: it routes to a human rather than guessing. */
+export const verificationVerdictEnum = pgEnum('verification_verdict', VERIFICATION_VERDICTS);
 
 export const geocodeStatusEnum = pgEnum('geocode_status', [
 	'pending',
@@ -180,6 +194,8 @@ export const events = pgTable(
 		status: eventStatusEnum('status').notNull().default('pending'),
 		/** Why the verification agent reached its conclusion — auditable, not a black box. */
 		verificationNotes: text('verification_notes'),
+		/** How this event arrived. */
+		submissionMethod: submissionMethodEnum('submission_method').notNull().default('import'),
 
 		createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 		updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow()
@@ -197,5 +213,36 @@ export type Venue = typeof venues.$inferSelect;
 export type NewVenue = typeof venues.$inferInsert;
 export type Source = typeof sources.$inferSelect;
 export type Organizer = typeof organizers.$inferSelect;
+/**
+ * One row per verification check per event.
+ *
+ * The README promises the agent's reasoning is "auditable rather than a black box". That promise
+ * is only real if the reasoning is stored: a verdict with no record of why is exactly the black box
+ * we said we would not build. Every check writes a row, including the ones that pass.
+ */
+export const verifications = pgTable(
+	'verifications',
+	{
+		id: serial('id').primaryKey(),
+		eventId: integer('event_id')
+			.notNull()
+			.references(() => events.id, { onDelete: 'cascade' }),
+		check: verificationCheckEnum('check').notNull(),
+		verdict: verificationVerdictEnum('verdict').notNull(),
+		/** 0–100. Low confidence routes to a human even when the verdict is `pass`. */
+		confidence: integer('confidence').notNull().default(0),
+		/** The agent's stated reasoning, in the reader's language. Shown, not just logged. */
+		reasoning: text('reasoning').notNull(),
+		/** Which model produced this, so a behaviour change is traceable to a model change. */
+		model: text('model'),
+		/** Set when a check is decided by code rather than a model — e.g. duplicate matching. */
+		deterministic: boolean('deterministic').notNull().default(false),
+		createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
+	},
+	(t) => [index('verifications_event_idx').on(t.eventId)]
+);
+
 export type IngestRun = typeof ingestRuns.$inferSelect;
+export type Verification = typeof verifications.$inferSelect;
+export type NewVerification = typeof verifications.$inferInsert;
 export type NewIngestRun = typeof ingestRuns.$inferInsert;

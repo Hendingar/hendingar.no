@@ -10,6 +10,12 @@ aspirational.
 pnpm verify        # typecheck (incl. svelte-check) → lint → test. Exits non-zero on any failure.
 ```
 
+`pnpm verify` does not see `services/verifier` — it is Python. For that:
+
+```bash
+cd services/verifier && ruff check . && ruff format --check . && pytest -q
+```
+
 **Run it before claiming a task is done.** If it passes, you are done; if it fails, you are not.
 Nothing else is evidence — not "it looks right", not a passing subset of tests.
 
@@ -27,6 +33,8 @@ pnpm db:reset                                   # wipe and re-migrate (local onl
 app/                SvelteKit — UI and *.remote.ts server functions
 packages/core/      THE source of truth: Drizzle schema, migrations, Zod schemas, taxonomy
 importers/          Deterministic source importers (see docs/event-sources.md)
+services/verifier/  Python. The ONLY place a language model is called (ADR 0008)
+infra/              Bicep. main = platform, app/verifier = the two Container Apps
 docs/decisions/     ADRs — read before re-opening a settled question
 ```
 
@@ -48,6 +56,16 @@ app/src/lib/
   events.remote.ts       the one client↔server boundary
 app/e2e/                 Playwright specs
 
+app/src/lib/components/submit/   single-use sections owned by `/send-inn`
+app/src/lib/submit.remote.ts     the submission boundary — photo, form, verification
+
+services/verifier/src/verifier/
+  llm.py                   Entra token → AsyncOpenAI. Rebuilt per call; the credential is reused
+  extract.py               the vision call. Nynorsk prompt, strict json_schema
+  verify.py                the five checks. Rules and model calls deliberately mixed
+  app.py                   FastAPI. create_app(config, factory) so tests inject a stub
+  tests/test_contract.py   asserts the check names still match packages/core
+
 importers/<source>/      one deterministic importer per source
   src/api.ts               upstream schema + paginator. Validates every response
   src/map.ts               PURE upstream -> our shape. No I/O, no clock, no randomness
@@ -68,10 +86,12 @@ Scoped in a component, the next agent cannot see it and writes a second one.
    redefining a category list or an event shape in `app/` or `importers/`, import it instead.
 2. **Never hand-edit generated migrations.** Change `packages/core/src/schema.ts`, then
    `pnpm db:generate`. A hand-edited migration desynchronises schema from database silently.
-3. **No LLM calls in importer code paths.** Importers are `fetch → parse → validate → upsert`,
-   deterministic and replayable. Verification of event content happens elsewhere in the pipeline,
-   on already-structured data, with a human reviewing anything uncertain. See
-   `docs/decisions/0004-deterministic-importers.md`.
+3. **`services/verifier` is the only place a model runs.** No model SDK in `app/` or
+   `importers/`, and no API keys anywhere — the service authenticates to Azure with a managed
+   identity. Importers are `fetch → parse → validate → upsert`, deterministic and replayable;
+   verification happens later, on already-structured data, with a human reviewing anything
+   uncertain. See `docs/decisions/0004-deterministic-importers.md` and
+   `docs/decisions/0008-verification-service.md`.
 4. **No `any`, no `as` escape hatches.** If a type is fighting you, the type is telling you
    something. `as unknown as T` in a PR is a red flag, not a fix.
 5. **No barrel files.** No `index.ts` that only re-exports. They defeat grep, which is how both
@@ -81,6 +101,10 @@ Scoped in a component, the next agent cannot see it and writes a second one.
    ambiguous, and ambiguous failure breaks the whole loop this repo is built around.
 7. **Server-only code stays server-only.** Database access lives behind `*.remote.ts` or
    `$lib/server/**`. If a secret or a `pg` import can reach the client bundle, that's a bug.
+8. **Verification failing must never mean submission failing.** `verifyEvent` does not throw; an
+   unavailable verifier produces `recommendation: 'review'` and the event is stored for a human.
+   The same applies to the photo shortcut: it is hidden when `VERIFIER_URL` is unset, never shown
+   as a button that cannot work.
 
 ## Client↔server: remote functions
 

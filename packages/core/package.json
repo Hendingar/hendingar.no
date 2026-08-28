@@ -9,7 +9,8 @@
 		"./validation": "./src/validation.ts",
 		"./db": "./src/db.ts",
 		"./datetime": "./src/datetime.ts",
-		"./schedule": "./src/schedule.ts"
+		"./schedule": "./src/schedule.ts",
+		"./verification": "./src/verification.ts"
 	},
 	"scripts": {
 		"typecheck": "tsc --noEmit",

@@ -7,7 +7,8 @@
 	 */
 	const links = [
 		{ href: '/hendingar', label: 'Hendingar' },
-		{ href: '/datasamling', label: 'Datasamling' }
+		{ href: '/datasamling', label: 'Datasamling' },
+		{ href: '/send-inn', label: 'Send inn' }
 	];
 </script>
 

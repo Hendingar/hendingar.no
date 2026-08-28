@@ -19,6 +19,9 @@
 				</li>
 			{/each}
 		</ol>
+		<p class="verify__cta">
+			<a class="btn btn--solid" href="/send-inn">Send inn ei hending</a>
+		</p>
 		<p class="fineprint">
 			Importørar er derimot heilt deterministiske — ingen språkmodell hentar data. Oppdikta
 			hendingar er verre enn ingen hendingar.
@@ -47,13 +50,20 @@
 		padding: 0;
 		margin: 0;
 		display: grid;
-		grid-template-columns: repeat(auto-fit, minmax(min(100%, 17rem), 1fr));
+		/* 12rem, not 17: there are five checks, and a 17rem minimum fits four per row on a laptop,
+		   which strands the fifth alone on a second row. Sized so all five sit on one line where
+		   there is room, and the count comes from core — so this must not assume a number. */
+		grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr));
+		gap: 0 1.25rem;
 	}
 	.step {
 		display: grid;
 		gap: 0.3rem;
 		padding: 1.4rem 1.4rem 1.6rem 0;
 		border-block-start: var(--rule) solid var(--peach-line);
+	}
+	.verify__cta {
+		margin: 2rem 0 1.5rem;
 	}
 	.step__n {
 		font-family: var(--font-display);

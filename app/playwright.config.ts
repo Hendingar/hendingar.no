@@ -10,7 +10,11 @@ export default defineConfig({
 		// but the server still refuses to boot without a well-formed value.
 		env: {
 			DATABASE_URL:
-				process.env.DATABASE_URL ?? 'postgres://hendingar:hendingar@localhost:5433/hendingar'
+				process.env.DATABASE_URL ?? 'postgres://hendingar:hendingar@localhost:5433/hendingar',
+			// Pinned empty, not inherited: the submission specs assert both the no-verifier UI and
+			// the degraded verdict. A developer with VERIFIER_URL set locally would otherwise get
+			// different results from CI.
+			VERIFIER_URL: ''
 		}
 	},
 	testDir: 'e2e',

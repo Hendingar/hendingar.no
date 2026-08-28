@@ -13,5 +13,17 @@ export const variables = defineEnvVars({
 			message: 'DATABASE_URL must be a postgres:// connection string'
 		}),
 		description: 'Postgres connection string. See .env.example.'
+	},
+	/**
+	 * Base URL of the verifier microservice (services/verifier). In Azure this is the Container
+	 * Apps internal DNS name, reachable only from inside the environment.
+	 *
+	 * Optional by design: without it, photo extraction and agentic verification are disabled and
+	 * the site says so plainly rather than failing. A contributor must be able to run the whole
+	 * app without any AI credentials, and the submission form still works.
+	 */
+	VERIFIER_URL: {
+		schema: (value) => value || undefined,
+		description: 'Base URL of the verifier service. Optional; features degrade without it.'
 	}
 });

@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { CATEGORY_SLUGS } from './taxonomy.ts';
+import { VERIFICATION_VERDICTS } from './verification.ts';
 
 /**
  * Validation lives here so ONE schema serves every boundary: remote-function arguments, importer
@@ -60,3 +61,97 @@ export const eventQuerySchema = z.object({
 });
 
 export type EventQuery = z.infer<typeof eventQuerySchema>;
+
+/**
+ * What the vision model is asked to return when reading a poster.
+ *
+ * Deliberately permissive where a poster is: every field except the title is nullable, because a
+ * poster that omits the end time or the organiser is normal, and a model that invents one is worse
+ * than a blank field a human fills in. `confidence` and `unreadable` exist so the UI can show what
+ * the extraction is unsure about instead of presenting guesses as facts.
+ */
+export const extractedEventSchema = z.object({
+	title: z.string().nullable(),
+	description: z.string().nullable(),
+	category: categorySchema.nullable(),
+	/** Local date at the venue, YYYY-MM-DD. Not an instant — a poster has no timezone. */
+	date: z
+		.string()
+		.regex(/^\d{4}-\d{2}-\d{2}$/, 'must be YYYY-MM-DD')
+		.nullable(),
+	/** Local wall-clock time, HH:MM. */
+	startTime: z
+		.string()
+		.regex(/^\d{2}:\d{2}$/, 'must be HH:MM')
+		.nullable(),
+	endTime: z
+		.string()
+		.regex(/^\d{2}:\d{2}$/, 'must be HH:MM')
+		.nullable(),
+	venueName: z.string().nullable(),
+	municipality: z.string().nullable(),
+	organizerName: z.string().nullable(),
+	ticketUrl: z.string().nullable(),
+	/** 0–100, the model's own confidence that this is a real event poster it read correctly. */
+	confidence: z.number().int().min(0).max(100),
+	/** Fields the model could not read, so the form can highlight them for the human. */
+	unreadable: z.array(z.string()),
+	/** One sentence for the person, in Nynorsk, about what was read and what was not. */
+	note: z.string()
+});
+
+export type ExtractedEvent = z.infer<typeof extractedEventSchema>;
+
+/** The verification pipeline's per-check output. */
+export const verificationResultSchema = z.object({
+	verdict: z.enum(VERIFICATION_VERDICTS),
+	confidence: z.number().int().min(0).max(100),
+	/** Stated in Nynorsk — this is shown to people, not just logged. */
+	reasoning: z.string().min(1)
+});
+
+export type VerificationResult = z.infer<typeof verificationResultSchema>;
+
+/**
+ * What the submission form posts.
+ *
+ * Date and time are separate fields rather than an ISO instant, because that is what a person
+ * reads off a poster and what a plain HTML form can send. The instant is derived server-side with
+ * the venue's zone (see `zonedWallClockToInstant`), so the form needs no JavaScript to be correct.
+ */
+export const eventFormSchema = z
+	.object({
+		title: z.string().trim().min(3).max(200),
+		description: z.string().trim().max(5000).optional(),
+		category: categorySchema,
+		date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'dato må vere ÅÅÅÅ-MM-DD'),
+		startTime: z.string().regex(/^\d{2}:\d{2}$/, 'klokkeslett må vere TT:MM'),
+		endTime: z
+			.string()
+			.regex(/^\d{2}:\d{2}$/, 'klokkeslett må vere TT:MM')
+			.optional()
+			.or(z.literal('').transform(() => undefined)),
+		venueName: z.string().trim().min(2).max(200),
+		municipality: z.string().trim().max(100).optional(),
+		organizerName: z.string().trim().max(200).optional(),
+		ctaUrl: z
+			.url()
+			.max(2000)
+			.optional()
+			.or(z.literal('').transform(() => undefined)),
+		sourceUrl: z
+			.url()
+			.max(2000)
+			.optional()
+			.or(z.literal('').transform(() => undefined)),
+		/** Provenance, so /datasamling can report how events actually arrive. */
+		method: z.enum(['form', 'photo']).default('form'),
+		/** IANA zone the wall-clock time is in. Defaults to the pilot region. */
+		timeZone: z.string().default('Europe/Oslo')
+	})
+	.refine((v) => !v.endTime || v.endTime > v.startTime, {
+		message: 'sluttid må vere etter starttid',
+		path: ['endTime']
+	});
+
+export type EventForm = z.infer<typeof eventFormSchema>;

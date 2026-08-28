@@ -1,8 +1,8 @@
-import { form, query } from '$app/server';
+import { query } from '$app/server';
 import { z } from 'zod';
 import { and, asc, eq, gte, lte, or, sql } from 'drizzle-orm';
-import { events, organizers, venues } from '@hendingar/core/schema';
-import { eventQuerySchema, eventSubmissionSchema } from '@hendingar/core/validation';
+import { events, venues } from '@hendingar/core/schema';
+import { eventQuerySchema } from '@hendingar/core/validation';
 import { db } from './server/db';
 
 /**
@@ -110,71 +110,3 @@ export const listUpcoming = query(z.number().int().min(1).max(60).default(24), a
 });
 
 export type UpcomingEvent = Awaited<ReturnType<typeof listUpcoming>>[number];
-
-/**
- * Anyone can submit an event — no account required (README non-goals: not a walled garden).
- * Submissions land as `pending` for the verification pipeline; they are never published directly.
- */
-export const submitEvent = form(eventSubmissionSchema, async (submission) => {
-	const database = db();
-
-	// venueName is REQUIRED by the schema, so dropping it silently — as this previously did —
-	// meant every submission landed with venue_id NULL and the location, the single most useful
-	// field on a local-events site, was unrecoverable.
-	const venueSlug = slugify(submission.venueName);
-	const [venue] = await database
-		.insert(venues)
-		.values({
-			name: submission.venueName,
-			slug: venueSlug,
-			municipality: submission.municipality
-		})
-		.onConflictDoUpdate({
-			target: venues.slug,
-			// Only overwrite the municipality when the submitter actually supplied one — an absent
-			// value must not blank out what we already know about a known venue.
-			set: submission.municipality
-				? { municipality: submission.municipality }
-				: { name: submission.venueName }
-		})
-		.returning({ id: venues.id });
-
-	let organizerId: number | undefined;
-	if (submission.organizerName) {
-		const [organizer] = await database
-			.insert(organizers)
-			.values({ name: submission.organizerName, slug: slugify(submission.organizerName) })
-			.onConflictDoUpdate({ target: organizers.slug, set: { name: submission.organizerName } })
-			.returning({ id: organizers.id });
-		organizerId = organizer?.id;
-	}
-
-	await database.insert(events).values({
-		title: submission.title,
-		description: submission.description,
-		category: submission.category,
-		startsAt: new Date(submission.startsAt),
-		endsAt: submission.endsAt ? new Date(submission.endsAt) : null,
-		venueId: venue?.id,
-		organizerId,
-		sourceUrl: submission.sourceUrl,
-		ctaUrl: submission.ctaUrl,
-		status: 'pending'
-	});
-
-	return { received: true };
-});
-
-/** Norwegian-aware slug: æøå transliterate rather than vanishing. */
-function slugify(value: string): string {
-	return value
-		.toLowerCase()
-		.replace(/æ/g, 'ae')
-		.replace(/ø/g, 'oe')
-		.replace(/å/g, 'aa')
-		.normalize('NFD')
-		.replace(/[̀-ͯ]/g, '')
-		.replace(/[^a-z0-9]+/g, '-')
-		.replace(/^-+|-+$/g, '')
-		.slice(0, 120);
-}

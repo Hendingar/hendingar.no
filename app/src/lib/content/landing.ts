@@ -4,11 +4,18 @@
  * Separated from layout so a typo fix doesn't mean touching layout code, and so each string has a
  * named slot instead of being `array[1]` of an anonymous tuple.
  *
- * `DOES_NOT` is the prose rendering of README.md#what-it-does-not-do and `PIPELINE` of the
- * README's verification table. Those are duplicated facts today. When the moderation queue lands,
- * PIPELINE should move to @hendingar/core and be rendered from there — the stage names will key
- * agent output and event statuses, which makes them domain data, not copy.
+ * `DOES_NOT` is the prose rendering of README.md#what-it-does-not-do.
+ *
+ * `PIPELINE` is no longer copy: the check names now key rows in `verifications` and drive the
+ * verdict panel on /send-inn, so they are domain data and live in @hendingar/core (rule 1). This
+ * file only orders them for the landing band.
  */
+
+import {
+	VERIFICATION_CHECK_LABELS,
+	VERIFICATION_CHECK_QUESTIONS,
+	VERIFICATION_CHECKS
+} from '@hendingar/core/verification';
 
 export type Claim = { readonly term: string; readonly body: string };
 export type PipelineStep = { readonly name: string; readonly what: string };
@@ -37,11 +44,11 @@ export const DOES_NOT: readonly Claim[] = [
 	{ term: 'Innhegning', body: 'Konto er frivillig. Alt kan eksporterast. Å gå er lett med vilje.' }
 ];
 
-export const PIPELINE: readonly PipelineStep[] = [
-	{ name: 'Truverd', what: 'Er dette ei verkeleg hending, eller spam?' },
-	{ name: 'Duplikat', what: 'Same hending frå to kjelder blir éi.' },
-	{ name: 'Normalisering', what: 'Dato, tid og gjentaking blir struktur.' },
-	{ name: 'Geokoding', what: 'Frå stadnamn til koordinat — eller flagg.' },
-	{ name: 'Kategori', what: 'Konsert, teater, kulturhus, sport …' },
-	{ name: 'Kjelde', what: 'Finst hendinga der ho seier ho kjem frå?' }
-];
+/**
+ * Derived, not retyped. Adding a check in core adds it here and to the verdict panel at once;
+ * previously the landing page listed a "Geokoding" stage the pipeline never ran.
+ */
+export const PIPELINE: readonly PipelineStep[] = VERIFICATION_CHECKS.map((check) => ({
+	name: VERIFICATION_CHECK_LABELS[check],
+	what: VERIFICATION_CHECK_QUESTIONS[check]
+}));

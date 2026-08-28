@@ -18,6 +18,9 @@ param postgresAdminUser string
 @secure()
 param postgresAdminPassword string
 
+@description('Internal URL of the verifier service. Empty is valid and supported: submission still works, and everything routes to the human queue.')
+param verifierUrl string = ''
+
 var dbName = appName
 var tags = {
   project: 'hendingar.no'
@@ -76,6 +79,12 @@ resource app 'Microsoft.App/containerApps@2024-03-01' = {
             {
               name: 'PORT'
               value: '8080'
+            }
+            {
+              // Empty is a supported state, not a misconfiguration — src/env.ts treats '' as
+              // unset and the UI hides the photo shortcut rather than offering a dead button.
+              name: 'VERIFIER_URL'
+              value: verifierUrl
             }
           ]
         }

@@ -28,6 +28,29 @@ jobs:
       # No network, no database — see docs/decisions/0004-deterministic-importers.md.
       - run: pnpm verify
 
+  verifier:
+    runs-on: ubuntu-latest
+    # The verification service is Python, so `pnpm verify` cannot see it. Its tests are hermetic in
+    # the same sense as the rest: no Azure, no network, no model call — a stub client is injected.
+    # test_contract.py reads packages/core/src/verification.ts, which is why it runs from the repo
+    # root checkout rather than in isolation.
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install
+        working-directory: services/verifier
+        run: pip install -e '.[dev]'
+      - name: Lint
+        working-directory: services/verifier
+        run: |
+          ruff check .
+          ruff format --check .
+      - name: Test
+        working-directory: services/verifier
+        run: pytest -q
+
   e2e:
     runs-on: ubuntu-latest
     # The e2e suite asserts server-rendered events and a /health endpoint that touches the

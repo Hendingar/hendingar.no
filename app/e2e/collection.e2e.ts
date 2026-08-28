@@ -78,7 +78,7 @@ test('site navigation reaches both pages', async ({ page }) => {
 
 test('no horizontal overflow on the new pages', async ({ page }) => {
 	await page.setViewportSize({ width: 320, height: 800 });
-	for (const path of ['/', '/datasamling']) {
+	for (const path of ['/', '/datasamling', '/hendingar', '/send-inn']) {
 		await page.goto(path);
 		const overflow = await page.evaluate(
 			() => document.documentElement.scrollWidth - document.documentElement.clientWidth
