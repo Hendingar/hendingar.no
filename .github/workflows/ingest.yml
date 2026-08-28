@@ -1,0 +1,105 @@
+name: Ingest (dev)
+
+on:
+  schedule:
+    # 05:00 UTC daily — 07:00 in Norway during summer time, 06:00 in winter. Chosen so a run has
+    # finished well before anyone is looking for what's on today.
+    - cron: '0 5 * * *'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: Map and count without writing
+        type: boolean
+        default: false
+
+concurrency:
+  group: ingest-dev
+  cancel-in-progress: false
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  RG: rg-hendingar-swc-dev
+
+jobs:
+  ingest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+
+      - uses: azure/login@v2
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Resolve the database
+        id: pg
+        run: |
+          FQDN=$(az postgres flexible-server list --resource-group "$RG" \
+            --query "[0].fullyQualifiedDomainName" -o tsv)
+          test -n "$FQDN" || { echo "::error::no Postgres server in $RG"; exit 1; }
+          echo "fqdn=$FQDN" >> "$GITHUB_OUTPUT"
+          echo "server=${FQDN%%.*}" >> "$GITHUB_OUTPUT"
+
+      # The firewall allows Azure services only, and a GitHub runner is not one.
+      - name: Open firewall for this runner
+        id: fw
+        run: |
+          RUNNER_IP=$(curl -fsS https://api.ipify.org)
+          az postgres flexible-server firewall-rule create \
+            --resource-group "$RG" --server-name "${{ steps.pg.outputs.server }}" \
+            --name "gh-ingest-${{ github.run_id }}" \
+            --start-ip-address "$RUNNER_IP" --end-ip-address "$RUNNER_IP" >/dev/null
+          echo "opened=true" >> "$GITHUB_OUTPUT"
+
+      - name: Ingest Det skjer Sunnhordland
+        env:
+          PGHOST: ${{ steps.pg.outputs.fqdn }}
+          INGEST_TRIGGER: ${{ github.event_name == 'schedule' && 'schedule' || 'manual' }}
+        run: |
+          DATABASE_URL=$(PW="${{ secrets.POSTGRES_ADMIN_PASSWORD }}" python3 -c \
+            'import os,urllib.parse as u; print("postgres://hendingar:%s@%s:5432/hendingar?sslmode=require" % (u.quote(os.environ["PW"], safe=""), os.environ["PGHOST"]))')
+          export DATABASE_URL
+          if [ "${{ inputs.dry_run }}" = "true" ]; then
+            pnpm --filter @hendingar/importer-detskjer ingest -- --dry-run | tee result.txt
+          else
+            pnpm --filter @hendingar/importer-detskjer ingest | tee result.txt
+          fi
+
+      # A separate always() step: a bash EXIT trap does not survive SIGKILL, and a leaked rule
+      # leaves a recycled public runner IP allowed against the database.
+      - name: Close firewall
+        if: always() && steps.fw.outputs.opened == 'true'
+        run: |
+          az postgres flexible-server firewall-rule delete \
+            --resource-group "$RG" --server-name "${{ steps.pg.outputs.server }}" \
+            --name "gh-ingest-${{ github.run_id }}" --yes >/dev/null 2>&1 || true
+          for stale in $(az postgres flexible-server firewall-rule list \
+                --resource-group "$RG" --server-name "${{ steps.pg.outputs.server }}" \
+                --query "[?starts_with(name,'gh-ingest-')].name" -o tsv); do
+            az postgres flexible-server firewall-rule delete \
+              --resource-group "$RG" --server-name "${{ steps.pg.outputs.server }}" \
+              --name "$stale" --yes >/dev/null 2>&1 || true
+          done
+
+      - name: Summary
+        if: always()
+        run: |
+          {
+            echo "### Ingest (dev)"
+            echo ""
+            echo '```'
+            cat result.txt 2>/dev/null || echo "no result — the run did not reach the importer"
+            echo '```'
+            echo ""
+            echo "Status board: https://ca-hendingar-dev.whitewave-5f5b53f5.swedencentral.azurecontainerapps.io/datasamling"
+          } >> "$GITHUB_STEP_SUMMARY"

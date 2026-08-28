@@ -1,5 +1,6 @@
 import { form, query } from '$app/server';
-import { and, asc, eq, gte, lte, or } from 'drizzle-orm';
+import { z } from 'zod';
+import { and, asc, desc, eq, gte, lte, or, sql } from 'drizzle-orm';
 import { events, organizers, venues } from '@hendingar/core/schema';
 import { eventQuerySchema, eventSubmissionSchema } from '@hendingar/core/validation';
 import { db } from './server/db';
@@ -55,6 +56,48 @@ export const listEvents = query(
 
 /** The row shape callers get, derived from the query rather than hand-written. */
 export type EventSummary = Awaited<ReturnType<typeof listEvents>>[number];
+
+/**
+ * The front-page grid: what is on today, topped up with the nearest upcoming events so the grid is
+ * never half empty on a quiet Tuesday.
+ *
+ * "Today" is evaluated in the VENUE's timezone, in SQL. Doing it in JS against the server's clock
+ * would put a 23:00 Helsinki concert on the wrong day for anyone reading from Norway.
+ */
+export const listToday = query(z.number().int().min(1).max(24).default(6), async (limit) => {
+	const rows = await db()
+		.select({
+			id: events.id,
+			title: events.title,
+			category: events.category,
+			startsAt: events.startsAt,
+			endsAt: events.endsAt,
+			venueName: venues.name,
+			venueTimeZone: venues.timezone,
+			municipality: venues.municipality,
+			posterUrl: events.posterUrl,
+			isToday: sql<boolean>`
+				(${events.startsAt} at time zone coalesce(${venues.timezone}, 'Europe/Oslo'))::date
+				= (now() at time zone coalesce(${venues.timezone}, 'Europe/Oslo'))::date
+			`.as('is_today')
+		})
+		.from(events)
+		.leftJoin(venues, eq(events.venueId, venues.id))
+		.where(
+			and(
+				eq(events.status, 'published'),
+				// Still-running events count as on today.
+				or(gte(events.startsAt, new Date()), gte(events.endsAt, new Date()))
+			)
+		)
+		// Today first, then soonest. Ordering in SQL keeps the grid stable between renders.
+		.orderBy(desc(sql`is_today`), asc(events.startsAt))
+		.limit(limit);
+
+	return rows;
+});
+
+export type TodayEvent = Awaited<ReturnType<typeof listToday>>[number];
 
 /**
  * Anyone can submit an event — no account required (README non-goals: not a walled garden).

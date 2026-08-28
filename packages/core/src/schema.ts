@@ -22,6 +22,21 @@ export const eventStatusEnum = pgEnum('event_status', [
 	'rejected'
 ]);
 
+/** How a source is collected. Shown on /datasamling so the method is public, not folklore. */
+export const sourceKindEnum = pgEnum('source_kind', [
+	'json-api', // an undocumented or public JSON endpoint — the cheapest and most stable
+	'feed', // iCal or RSS
+	'html', // parsed markup, brittle by nature
+	'manual' // human submissions
+]);
+
+export const ingestRunStatusEnum = pgEnum('ingest_run_status', [
+	'running',
+	'success',
+	'partial', // finished, but some records were rejected
+	'failed'
+]);
+
 export const geocodeStatusEnum = pgEnum('geocode_status', [
 	'pending',
 	'resolved',
@@ -41,9 +56,58 @@ export const sources = pgTable('sources', {
 	region: text('region').notNull(),
 	/** Attribution shown on every event from this source. */
 	attribution: text('attribution').notNull(),
+	/** How we collect it. Surfaced publicly — see /datasamling. */
+	kind: sourceKindEnum('kind').notNull().default('json-api'),
+	/** The exact endpoint we call, so the method is inspectable rather than implied. */
+	endpoint: text('endpoint'),
+	/** Cron expression the scheduled job runs on. Null means "not scheduled yet". */
+	scheduleCron: text('schedule_cron'),
+	/**
+	 * The upstream is editorially moderated, so its events publish on import rather than queueing.
+	 *
+	 * This is a deliberate, per-source decision and not a default. Untrusted sources — and every
+	 * human submission — land as `pending` for the verification pipeline. Making it a column means
+	 * the choice is auditable and visible on /datasamling, instead of being a constant buried in
+	 * one importer.
+	 */
+	trusted: boolean('trusted').notNull().default(false),
 	active: boolean('active').notNull().default(true),
 	lastRunAt: timestamp('last_run_at', { withTimezone: true })
 });
+
+/**
+ * One row per importer execution. This is the evidence behind /datasamling: without it the page
+ * could only claim a source is being collected, never show that it actually was, when, or what
+ * came back. Also the only way a silently-failing importer becomes visible.
+ */
+export const ingestRuns = pgTable(
+	'ingest_runs',
+	{
+		id: serial('id').primaryKey(),
+		sourceId: integer('source_id')
+			.notNull()
+			.references(() => sources.id),
+		startedAt: timestamp('started_at', { withTimezone: true }).notNull().defaultNow(),
+		finishedAt: timestamp('finished_at', { withTimezone: true }),
+		status: ingestRunStatusEnum('status').notNull().default('running'),
+		/** 'schedule' | 'manual' — how the run was kicked off. */
+		trigger: text('trigger').notNull().default('schedule'),
+
+		/** Counts. `rejected` is the interesting one: it means the source changed shape. */
+		fetched: integer('fetched').notNull().default(0),
+		created: integer('created').notNull().default(0),
+		updated: integer('updated').notNull().default(0),
+		unchanged: integer('unchanged').notNull().default(0),
+		rejected: integer('rejected').notNull().default(0),
+
+		durationMs: integer('duration_ms'),
+		/** Populated on failure or partial success. Shown verbatim on /datasamling. */
+		message: text('message'),
+		/** The commit that produced this run, so a behaviour change is traceable. */
+		revision: text('revision')
+	},
+	(t) => [index('ingest_runs_source_started_idx').on(t.sourceId, t.startedAt)]
+);
 
 /**
  * Venues are geocoded once and cached. Sources give us free-text venue names ("Den Blå Time"), and
@@ -133,3 +197,5 @@ export type Venue = typeof venues.$inferSelect;
 export type NewVenue = typeof venues.$inferInsert;
 export type Source = typeof sources.$inferSelect;
 export type Organizer = typeof organizers.$inferSelect;
+export type IngestRun = typeof ingestRuns.$inferSelect;
+export type NewIngestRun = typeof ingestRuns.$inferInsert;

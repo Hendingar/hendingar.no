@@ -16,6 +16,8 @@ lock-in — community-owned infrastructure for public-good information.
 ## What it does
 
 - **Aggregates local events** — one searchable, geotagged listing instead of a dozen silos
+- **Shows its work** — [`/datasamling`](https://ca-hendingar-dev.whitewave-5f5b53f5.swedencentral.azurecontainerapps.io/datasamling)
+  is a public status board: every source, how it is collected, how often, and what the last run did
 - **Accepts submissions from anyone** — no account required to add an event
 - **Verifies submissions with an agent pipeline** — see below
 - **Shows events on a map** — find what's happening near you

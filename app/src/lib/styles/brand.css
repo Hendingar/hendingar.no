@@ -93,9 +93,14 @@ body {
 	 * Safety net, not a design choice. At 125% width a capital glyph advances ~0.92em, so a
 	 * 12-character Norwegian compound inks far wider than its own box implies — "Lokalsamfunn"
 	 * measured 340px inside a 280px column. Clipping text off the viewport is a WCAG 1.4.10
-	 * failure; an ugly break is not. This only engages when a single word truly cannot fit.
+	 * failure; an ugly break is not. This only engages when a word truly cannot fit.
+	 *
+	 * `anywhere`, not `break-word`: only `anywhere` is taken into account when a grid or flex
+	 * track computes its min-content size. With `break-word` the track stays as wide as the
+	 * longest unbreakable run and the page scrolls sideways anyway — which is exactly what a real
+	 * event title ("TID – Lars Saabye Christensen/...") did at 320px.
 	 */
-	overflow-wrap: break-word;
+	overflow-wrap: anywhere;
 }
 
 .display--slant {

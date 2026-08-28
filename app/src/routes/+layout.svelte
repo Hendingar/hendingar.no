@@ -9,6 +9,7 @@
 
 	import favicon from '#lib/assets/favicon.svg';
 	import SiteFooter from '../lib/components/SiteFooter.svelte';
+	import SiteMasthead from '../lib/components/SiteMasthead.svelte';
 	import type { LayoutProps } from './$types';
 
 	// Typed, not bare $props() — an untyped destructure makes `children` implicitly any, which
@@ -22,6 +23,8 @@
 </svelte:head>
 
 <a class="skip" href="#innhald">Gå til innhaldet</a>
+
+<SiteMasthead />
 
 <!-- Page chrome lives here so both routes get the same landmarks and the same footer. The landing
      page previously had no <main> at all, which put its h1 and both CTAs inside role=banner —

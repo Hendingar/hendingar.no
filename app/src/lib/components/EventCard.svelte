@@ -36,6 +36,7 @@
 <style>
 	.card {
 		padding: 1.2rem;
+		min-inline-size: 0;
 		display: grid;
 		gap: 0.5rem;
 		align-content: start;
@@ -52,6 +53,7 @@
 	}
 	.card__meta {
 		margin: 0;
+		overflow-wrap: anywhere;
 		font-size: var(--step-micro);
 		letter-spacing: 0.18em;
 		text-transform: uppercase;

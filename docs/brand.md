@@ -76,7 +76,9 @@ the CTA heading and the `/hendingar` title at 320px — the same bug at the othe
 
 Two guards now exist so it cannot silently return:
 
-- `.display` carries `overflow-wrap: break-word`. At 125% width a capital glyph advances ~0.92em,
+- `.display` carries `overflow-wrap: anywhere` — **not** `break-word`. Only `anywhere` is counted
+  when a grid or flex track computes its min-content width; with `break-word` the track stays as
+  wide as the longest unbreakable run and the page scrolls sideways regardless. At 125% width a capital glyph advances ~0.92em,
   so a 12-character Norwegian compound inks ~340px inside a 280px column. An ugly break is
   strictly better than text escaping the viewport, which is a WCAG 1.4.10 failure.
 - An e2e test asserts zero horizontal overflow at 320px on both pages.
