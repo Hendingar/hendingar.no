@@ -74,6 +74,12 @@ export const sources = pgTable('sources', {
 	kind: sourceKindEnum('kind').notNull().default('json-api'),
 	/** The exact endpoint we call, so the method is inspectable rather than implied. */
 	endpoint: text('endpoint'),
+	/**
+	 * The source's own icon, hotlinked. Per-source data rather than a URL hardcoded in a component,
+	 * because the next source will have a different one and /datasamling should not need a code
+	 * change to show it. Null renders initials instead — the same fallback the event thumbnails use.
+	 */
+	iconUrl: text('icon_url'),
 	/** Cron expression the scheduled job runs on. Null means "not scheduled yet". */
 	scheduleCron: text('schedule_cron'),
 	/**

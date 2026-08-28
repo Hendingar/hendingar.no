@@ -29,6 +29,13 @@
       "when": 1787895710845,
       "tag": "0003_elite_ken_ellis",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1787922378201,
+      "tag": "0004_slim_blacklash",
+      "breakpoints": true
     }
   ]
 }

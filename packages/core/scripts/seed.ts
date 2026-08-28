@@ -5,7 +5,7 @@
  * Idempotent: safe to run repeatedly. Dates are relative to now, because hardcoded 2026 dates
  * silently produce an empty homepage once they pass — `listEvents` only returns the future.
  */
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import { createDb } from '../src/db.ts';
 import { events, ingestRuns, sources, venues } from '../src/schema.ts';
 
@@ -36,6 +36,9 @@ const [source] = await db
 		// has only ever run the seed — a developer's laptop, or CI.
 		kind: 'json-api',
 		endpoint: 'https://detskjer.sunnhordland.no/api/events',
+		// Their own favicon, read from the <link rel="icon"> on their site.
+		iconUrl:
+			'https://superlocal-production.s3.eu-west-1.amazonaws.com/uploads/clients/header_style/1e6e4e2e-20e7-4390-a4cd-279f89e8b678/favicon/favicon-196.png',
 		scheduleCron: '0 5 * * *',
 		trusted: true,
 		lastRunAt: new Date()
@@ -46,6 +49,8 @@ const [source] = await db
 			name: 'Det skjer Sunnhordland',
 			kind: 'json-api',
 			endpoint: 'https://detskjer.sunnhordland.no/api/events',
+			iconUrl:
+				'https://superlocal-production.s3.eu-west-1.amazonaws.com/uploads/clients/header_style/1e6e4e2e-20e7-4390-a4cd-279f89e8b678/favicon/favicon-196.png',
 			scheduleCron: '0 5 * * *',
 			trusted: true
 		}
@@ -133,6 +138,45 @@ await db
 		}
 	])
 	.onConflictDoNothing({ target: [events.sourceId, events.externalId] });
+
+/*
+ * Two human submissions, so /datasamling's submission log is not empty on a machine that has only
+ * ever run the seed — the same reason the source metadata is registered here.
+ *
+ * One pending and one rejected, because those two rows exercise different behaviour: the rejected
+ * one has its title withheld on the log, and a seed with only happy rows would never show that.
+ * `sourceId` stays null — that is what makes an event a submission rather than an import.
+ */
+const submissionSeeds = [
+	{
+		title: 'Quiz på Kaikanten',
+		category: 'anna' as const,
+		startsAt: daysFromNow(4, 19),
+		endsAt: daysFromNow(4, 21),
+		venueId: venue.id,
+		status: 'pending' as const,
+		submissionMethod: 'photo' as const,
+		verificationNotes:
+			'Lese frå ein plakat. Kontrollen fann ikkje hendinga hos ei kjelde, så ho ventar på ein person.'
+	},
+	{
+		title: 'KJØP BILLIGE KLOKKER NO!!!',
+		category: 'anna' as const,
+		startsAt: daysFromNow(2, 12),
+		endsAt: null,
+		venueId: null,
+		status: 'rejected' as const,
+		submissionMethod: 'form' as const,
+		verificationNotes: 'Vurdert som reklame, ikkje ei hending. Lagra, ikkje sletta.'
+	}
+];
+
+const [existingSubmission] = await db
+	.select({ id: events.id })
+	.from(events)
+	.where(sql`${events.sourceId} is null`)
+	.limit(1);
+if (!existingSubmission) await db.insert(events).values(submissionSeeds);
 
 /*
  * A little run history, so the status board has something to render locally and in CI.
