@@ -23,7 +23,11 @@
 		"db:down": "./scripts/db.sh down",
 		"db:logs": "./scripts/db.sh logs",
 		"db:psql": "./scripts/db.sh psql",
-		"db:url": "./scripts/db.sh url"
+		"db:url": "./scripts/db.sh url",
+		"ingest": "pnpm --filter @hendingar/importer-detskjer ingest",
+		"verifier:dev": "cd services/verifier && ./.venv/bin/verifier dev",
+		"verifier:eval": "cd services/verifier && ./.venv/bin/python evals/run.py",
+		"db:bootstrap": "pnpm run db:up && pnpm run db:migrate && pnpm run db:seed && pnpm run ingest"
 	},
 	"devDependencies": {
 		"prettier": "^3.4.2",

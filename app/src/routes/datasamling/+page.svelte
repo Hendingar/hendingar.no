@@ -1,7 +1,8 @@
 <script lang="ts">
 	import { formatEventTime } from '@hendingar/core/datetime';
 	import { freshness } from '@hendingar/core/schedule';
-	import SourceCard from '../../lib/components/collection/SourceCard.svelte';
+	import SourceRow from '../../lib/components/collection/SourceRow.svelte';
+	import SubmissionLog from '../../lib/components/collection/SubmissionLog.svelte';
 	import { listCollection } from '../../lib/collection.remote';
 
 	// Top-level await so the status board is in the server-rendered HTML (CLAUDE.md).
@@ -77,6 +78,10 @@
 			<p class="stat__n display">{data.submittedCount}</p>
 			<p class="stat__l">sendt inn av folk</p>
 		</div>
+		<div class="stat">
+			<p class="stat__n display">{data.pendingCount}</p>
+			<p class="stat__l">ventar på eit menneske</p>
+		</div>
 		<div class="stat stat--wide">
 			<p class="stat__n display stat__n--sm">
 				{#if anyBroken}Treng tilsyn{:else if allFresh}Alt går som det skal{:else}Noko heng etter{/if}
@@ -89,16 +94,29 @@
 	</div>
 </section>
 
-<section class="shell sources" aria-labelledby="h-sources">
-	<p class="label">01 — Kjelder</p>
-	<h2 id="h-sources" class="display sources__h">Kvar det kjem frå</h2>
+<section class="shell block" aria-labelledby="h-submissions">
+	<p class="label">01 — Innsendingar</p>
+	<h2 id="h-submissions" class="display block__h">Sendt inn av folk</h2>
+	<p class="block__lede">
+		Kva som er kome inn gjennom <a href="/send-inn">skjemaet</a> eller frå eit bilete, og kva dei fem
+		kontrollane avgjorde. Er noko usikkert, ventar hendinga på ein person — ho blir ikkje kasta.
+	</p>
+	<SubmissionLog submissions={data.submissions} />
+</section>
+
+<section class="shell block" aria-labelledby="h-sources">
+	<p class="label">02 — Kjelder</p>
+	<h2 id="h-sources" class="display block__h">Kvar det kjem frå</h2>
+	<p class="block__lede">
+		Éi linje per kjelde. Opne ei av dei for rytme, endepunkt og køyringshistorikk.
+	</p>
 
 	{#if data.sources.length === 0}
 		<p class="empty">Ingen kjelder registrerte enno.</p>
 	{:else}
-		<div class="grid">
+		<div class="rows">
 			{#each data.sources as source (source.slug)}
-				<SourceCard {source} {now} />
+				<SourceRow {source} {now} />
 			{/each}
 		</div>
 	{/if}
@@ -106,7 +124,7 @@
 
 <section class="method" aria-labelledby="h-method">
 	<div class="shell">
-		<p class="label">02 — Metode</p>
+		<p class="label">03 — Metode</p>
 		<h2 id="h-method" class="display method__h">Korleis vi gjer det</h2>
 		<p class="method__lede">
 			Innhentinga er heilt deterministisk. Same kjelde inn gir same resultat ut, kvar gong.
@@ -208,18 +226,25 @@
 		color: rgb(22 34 59 / 78%);
 	}
 
-	.sources {
-		padding-block: var(--section-y);
+	.block {
+		/* Was --section-y (up to 9rem) per section. With two list sections plus the method band
+		   that put most of the page's height into empty space between headings. */
+		padding-block: clamp(2.5rem, 6vw, 4.5rem);
 		container-type: inline-size;
 	}
-	.sources__h {
-		font-size: clamp(1.75rem, 11cqw, 5rem);
-		margin-block: 0.25em 1em;
+	.block__h {
+		/* Was 11cqw, up to 5rem — a heading taller than the list it introduced. The lists are the
+		   content here; the headings only have to separate them. */
+		font-size: clamp(1.5rem, 6cqw, 2.5rem);
+		margin-block: 0.25em 0.4em;
 	}
-	.grid {
-		display: grid;
-		grid-template-columns: repeat(auto-fit, minmax(min(100%, 24rem), 1fr));
-		gap: var(--gutter);
+	.block__lede {
+		margin: 0 0 1.75rem;
+		max-inline-size: 62ch;
+		color: var(--peach-dim);
+	}
+	.rows {
+		border-block-start: var(--rule) solid var(--peach-line);
 	}
 	.empty {
 		font-family: var(--font-display);

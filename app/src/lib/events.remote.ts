@@ -1,8 +1,10 @@
-import { form, query } from '$app/server';
+import { error } from '@sveltejs/kit';
+import { query } from '$app/server';
 import { z } from 'zod';
-import { and, asc, eq, gte, lte, or, sql } from 'drizzle-orm';
-import { events, organizers, venues } from '@hendingar/core/schema';
-import { eventQuerySchema, eventSubmissionSchema } from '@hendingar/core/validation';
+import { and, asc, count, eq, gte, lte, or, sql } from 'drizzle-orm';
+import { events, organizers, sources, venues, verifications } from '@hendingar/core/schema';
+import { eventQuerySchema } from '@hendingar/core/validation';
+import { categoryLabel } from '@hendingar/core/taxonomy';
 import { db } from './server/db';
 
 /**
@@ -23,36 +25,74 @@ export const listEvents = query(
 	async ({ from, to, category, municipality, limit }) => {
 		const since = from ? new Date(from) : new Date();
 
-		return db()
-			.select({
-				id: events.id,
-				title: events.title,
-				category: events.category,
-				startsAt: events.startsAt,
-				endsAt: events.endsAt,
-				venueName: venues.name,
-				// The zone is what makes startsAt renderable as a wall clock. Always select it.
-				venueTimeZone: venues.timezone,
-				municipality: venues.municipality
-			})
-			.from(events)
-			.leftJoin(venues, eq(events.venueId, venues.id))
-			.where(
-				and(
-					eq(events.status, 'published'),
-					// An event that has started but not ended is still happening, and must stay
-					// visible. Filtering on startsAt alone hid a three-hour concert for its whole
-					// duration, and a weekend festival for the entire weekend.
-					or(gte(events.startsAt, since), gte(events.endsAt, since)),
-					to ? lte(events.startsAt, new Date(to)) : undefined,
-					category ? eq(events.category, category) : undefined,
-					municipality ? eq(venues.municipality, municipality) : undefined
+		return (
+			db()
+				.select({
+					id: events.id,
+					title: events.title,
+					category: events.category,
+					startsAt: events.startsAt,
+					endsAt: events.endsAt,
+					venueName: venues.name,
+					// The zone is what makes startsAt renderable as a wall clock. Always select it.
+					venueTimeZone: venues.timezone,
+					municipality: venues.municipality,
+					posterUrl: events.posterUrl,
+					// Same day-grouping columns as listUpcoming, so one component renders both listings
+					// instead of /hendingar having a second, plainer list that drifts from the front page.
+					localDate: sql<string>`
+					to_char(
+						greatest(${events.startsAt}, now())
+							at time zone coalesce(${venues.timezone}, 'Europe/Oslo'),
+						'YYYY-MM-DD'
+					)
+				`.as('local_date'),
+					todayLocalDate: sql<string>`
+					to_char(now() at time zone coalesce(${venues.timezone}, 'Europe/Oslo'), 'YYYY-MM-DD')
+				`.as('today_local_date')
+				})
+				.from(events)
+				.leftJoin(venues, eq(events.venueId, venues.id))
+				.where(
+					and(
+						eq(events.status, 'published'),
+						// An event that has started but not ended is still happening, and must stay
+						// visible. Filtering on startsAt alone hid a three-hour concert for its whole
+						// duration, and a weekend festival for the entire weekend.
+						or(gte(events.startsAt, since), gte(events.endsAt, since)),
+						to ? lte(events.startsAt, new Date(to)) : undefined,
+						category ? eq(events.category, category) : undefined,
+						municipality ? eq(venues.municipality, municipality) : undefined
+					)
 				)
-			)
-			.orderBy(asc(events.startsAt))
-			.limit(limit);
+				// Ordered by the same effective instant the grouping uses, so day groups stay contiguous.
+				.orderBy(sql`greatest(${events.startsAt}, now())`, asc(events.startsAt))
+				.limit(limit)
+		);
 	}
 );
+
+/**
+ * How many upcoming events each category has.
+ *
+ * The filter renders from this rather than from the full taxonomy: sixteen chips where eleven lead
+ * to an empty page is a worse control than five that all go somewhere. The count also tells you
+ * whether a filter is worth pressing before you press it.
+ */
+export const listCategoryCounts = query(async () => {
+	const now = new Date();
+	const rows = await db()
+		.select({ category: events.category, total: count() })
+		.from(events)
+		.where(
+			and(eq(events.status, 'published'), or(gte(events.startsAt, now), gte(events.endsAt, now)))
+		)
+		.groupBy(events.category);
+
+	return rows
+		.map((row) => ({ slug: row.category, label: categoryLabel(row.category), total: row.total }))
+		.sort((a, b) => b.total - a.total || a.label.localeCompare(b.label, 'nb-NO'));
+});
 
 /** The row shape callers get, derived from the query rather than hand-written. */
 export type EventSummary = Awaited<ReturnType<typeof listEvents>>[number];
@@ -112,69 +152,64 @@ export const listUpcoming = query(z.number().int().min(1).max(60).default(24), a
 export type UpcomingEvent = Awaited<ReturnType<typeof listUpcoming>>[number];
 
 /**
- * Anyone can submit an event — no account required (README non-goals: not a walled garden).
- * Submissions land as `pending` for the verification pipeline; they are never published directly.
+ * One event, with everything needed to render a page for it.
+ *
+ * Published only. An event awaiting review has a URL that resolves to nothing, deliberately: the
+ * queue is not a preview channel, and a `pending` event is one we have not vouched for.
+ *
+ * The verification rows come along because the README promises the reasoning is auditable rather
+ * than a black box, and the event's own page is the only place a reader would look for it.
  */
-export const submitEvent = form(eventSubmissionSchema, async (submission) => {
+export const getEvent = query(z.number().int().positive(), async (id) => {
 	const database = db();
 
-	// venueName is REQUIRED by the schema, so dropping it silently — as this previously did —
-	// meant every submission landed with venue_id NULL and the location, the single most useful
-	// field on a local-events site, was unrecoverable.
-	const venueSlug = slugify(submission.venueName);
-	const [venue] = await database
-		.insert(venues)
-		.values({
-			name: submission.venueName,
-			slug: venueSlug,
-			municipality: submission.municipality
+	const [row] = await database
+		.select({
+			id: events.id,
+			title: events.title,
+			description: events.description,
+			category: events.category,
+			startsAt: events.startsAt,
+			endsAt: events.endsAt,
+			posterUrl: events.posterUrl,
+			ctaUrl: events.ctaUrl,
+			sourceUrl: events.sourceUrl,
+			submissionMethod: events.submissionMethod,
+			verificationNotes: events.verificationNotes,
+			venueName: venues.name,
+			venueAddress: venues.address,
+			venueMunicipality: venues.municipality,
+			venueLatitude: venues.latitude,
+			venueLongitude: venues.longitude,
+			venueTimeZone: venues.timezone,
+			organizerName: organizers.name,
+			sourceName: sources.name,
+			sourceAttribution: sources.attribution,
+			sourceSiteUrl: sources.url
 		})
-		.onConflictDoUpdate({
-			target: venues.slug,
-			// Only overwrite the municipality when the submitter actually supplied one — an absent
-			// value must not blank out what we already know about a known venue.
-			set: submission.municipality
-				? { municipality: submission.municipality }
-				: { name: submission.venueName }
+		.from(events)
+		.leftJoin(venues, eq(events.venueId, venues.id))
+		.leftJoin(organizers, eq(events.organizerId, organizers.id))
+		.leftJoin(sources, eq(events.sourceId, sources.id))
+		.where(and(eq(events.id, id), eq(events.status, 'published')))
+		.limit(1);
+
+	if (!row) error(404, 'Fann ikkje hendinga');
+
+	const checks = await database
+		.select({
+			check: verifications.check,
+			verdict: verifications.verdict,
+			confidence: verifications.confidence,
+			reasoning: verifications.reasoning,
+			deterministic: verifications.deterministic,
+			model: verifications.model
 		})
-		.returning({ id: venues.id });
+		.from(verifications)
+		.where(eq(verifications.eventId, id))
+		.orderBy(asc(verifications.id));
 
-	let organizerId: number | undefined;
-	if (submission.organizerName) {
-		const [organizer] = await database
-			.insert(organizers)
-			.values({ name: submission.organizerName, slug: slugify(submission.organizerName) })
-			.onConflictDoUpdate({ target: organizers.slug, set: { name: submission.organizerName } })
-			.returning({ id: organizers.id });
-		organizerId = organizer?.id;
-	}
-
-	await database.insert(events).values({
-		title: submission.title,
-		description: submission.description,
-		category: submission.category,
-		startsAt: new Date(submission.startsAt),
-		endsAt: submission.endsAt ? new Date(submission.endsAt) : null,
-		venueId: venue?.id,
-		organizerId,
-		sourceUrl: submission.sourceUrl,
-		ctaUrl: submission.ctaUrl,
-		status: 'pending'
-	});
-
-	return { received: true };
+	return { ...row, checks };
 });
 
-/** Norwegian-aware slug: æøå transliterate rather than vanishing. */
-function slugify(value: string): string {
-	return value
-		.toLowerCase()
-		.replace(/æ/g, 'ae')
-		.replace(/ø/g, 'oe')
-		.replace(/å/g, 'aa')
-		.normalize('NFD')
-		.replace(/[̀-ͯ]/g, '')
-		.replace(/[^a-z0-9]+/g, '-')
-		.replace(/^-+|-+$/g, '')
-		.slice(0, 120);
-}
+export type EventDetail = Awaited<ReturnType<typeof getEvent>>;

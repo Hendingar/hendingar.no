@@ -1,0 +1,15 @@
+{
+	"description": "Printed poster with a date and time but NO venue named — the building is pictured, never labelled. The venue assertion is the point: a plausible guess here is a wrong answer.",
+	"source": "supplied by Tor, 2026-08-28",
+	"today": "2026-08-28",
+	"expect": {
+		"title": { "contains": "sommermøte" },
+		"category": { "oneOf": ["kyrkjeliv", "mote"] },
+		"date": { "equals": "2026-08-28" },
+		"start_time": { "equals": "18:00" },
+		"end_time": { "isNull": true },
+		"recurrence": { "isNull": true },
+		"venue_name": { "isNull": true },
+		"confidence": { "atLeast": 60 }
+	}
+}

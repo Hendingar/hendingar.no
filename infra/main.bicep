@@ -148,6 +148,18 @@ resource containerEnv 'Microsoft.App/managedEnvironments@2024-03-01' = {
   }
 }
 
+// The only place a language model lives. Part of the platform, not the app: it is long-lived and
+// must not be re-applied by an image deploy. See docs/decisions/0006-agentic-verification.md.
+module ai 'ai.bicep' = {
+  name: 'ai'
+  params: {
+    appName: appName
+    location: location
+    tags: tags
+    nameSuffix: suffix
+  }
+}
+
 output acrName string = acr.name
 output acrLoginServer string = acr.properties.loginServer
 output postgresFqdn string = postgres.properties.fullyQualifiedDomainName
@@ -155,3 +167,7 @@ output postgresAdminUserOut string = postgresAdminUser
 output managedEnvironmentId string = containerEnv.id
 output runtimeIdentityId string = runtimeIdentity.id
 output runtimeIdentityPrincipalId string = runtimeIdentity.properties.principalId
+output runtimeIdentityClientId string = runtimeIdentity.properties.clientId
+output openAiEndpoint string = ai.outputs.endpoint
+output openAiAccountName string = ai.outputs.accountName
+output openAiDeployment string = ai.outputs.deploymentName

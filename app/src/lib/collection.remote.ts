@@ -1,6 +1,6 @@
 import { query } from '$app/server';
 import { and, count, desc, eq, gte, sql } from 'drizzle-orm';
-import { events, ingestRuns, sources } from '@hendingar/core/schema';
+import { events, ingestRuns, sources, venues } from '@hendingar/core/schema';
 import { db } from './server/db';
 
 /**
@@ -20,6 +20,7 @@ export const listCollection = query(async () => {
 			name: sources.name,
 			url: sources.url,
 			endpoint: sources.endpoint,
+			iconUrl: sources.iconUrl,
 			region: sources.region,
 			kind: sources.kind,
 			scheduleCron: sources.scheduleCron,
@@ -86,13 +87,54 @@ export const listCollection = query(async () => {
 		.from(events)
 		.where(sql`${events.sourceId} is null`);
 
+	/*
+	 * The submission log.
+	 *
+	 * /datasamling could account for every imported event and none of the submitted ones, so the
+	 * half of the pipeline with a person in it was invisible. A count is not enough: the point of
+	 * publishing verification reasoning is that someone can read it, and that means a list.
+	 *
+	 * Titles are shown for pending and published rows but withheld for rejected ones — a rejected
+	 * submission is retained as evidence (see submit.remote.ts), and republishing the text of
+	 * something we judged to be spam or abuse would defeat rejecting it.
+	 */
+	const submissions = await database
+		.select({
+			id: events.id,
+			title: events.title,
+			status: events.status,
+			method: events.submissionMethod,
+			createdAt: events.createdAt,
+			startsAt: events.startsAt,
+			venueName: venues.name,
+			notes: events.verificationNotes
+		})
+		.from(events)
+		.leftJoin(venues, eq(events.venueId, venues.id))
+		.where(sql`${events.sourceId} is null`)
+		.orderBy(desc(events.createdAt))
+		// Five. The log is a "what just happened" signal on a status board, not an archive: a long
+		// scroll of submissions pushes the source rows — the other half of the page — below the fold.
+		.limit(5);
+
+	const [pending] = await database
+		.select({ total: count() })
+		.from(events)
+		.where(and(sql`${events.sourceId} is null`, eq(events.status, 'pending')));
+
 	return {
 		generatedAt: now,
 		sources: collected,
-		submittedCount: submitted?.total ?? 0
+		submittedCount: submitted?.total ?? 0,
+		pendingCount: pending?.total ?? 0,
+		submissions: submissions.map((row) => ({
+			...row,
+			title: row.status === 'rejected' ? null : row.title
+		}))
 	};
 });
 
 export type Collection = Awaited<ReturnType<typeof listCollection>>;
+export type SubmissionLogRow = Collection['submissions'][number];
 export type CollectedSource = Collection['sources'][number];
 export type IngestRunSummary = CollectedSource['runs'][number];

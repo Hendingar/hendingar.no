@@ -5,9 +5,10 @@
  * Idempotent: safe to run repeatedly. Dates are relative to now, because hardcoded 2026 dates
  * silently produce an empty homepage once they pass — `listEvents` only returns the future.
  */
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import { createDb } from '../src/db.ts';
 import { events, ingestRuns, sources, venues } from '../src/schema.ts';
+import type { CategorySlug } from '../src/taxonomy.ts';
 
 const url = process.env.DATABASE_URL;
 if (!url) {
@@ -36,6 +37,9 @@ const [source] = await db
 		// has only ever run the seed — a developer's laptop, or CI.
 		kind: 'json-api',
 		endpoint: 'https://detskjer.sunnhordland.no/api/events',
+		// Their own favicon, read from the <link rel="icon"> on their site.
+		iconUrl:
+			'https://superlocal-production.s3.eu-west-1.amazonaws.com/uploads/clients/header_style/1e6e4e2e-20e7-4390-a4cd-279f89e8b678/favicon/favicon-196.png',
 		scheduleCron: '0 5 * * *',
 		trusted: true,
 		lastRunAt: new Date()
@@ -46,6 +50,8 @@ const [source] = await db
 			name: 'Det skjer Sunnhordland',
 			kind: 'json-api',
 			endpoint: 'https://detskjer.sunnhordland.no/api/events',
+			iconUrl:
+				'https://superlocal-production.s3.eu-west-1.amazonaws.com/uploads/clients/header_style/1e6e4e2e-20e7-4390-a4cd-279f89e8b678/favicon/favicon-196.png',
 			scheduleCron: '0 5 * * *',
 			trusted: true
 		}
@@ -135,6 +141,99 @@ await db
 	.onConflictDoNothing({ target: [events.sourceId, events.externalId] });
 
 /*
+ * Twelve more published events, so a seed-only database looks like the product instead of like a
+ * near-empty one.
+ *
+ * This is not padding. `/hendingar` is a day-grouped grid with thumbnails, and neither property is
+ * observable at four rows: nothing groups, and no tile has a poster. Two listing specs asserted
+ * both against data that only `pnpm ingest` ever produced, so CI — which must not reach the
+ * network (rule 6) and therefore never runs the importer — failed on data it could not create.
+ * Fixing the seed keeps the assertions honest; lowering them would have hidden the real gap.
+ *
+ * Posters point at a local same-origin file rather than the source's CDN, for the same reason.
+ */
+const POSTER = '/seed-poster.svg';
+
+const filler = (
+	externalId: string,
+	title: string,
+	category: CategorySlug,
+	day: number,
+	hour: number,
+	venueId: number,
+	poster = false
+) => ({
+	sourceId: source.id,
+	externalId,
+	title,
+	category,
+	startsAt: daysFromNow(day, hour),
+	endsAt: daysFromNow(day, hour + 2),
+	venueId,
+	status: 'published' as const,
+	posterUrl: poster ? POSTER : null
+});
+
+const fillerEvents = [
+	filler('seed-5', 'Songkveld i Stord kyrkje', 'kyrkjeliv', 1, 19, venue.id, true),
+	filler('seed-6', 'Fjordcup: finaledag', 'sport', 1, 12, venue.id),
+	filler('seed-7', 'Bokbad med Åsta Nordmark', 'litteratur', 2, 18, venue.id, true),
+	filler('seed-8', 'Folkedans på kaien', 'dans', 2, 20, venue.id),
+	filler('seed-9', 'Stand-up: Ope mikrofon', 'stand-up', 4, 21, venue.id, true),
+	filler('seed-10', 'Bondens marknad', 'marknad', 5, 10, venue.id),
+	filler('seed-11', 'Smakskveld: lokal sider', 'mat-og-drikke', 7, 19, venue.id, true),
+	filler('seed-12', 'Kurs i trykkjekunst', 'kurs', 8, 17, venue.id),
+	filler('seed-13', 'Haustfestivalen opnar', 'festival', 9, 15, venue.id, true),
+	filler('seed-14', 'Kammermusikk i Helsingfors', 'musikk', 12, 19, helsinki.id, true),
+	filler('seed-15', 'Teater: Kvit natt', 'teater', 14, 19, venue.id),
+	filler('seed-16', 'Konferanse om lokaljournalistikk', 'konferanse', 16, 9, venue.id)
+];
+
+await db
+	.insert(events)
+	.values(fillerEvents)
+	.onConflictDoNothing({ target: [events.sourceId, events.externalId] });
+
+/*
+ * Two human submissions, so /datasamling's submission log is not empty on a machine that has only
+ * ever run the seed — the same reason the source metadata is registered here.
+ *
+ * One pending and one rejected, because those two rows exercise different behaviour: the rejected
+ * one has its title withheld on the log, and a seed with only happy rows would never show that.
+ * `sourceId` stays null — that is what makes an event a submission rather than an import.
+ */
+const submissionSeeds = [
+	{
+		title: 'Quiz på Kaikanten',
+		category: 'anna' as const,
+		startsAt: daysFromNow(4, 19),
+		endsAt: daysFromNow(4, 21),
+		venueId: venue.id,
+		status: 'pending' as const,
+		submissionMethod: 'photo' as const,
+		verificationNotes:
+			'Lese frå ein plakat. Kontrollen fann ikkje hendinga hos ei kjelde, så ho ventar på ein person.'
+	},
+	{
+		title: 'KJØP BILLIGE KLOKKER NO!!!',
+		category: 'anna' as const,
+		startsAt: daysFromNow(2, 12),
+		endsAt: null,
+		venueId: null,
+		status: 'rejected' as const,
+		submissionMethod: 'form' as const,
+		verificationNotes: 'Vurdert som reklame, ikkje ei hending. Lagra, ikkje sletta.'
+	}
+];
+
+const [existingSubmission] = await db
+	.select({ id: events.id })
+	.from(events)
+	.where(sql`${events.sourceId} is null`)
+	.limit(1);
+if (!existingSubmission) await db.insert(events).values(submissionSeeds);
+
+/*
  * A little run history, so the status board has something to render locally and in CI.
  *
  * `trigger: 'seed'` rather than 'schedule' — these did not happen, and the board must never let
@@ -169,6 +268,6 @@ const [{ count } = { count: 0 }] = await db
 	.limit(1);
 
 console.log(
-	`seeded: 1 source, 2 venues, 4 events, ${existingRun ? 0 : seedRuns.length} runs (sample id ${count})`
+	`seeded: 1 source, 2 venues, ${4 + fillerEvents.length} events, ${submissionSeeds.length} submissions, ${existingRun ? 0 : seedRuns.length} runs (sample id ${count})`
 );
 process.exit(0);

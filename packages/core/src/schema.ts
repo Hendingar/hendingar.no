@@ -1,5 +1,6 @@
 import {
 	boolean,
+	date,
 	doublePrecision,
 	index,
 	integer,
@@ -11,6 +12,8 @@ import {
 	uniqueIndex
 } from 'drizzle-orm/pg-core';
 import { CATEGORY_SLUGS } from './taxonomy.ts';
+import { RECURRENCE_FREQUENCIES } from './recurrence.ts';
+import { VERIFICATION_CHECKS, VERIFICATION_VERDICTS } from './verification.ts';
 
 /** Derived from taxonomy.ts — never write this list out by hand. */
 export const categoryEnum = pgEnum('category', CATEGORY_SLUGS);
@@ -37,6 +40,19 @@ export const ingestRunStatusEnum = pgEnum('ingest_run_status', [
 	'failed'
 ]);
 
+/** How an event entered the system. Shown on the event, so provenance is never a guess. */
+export const submissionMethodEnum = pgEnum('submission_method', [
+	'import', // a deterministic importer
+	'form', // a human filled in the form
+	'photo' // a human photographed a poster and confirmed the extraction
+]);
+
+/** The verification pipeline's stages — names and labels live in ./verification.ts (rule 1). */
+export const verificationCheckEnum = pgEnum('verification_check', VERIFICATION_CHECKS);
+
+/** `uncertain` is the one that matters: it routes to a human rather than guessing. */
+export const verificationVerdictEnum = pgEnum('verification_verdict', VERIFICATION_VERDICTS);
+
 export const geocodeStatusEnum = pgEnum('geocode_status', [
 	'pending',
 	'resolved',
@@ -60,6 +76,12 @@ export const sources = pgTable('sources', {
 	kind: sourceKindEnum('kind').notNull().default('json-api'),
 	/** The exact endpoint we call, so the method is inspectable rather than implied. */
 	endpoint: text('endpoint'),
+	/**
+	 * The source's own icon, hotlinked. Per-source data rather than a URL hardcoded in a component,
+	 * because the next source will have a different one and /datasamling should not need a code
+	 * change to show it. Null renders initials instead — the same fallback the event thumbnails use.
+	 */
+	iconUrl: text('icon_url'),
 	/** Cron expression the scheduled job runs on. Null means "not scheduled yet". */
 	scheduleCron: text('schedule_cron'),
 	/**
@@ -148,6 +170,43 @@ export const organizers = pgTable('organizers', {
 	avatarUrl: text('avatar_url')
 });
 
+export const recurrenceFreqEnum = pgEnum('recurrence_freq', RECURRENCE_FREQUENCIES);
+
+/**
+ * A repeating event's rule. One row per series; the occurrences are rows in `events`.
+ *
+ * Occurrences are materialised rather than expanded at query time because every listing is
+ * `starts_at >= now()` grouped by day, and expanding on read would mean rewriting all of them and
+ * losing the index. See docs/decisions/0009-recurring-events.md and `src/recurrence.ts`.
+ *
+ * The time fields are a wall clock and a zone, not an instant: "torsdager kl 12" is 12:00 local on
+ * both sides of a DST change, which is an hour apart in UTC. Storing an instant here and adding
+ * seven days per occurrence is the classic way to get that wrong.
+ */
+export const eventSeries = pgTable('event_series', {
+	id: serial('id').primaryKey(),
+	freq: recurrenceFreqEnum('freq').notNull(),
+	/** Every N periods. 2 with `weekly` is "annakvar veke". */
+	interval: integer('interval').notNull().default(1),
+	/** ISO weekdays, 1 = Monday. Empty for `daily`. */
+	weekdays: integer('weekdays').array().notNull().default([]),
+	/** Monthly only: which occurrence of the weekday, or -1 for the last. */
+	nth: integer('nth'),
+	/** First local date the series can occur on, and the anchor the interval counts from. */
+	anchorDate: date('anchor_date', { mode: 'string' }).notNull(),
+	/** Last local date, inclusive. Null means open-ended, capped by the horizon. */
+	until: date('until', { mode: 'string' }),
+	startTime: text('start_time').notNull(),
+	endTime: text('end_time'),
+	timezone: text('timezone').notNull().default('Europe/Oslo'),
+	/**
+	 * How far occurrences have been written. The top-up job reads this rather than counting rows,
+	 * so an open-ended series extends without re-expanding what already exists.
+	 */
+	materialisedThrough: date('materialised_through', { mode: 'string' }),
+	createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
+});
+
 export const events = pgTable(
 	'events',
 	{
@@ -170,6 +229,13 @@ export const events = pgTable(
 
 		venueId: integer('venue_id').references(() => venues.id),
 		organizerId: integer('organizer_id').references(() => organizers.id),
+		/**
+		 * Set when this event is one occurrence of a series. Null for a one-off.
+		 *
+		 * Every listing query stays untouched: an occurrence is an ordinary event that happens to
+		 * have siblings, which is the whole point of materialising rather than expanding on read.
+		 */
+		seriesId: integer('series_id').references(() => eventSeries.id, { onDelete: 'cascade' }),
 
 		/** Outbound ticket link. We never sell tickets — see README non-goals. */
 		ctaUrl: text('cta_url'),
@@ -180,12 +246,26 @@ export const events = pgTable(
 		status: eventStatusEnum('status').notNull().default('pending'),
 		/** Why the verification agent reached its conclusion — auditable, not a black box. */
 		verificationNotes: text('verification_notes'),
+		/** How this event arrived. */
+		submissionMethod: submissionMethodEnum('submission_method').notNull().default('import'),
+		/**
+		 * When the review agent last looked at this event.
+		 *
+		 * This is what distinguishes the two very different meanings `pending` used to carry:
+		 * `pending` with a null `reviewedAt` is waiting for the agent, and `pending` with one set
+		 * has been through the agent and escalated to a person. Expressing it this way rather than
+		 * adding an `escalated` status keeps the enum — and every query that filters on it —
+		 * unchanged, and records *when* the escalation happened, which a status cannot.
+		 */
+		reviewedAt: timestamp('reviewed_at', { withTimezone: true }),
 
 		createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 		updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow()
 	},
 	(t) => [
 		uniqueIndex('events_source_external_idx').on(t.sourceId, t.externalId),
+		// Makes materialising idempotent: topping up a series can never double-write a day.
+		uniqueIndex('events_series_starts_at_idx').on(t.seriesId, t.startsAt),
 		index('events_starts_at_idx').on(t.startsAt),
 		index('events_status_starts_at_idx').on(t.status, t.startsAt)
 	]
@@ -197,5 +277,36 @@ export type Venue = typeof venues.$inferSelect;
 export type NewVenue = typeof venues.$inferInsert;
 export type Source = typeof sources.$inferSelect;
 export type Organizer = typeof organizers.$inferSelect;
+/**
+ * One row per verification check per event.
+ *
+ * The README promises the agent's reasoning is "auditable rather than a black box". That promise
+ * is only real if the reasoning is stored: a verdict with no record of why is exactly the black box
+ * we said we would not build. Every check writes a row, including the ones that pass.
+ */
+export const verifications = pgTable(
+	'verifications',
+	{
+		id: serial('id').primaryKey(),
+		eventId: integer('event_id')
+			.notNull()
+			.references(() => events.id, { onDelete: 'cascade' }),
+		check: verificationCheckEnum('check').notNull(),
+		verdict: verificationVerdictEnum('verdict').notNull(),
+		/** 0–100. Low confidence routes to a human even when the verdict is `pass`. */
+		confidence: integer('confidence').notNull().default(0),
+		/** The agent's stated reasoning, in the reader's language. Shown, not just logged. */
+		reasoning: text('reasoning').notNull(),
+		/** Which model produced this, so a behaviour change is traceable to a model change. */
+		model: text('model'),
+		/** Set when a check is decided by code rather than a model — e.g. duplicate matching. */
+		deterministic: boolean('deterministic').notNull().default(false),
+		createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
+	},
+	(t) => [index('verifications_event_idx').on(t.eventId)]
+);
+
 export type IngestRun = typeof ingestRuns.$inferSelect;
+export type Verification = typeof verifications.$inferSelect;
+export type NewVerification = typeof verifications.$inferInsert;
 export type NewIngestRun = typeof ingestRuns.$inferInsert;

@@ -12,7 +12,8 @@
 		</p>
 		<p class="label">
 			<a href="/datasamling">Datasamling</a> ·
-			<a href="/hendingar">Alle hendingar</a>
+			<a href="/hendingar">Alle hendingar</a> ·
+			<a href="/send-inn">Send inn</a>
 		</p>
 		<p class="label">AGPL-3.0 · Tidleg utvikling</p>
 		<p class="label">Utviklingsinfrastruktur sponsa av Nordlo</p>

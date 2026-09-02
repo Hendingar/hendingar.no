@@ -38,21 +38,38 @@ Scope discipline is a feature. hendingar.no is deliberately **not**:
 
 ## Agentic verification
 
-Open submission invites spam, duplicates and junk. Rather than gate contributions behind
-accounts, incoming events run through an agent pipeline before they go live:
+Open submission invites spam, duplicates and junk. Rather than gate contributions behind accounts,
+every incoming event runs through five checks before it goes live. Three are **rules** — code with
+the same answer every time. Two ask a **language model**, because they need judgement:
 
-| Check          | What it does                                                        |
-| -------------- | ------------------------------------------------------------------- |
-| Plausibility   | Is this a real event, or spam / a test / an ad?                     |
-| Deduplication  | Match against existing events across venue, time and title variants |
-| Normalisation  | Resolve dates, times and recurrence into structured form            |
-| Geocoding      | Turn a venue name into coordinates; flag when it can't be placed    |
-| Categorisation | Assign category and tags (concert, theatre, kulturhus, sports, …)   |
-| Corroboration  | Look for the event at its cited source URL                          |
+| Check          | How              | What it asks                                                  |
+| -------------- | ---------------- | ------------------------------------------------------------- |
+| Plausibility   | model            | Is this a real event, or spam / a test / an ad?               |
+| Duplicate      | rule + shortlist | Does it already exist, across venue, time and title variants? |
+| Normalisation  | rule             | Are time, place and required fields present and well-formed?  |
+| Categorisation | model            | Does the category match the content?                          |
+| Corroboration  | rule             | Can it be confirmed against a cited source?                   |
 
-High-confidence events publish immediately. Anything uncertain goes to a human moderation
-queue — the agent triages, people decide. Verification status is visible on every event, and
-the agent's reasoning is auditable rather than a black box.
+A unanimous confident pass publishes immediately. Anything uncertain goes to a human queue — the
+agent triages, people decide. Nothing is deleted on a model's say-so: a rejected submission is
+stored as rejected, so a wrong call is recoverable and repeat spam has something to match against.
+
+Every check's verdict, confidence and reasoning is stored and shown to the submitter, in Nynorsk.
+The reasoning is the product, not a debug log.
+
+**Two ways to submit.** Upload an image — a poster on a noticeboard, a screenshot of a Facebook
+event, an advert in the paper — and we read the event out of it and hand you a filled-in
+suggestion. You review and correct it before anything is sent, and the image is downscaled in your
+browser, stripped of location data, read once and never stored. Or fill the form in yourself; it
+works without JavaScript.
+
+Extraction is transcription, not writing, so it is pinned as close to deterministic as the API
+allows: temperature 0, a fixed seed, and a strict JSON schema. Two people photographing the same
+poster should get the same suggestion.
+
+**No API keys anywhere.** The one service that calls a model runs on its own managed identity
+against an account with key authentication disabled. See
+[ADR 0008](docs/decisions/0008-verification-service.md).
 
 ## Status
 

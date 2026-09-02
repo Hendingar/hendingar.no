@@ -203,15 +203,44 @@ az role assignment create \
   --scope "$ACR_ID"
 ```
 
+**3. `Cognitive Services OpenAI User` for the runtime identity.** Same constraint, same operator,
+same reason — and the same "only after the first deploy" caveat, because `infra/ai.bicep` creates
+the account during the platform converge. The verifier service holds no API key: the account is
+created with `disableLocalAuth: true`, so this grant is the _only_ way it can call the model.
+
+```bash
+SUB=7bcda9cc-633e-4b98-8c36-926f9d181bb0
+RG=rg-hendingar-swc-dev
+MI_PRINCIPAL=$(az identity show -g "$RG" -n id-hendingar --query principalId -o tsv)
+AI_ID=$(az resource list -g "$RG" --resource-type Microsoft.CognitiveServices/accounts --query '[0].id' -o tsv)
+
+az role assignment create \
+  --assignee-object-id "$MI_PRINCIPAL" --assignee-principal-type ServicePrincipal \
+  --role 5e0bd9bd-7b93-4f28-af87-19fc36ad61bd \
+  --scope "$AI_ID"
+```
+
+Until this exists, the deploy still succeeds and the site still works: the verifier answers
+`/health` (which does not call the model), every submission routes to the human queue, and the
+photo shortcut returns "kunne ikkje lese plakaten". Nothing 500s — but the feature is off.
+
+Check the model quota before the first deploy, since `Standard` is the only SKU with any in this
+subscription:
+
+```bash
+az cognitiveservices usage list -l swedencentral --subscription "$SUB" \
+  --query "[?contains(name.value, 'gpt-4.1-mini')].{name:name.value, limit:limit, current:currentValue}" -o table
+```
+
 ### So the first bootstrap takes two workflow runs
 
 This is inherent, not a bug — the grant target doesn't exist until the first run creates it.
 
-| Run | What happens                                                                                                                 |
-| --- | ---------------------------------------------------------------------------------------------------------------------------- |
-| 1   | Platform converges, image builds in ACR, migrations apply. **"Deploy application" fails** — the app cannot pull from ACR yet |
-| —   | Run the `AcrPull` command above                                                                                              |
-| 2   | Everything passes; the app serves the image                                                                                  |
+| Run | What happens                                                                                                                                       |
+| --- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | Platform converges (incl. the AI account), both images build in ACR, migrations apply. **"Deploy verifier" fails** — nothing can pull from ACR yet |
+| —   | Run the `AcrPull` **and** `Cognitive Services OpenAI User` commands above                                                                          |
+| 2   | Everything passes; the app serves the image and the verifier answers on its internal URL                                                           |
 
 Steady state after that is a single run per push.
 
@@ -221,8 +250,13 @@ unreachable, so a wrong password would have shipped as a green deploy.
 
 ### Notes on the design
 
-- **Two templates, deliberately.** `infra/main.bicep` is the platform (identity, ACR, Log
-  Analytics, Container Apps environment, Postgres); `infra/app.bicep` is the Container App alone.
+- **Three templates, deliberately.** `infra/main.bicep` is the platform (identity, ACR, Log
+  Analytics, Container Apps environment, Postgres, and the AI account via `infra/ai.bicep`);
+  `infra/app.bicep` and `infra/verifier.bicep` are the two Container Apps, each taking an image
+  parameter. Anything with an image parameter must stay out of the platform template, or a platform
+  converge can silently roll a running app back to a default.
+- **The verifier has `external: false` ingress.** It is reachable from the app and from nothing
+  else. A public `/extract` would be an open vision-model proxy, billed to us.
   They used to be one file, and because the workflow's first pass omitted the image parameter, ARM
   re-applied the template default — a public placeholder image — on every deploy, serving
   Microsoft's quickstart page for several minutes until the second pass restored it. Split, a

@@ -47,20 +47,56 @@ test('every tile has a thumbnail and offers more', async ({ page }) => {
 	await expect(page.getByRole('link', { name: 'Vis fleire' })).toBeVisible();
 });
 
-test('datasamling reports the source, method and schedule', async ({ page }) => {
+test('a source is one compact row until you open it', async ({ page }) => {
 	await page.goto('/datasamling');
 	await expect(page.getByRole('heading', { level: 1, name: /datasamling/i })).toBeVisible();
-	await expect(page.getByRole('heading', { name: /det skjer sunnhordland/i })).toBeVisible();
-	// Method and rhythm are stated, not implied.
-	await expect(page.getByText('JSON-API')).toBeVisible();
+
+	const row = page.locator('details.row').filter({ hasText: /det skjer sunnhordland/i });
+	await expect(row).toBeVisible();
+	// Scannable without opening: who it is, how we collect it.
+	await expect(row).toContainText('JSON-API');
+	// The detail is deliberately not on screen yet — that is the whole point of the change.
+	await expect(page.getByText(/dagleg \d{2}:\d{2} UTC/)).toBeHidden();
+
+	await row.locator('summary').click();
 	await expect(page.getByText(/dagleg \d{2}:\d{2} UTC/)).toBeVisible();
+	await expect(row).toContainText('detskjer.sunnhordland.no/api/events');
 });
 
 test('datasamling shows run history rather than claiming a status', async ({ page }) => {
 	await page.goto('/datasamling');
+	await page.locator('details.row').first().locator('summary').click();
 	const strip = page.getByRole('list', { name: /siste køyringar/i });
 	await expect(strip).toBeVisible();
 	expect(await strip.locator('li').count()).toBeGreaterThan(0);
+});
+
+test('every source row carries an icon or its initials', async ({ page }) => {
+	await page.goto('/datasamling');
+	for (const row of await page.locator('details.row').all()) {
+		// One or the other, never neither: the row layout reserves the space either way.
+		expect(await row.locator('.icon').count()).toBe(1);
+	}
+});
+
+test('the submission log lists what people sent and what was decided', async ({ page }) => {
+	await page.goto('/datasamling');
+	const log = page.locator('.log');
+	await expect(log).toBeVisible();
+	expect(await log.locator('.entry').count()).toBeGreaterThan(0);
+	// Seeded: one pending photo submission and one rejected form submission.
+	await expect(log).toContainText('Quiz på Kaikanten');
+	await expect(log).toContainText('Til gjennomgang');
+});
+
+test('a rejected submission is listed but its title is withheld', async ({ page }) => {
+	await page.goto('/datasamling');
+	const rejected = page.locator('.entry[data-status="rejected"]').first();
+	await expect(rejected).toBeVisible();
+	// Retained as evidence, not republished — reprinting what we judged to be spam would defeat
+	// rejecting it. The seed's rejected row is advertising copy, so assert it never reaches the page.
+	await expect(rejected).toContainText('Tilbakehalden tittel');
+	await expect(page.locator('body')).not.toContainText('BILLIGE KLOKKER');
 });
 
 test('site navigation reaches both pages', async ({ page }) => {
@@ -78,7 +114,7 @@ test('site navigation reaches both pages', async ({ page }) => {
 
 test('no horizontal overflow on the new pages', async ({ page }) => {
 	await page.setViewportSize({ width: 320, height: 800 });
-	for (const path of ['/', '/datasamling']) {
+	for (const path of ['/', '/datasamling', '/hendingar', '/send-inn']) {
 		await page.goto(path);
 		const overflow = await page.evaluate(
 			() => document.documentElement.scrollWidth - document.documentElement.clientWidth

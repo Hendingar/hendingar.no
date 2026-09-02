@@ -104,3 +104,80 @@ export function formatEventClock(instant: Date, timeZone: string | null | undefi
 export function machineDateTime(instant: Date): string {
 	return instant.toISOString();
 }
+
+/** The zone's UTC offset, in ms, at a given instant. */
+function zoneOffsetMs(instant: Date, timeZone: string): number {
+	const parts = Object.fromEntries(
+		new Intl.DateTimeFormat('en-US', {
+			timeZone,
+			hour12: false,
+			year: 'numeric',
+			month: '2-digit',
+			day: '2-digit',
+			hour: '2-digit',
+			minute: '2-digit',
+			second: '2-digit'
+		})
+			.formatToParts(instant)
+			.map((p) => [p.type, p.value])
+	);
+	const asIfUtc = Date.UTC(
+		Number(parts.year),
+		Number(parts.month) - 1,
+		Number(parts.day),
+		Number(parts.hour) % 24,
+		Number(parts.minute),
+		Number(parts.second)
+	);
+	return asIfUtc - instant.getTime();
+}
+
+/**
+ * A wall-clock date and time in a zone → the instant it denotes.
+ *
+ * A poster says "laurdag 14. mars, 20:00". That is a wall clock, not an instant, and turning one
+ * into the other needs the zone's offset *at that moment* — which changes twice a year. Building
+ * the Date in the server's local zone would be wrong for every deployment outside Norway, and
+ * wrong twice a year even inside it.
+ *
+ * The offset is applied, then re-checked: a naive single pass lands on the wrong side of a DST
+ * transition for times near the boundary.
+ */
+export function zonedWallClockToInstant(
+	localDate: string,
+	localTime: string,
+	timeZone: string = DEFAULT_TIME_ZONE
+): Date {
+	const [year, month, day] = localDate.split('-').map(Number);
+	const [hour, minute] = localTime.split(':').map(Number);
+	if ([year, month, day, hour, minute].some((n) => n === undefined || Number.isNaN(n))) {
+		throw new Error(`invalid local date/time: ${localDate} ${localTime}`);
+	}
+
+	const naive = Date.UTC(year!, month! - 1, day!, hour!, minute!);
+	const firstPass = naive - zoneOffsetMs(new Date(naive), timeZone);
+	const secondPass = naive - zoneOffsetMs(new Date(firstPass), timeZone);
+	return new Date(secondPass);
+}
+
+/**
+ * Format keystrokes into a 24-hour `HH:MM` as the person types.
+ *
+ * `<input type="time">` renders in the *browser's* locale, not the page's, and nothing in HTML or
+ * CSS can override that — an English-locale browser shows "04:30 PM" on a Nynorsk form. Every
+ * displayed time elsewhere is pinned to nb-NO (see the formatter above); the native input was the
+ * one place we could not pin, so the form uses a text field and this function.
+ *
+ * Pure, so the fiddly part is testable: a leading digit of 3 or more cannot begin a two-digit hour
+ * (there is no 30:00), so "930" means 09:30 while "1930" means 19:30. Without that rule a person
+ * typing 9-3-0 on a numeric keypad gets "90:3".
+ */
+export function formatTimeDigits(raw: string): string {
+	const digits = raw.replace(/\D/g, '').slice(0, 4);
+	if (digits.length <= 1) return digits;
+
+	const singleDigitHour = digits[0]! >= '3';
+	const hour = singleDigitHour ? `0${digits[0]}` : digits.slice(0, 2);
+	const minutes = digits.slice(singleDigitHour ? 1 : 2, singleDigitHour ? 3 : 4);
+	return minutes.length > 0 ? `${hour}:${minutes}` : hour;
+}

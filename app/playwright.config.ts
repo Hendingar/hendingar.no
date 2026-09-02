@@ -10,7 +10,12 @@ export default defineConfig({
 		// but the server still refuses to boot without a well-formed value.
 		env: {
 			DATABASE_URL:
-				process.env.DATABASE_URL ?? 'postgres://hendingar:hendingar@localhost:5433/hendingar'
+				process.env.DATABASE_URL ?? 'postgres://hendingar:hendingar@localhost:5433/hendingar',
+			// A closed port, not empty and not inherited. Set, so the photo tab renders and the
+			// two-panel markup is under test; unreachable, so every submission takes the degraded
+			// path to the human queue. A developer with a real VERIFIER_URL locally would
+			// otherwise get different results from CI.
+			VERIFIER_URL: 'http://127.0.0.1:9'
 		}
 	},
 	testDir: 'e2e',

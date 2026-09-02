@@ -26,6 +26,9 @@ env:
 #   1. secret POSTGRES_ADMIN_PASSWORD is set
 #   2. the runtime identity id-hendingar has AcrPull — the CI principal is only Contributor, and
 #      Contributor cannot create role assignments
+#   3. the same identity has 'Cognitive Services OpenAI User' on the AI account. Without it the
+#      verifier deploys and answers /health, but every model call 401s and every submission
+#      routes to the human queue. The app still works; the photo shortcut does not.
 jobs:
   deploy:
     # workflow_run fires on failure too; only deploy green commits.
@@ -52,7 +55,8 @@ jobs:
             --parameters appName="$APP" env="$ENV_NAME" \
               postgresAdminPassword="${{ secrets.POSTGRES_ADMIN_PASSWORD }}" \
             --query properties.outputs -o json > outputs.json
-          for k in acrName acrLoginServer postgresFqdn postgresAdminUserOut managedEnvironmentId runtimeIdentityId; do
+          for k in acrName acrLoginServer postgresFqdn postgresAdminUserOut managedEnvironmentId \
+                   runtimeIdentityId runtimeIdentityClientId openAiEndpoint openAiDeployment; do
             echo "$k=$(jq -r ".$k.value" outputs.json)" >> "$GITHUB_OUTPUT"
           done
 
@@ -64,6 +68,14 @@ jobs:
             --image "hendingar:${{ github.sha }}" \
             --image "hendingar:latest" \
             --file Dockerfile .
+
+      - name: Build verifier image in ACR
+        run: |
+          az acr build \
+            --registry "${{ steps.infra.outputs.acrName }}" \
+            --image "hendingar-verifier:${{ github.sha }}" \
+            --image "hendingar-verifier:latest" \
+            --file services/verifier/Dockerfile services/verifier
 
       # The Postgres firewall allows Azure services only, and a GitHub runner is not one.
       - name: Open firewall for this runner
@@ -111,6 +123,26 @@ jobs:
               --name "$stale" --yes >/dev/null 2>&1 || true
           done
 
+      # Before the app, because the app needs its internal URL. Internal ingress means this URL
+      # only resolves from inside the Container Apps environment — it is not a public endpoint.
+      - name: Deploy verifier
+        id: verifier
+        run: |
+          az deployment group create \
+            --resource-group "$RG" \
+            --name "verifier-${{ github.run_id }}" \
+            --template-file infra/verifier.bicep \
+            --parameters appName="$APP" env="$ENV_NAME" \
+              containerImage="${{ steps.infra.outputs.acrLoginServer }}/hendingar-verifier:${{ github.sha }}" \
+              acrLoginServer="${{ steps.infra.outputs.acrLoginServer }}" \
+              managedEnvironmentId="${{ steps.infra.outputs.managedEnvironmentId }}" \
+              runtimeIdentityId="${{ steps.infra.outputs.runtimeIdentityId }}" \
+              runtimeIdentityClientId="${{ steps.infra.outputs.runtimeIdentityClientId }}" \
+              openAiEndpoint="${{ steps.infra.outputs.openAiEndpoint }}" \
+              openAiDeployment="${{ steps.infra.outputs.openAiDeployment }}" \
+            --query properties.outputs -o json > verifier-outputs.json
+          echo "url=$(jq -r .verifierUrl.value verifier-outputs.json)" >> "$GITHUB_OUTPUT"
+
       - name: Deploy application
         id: app
         run: |
@@ -126,6 +158,7 @@ jobs:
               postgresFqdn="${{ steps.infra.outputs.postgresFqdn }}" \
               postgresAdminUser="${{ steps.infra.outputs.postgresAdminUserOut }}" \
               postgresAdminPassword="${{ secrets.POSTGRES_ADMIN_PASSWORD }}" \
+              verifierUrl="${{ steps.verifier.outputs.url }}" \
             --query properties.outputs -o json > app-outputs.json
           echo "url=$(jq -r .appUrl.value app-outputs.json)" >> "$GITHUB_OUTPUT"
           echo "name=$(jq -r .containerAppName.value app-outputs.json)" >> "$GITHUB_OUTPUT"
@@ -171,5 +204,6 @@ jobs:
             echo ""
             echo "- App: ${{ steps.app.outputs.url }}"
             echo "- Image: \`hendingar:${{ github.sha }}\`"
+            echo "- Verifier (internal): \`${{ steps.verifier.outputs.url }}\`"
             echo "- Postgres: \`${{ steps.infra.outputs.postgresFqdn }}\`"
           } >> "$GITHUB_STEP_SUMMARY"

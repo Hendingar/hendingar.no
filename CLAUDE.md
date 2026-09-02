@@ -10,16 +10,31 @@ aspirational.
 pnpm verify        # typecheck (incl. svelte-check) → lint → test. Exits non-zero on any failure.
 ```
 
+`pnpm verify` does not see `services/verifier` — it is Python. For that:
+
+```bash
+cd services/verifier && ruff check . && ruff format --check . && pytest -q
+```
+
 **Run it before claiming a task is done.** If it passes, you are done; if it fails, you are not.
 Nothing else is evidence — not "it looks right", not a passing subset of tests.
 
 ```bash
-pnpm db:up && pnpm db:migrate && pnpm db:seed   # known-good database from nothing
-pnpm dev                                        # http://localhost:5173
-pnpm test:e2e                                   # Playwright, headless
-pnpm db:psql                                    # a shell in the database
-pnpm db:reset                                   # wipe and re-migrate (local only; it refuses otherwise)
+pnpm db:bootstrap  # up + migrate + seed + ingest. A database that looks like production
+pnpm dev           # http://localhost:5173
+pnpm test:e2e      # Playwright, headless
+pnpm db:psql       # a shell in the database
+pnpm db:reset      # wipe and re-migrate (local only; it refuses otherwise)
+pnpm ingest        # fetch Det skjer Sunnhordland — RUN THIS AFTER ANY RESET
 ```
+
+**`db:seed` gives sixteen events; `pnpm ingest` gives a hundred.** The seed is deliberately
+representative — several days, several categories, and six events carrying a poster — because day
+grouping and thumbnails are not observable without them, and the listing e2e specs assert both.
+Posters in the seed are a local same-origin file: a seed that hotlinked the source's CDN would
+make the browser specs depend on a third party's uptime. It is still not production volume, so
+`pnpm db:bootstrap` exists to get the full picture in one command; after a `db:reset`, run
+`pnpm ingest`.
 
 ## Layout
 
@@ -27,6 +42,8 @@ pnpm db:reset                                   # wipe and re-migrate (local onl
 app/                SvelteKit — UI and *.remote.ts server functions
 packages/core/      THE source of truth: Drizzle schema, migrations, Zod schemas, taxonomy
 importers/          Deterministic source importers (see docs/event-sources.md)
+services/verifier/  Python. The ONLY place a language model is called (ADR 0008)
+infra/              Bicep. main = platform, app/verifier = the two Container Apps
 docs/decisions/     ADRs — read before re-opening a settled question
 ```
 
@@ -48,6 +65,16 @@ app/src/lib/
   events.remote.ts       the one client↔server boundary
 app/e2e/                 Playwright specs
 
+app/src/lib/components/submit/   single-use sections owned by `/send-inn`
+app/src/lib/submit.remote.ts     the submission boundary — photo, form, verification
+
+services/verifier/src/verifier/
+  llm.py                   Entra token → AsyncOpenAI. Rebuilt per call; the credential is reused
+  extract.py               the vision call. Nynorsk prompt, strict json_schema
+  verify.py                the five checks. Rules and model calls deliberately mixed
+  app.py                   FastAPI. create_app(config, factory) so tests inject a stub
+  tests/test_contract.py   asserts the check names still match packages/core
+
 importers/<source>/      one deterministic importer per source
   src/api.ts               upstream schema + paginator. Validates every response
   src/map.ts               PURE upstream -> our shape. No I/O, no clock, no randomness
@@ -67,11 +94,16 @@ Scoped in a component, the next agent cannot see it and writes a second one.
 1. **`packages/core` is the only place** schema, taxonomy and validation live. If you find yourself
    redefining a category list or an event shape in `app/` or `importers/`, import it instead.
 2. **Never hand-edit generated migrations.** Change `packages/core/src/schema.ts`, then
-   `pnpm db:generate`. A hand-edited migration desynchronises schema from database silently.
-3. **No LLM calls in importer code paths.** Importers are `fetch → parse → validate → upsert`,
-   deterministic and replayable. Verification of event content happens elsewhere in the pipeline,
-   on already-structured data, with a human reviewing anything uncertain. See
-   `docs/decisions/0004-deterministic-importers.md`.
+   `pnpm db:generate` **and `pnpm db:migrate`**. A hand-edited migration desynchronises schema from
+   database silently — and generating without applying breaks writes to that table immediately,
+   because Drizzle names the new column in its INSERT. That failure surfaces somewhere unrelated
+   (a form that no longer returns a result), so it costs more to diagnose than to avoid.
+3. **`services/verifier` is the only place a model runs.** No model SDK in `app/` or
+   `importers/`, and no API keys anywhere — the service authenticates to Azure with a managed
+   identity. Importers are `fetch → parse → validate → upsert`, deterministic and replayable;
+   verification happens later, on already-structured data, with a human reviewing anything
+   uncertain. See `docs/decisions/0004-deterministic-importers.md` and
+   `docs/decisions/0008-verification-service.md`.
 4. **No `any`, no `as` escape hatches.** If a type is fighting you, the type is telling you
    something. `as unknown as T` in a PR is a red flag, not a fix.
 5. **No barrel files.** No `index.ts` that only re-exports. They defeat grep, which is how both
@@ -81,6 +113,10 @@ Scoped in a component, the next agent cannot see it and writes a second one.
    ambiguous, and ambiguous failure breaks the whole loop this repo is built around.
 7. **Server-only code stays server-only.** Database access lives behind `*.remote.ts` or
    `$lib/server/**`. If a secret or a `pg` import can reach the client bundle, that's a bug.
+8. **Verification failing must never mean submission failing.** `verifyEvent` does not throw; an
+   unavailable verifier produces `recommendation: 'review'` and the event is stored for a human.
+   The same applies to the photo shortcut: it is hidden when `VERIFIER_URL` is unset, never shown
+   as a button that cannot work.
 
 ## Client↔server: remote functions
 
@@ -150,6 +186,15 @@ Use `formatEventTime` from `@hendingar/core/datetime`. Two reasons, both measure
   renders `9/12/2026` for 12 September. Server and client then disagree on the same row.
 - **A `timestamptz` is an instant, not a wall clock.** Always format with the venue's `timezone`.
   Assuming Oslo renders a 20:00 Helsinki concert as 19:00.
+
+### A component rule on a bare element beats brand.css
+
+Svelte rewrites `input { … }` to `input.svelte-hash { … }` — specificity (0,1,1), which outranks a
+shared single-class utility like `.visually-hidden` at (0,1,0). A component that styles an element
+type therefore silently overrides `brand.css` for every such element inside it, including ones it
+never meant to touch. This gave two visually-hidden radios `inline-size: 100%` and pushed
+`/send-inn` 25px past the viewport at 320px. **Select on a wrapper class** (`.field input`), not on
+the element type.
 
 ### Display type is sized in `cqw`, never `vw`
 
