@@ -301,3 +301,79 @@ Sunnhordland importer (#3) is what should populate it.
    placeholder is not baked into the bundle.
 4. **`AcrPull` can only be granted after the first deploy**, because the identity and registry don't
    exist until then. Hence the documented two-run bootstrap.
+
+## Custom domains (2026-09-02)
+
+DNS for `hendingar.no` is hosted at **one.com** (`ns01`/`ns02.one.com`). The records are
+hand-managed in one.com's _Personal DNS settings_ panel and are **not** in bicep — the zone is not
+delegated to Azure DNS, so nothing in this repo can converge them. Changing a hostname means
+editing it there by hand.
+
+| Hostname            | Type  | Value                                                                     |
+| ------------------- | ----- | ------------------------------------------------------------------------- |
+| `hendingar.no`      | A     | `172.160.16.6` — `cae-hendingar-dev` inbound IP                           |
+| `www.hendingar.no`  | CNAME | `ca-hendingar-dev.whitewave-5f5b53f5.swedencentral.azurecontainerapps.io` |
+| `dev.hendingar.no`  | CNAME | same as `www`                                                             |
+| `asuid[.www\|.dev]` | TXT   | the app's `customDomainVerificationId`                                    |
+| `_acme-challenge`   | TXT   | apex certificate only — that certificate's `validationToken`              |
+
+Mail is a null MX (`0 .`) — the domain accepts no mail, so none of this can break it.
+
+### Ownership and certificate validation are two different records
+
+`asuid.<host>` TXT proves _ownership_, and is what `az containerapp hostname add` checks. The
+managed _certificate_ then does its own domain-control validation, and the method is not a free
+choice:
+
+- **Subdomains** CNAME straight at the app FQDN, so `--validation-method CNAME` validates against
+  that record and needs no new DNS.
+- **The apex** cannot be a CNAME — DNS forbids it at the zone apex and one.com offers no
+  ALIAS/ANAME — so it is an A record, which forces `--validation-method TXT` and one extra
+  `_acme-challenge` record.
+
+**A managed certificate validates once and never retries.** Create it before its DNS record
+exists and it stays `Pending` forever, even after the record is correct and visible on every
+nameserver — which is what an apex looks like if you add the `_acme-challenge` record after
+running the bind. There is no refresh: delete the certificate and create it again with the
+record already in place. Both hostnames here hit this, from opposite directions.
+
+Getting this wrong fails _silently_. Binding a CNAME'd subdomain with `--validation-method TXT`
+creates a certificate that sits in `Pending` forever, waiting on an `_acme-challenge` record nobody
+added. Worse, `az containerapp hostname bind` then **reuses that stuck certificate** on every
+retry rather than creating a fresh one, so switching to `--validation-method CNAME` appears to
+change nothing. Delete the certificate first:
+
+```bash
+az containerapp env certificate list -n cae-hendingar-dev -g rg-hendingar-swc-dev \
+  -o json | jq -r '.[] | "\(.properties.subjectName) \(.properties.provisioningState) \(.properties.validationMethod)"'
+az containerapp env certificate delete -n cae-hendingar-dev -g rg-hendingar-swc-dev \
+  --certificate <stuck-cert-name> --yes
+```
+
+### one.com owns the apex record while its web hosting is active
+
+The DNS panel accepts edits to every subdomain but silently declines to override the root `A`
+record while one.com's web space is subscribed for the domain — the panel saves, and both
+nameservers keep answering one.com's parking IP (`46.30.211.38`). Turning off the web hosting for
+the domain releases the record. Verify against the authoritative servers, not a resolver, or a
+cache will make a failed edit look like propagation lag:
+
+```bash
+dig +short @ns01.one.com hendingar.no A
+```
+
+### The apex IP is not managed by anything
+
+`172.160.16.6` is `cae-hendingar-dev`'s inbound IP. It is stable for the life of that managed
+environment but is **not** a reserved address. Delete and recreate the environment and the apex
+points at nothing, while `www` and `dev` recover on their own because they CNAME to a _name_
+rather than an address. If the environment is ever rebuilt, re-read it and update the A record:
+
+```bash
+az containerapp env show -n cae-hendingar-dev -g rg-hendingar-swc-dev \
+  --query properties.staticIp -o tsv
+```
+
+This is the strongest argument for eventually delegating the zone to Azure DNS: the records would
+then live in bicep next to the environment that determines them, and be reviewable like the rest
+of the infrastructure.
