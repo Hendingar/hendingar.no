@@ -8,6 +8,7 @@
 import { eq, sql } from 'drizzle-orm';
 import { createDb } from '../src/db.ts';
 import { events, ingestRuns, sources, venues } from '../src/schema.ts';
+import type { CategorySlug } from '../src/taxonomy.ts';
 
 const url = process.env.DATABASE_URL;
 if (!url) {
@@ -140,6 +141,60 @@ await db
 	.onConflictDoNothing({ target: [events.sourceId, events.externalId] });
 
 /*
+ * Twelve more published events, so a seed-only database looks like the product instead of like a
+ * near-empty one.
+ *
+ * This is not padding. `/hendingar` is a day-grouped grid with thumbnails, and neither property is
+ * observable at four rows: nothing groups, and no tile has a poster. Two listing specs asserted
+ * both against data that only `pnpm ingest` ever produced, so CI — which must not reach the
+ * network (rule 6) and therefore never runs the importer — failed on data it could not create.
+ * Fixing the seed keeps the assertions honest; lowering them would have hidden the real gap.
+ *
+ * Posters point at a local same-origin file rather than the source's CDN, for the same reason.
+ */
+const POSTER = '/seed-poster.svg';
+
+const filler = (
+	externalId: string,
+	title: string,
+	category: CategorySlug,
+	day: number,
+	hour: number,
+	venueId: number,
+	poster = false
+) => ({
+	sourceId: source.id,
+	externalId,
+	title,
+	category,
+	startsAt: daysFromNow(day, hour),
+	endsAt: daysFromNow(day, hour + 2),
+	venueId,
+	status: 'published' as const,
+	posterUrl: poster ? POSTER : null
+});
+
+const fillerEvents = [
+	filler('seed-5', 'Songkveld i Stord kyrkje', 'kyrkjeliv', 1, 19, venue.id, true),
+	filler('seed-6', 'Fjordcup: finaledag', 'sport', 1, 12, venue.id),
+	filler('seed-7', 'Bokbad med Åsta Nordmark', 'litteratur', 2, 18, venue.id, true),
+	filler('seed-8', 'Folkedans på kaien', 'dans', 2, 20, venue.id),
+	filler('seed-9', 'Stand-up: Ope mikrofon', 'stand-up', 4, 21, venue.id, true),
+	filler('seed-10', 'Bondens marknad', 'marknad', 5, 10, venue.id),
+	filler('seed-11', 'Smakskveld: lokal sider', 'mat-og-drikke', 7, 19, venue.id, true),
+	filler('seed-12', 'Kurs i trykkjekunst', 'kurs', 8, 17, venue.id),
+	filler('seed-13', 'Haustfestivalen opnar', 'festival', 9, 15, venue.id, true),
+	filler('seed-14', 'Kammermusikk i Helsingfors', 'musikk', 12, 19, helsinki.id, true),
+	filler('seed-15', 'Teater: Kvit natt', 'teater', 14, 19, venue.id),
+	filler('seed-16', 'Konferanse om lokaljournalistikk', 'konferanse', 16, 9, venue.id)
+];
+
+await db
+	.insert(events)
+	.values(fillerEvents)
+	.onConflictDoNothing({ target: [events.sourceId, events.externalId] });
+
+/*
  * Two human submissions, so /datasamling's submission log is not empty on a machine that has only
  * ever run the seed — the same reason the source metadata is registered here.
  *
@@ -213,6 +268,6 @@ const [{ count } = { count: 0 }] = await db
 	.limit(1);
 
 console.log(
-	`seeded: 1 source, 2 venues, 4 events, ${existingRun ? 0 : seedRuns.length} runs (sample id ${count})`
+	`seeded: 1 source, 2 venues, ${4 + fillerEvents.length} events, ${submissionSeeds.length} submissions, ${existingRun ? 0 : seedRuns.length} runs (sample id ${count})`
 );
 process.exit(0);

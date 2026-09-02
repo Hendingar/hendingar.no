@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  A stand-in poster for seeded events.
+
+  Local and same-origin on purpose: the listing specs assert that a tile renders a real <img>, and
+  a seed that hotlinked the source's CDN would make those specs depend on a third party's uptime,
+  which CLAUDE.md rule 6 forbids. Imported events carry the source's own poster URL instead.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 225" width="400" height="225" role="img" aria-label="Plakat">
+  <rect width="400" height="225" fill="#101a3d" />
+  <circle cx="300" cy="70" r="120" fill="#ff8f6b" opacity="0.55" />
+  <circle cx="110" cy="180" r="90" fill="#f5c26b" opacity="0.45" />
+  <text x="28" y="200" font-family="Georgia, serif" font-size="26" fill="#fdf6ec">Plakat</text>
+</svg>

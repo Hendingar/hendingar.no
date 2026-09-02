@@ -6,3 +6,4 @@ package-lock.json
 **/static/
 packages/core/migrations/
 .claude/skills/
+.claude/settings.local.json

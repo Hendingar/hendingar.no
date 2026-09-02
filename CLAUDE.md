@@ -28,10 +28,12 @@ pnpm db:reset      # wipe and re-migrate (local only; it refuses otherwise)
 pnpm ingest        # fetch Det skjer Sunnhordland — RUN THIS AFTER ANY RESET
 ```
 
-**`db:seed` alone is not a representative database.** The four seeded events carry no poster
-images, so a seed-only front page shows generated fallback patterns where production shows real
-posters. That looks exactly like a rendering regression and has already been mistaken for one.
-`pnpm db:bootstrap` exists so the full picture is one command; after a `db:reset`, run
+**`db:seed` gives sixteen events; `pnpm ingest` gives a hundred.** The seed is deliberately
+representative — several days, several categories, and six events carrying a poster — because day
+grouping and thumbnails are not observable without them, and the listing e2e specs assert both.
+Posters in the seed are a local same-origin file: a seed that hotlinked the source's CDN would
+make the browser specs depend on a third party's uptime. It is still not production volume, so
+`pnpm db:bootstrap` exists to get the full picture in one command; after a `db:reset`, run
 `pnpm ingest`.
 
 ## Layout

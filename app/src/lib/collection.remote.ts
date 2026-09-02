@@ -113,7 +113,9 @@ export const listCollection = query(async () => {
 		.leftJoin(venues, eq(events.venueId, venues.id))
 		.where(sql`${events.sourceId} is null`)
 		.orderBy(desc(events.createdAt))
-		.limit(25);
+		// Five. The log is a "what just happened" signal on a status board, not an archive: a long
+		// scroll of submissions pushes the source rows — the other half of the page — below the fold.
+		.limit(5);
 
 	const [pending] = await database
 		.select({ total: count() })
