@@ -188,6 +188,43 @@
 		gap: 0.4rem;
 		margin-block-end: clamp(1.5rem, 3vw, 2.5rem);
 	}
+
+	/*
+	 * On a phone the chips scroll sideways instead of wrapping.
+	 *
+	 * Wrapped, the sixteen category chips are 271px tall on a 390x844 screen — a third of the
+	 * viewport spent on a control, before a single event is visible. One scrollable row is 44px.
+	 *
+	 * `flex: none` on the chips is what makes it work: without it flexbox shrinks them to fit and
+	 * you get sixteen unreadable slivers rather than a scroller. The negative margin plus matching
+	 * padding lets the row bleed to the screen edge so the last chip is not clipped mid-word, which
+	 * is also the affordance that says "there is more this way".
+	 */
+	@media (width < 34rem) {
+		.filters {
+			flex-wrap: nowrap;
+			overflow-x: auto;
+			overscroll-behavior-x: contain;
+			scroll-snap-type: x proximity;
+			margin-inline: calc(var(--gutter, 1rem) * -1);
+			padding-inline: var(--gutter, 1rem);
+			padding-block-end: 0.35rem;
+			margin-block-end: 1.1rem;
+			/* The row is the scroller; hiding its bar keeps it from reading as a broken layout.
+			   Scrolling is still discoverable because the chips visibly run off the edge. */
+			scrollbar-width: none;
+		}
+		.filters::-webkit-scrollbar {
+			display: none;
+		}
+		.filters .chip {
+			flex: none;
+			scroll-snap-align: start;
+		}
+		.filters--source {
+			margin-block-start: 0;
+		}
+	}
 	.chip {
 		display: inline-flex;
 		align-items: baseline;
