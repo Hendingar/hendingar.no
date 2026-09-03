@@ -25,7 +25,7 @@ pnpm dev           # http://localhost:5173
 pnpm test:e2e      # Playwright, headless
 pnpm db:psql       # a shell in the database
 pnpm db:reset      # wipe and re-migrate (local only; it refuses otherwise)
-pnpm ingest        # fetch Det skjer Sunnhordland — RUN THIS AFTER ANY RESET
+pnpm ingest        # fetch every source — RUN THIS AFTER ANY RESET
 ```
 
 **`db:seed` gives sixteen events; `pnpm ingest` gives a hundred.** The seed is deliberately
@@ -75,7 +75,9 @@ services/verifier/src/verifier/
   app.py                   FastAPI. create_app(config, factory) so tests inject a stub
   tests/test_contract.py   asserts the check names still match packages/core
 
-importers/<source>/      one deterministic importer per source
+importers/<source>/      one deterministic importer per source, or per *platform*:
+                         `mec/` reads every Modern Events Calendar site from one parser, with
+                         the sites as data in src/instances.ts. Adding one is a config entry.
   src/api.ts               upstream schema + paginator. Validates every response
   src/map.ts               PURE upstream -> our shape. No I/O, no clock, no randomness
   src/ingest.ts            orchestration, upsert, and the ingest_runs row
