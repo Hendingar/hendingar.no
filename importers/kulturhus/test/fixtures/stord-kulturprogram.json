@@ -1,0 +1,2952 @@
+{
+ "componentChunkName": "component---src-layouts-pages-page-header-footer-tsx",
+ "path": "/kulturprogram",
+ "result": {
+  "pageContext": {
+   "blocks": [
+    {
+     "component": "cw-component-culture-program",
+     "id": "f262f84d-ccf5-4356-a21f-7e655c79f7bc",
+     "data": {
+      "id": "2e40098d-80fa-4e38-af49-c72ad10022d6",
+      "bindings": {
+       "subtitle": {
+        "binding": "",
+        "source": null
+       },
+       "events": {
+        "binding": {
+         "begin": "@begin",
+         "description": "@contents[0].summary",
+         "id": "@id",
+         "title": "@title",
+         "category": "@typeText",
+         "properties": {
+          "source": null,
+          "binding": [
+           {
+            "property": "",
+            "value": ""
+           }
+          ]
+         },
+         "image": "@assets[type=first_image].url?w=370&h=250&fit=crop&@assets[type=first_poster].focalPointQuery&crop=faces,top&auto=compress",
+         "tickets": {
+          "binding": {
+           "date": "@begin",
+           "ticketSaleType": "@ticketSaleType",
+           "id": "@key",
+           "link": "@purchaseUrl",
+           "location": "@location.name",
+           "count": "@ticketSales[0].available"
+          },
+          "source": "events"
+         },
+         "link": "/@pageReference",
+         "features": {
+          "binding": [
+           {
+            "highlight": false,
+            "name": "@value"
+           }
+          ],
+          "source": null
+         }
+        },
+        "source": "productions"
+       },
+       "title": {
+        "source": null,
+        "binding": "Kulturprogram"
+       },
+       "limit": {
+        "binding": 0,
+        "source": null
+       },
+       "showMoreLinkTitle": {
+        "source": null,
+        "binding": ""
+       },
+       "showMoreLinkUrl": {
+        "source": null,
+        "binding": ""
+       },
+       "filter": {
+        "source": null,
+        "binding": {
+         "display": true,
+         "to": "",
+         "from": ""
+        }
+       }
+      },
+      "locale": "nb",
+      "title": "Kulturprogram",
+      "subtitle": "",
+      "filter": {
+       "display": true,
+       "to": "",
+       "from": ""
+      },
+      "events": [
+       {
+        "id": "59218_culture_culture",
+        "title": "Offentleg symjing",
+        "image": "https://mff.dx.no/198576.jpg?w=370&h=250&fit=crop&fit=crop&crop=faces,top&crop=faces,top&auto=compress",
+        "description": "Badereglar",
+        "link": "/offentleg-bading-d4ljf8",
+        "category": "Offentleg bading",
+        "begin": "2026-09-03 11:00:00",
+        "features": [
+         {
+          "name": null,
+          "highlight": false
+         }
+        ],
+        "tickets": [
+         {
+          "id": "e-1690000099366",
+          "date": "2026-09-03 11:00:00",
+          "location": "Symjehallen",
+          "link": "https://checkout.ebillett.no/169/events/99366/purchase?kanal=dxf",
+          "count": 70,
+          "ticketSaleType": "normal",
+          "eventTags": []
+         },
+         {
+          "id": "e-1690000099378",
+          "date": "2026-09-03 12:00:00",
+          "location": "Symjehallen",
+          "link": "https://checkout.ebillett.no/169/events/99378/purchase?kanal=dxf",
+          "count": 70,
+          "ticketSaleType": "normal",
+          "eventTags": []
+         },
+         {
+          "id": "e-1690000099138",
+          "date": "2026-09-03 17:00:00",
+          "location": "Symjehallen",
+          "link": "https://checkout.ebillett.no/169/events/99138/purchase?kanal=dxf",
+          "count": 70,
+          "ticketSaleType": "normal",
+          "eventTags": []
+         },
+         {
+          "id": "e-1690000099155",
+          "date": "2026-09-03 18:00:00",
+          "location": "Symjehallen",
+          "link": "https://checkout.ebillett.no/169/events/99155/purchase?kanal=dxf",
+          "count": 70,
+          "ticketSaleType": "normal",
+          "eventTags": []
+         },
+         {
+          "id": "e-1690000099186",
+          "date": "2026-09-03 18:59:00",
+          "location": "Symjehallen",
+          "link": "https://checkout.ebillett.no/169/events/99186/purchase?kanal=dxf",
+          "count": 70,
+          "ticketSaleType": "normal",
+          "eventTags": []
+         },
+         {
+          "id": "e-1690000099139",
+          "date": "2026-09-04 17:00:00",
+          "location": "Symjehallen",
+          "link": "https://checkout.ebillett.no/169/events/99139/purchase?kanal=dxf",
+          "count": 70,
+          "ticketSaleType": "normal",
+          "eventTags": []
+         },
+         {
+          "id": "e-1690000099156",
+          "date": "2026-09-04 18:00:00",
+          "location": "Symjehallen",
+          "link": "https://checkout.ebillett.no/169/events/99156/purchase?kanal=dxf",
+          "count": 70,
+          "ticketSaleType": "normal",
+          "eventTags": []
+         },
+         {
+          "id": "e-1690000099187",
+          "date": "2026-09-04 18:59:00",
+          "location": "Symjehallen",
+          "link": "https://checkout.ebillett.no/169/events/99187/purchase?kanal=dxf",
+          "count": 70,
+          "ticketSaleType": "normal",
+          "eventTags": []
+         },
+         {
+          "id": "e-1690000099402",
+          "date": "2026-09-05 10:00:00",
+          "location": "Symjehallen",
+          "link": "https://checkout.ebillett.no/169/events/99402/purchase?kanal=dxf",
+          "count": 70,
+          "ticketSaleType": "normal",
+          "eventTags": []
+         },
+         {
+          "id": "e-1690000099391",
+          "date": "2026-09-05 11:00:00",
+          "location": "Symjehallen",
+          "link": "https://checkout.ebillett.no/169/events/99391/purchase?kanal=dxf",
+          "count": 70,
+          "ticketSaleType": "normal",
+          "eventTags": []
+         },
+         {
+          "id": "e-1690000099397",
+          "date": "2026-09-05 12:00:00",
+          "location": "Symjehallen",
+          "link": "https://checkout.ebillett.no/169/events/99397/purchase?kanal=dxf",
+          "count": 70,
+          "ticketSaleType": "normal",
+          "eventTags": []
+         },
+         {
+          "id": "e-1690000100465",
+          "date": "2026-09-05 13:00:00",
+          "location": "Symjehallen",
+          "link": "https://checkout.ebillett.no/169/events/100465/purchase?kanal=dxf",
+          "count": 70,
+          "ticketSaleType": "normal",
+          "eventTags": []
+         },
+         {
+          "id": "e-1690000099367",
+          "date": "2026-09-07 11:00:00",
+          "location": "Symjehallen",
+          "link": "https://checkout.ebillett.no/169/events/99367/purchase?kanal=dxf",
+          "count": 70,
+          "ticketSaleType": "normal",
+          "eventTags": []
+         },
+         {
+          "id": "e-1690000099379",
+          "date": "2026-09-07 12:00:00",
+          "location": "Symjehallen",
+          "link": "https://checkout.ebillett.no/169/events/99379/purchase?kanal=dxf",
+          "count": 70,
+          "ticketSaleType": "normal",
+          "eventTags": []
+         }
+        ],
+        "properties": [
+         {
+          "property": "",
+          "value": ""
+         }
+        ]
+       },
+       {
+        "id": "87047_culture_culture",
+        "title": "Audun Myskja: Hjartet mitt har ikkje demens",
+        "image": "https://mff.dx.no/201027.jpg?w=370&h=250&fit=crop&fit=crop&crop=faces,top&crop=faces,top&auto=compress",
+        "description": "Velkomen til eit inspirerande føredrag med Audun Myskja. Med utgangspunkt i boka «Hjertet mitt har ikke demens» løftar han fram nye perspektiv på demens og kva det vil seia å vera menneske, også når hukommelsen sviktar.",
+        "link": "/stord-fitjar-demensforening-audun-myskja-wf17rzt",
+        "category": "Føredrag",
+        "begin": "2026-09-03 18:00:00",
+        "features": [
+         {
+          "name": null,
+          "highlight": false
+         }
+        ],
+        "tickets": [
+         {
+          "id": "e-1690000097438",
+          "date": "2026-09-03 18:00:00",
+          "location": "Storsalen",
+          "link": "https://checkout.ebillett.no/169/events/97438/purchase?kanal=dxf",
+          "count": 168,
+          "ticketSaleType": "normal",
+          "eventTags": []
+         }
+        ],
+        "properties": [
+         {
+          "property": "",
+          "value": ""
+         }
+        ]
+       },
+       {
+        "id": "81899_culture_culture",
+        "title": "Bård Tufte Johansen - Prøver å være positiv (18 år)",
+        "image": "https://mff.dx.no/188866.jpg?w=370&h=250&fit=crop&fit=crop&crop=faces,top&crop=faces,top&auto=compress",
+        "description": "Stand Up Norge AS presenterer: BÅRD TUFTE JOHANSEN  - PRØVER Å VÆRE POSITIV!\"",
+        "link": "/bard-tufte-johansen-prover-a-vaere-positiv-r2t7ko",
+        "category": "Standup",
+        "begin": "2026-09-04 19:00:00",
+        "features": [
+         {
+          "name": null,
+          "highlight": false
+         }
+        ],
+        "tickets": [
+         {
+          "id": "e-1690000095397",
+          "date": "2026-09-04 19:00:00",
+          "location": "Storsalen",
+          "link": "https://checkout.ebillett.no/169/events/95397/purchase?kanal=dxf",
+          "count": 12,
+          "ticketSaleType": "normal",
+          "eventTags": []
+         },
+         {
+          "id": "e-1690000098494",
+          "date": "2026-09-04 21:00:00",
+          "location": "Storsalen",
+          "link": "https://checkout.ebillett.no/169/events/98494/purchase?kanal=dxf",
+          "count": 10,
+          "ticketSaleType": "normal",
+          "eventTags": []
+         }
+        ],
+        "properties": [
+         {
+          "property": "",
+          "value": ""
+         }
+        ]
+       },
+       {
+        "id": "89710_culture_culture",
+        "title": "Musikkleik 0-1",
+        "image": "https://mff.dx.no/208503.jpg?w=370&h=250&fit=crop&fit=crop&crop=focalpoint&fp-x=0.318485&fp-y=0.753145&crop=faces,top&auto=compress",
+        "description": "Velkomen til Musikkleik på Stord bibliotek! Musikkleik 0-1 er eit tilbod for barn frå 0 til 1 år. Kulturskulen tilrår at barna er minst 2 månader når dei startar.",
+        "link": "/musikkleik-0-1-lz1a3c",
+        "category": "Aktivitet",
+        "begin": "2026-09-08 11:00:00",
+        "features": [
+         {
+          "name": null,
+          "highlight": false
+         }
+        ],
+        "tickets": [
+         {
+          "id": "e-1690000101240",
+          "date": "2026-09-08 11:00:00",
+          "location": "Biblioteket",
+          "link": "https://checkout.ebillett.no/169/events/101240/purchase?kanal=dxf",
+          "count": 0,
+          "ticketSaleType": "open",
+          "eventTags": []
+         },
+         {
+          "id": "e-1690000101241",
+          "date": "2026-09-22 11:00:00",
+          "location": "Biblioteket",
+          "link": "https://checkout.ebillett.no/169/events/101241/purchase?kanal=dxf",
+          "count": 130,
+          "ticketSaleType": "open",
+          "eventTags": []
+         },
+         {
+          "id": "e-1690000101242",
+          "date": "2026-10-14 11:00:00",
+          "location": "Biblioteket",
+          "link": "https://checkout.ebillett.no/169/events/101242/purchase?kanal=dxf",
+          "count": 130,
+          "ticketSaleType": "open",
+          "eventTags": []
+         },
+         {
+          "id": "e-1690000101243",
+          "date": "2026-10-28 11:00:00",
+          "location": "Biblioteket",
+          "link": "https://checkout.ebillett.no/169/events/101243/purchase?kanal=dxf",
+          "count": 130,
+          "ticketSaleType": "open",
+          "eventTags": []
+         },
+         {
+          "id": "e-1690000101244",
+          "date": "2026-11-17 11:00:00",
+          "location": "Biblioteket",
+          "link": "https://checkout.ebillett.no/169/events/101244/purchase?kanal=dxf",
+          "count": 130,
+          "ticketSaleType": "open",
+          "eventTags": []
+         },
+         {
+          "id": "e-1690000101245",
+          "date": "2026-11-25 11:00:00",
+          "location": "Biblioteket",
+          "link": "https://checkout.ebillett.no/169/events/101245/purchase?kanal=dxf",
+          "count": 130,
+          "ticketSaleType": "open",
+          "eventTags": []
+         },
+         {
+          "id": "e-1690000101246",
+          "date": "2026-12-01 11:00:00",
+          "location": "Biblioteket",
+          "link": "https://checkout.ebillett.no/169/events/101246/purchase?kanal=dxf",
+          "count": 130,
+          "ticketSaleType": "open",
+          "eventTags": []
+         },
+         {
+          "id": "e-1690000101247",
+          "date": "2026-12-15 11:00:00",
+          "location": "Biblioteket",
+          "link": "https://checkout.ebillett.no/169/events/101247/purchase?kanal=dxf",
+          "count": 130,
+          "ticketSaleType": "open",
+          "eventTags": []
+         }
+        ],
+        "properties": [
+         {
+          "property": "",
+          "value": ""
+         }
+        ]
+       },
+       {
+        "id": "88734_culture_culture",
+        "title": "Slektsgransking - innføring og rettleiing",
+        "image": null,
+        "description": "Få hjelp til å koma i gang med di eiga slektsgransking, med Kristine Holm Nilsen.",
+        "link": "/slektsgransking-n7d8fmr",
+        "category": "Møte",
+        "begin": "2026-09-09 11:00:00",
+        "features": [
+         {
+          "name": null,
+          "highlight": false
+         }
+        ],
+        "tickets": [
+         {
+          "id": "e-1690000100160",
+          "date": "2026-09-09 11:00:00",
+          "location": "Hagerupshuset",
+          "link": "https://checkout.ebillett.no/169/events/100160/purchase?kanal=dxf",
+          "count": 17,
+          "ticketSaleType": "normal",
+          "eventTags": []
+         },
+         {
+          "id": "e-1690000100199",
+          "date": "2026-09-10 16:30:00",
+          "location": "Hagerupshuset",
+          "link": "https://checkout.ebillett.no/169/events/100199/purchase?kanal=dxf",
+          "count": 20,
+          "ticketSaleType": "normal",
+          "eventTags": []
+         }
+        ],
+        "properties": [
+         {
+          "property": "",
+          "value": ""
+         }
+        ]
+       },
+       {
+        "id": "89481_culture_culture",
+        "title": "Salmar på Osvald (med gjesteartist)",
+        "image": "https://mff.dx.no/207850.jpg?w=370&h=250&fit=crop&fit=crop&crop=faces,top&crop=faces,top&auto=compress",
+        "description": "SALMAR PÅ OSVALD ER TILBAKE!\nEtter eit kvileskjer i vårsemesteret, er Salmar på Osvald no tilbake  med god musikk, høg allsangfaktor og god stemning på Osvald, leia av vårt solide band.\nFørste gong blir fredag 11. september kl 1900, med Daniel Måge som gjesteartist.\nTorsdag 29.10 kl 19.30 blir det eit ekstra spennande program. Då blir det \"Melk og Honning\" av Kenneth Sivertsen, med Endre Olsen som gjesteartist, i samarbeid med Falturiltu-festivalen.\nSet av datoene allerede no! ??????",
+        "link": "/salmar-pa-osvald-med-gjesteartist-o9mnd6",
+        "category": "Konsert",
+        "begin": "2026-09-11 19:00:00",
+        "features": [
+         {
+          "name": null,
+          "highlight": false
+         }
+        ],
+        "tickets": [
+         {
+          "id": "e-1690000100999",
+          "date": "2026-09-11 19:00:00",
+          "location": "Osvald Pub",
+          "link": "https://checkout.ebillett.no/169/events/100999/purchase?kanal=dxf",
+          "count": 46,
+          "ticketSaleType": "normal",
+          "eventTags": []
+         }
+        ],
+        "properties": [
+         {
+          "property": "",
+          "value": ""
+         }
+        ]
+       },
+       {
+        "id": "88706_culture_culture",
+        "title": "Bok & bolle",
+        "image": "https://mff.dx.no/205706.png?w=370&h=250&fit=crop&fit=crop&crop=faces,top&crop=faces,top&auto=compress",
+        "description": "Velkomen til høgtlesing av ei bildebok for barn i biblioteket!",
+        "link": "/bok-bolle-ze54by",
+        "category": "Litteratur",
+        "begin": "2026-09-12 12:00:00",
+        "features": [
+         {
+          "name": null,
+          "highlight": false
+         }
+        ],
+        "tickets": [
+         {
+          "id": "e-1690000100173",
+          "date": "2026-09-12 12:00:00",
+          "location": "Biblioteket",
+          "link": "",
+          "count": 90,
+          "ticketSaleType": "normal",
+          "eventTags": []
+         },
+         {
+          "id": "e-1690000100175",
+          "date": "2026-10-03 12:00:00",
+          "location": "Biblioteket",
+          "link": "",
+          "count": 130,
+          "ticketSaleType": "normal",
+          "eventTags": []
+         },
+         {
+          "id": "e-1690000100176",
+          "date": "2026-11-07 12:00:00",
+          "location": "Biblioteket",
+          "link": "",
+          "count": 130,
+          "ticketSaleType": "normal",
+          "eventTags": []
+         },
+         {
+          "id": "e-1690000100174",
+          "date": "2026-12-05 12:00:00",
+          "location": "Biblioteket",
+          "link": "",
+          "count": 130,
+          "ticketSaleType": "normal",
+          "eventTags": []
+         }
+        ],
+        "properties": [
+         {
+          "property": "",
+          "value": ""
+         }
+        ]
+       },
+       {
+        "id": "89233_culture_culture",
+        "title": "Demokratisk lesesirkel",
+        "image": "https://mff.dx.no/207362.jpg?w=370&h=250&fit=crop&fit=crop&crop=focalpoint&fp-x=0.483296&fp-y=0.847484&crop=faces,top&auto=compress",
+        "description": "Velkomen til lesesirkel for vaksne!",
+        "link": "/demokratisk-lesesirkel-ba98lok",
+        "category": "Litteratur",
+        "begin": "2026-09-14 18:00:00",
+        "features": [
+         {
+          "name": null,
+          "highlight": false
+         }
+        ],
+        "tickets": [
+         {
+          "id": "e-1690000100950",
+          "date": "2026-09-14 18:00:00",
+          "location": "Biblioteket",
+          "link": "https://checkout.ebillett.no/169/events/100950/purchase?kanal=dxf",
+          "count": 7,
+          "ticketSaleType": "normal",
+          "eventTags": []
+         },
+         {
+          "id": "e-1690000100952",
+          "date": "2026-10-27 18:00:00",
+          "location": "Biblioteket",
+          "link": "https://checkout.ebillett.no/169/events/100952/purchase?kanal=dxf",
+          "count": 10,
+          "ticketSaleType": "normal",
+          "eventTags": []
+         },
+         {
+          "id": "e-1690000100953",
+          "date": "2026-11-30 18:00:00",
+          "location": "Biblioteket",
+          "link": "https://checkout.ebillett.no/169/events/100953/purchase?kanal=dxf",
+          "count": 10,
+          "ticketSaleType": "normal",
+          "eventTags": []
+         }
+        ],
+        "properties": [
+         {
+          "property": "",
+          "value": ""
+         }
+        ]
+       },
+       {
+        "id": "88733_culture_culture",
+        "title": "Språkkafé",
+        "image": "https://mff.dx.no/205815.jpg?w=370&h=250&fit=crop&fit=crop&crop=focalpoint&fp-x=0.113457&fp-y=0.441824&crop=faces,top&auto=compress",
+        "description": "Velkomen til uformelle samtalegrupper på Stord bibliotek!",
+        "link": "/sprakkafe-p5b9pz",
+        "category": "Aktivitet",
+        "begin": "2026-09-15 12:30:00",
+        "features": [
+         {
+          "name": null,
+          "highlight": false
+         }
+        ],
+        "tickets": [
+         {
+          "id": "e-1690000100188",
+          "date": "2026-09-15 12:30:00",
+          "location": "Biblioteket",
+          "link": "https://checkout.ebillett.no/169/events/100188/purchase?kanal=dxf",
+          "count": 130,
+          "ticketSaleType": "open",
+          "eventTags": []
+         },
+         {
+          "id": "e-1690000100563",
+          "date": "2026-09-29 12:30:00",
+          "location": "Biblioteket",
+          "link": "https://checkout.ebillett.no/169/events/100563/purchase?kanal=dxf",
+          "count": 130,
+          "ticketSaleType": "open",
+          "eventTags": []
+         },
+         {
+          "id": "e-1690000100190",
+          "date": "2026-10-13 12:30:00",
+          "location": "Biblioteket",
+          "link": "https://checkout.ebillett.no/169/events/100190/purchase?kanal=dxf",
+          "count": 130,
+          "ticketSaleType": "open",
+          "eventTags": []
+         },
+         {
+          "id": "e-1690000100191",
+          "date": "2026-10-27 12:30:00",
+          "location": "Biblioteket",
+          "link": "https://checkout.ebillett.no/169/events/100191/purchase?kanal=dxf",
+          "count": 130,
+          "ticketSaleType": "open",
+          "eventTags": []
+         },
+         {
+          "id": "e-1690000100192",
+          "date": "2026-11-10 12:30:00",
+          "location": "Biblioteket",
+          "link": "https://checkout.ebillett.no/169/events/100192/purchase?kanal=dxf",
+          "count": 130,
+          "ticketSaleType": "open",
+          "eventTags": []
+         },
+         {
+          "id": "e-1690000100193",
+          "date": "2026-11-24 12:30:00",
+          "location": "Biblioteket",
+          "link": "https://checkout.ebillett.no/169/events/100193/purchase?kanal=dxf",
+          "count": 130,
+          "ticketSaleType": "open",
+          "eventTags": []
+         },
+         {
+          "id": "e-1690000100194",
+          "date": "2026-12-08 12:30:00",
+          "location": "Biblioteket",
+          "link": "https://checkout.ebillett.no/169/events/100194/purchase?kanal=dxf",
+          "count": 130,
+          "ticketSaleType": "open",
+          "eventTags": []
+         }
+        ],
+        "properties": [
+         {
+          "property": "",
+          "value": ""
+         }
+        ]
+       },
+       {
+        "id": "90182_culture_culture",
+        "title": "Magnar Kartveit: \"Gud, pest og plage\".",
+        "image": "https://mff.dx.no/209524.png?w=370&h=250&fit=crop&fit=crop&crop=faces,top&crop=faces,top&auto=compress",
+        "description": "Dei \"vrange\" bibeltekstane. Om bibeltekstar som det er vanskeleg å koma til rettes med.",
+        "link": "/magnar-kartveit-gud-pest-og-plage-p5p3jj",
+        "category": "Føredrag",
+        "begin": "2026-09-15 18:30:00",
+        "features": [
+         {
+          "name": null,
+          "highlight": false
+         }
+        ],
+        "tickets": [
+         {
+          "id": "e-1690000101430",
+          "date": "2026-09-15 18:30:00",
+          "location": "Biblioteket",
+          "link": "https://checkout.ebillett.no/169/events/101430/purchase?kanal=dxf",
+          "count": 130,
+          "ticketSaleType": "normal",
+          "eventTags": []
+         }
+        ],
+        "properties": [
+         {
+          "property": "",
+          "value": ""
+         }
+        ]
+       },
+       {
+        "id": "86986_culture_culture",
+        "title": "Andreas Tjernshaugen: Eit høneliv",
+        "image": "https://mff.dx.no/201936.jpg?w=370&h=250&fit=crop&fit=crop&crop=faces,top&crop=faces,top&auto=compress",
+        "description": "Velkomen til eit tankevekkande føredrag av forfattar og sosiolog Andreas Tjernshaugen!",
+        "link": "/et-honeliv-mandreas-tjernshaugen-i3m2qn",
+        "category": "Litteratur",
+        "begin": "2026-09-16 17:00:00",
+        "features": [
+         {
+          "name": null,
+          "highlight": false
+         }
+        ],
+        "tickets": [
+         {
+          "id": "e-1690000098726",
+          "date": "2026-09-16 17:00:00",
+          "location": "Biblioteket",
+          "link": "https://checkout.ebillett.no/169/events/98726/purchase?kanal=dxf",
+          "count": 0,
+          "ticketSaleType": "open",
+          "eventTags": []
+         }
+        ],
+        "properties": [
+         {
+          "property": "",
+          "value": ""
+         }
+        ]
+       },
+       {
+        "id": "88720_culture_culture",
+        "title": "Lesesona",
+        "image": "https://mff.dx.no/205771.png?w=370&h=250&fit=crop&fit=crop&crop=faces,top&crop=faces,top&auto=compress",
+        "description": "Velkomne til Lesesona for deg som går på 8.-10. trinn!",
+        "link": "/lesesona-8-10-trinn-x1efj78",
+        "category": "Litteratur",
+        "begin": "2026-09-17 14:30:00",
+        "features": [
+         {
+          "name": null,
+          "highlight": false
+         }
+        ],
+        "tickets": [
+         {
+          "id": "e-1690000100182",
+          "date": "2026-09-17 14:30:00",
+          "location": "Biblioteket",
+          "link": "https://checkout.ebillett.no/169/events/100182/purchase?kanal=dxf",
+          "count": 0,
+          "ticketSaleType": "open",
+          "eventTags": []
+         },
+         {
+          "id": "e-1690000100183",
+          "date": "2026-10-15 14:30:00",
+          "location": "Biblioteket",
+          "link": "https://checkout.ebillett.no/169/events/100183/purchase?kanal=dxf",
+          "count": 130,
+          "ticketSaleType": "open",
+          "eventTags": []
+         },
+         {
+          "id": "e-1690000100184",
+          "date": "2026-11-19 14:30:00",
+          "location": "Biblioteket",
+          "link": "https://checkout.ebillett.no/169/events/100184/purchase?kanal=dxf",
+          "count": 130,
+          "ticketSaleType": "open",
+          "eventTags": []
+         },
+         {
+          "id": "e-1690000100185",
+          "date": "2026-12-10 14:30:00",
+          "location": "Biblioteket",
+          "link": "https://checkout.ebillett.no/169/events/100185/purchase?kanal=dxf",
+          "count": 130,
+          "ticketSaleType": "open",
+          "eventTags": []
+         }
+        ],
+        "properties": [
+         {
+          "property": "",
+          "value": ""
+         }
+        ]
+       },
+       {
+        "id": "82691_culture_culture",
+        "title": "Høyt og lavt  – En statusrapport fra Norges rikeste land",
+        "image": "https://mff.dx.no/190667.png?w=370&h=250&fit=crop&fit=crop&crop=faces,top&crop=faces,top&auto=compress",
+        "description": "Med BAdesKen og Rune Nilson",
+        "link": "/ken-andre-ottesen-og-rune-nilson-z5w4bm",
+        "category": "Standup",
+        "begin": "2026-09-17 18:30:00",
+        "features": [
+         {
+          "name": null,
+          "highlight": false
+         }
+        ],
+        "tickets": [
+         {
+          "id": "e-1690000097174",
+          "date": "2026-09-17 18:30:00",
+          "location": "Storsalen",
+          "link": "https://checkout.ebillett.no/169/events/97174/purchase?kanal=dxf",
+          "count": 191,
+          "ticketSaleType": "normal",
+          "eventTags": []
+         }
+        ],
+        "properties": [
+         {
+          "property": "",
+          "value": ""
+         }
+        ]
+       },
+       {
+        "id": "87880_culture_culture",
+        "title": "TID – Lars Saabye Christensen/Steinar Raknes med band (18)",
+        "image": "https://mff.dx.no/203303.jpg?w=370&h=250&fit=crop&fit=crop&crop=faces,top&crop=faces,top&auto=compress",
+        "description": "Eit unikt samarbeid som blir støtta av dei strålande musikarane Knut Reiersrud, Andreas Utnem og Per Oddvar Johansen.",
+        "link": "/jazz-yn6c9c",
+        "category": "Konsert",
+        "begin": "2026-09-19 19:00:00",
+        "features": [
+         {
+          "name": null,
+          "highlight": false
+         }
+        ],
+        "tickets": [
+         {
+          "id": "e-1690000092828",
+          "date": "2026-09-19 19:00:00",
+          "location": "Storsalen",
+          "link": "https://checkout.ebillett.no/169/events/92828/purchase?kanal=dxf",
+          "count": 298,
+          "ticketSaleType": "normal",
+          "eventTags": []
+         }
+        ],
+        "properties": [
+         {
+          "property": "",
+          "value": ""
+         }
+        ]
+       },
+       {
+        "id": "87871_culture_culture",
+        "title": "Gabriel Fauré: Requiem",
+        "image": "https://mff.dx.no/203161.jpeg?w=370&h=250&fit=crop&fit=crop&crop=faces,top&crop=faces,top&auto=compress",
+        "description": null,
+        "link": "/gabriel-faure-requiem-ee2g9y",
+        "category": "Konsert",
+        "begin": "2026-09-20 16:00:00",
+        "features": [
+         {
+          "name": null,
+          "highlight": false
+         }
+        ],
+        "tickets": [
+         {
+          "id": "e-1690000099492",
+          "date": "2026-09-20 16:00:00",
+          "location": "Stord kyrkje",
+          "link": "https://checkout.ebillett.no/169/events/99492/purchase?kanal=dxf",
+          "count": 255,
+          "ticketSaleType": "normal",
+          "eventTags": []
+         },
+         {
+          "id": "e-1690000099493",
+          "date": "2026-09-20 19:00:00",
+          "location": "Stord kyrkje",
+          "link": "https://checkout.ebillett.no/169/events/99493/purchase?kanal=dxf",
+          "count": 263,
+          "ticketSaleType": "normal",
+          "eventTags": []
+         }
+        ],
+        "properties": [
+         {
+          "property": "",
+          "value": ""
+         }
+        ]
+       },
+       {
+        "id": "89092_culture_culture",
+        "title": "Lytt & prat - ei sosial lesestund",
+        "image": "https://mff.dx.no/207483.jpg?w=370&h=250&fit=crop&fit=crop&crop=faces,top&crop=faces,top&auto=compress",
+        "description": "Lytt og prat er ei roleg og inkluderande form for sosial lesing der vi les korte tekstar i lag med rom for å kjenna etter og dela tankar undervegs.",
+        "link": "/lytt-prat-ei-sosial-lesestund-qw2r6n",
+        "category": "Litteratur",
+        "begin": "2026-09-23 12:00:00",
+        "features": [
+         {
+          "name": null,
+          "highlight": false
+         }
+        ],
+        "tickets": [
+         {
+          "id": "e-1690000100559",
+          "date": "2026-09-23 12:00:00",
+          "location": "Biblioteket",
+          "link": "https://checkout.ebillett.no/169/events/100559/purchase?kanal=dxf",
+          "count": 10,
+          "ticketSaleType": "normal",
+          "eventTags": []
+         },
+         {
+          "id": "e-1690000100560",
+          "date": "2026-10-21 12:00:00",
+          "location": "Biblioteket",
+          "link": "https://checkout.ebillett.no/169/events/100560/purchase?kanal=dxf",
+          "count": 10,
+          "ticketSaleType": "normal",
+          "eventTags": []
+         },
+         {
+          "id": "e-1690000100561",
+          "date": "2026-11-04 19:00:00",
+          "location": "Biblioteket",
+          "link": "https://checkout.ebillett.no/169/events/100561/purchase?kanal=dxf",
+          "count": 10,
+          "ticketSaleType": "normal",
+          "eventTags": []
+         },
+         {
+          "id": "e-1690000100562",
+          "date": "2026-12-02 12:00:00",
+          "location": "Biblioteket",
+          "link": "https://checkout.ebillett.no/169/events/100562/purchase?kanal=dxf",
+          "count": 10,
+          "ticketSaleType": "normal",
+          "eventTags": []
+         }
+        ],
+        "properties": [
+         {
+          "property": "",
+          "value": ""
+         }
+        ]
+       },
+       {
+        "id": "83238_culture_culture",
+        "title": "Rune Alver: \"Bøn for fred\"",
+        "image": "https://mff.dx.no/208331.jpg?w=370&h=250&fit=crop&fit=crop&crop=faces,top&crop=faces,top&auto=compress",
+        "description": "Konsert",
+        "link": "/rune-alver-jk7g3f",
+        "category": "Konsert",
+        "begin": "2026-09-24 19:00:00",
+        "features": [
+         {
+          "name": null,
+          "highlight": false
+         }
+        ],
+        "tickets": [
+         {
+          "id": "e-1690000097409",
+          "date": "2026-09-24 19:00:00",
+          "location": "Scene, Storsal",
+          "link": "https://checkout.ebillett.no/169/events/97409/purchase?kanal=dxf",
+          "count": 68,
+          "ticketSaleType": "normal",
+          "eventTags": []
+         }
+        ],
+        "properties": [
+         {
+          "property": "",
+          "value": ""
+         }
+        ]
+       },
+       {
+        "id": "53954_culture_culture",
+        "title": "De musikalske dvergene",
+        "image": "https://mff.dx.no/129678.jpg?w=370&h=250&fit=crop&fit=crop&crop=faces,top&crop=faces,top&auto=compress",
+        "description": "«Konkret, rett fram norsk rock», blir det sagt om De Musikalske Dvergene. Favorittane våre i Bergen har gjeve ut ti album og hatt torsk til middag kvar torsdag i 40 år. Dei lever så definitivt ikkje opp til mottoet «garantert ambisjonsløs rock». Dvergene spelar melodisk rock med underfundige og kvardagslege tekstar, eit omgjengeleg og jordnært kultband. No har du sjansen til å høyra dei på Osvald Pub igjen!",
+        "link": "/vikjo-visefestival-de-musikalske-dvergene-sw53da",
+        "category": "Konsert",
+        "begin": "2026-09-26 16:00:00",
+        "features": [
+         {
+          "name": null,
+          "highlight": false
+         }
+        ],
+        "tickets": [
+         {
+          "id": "e-1690000099416",
+          "date": "2026-09-26 16:00:00",
+          "location": "Osvald Pub",
+          "link": "https://checkout.ebillett.no/169/events/99416/purchase?kanal=dxf",
+          "count": 108,
+          "ticketSaleType": "normal",
+          "eventTags": []
+         }
+        ],
+        "properties": [
+         {
+          "property": "",
+          "value": ""
+         }
+        ]
+       },
+       {
+        "id": "89228_culture_culture",
+        "title": "Sola Fide: Do you hear the people sing?",
+        "image": "https://mff.dx.no/207341.png?w=370&h=250&fit=crop&fit=crop&crop=faces,top&crop=faces,top&auto=compress",
+        "description": "Frå Les Mirables til norske folketonar",
+        "link": "/blandakor-fra-fana-dx75to",
+        "category": "Konsert",
+        "begin": "2026-09-26 18:00:00",
+        "features": [
+         {
+          "name": null,
+          "highlight": false
+         }
+        ],
+        "tickets": [
+         {
+          "id": "e-1690000099474",
+          "date": "2026-09-26 18:00:00",
+          "location": "Storsalen",
+          "link": "https://checkout.ebillett.no/169/events/99474/purchase?kanal=dxf",
+          "count": 401,
+          "ticketSaleType": "normal",
+          "eventTags": []
+         }
+        ],
+        "properties": [
+         {
+          "property": "",
+          "value": ""
+         }
+        ]
+       },
+       {
+        "id": "88860_culture_culture",
+        "title": "Kurt Slevigen med Brødrene Stensletten",
+        "image": "https://mff.dx.no/206331.jpg?w=370&h=250&fit=crop&fit=crop&crop=faces,top&crop=faces,top&auto=compress",
+        "description": "Slevigen og brødrene Stensletten",
+        "link": "/kurt-slevigen-s4s2lb",
+        "category": "Konsert",
+        "begin": "2026-10-03 16:00:00",
+        "features": [
+         {
+          "name": null,
+          "highlight": false
+         }
+        ],
+        "tickets": [
+         {
+          "id": "e-1690000099429",
+          "date": "2026-10-03 16:00:00",
+          "location": "Osvald Pub",
+          "link": "https://checkout.ebillett.no/169/events/99429/purchase?kanal=dxf",
+          "count": 118,
+          "ticketSaleType": "normal",
+          "eventTags": []
+         }
+        ],
+        "properties": [
+         {
+          "property": "",
+          "value": ""
+         }
+        ]
+       },
+       {
+        "id": "88714_culture_culture",
+        "title": "Lesedigg-klubben",
+        "image": "https://mff.dx.no/205770.png?w=370&h=250&fit=crop&fit=crop&crop=faces,top&crop=faces,top&auto=compress",
+        "description": "Likar du å lesa? Og går du i 4.-7. trinn? No kan du bli med i Lesedigg-klubben på biblioteket!",
+        "link": "/lesedigg-klubben-lk8d4t",
+        "category": "Litteratur",
+        "begin": "2026-10-13 13:30:00",
+        "features": [
+         {
+          "name": null,
+          "highlight": false
+         }
+        ],
+        "tickets": [
+         {
+          "id": "e-1690000100178",
+          "date": "2026-10-13 13:30:00",
+          "location": "Biblioteket",
+          "link": "https://checkout.ebillett.no/169/events/100178/purchase?kanal=dxf",
+          "count": 130,
+          "ticketSaleType": "open",
+          "eventTags": []
+         },
+         {
+          "id": "e-1690000100179",
+          "date": "2026-11-03 12:45:00",
+          "location": "Biblioteket",
+          "link": "https://checkout.ebillett.no/169/events/100179/purchase?kanal=dxf",
+          "count": 130,
+          "ticketSaleType": "open",
+          "eventTags": []
+         },
+         {
+          "id": "e-1690000100180",
+          "date": "2026-12-01 13:30:00",
+          "location": "Biblioteket",
+          "link": "https://checkout.ebillett.no/169/events/100180/purchase?kanal=dxf",
+          "count": 130,
+          "ticketSaleType": "open",
+          "eventTags": []
+         }
+        ],
+        "properties": [
+         {
+          "property": "",
+          "value": ""
+         }
+        ]
+       },
+       {
+        "id": "90018_culture_culture",
+        "title": "Ulven (og geitekillingane)",
+        "image": "https://mff.dx.no/209178.png?w=370&h=250&fit=crop&fit=crop&crop=faces,top&crop=faces,top&auto=compress",
+        "description": "Mamma er her, nå er eg heima igjen.",
+        "link": "/ulven-og-geitekillingane-b3akg78",
+        "category": "Musikal",
+        "begin": "2026-10-16 18:00:00",
+        "features": [
+         {
+          "name": null,
+          "highlight": false
+         }
+        ],
+        "tickets": [
+         {
+          "id": "e-1690000101317",
+          "date": "2026-10-16 18:00:00",
+          "location": "Stord VGS konsertsal",
+          "link": "https://checkout.ebillett.no/169/events/101317/purchase?kanal=dxf",
+          "count": 181,
+          "ticketSaleType": "normal",
+          "eventTags": []
+         },
+         {
+          "id": "e-1690000101318",
+          "date": "2026-10-17 12:00:00",
+          "location": "Stord VGS konsertsal",
+          "link": "https://checkout.ebillett.no/169/events/101318/purchase?kanal=dxf",
+          "count": 179,
+          "ticketSaleType": "normal",
+          "eventTags": []
+         },
+         {
+          "id": "e-1690000101319",
+          "date": "2026-10-17 16:00:00",
+          "location": "Stord VGS konsertsal",
+          "link": "https://checkout.ebillett.no/169/events/101319/purchase?kanal=dxf",
+          "count": 182,
+          "ticketSaleType": "normal",
+          "eventTags": []
+         },
+         {
+          "id": "e-1690000101320",
+          "date": "2026-10-18 16:00:00",
+          "location": "Stord VGS konsertsal",
+          "link": "https://checkout.ebillett.no/169/events/101320/purchase?kanal=dxf",
+          "count": 173,
+          "ticketSaleType": "normal",
+          "eventTags": []
+         }
+        ],
+        "properties": [
+         {
+          "property": "",
+          "value": ""
+         }
+        ]
+       },
+       {
+        "id": "87707_culture_culture",
+        "title": "elle melle",
+        "image": "https://mff.dx.no/206832.png?w=370&h=250&fit=crop&fit=crop&crop=faces,top&crop=faces,top&auto=compress",
+        "description": "elle melle består av Odd Erik Ognedal, Svein Hyttebakk og Jon Konrad Strøm; Det folkekjære\nbandet har tgitt ut 8 fullengders album, og har tidligere mottatt Prøysen-prisen og vært\nnominert til Edvard-prisen. elle melle&#39;s låtkatalog har over 13 millioner avspillinger på\nstrømmetjenestene, og i snart 30 år har sanger fra deres rikholdige sangkatalog strømmet ut\nav radioer over hele landet.  \n \nDe aller fleste vil dra kjensel på låter som Frokost På Kafe, Ikkje Vekk Meg Når Du Går, På\nDenne Tiå Her I Fjor, Du Sko Vært Her Nå, Ser Du Då At Eg E Din, og ikke minst den\numiddelbare klassikeren Himmelhøge Sti.\nMen trioen serverer også nyere elle melle-sanger, bl.a singelen «Emigrant», innspilt og utgitt\nmed Trygve Skaug som duettpartner, og det blir nye utgivelser i 2026-2027. \n \nelle melle har høstet fantastiske tilbakemeldinger etter å ha turnert massivt og solgt ut\nmange scener rundt i Norge de siste årene. Gutta ser fram til å besøke Osvald Pub for første\ngang!",
+        "link": "/elle-melle-bc2q1y",
+        "category": "Konsert",
+        "begin": "2026-10-17 16:00:00",
+        "features": [
+         {
+          "name": null,
+          "highlight": false
+         }
+        ],
+        "tickets": [
+         {
+          "id": "e-1690000099414",
+          "date": "2026-10-17 16:00:00",
+          "location": "Osvald Pub",
+          "link": "https://checkout.ebillett.no/169/events/99414/purchase?kanal=dxf",
+          "count": 39,
+          "ticketSaleType": "normal",
+          "eventTags": []
+         }
+        ],
+        "properties": [
+         {
+          "property": "",
+          "value": ""
+         }
+        ]
+       },
+       {
+        "id": "88903_culture_culture",
+        "title": "Sunnhordland revmatikarlag: Vagusnerven - kroppen si skjulte superkraft!",
+        "image": "https://mff.dx.no/206514.jpg?w=370&h=250&fit=crop&fit=crop&crop=faces,top&crop=faces,top&auto=compress",
+        "description": null,
+        "link": "/sunnhoprdland-revmatikarlag-t3b9la",
+        "category": "Føredrag",
+        "begin": "2026-10-21 18:00:00",
+        "features": [
+         {
+          "name": null,
+          "highlight": false
+         }
+        ],
+        "tickets": [
+         {
+          "id": "e-1690000100076",
+          "date": "2026-10-21 18:00:00",
+          "location": "Småsalen",
+          "link": "https://checkout.ebillett.no/169/events/100076/purchase?kanal=dxf",
+          "count": 66,
+          "ticketSaleType": "normal",
+          "eventTags": []
+         }
+        ],
+        "properties": [
+         {
+          "property": "",
+          "value": ""
+         }
+        ]
+       },
+       {
+        "id": "87766_culture_culture",
+        "title": "Claus Sellevoll - Heim til meg (18 år)",
+        "image": "https://mff.dx.no/203124.png?w=370&h=250&fit=crop&fit=crop&crop=faces,top&crop=faces,top&auto=compress",
+        "description": null,
+        "link": "/stageway-c6ljx2",
+        "category": "Standup",
+        "begin": "2026-10-24 18:00:00",
+        "features": [
+         {
+          "name": null,
+          "highlight": false
+         }
+        ],
+        "tickets": [
+         {
+          "id": "e-1690000098750",
+          "date": "2026-10-24 18:00:00",
+          "location": "Storsalen",
+          "link": "https://checkout.ebillett.no/169/events/98750/purchase?kanal=dxf",
+          "count": 284,
+          "ticketSaleType": "normal",
+          "eventTags": []
+         }
+        ],
+        "properties": [
+         {
+          "property": "",
+          "value": ""
+         }
+        ]
+       },
+       {
+        "id": "86836_culture_culture",
+        "title": "Riksteatret: Apestjernen",
+        "image": "https://mff.dx.no/200460.jpg?w=370&h=250&fit=crop&fit=crop&crop=faces,top&crop=faces,top&auto=compress",
+        "description": "Tenk å plutselig få ein gorilla som mamma!",
+        "link": "/riksteatret-famileforestilling-pq6i4h",
+        "category": "Teater",
+        "begin": "2026-10-26 18:00:00",
+        "features": [
+         {
+          "name": null,
+          "highlight": false
+         }
+        ],
+        "tickets": [
+         {
+          "id": "e-1690000094990",
+          "date": "2026-10-26 18:00:00",
+          "location": "Storsalen",
+          "link": "https://checkout.ebillett.no/169/events/94990/purchase?kanal=dxf",
+          "count": 296,
+          "ticketSaleType": "normal",
+          "eventTags": []
+         }
+        ],
+        "properties": [
+         {
+          "property": "",
+          "value": ""
+         }
+        ]
+       },
+       {
+        "id": "89775_culture_culture",
+        "title": "Salmar på Falturiltu - Melk og honning (18+)",
+        "image": "https://mff.dx.no/208557.jpg?w=370&h=250&fit=crop&fit=crop&crop=faces,top&crop=faces,top&auto=compress",
+        "description": null,
+        "link": "/salmesong-pa-falturiltu-mw3y2j",
+        "category": "Falturiltu",
+        "begin": "2026-10-29 19:30:00",
+        "features": [
+         {
+          "name": null,
+          "highlight": false
+         }
+        ],
+        "tickets": [
+         {
+          "id": "e-1690000101206",
+          "date": "2026-10-29 19:30:00",
+          "location": "Vestibylen",
+          "link": "https://checkout.ebillett.no/169/events/101206/purchase?kanal=dxf",
+          "count": 159,
+          "ticketSaleType": "normal",
+          "eventTags": []
+         }
+        ],
+        "properties": [
+         {
+          "property": "",
+          "value": ""
+         }
+        ]
+       },
+       {
+        "id": "89546_culture_culture",
+        "title": "Husdraumar med Marit Eikemo og Marita Aarekol",
+        "image": "https://mff.dx.no/207960.jpg?w=370&h=250&fit=crop&fit=crop&crop=faces,top&crop=faces,top&auto=compress",
+        "description": null,
+        "link": "/husdraumar-med-marit-eikemo-og-marita-aarekol-b5cae1",
+        "category": "Falturiltu",
+        "begin": "2026-10-30 12:00:00",
+        "features": [
+         {
+          "name": null,
+          "highlight": false
+         }
+        ],
+        "tickets": [
+         {
+          "id": "e-1690000101135",
+          "date": "2026-10-30 12:00:00",
+          "location": "Biblioteket",
+          "link": "https://checkout.ebillett.no/169/events/101135/purchase?kanal=dxf",
+          "count": 130,
+          "ticketSaleType": "normal",
+          "eventTags": []
+         }
+        ],
+        "properties": [
+         {
+          "property": "",
+          "value": ""
+         }
+        ]
+       },
+       {
+        "id": "89287_culture_culture",
+        "title": "Linda Eide med Ruth Lillegraven (18+)",
+        "image": "https://mff.dx.no/207474.jpg?w=370&h=250&fit=crop&fit=crop&crop=faces,top&crop=faces,top&auto=compress",
+        "description": null,
+        "link": "/linda-eide-med-ruth-lillegraven-wk9y7a",
+        "category": "Falturiltu",
+        "begin": "2026-10-30 18:30:00",
+        "features": [
+         {
+          "name": null,
+          "highlight": false
+         }
+        ],
+        "tickets": [
+         {
+          "id": "e-1690000100978",
+          "date": "2026-10-30 18:30:00",
+          "location": "Storsalen",
+          "link": "https://checkout.ebillett.no/169/events/100978/purchase?kanal=dxf",
+          "count": 197,
+          "ticketSaleType": "normal",
+          "eventTags": []
+         }
+        ],
+        "properties": [
+         {
+          "property": "",
+          "value": ""
+         }
+        ]
+       },
+       {
+        "id": "89266_culture_culture",
+        "title": "Frode Grytten Beat Band (18+)",
+        "image": "https://mff.dx.no/207462.jpg?w=370&h=250&fit=crop&fit=crop&crop=faces,top&crop=faces,top&auto=compress",
+        "description": null,
+        "link": "/frode-grytten-beat-band-te57qr",
+        "category": "Falturiltu",
+        "begin": "2026-10-30 21:30:00",
+        "features": [
+         {
+          "name": null,
+          "highlight": false
+         }
+        ],
+        "tickets": [
+         {
+          "id": "e-1690000100977",
+          "date": "2026-10-30 21:30:00",
+          "location": "Storsalen",
+          "link": "https://checkout.ebillett.no/169/events/100977/purchase?kanal=dxf",
+          "count": 196,
+          "ticketSaleType": "normal",
+          "eventTags": []
+         }
+        ],
+        "properties": [
+         {
+          "property": "",
+          "value": ""
+         }
+        ]
+       },
+       {
+        "id": "89545_culture_culture",
+        "title": "Spor av perlemor - Børsheim, Djønne og Lillegraven",
+        "image": "https://mff.dx.no/208257.png?w=370&h=250&fit=crop&fit=crop&crop=faces,top&crop=faces,top&auto=compress",
+        "description": null,
+        "link": "/spor-av-perlemor-borsheim-djonne-og-lillegraven-n6f5md",
+        "category": "Falturiltu",
+        "begin": "2026-10-31 12:00:00",
+        "features": [
+         {
+          "name": null,
+          "highlight": false
+         }
+        ],
+        "tickets": [
+         {
+          "id": "e-1690000101133",
+          "date": "2026-10-31 12:00:00",
+          "location": "Scene, Storsal",
+          "link": "https://checkout.ebillett.no/169/events/101133/purchase?kanal=dxf",
+          "count": 138,
+          "ticketSaleType": "normal",
+          "eventTags": []
+         }
+        ],
+        "properties": [
+         {
+          "property": "",
+          "value": ""
+         }
+        ]
+       },
+       {
+        "id": "90167_culture_culture",
+        "title": "Mr. Halloween sin magiske butikk",
+        "image": "https://mff.dx.no/209473.png?w=370&h=250&fit=crop&fit=crop&crop=faces,top&crop=faces,top&auto=compress",
+        "description": "Me gjentek suksessen frå i fjor og set opp teaterstykket «Mr. Halloween sin magiske butikk», med mykje nytt og spennande i år.",
+        "link": "/mr-halloween-sin-magiske-butikk-si24gt",
+        "category": "Teater",
+        "begin": "2026-10-31 16:00:00",
+        "features": [
+         {
+          "name": null,
+          "highlight": false
+         }
+        ],
+        "tickets": [
+         {
+          "id": "e-1690000101422",
+          "date": "2026-10-31 16:00:00",
+          "location": "Ungdomshallen",
+          "link": "https://checkout.ebillett.no/169/events/101422/purchase?kanal=dxf",
+          "count": 0,
+          "ticketSaleType": "normal",
+          "eventTags": []
+         },
+         {
+          "id": "e-1690000101424",
+          "date": "2026-10-31 18:00:00",
+          "location": "Ungdomshallen",
+          "link": "https://checkout.ebillett.no/169/events/101424/purchase?kanal=dxf",
+          "count": 90,
+          "ticketSaleType": "normal",
+          "eventTags": []
+         },
+         {
+          "id": "e-1690000101425",
+          "date": "2026-11-01 16:00:00",
+          "location": "Ungdomshallen",
+          "link": "https://checkout.ebillett.no/169/events/101425/purchase?kanal=dxf",
+          "count": 90,
+          "ticketSaleType": "normal",
+          "eventTags": []
+         },
+         {
+          "id": "e-1690000101426",
+          "date": "2026-11-01 18:00:00",
+          "location": "Ungdomshallen",
+          "link": "https://checkout.ebillett.no/169/events/101426/purchase?kanal=dxf",
+          "count": 90,
+          "ticketSaleType": "normal",
+          "eventTags": []
+         }
+        ],
+        "properties": [
+         {
+          "property": "",
+          "value": ""
+         }
+        ]
+       },
+       {
+        "id": "84603_culture_culture",
+        "title": "SYMRE (18+)",
+        "image": "https://mff.dx.no/207467.jpg?w=370&h=250&fit=crop&fit=crop&crop=faces,top&crop=faces,top&auto=compress",
+        "description": "SYMRE frå Morgedal er ein ung artist med jazza pop og folketonar",
+        "link": "/symre-p3k2jsp",
+        "category": "Falturiltu",
+        "begin": "2026-10-31 19:45:00",
+        "features": [
+         {
+          "name": null,
+          "highlight": false
+         }
+        ],
+        "tickets": [
+         {
+          "id": "e-1690000097966",
+          "date": "2026-10-31 19:45:00",
+          "location": "Vestibylen",
+          "link": "https://checkout.ebillett.no/169/events/97966/purchase?kanal=dxf",
+          "count": 200,
+          "ticketSaleType": "normal",
+          "eventTags": []
+         }
+        ],
+        "properties": [
+         {
+          "property": "",
+          "value": ""
+         }
+        ]
+       },
+       {
+        "id": "88877_culture_culture",
+        "title": "Finn Erix (18+)",
+        "image": "https://mff.dx.no/207463.jpg?w=370&h=250&fit=crop&fit=crop&crop=faces,top&crop=faces,top&auto=compress",
+        "description": "Det velurkledde populærorkesteret kjem endeleg tilbake til Falturiltu – med jubileumsbasar og hemmelege gjester!",
+        "link": "/finn-erix-j7lto2",
+        "category": "Falturiltu",
+        "begin": "2026-10-31 21:00:00",
+        "features": [
+         {
+          "name": null,
+          "highlight": false
+         }
+        ],
+        "tickets": [
+         {
+          "id": "e-1690000100508",
+          "date": "2026-10-31 21:00:00",
+          "location": "Storsalen",
+          "link": "https://checkout.ebillett.no/169/events/100508/purchase?kanal=dxf",
+          "count": 161,
+          "ticketSaleType": "normal",
+          "eventTags": []
+         }
+        ],
+        "properties": [
+         {
+          "property": "",
+          "value": ""
+         }
+        ]
+       },
+       {
+        "id": "87716_culture_culture",
+        "title": "Claudia Scott & Torstein Flakne",
+        "image": "https://mff.dx.no/206516.jpg?w=370&h=250&fit=crop&fit=crop&crop=faces,top&crop=faces,top&auto=compress",
+        "description": "Claudia Scott & Torstein Flakne",
+        "link": "/claudia-scott-torstein-flakne-hb3w4j",
+        "category": "Konsert",
+        "begin": "2026-11-07 15:00:00",
+        "features": [
+         {
+          "name": null,
+          "highlight": false
+         }
+        ],
+        "tickets": [
+         {
+          "id": "e-1690000099421",
+          "date": "2026-11-07 15:00:00",
+          "location": "Osvald Pub",
+          "link": "https://checkout.ebillett.no/169/events/99421/purchase?kanal=dxf",
+          "count": 95,
+          "ticketSaleType": "normal",
+          "eventTags": []
+         }
+        ],
+        "properties": [
+         {
+          "property": "",
+          "value": ""
+         }
+        ]
+       },
+       {
+        "id": "88605_culture_culture",
+        "title": "Flåklypa Grand Prix in Concert",
+        "image": "https://mff.dx.no/205398.png?w=370&h=250&fit=crop&fit=crop&crop=faces,top&crop=faces,top&auto=compress",
+        "description": "Opplev Flåklypa Grand Prix slik du aldri har opplevd den før!",
+        "link": "/flaklypakonsert-w5e1ttp",
+        "category": "Konsert",
+        "begin": "2026-11-12 17:00:00",
+        "features": [
+         {
+          "name": null,
+          "highlight": false
+         }
+        ],
+        "tickets": [
+         {
+          "id": "e-1690000099528",
+          "date": "2026-11-12 17:00:00",
+          "location": "Storsalen",
+          "link": "https://checkout.ebillett.no/169/events/99528/purchase?kanal=dxf",
+          "count": 308,
+          "ticketSaleType": "normal",
+          "eventTags": []
+         },
+         {
+          "id": "e-1690000100172",
+          "date": "2026-11-12 19:30:00",
+          "location": "Storsalen",
+          "link": "https://checkout.ebillett.no/169/events/100172/purchase?kanal=dxf",
+          "count": 312,
+          "ticketSaleType": "normal",
+          "eventTags": []
+         }
+        ],
+        "properties": [
+         {
+          "property": "",
+          "value": ""
+         }
+        ]
+       },
+       {
+        "id": "86840_culture_culture",
+        "title": "Riksteatret: ubesvart anrop",
+        "image": "https://mff.dx.no/200462.jpg?w=370&h=250&fit=crop&fit=crop&crop=faces,top&crop=faces,top&auto=compress",
+        "description": "Til ungdommen",
+        "link": "/rt-ubesvart-anrop-f3wxd16",
+        "category": "Teater",
+        "begin": "2026-11-20 13:00:00",
+        "features": [
+         {
+          "name": null,
+          "highlight": false
+         }
+        ],
+        "tickets": [
+         {
+          "id": "e-1690000095230",
+          "date": "2026-11-20 13:00:00",
+          "location": "Storsalen",
+          "link": "https://checkout.ebillett.no/169/events/95230/purchase?kanal=dxf",
+          "count": 392,
+          "ticketSaleType": "normal",
+          "eventTags": []
+         }
+        ],
+        "properties": [
+         {
+          "property": "",
+          "value": ""
+         }
+        ]
+       },
+       {
+        "id": "87718_culture_culture",
+        "title": "Tubesnakes",
+        "image": "https://mff.dx.no/207141.jpg?w=370&h=250&fit=crop&fit=crop&crop=faces,top&crop=faces,top&auto=compress",
+        "description": "Tubesnakes",
+        "link": "/tubesnakes-xe7j5b",
+        "category": "Konsert",
+        "begin": "2026-11-20 22:00:00",
+        "features": [
+         {
+          "name": null,
+          "highlight": false
+         }
+        ],
+        "tickets": [
+         {
+          "id": "e-1690000099423",
+          "date": "2026-11-20 22:00:00",
+          "location": "Osvald Pub",
+          "link": "https://checkout.ebillett.no/169/events/99423/purchase?kanal=dxf",
+          "count": 120,
+          "ticketSaleType": "normal",
+          "eventTags": []
+         },
+         {
+          "id": "e-1690000099424",
+          "date": "2026-11-21 22:00:00",
+          "location": "Osvald Pub",
+          "link": "https://checkout.ebillett.no/169/events/99424/purchase?kanal=dxf",
+          "count": 120,
+          "ticketSaleType": "normal",
+          "eventTags": []
+         }
+        ],
+        "properties": [
+         {
+          "property": "",
+          "value": ""
+         }
+        ]
+       },
+       {
+        "id": "87094_culture_culture",
+        "title": "\"Treretters\" med Kevin Vågenes, Cess og Rasmus Wold (18 år)",
+        "image": "https://mff.dx.no/202909.jpg?w=370&h=250&fit=crop&fit=crop&crop=faces,top&crop=faces,top&auto=compress",
+        "description": "Haustens store humorfest!",
+        "link": "/treretters-d2xye1",
+        "category": "Standup",
+        "begin": "2026-11-27 19:00:00",
+        "features": [
+         {
+          "name": null,
+          "highlight": false
+         }
+        ],
+        "tickets": [
+         {
+          "id": "e-1690000098024",
+          "date": "2026-11-27 19:00:00",
+          "location": "Storsalen",
+          "link": "https://checkout.ebillett.no/169/events/98024/purchase?kanal=dxf",
+          "count": 193,
+          "ticketSaleType": "normal",
+          "eventTags": []
+         }
+        ],
+        "properties": [
+         {
+          "property": "",
+          "value": ""
+         }
+        ]
+       },
+       {
+        "id": "36668_culture_culture",
+        "title": "Øyvind Halleraker og Trekantsambandet@Osvald",
+        "image": "https://mff.dx.no/92734.jpg?w=370&h=250&fit=crop&fit=crop&crop=faces,top&crop=faces,top&auto=compress",
+        "description": "Øyvind Halleraker og Trekantsambandet@OsvaldPub",
+        "link": "/oyvind-halleraker-og-trekantsambandet-at-osvald-q5j2gi",
+        "category": "Konsert",
+        "begin": "2026-11-27 22:00:00",
+        "features": [
+         {
+          "name": null,
+          "highlight": false
+         }
+        ],
+        "tickets": [
+         {
+          "id": "e-1690000099427",
+          "date": "2026-11-27 22:00:00",
+          "location": "Osvald Pub",
+          "link": "https://checkout.ebillett.no/169/events/99427/purchase?kanal=dxf",
+          "count": 120,
+          "ticketSaleType": "normal",
+          "eventTags": []
+         },
+         {
+          "id": "e-1690000099428",
+          "date": "2026-11-28 22:00:00",
+          "location": "Osvald Pub",
+          "link": "https://checkout.ebillett.no/169/events/99428/purchase?kanal=dxf",
+          "count": 50,
+          "ticketSaleType": "normal",
+          "eventTags": []
+         }
+        ],
+        "properties": [
+         {
+          "property": "",
+          "value": ""
+         }
+        ]
+       },
+       {
+        "id": "87709_culture_culture",
+        "title": "Olsen & Jensens viseklubb presenterer JAN EGGUM",
+        "image": "https://mff.dx.no/206834.jpg?w=370&h=250&fit=crop&fit=crop&crop=faces,top&crop=faces,top&auto=compress",
+        "description": "Det blir ikkje jul før Eggum har hatt dagskonsert på trivselspuben. Visehøvdingen er tradisjonen tru på plass i adventstida: 28. november kl. 15:00 og kl. 18:00\nFra dur er du kommet, til moll skal du bli. Gå ikkje glipp av artisten som har spelt mest på viseklubben gjennom tidene.",
+        "link": "/olsen-jensens-viseklubb-presenterer-jan-eggum-sp29es",
+        "category": "Konsert",
+        "begin": "2026-11-28 15:00:00",
+        "features": [
+         {
+          "name": null,
+          "highlight": false
+         }
+        ],
+        "tickets": [
+         {
+          "id": "e-1690000099417",
+          "date": "2026-11-28 15:00:00",
+          "location": "Osvald Pub",
+          "link": "https://checkout.ebillett.no/169/events/99417/purchase?kanal=dxf",
+          "count": 113,
+          "ticketSaleType": "normal",
+          "eventTags": []
+         },
+         {
+          "id": "e-1690000099418",
+          "date": "2026-11-28 18:00:00",
+          "location": "Osvald Pub",
+          "link": "https://checkout.ebillett.no/169/events/99418/purchase?kanal=dxf",
+          "count": 103,
+          "ticketSaleType": "normal",
+          "eventTags": []
+         }
+        ],
+        "properties": [
+         {
+          "property": "",
+          "value": ""
+         }
+        ]
+       },
+       {
+        "id": "82867_culture_culture",
+        "title": "Grand Kiev: Svanesjøen",
+        "image": "https://mff.dx.no/191060.png?w=370&h=250&fit=crop&fit=crop&crop=faces,top&crop=faces,top&auto=compress",
+        "description": "«Svanesjøen: Lysets symfoni» er den banebrytande nye produksjonen for den komande sesongen.",
+        "link": "/grand-kiev-xn4a3a",
+        "category": "Dans",
+        "begin": "2026-12-03 18:00:00",
+        "features": [
+         {
+          "name": null,
+          "highlight": false
+         }
+        ],
+        "tickets": [
+         {
+          "id": "e-1690000096612",
+          "date": "2026-12-03 18:00:00",
+          "location": "Storsalen",
+          "link": "https://checkout.ebillett.no/169/events/96612/purchase?kanal=dxf",
+          "count": 391,
+          "ticketSaleType": "normal",
+          "eventTags": []
+         }
+        ],
+        "properties": [
+         {
+          "property": "",
+          "value": ""
+         }
+        ]
+       },
+       {
+        "id": "68619_culture_culture",
+        "title": "Olsen og Jensens Viseklubb: Kniv og Taffel «Tafler julen inn» på Osvald Pub",
+        "image": "https://mff.dx.no/206863.jpg?w=370&h=250&fit=crop&fit=crop&crop=faces,top&crop=faces,top&auto=compress",
+        "description": null,
+        "link": "/kniv-og-taffel-swingjazzorkester-wn64yk",
+        "category": "Konsert",
+        "begin": "2026-12-05 16:00:00",
+        "features": [
+         {
+          "name": null,
+          "highlight": false
+         }
+        ],
+        "tickets": [
+         {
+          "id": "e-1690000099412",
+          "date": "2026-12-05 16:00:00",
+          "location": "Osvald Pub",
+          "link": "https://checkout.ebillett.no/169/events/99412/purchase?kanal=dxf",
+          "count": 75,
+          "ticketSaleType": "normal",
+          "eventTags": []
+         },
+         {
+          "id": "e-1690000099413",
+          "date": "2026-12-05 20:00:00",
+          "location": "Osvald Pub",
+          "link": "https://checkout.ebillett.no/169/events/99413/purchase?kanal=dxf",
+          "count": 79,
+          "ticketSaleType": "normal",
+          "eventTags": []
+         }
+        ],
+        "properties": [
+         {
+          "property": "",
+          "value": ""
+         }
+        ]
+       },
+       {
+        "id": "83664_culture_culture",
+        "title": "Tenorane og Steffen Horn",
+        "image": "https://mff.dx.no/192637.jpg?w=370&h=250&fit=crop&fit=crop&crop=faces,top&crop=faces,top&auto=compress",
+        "description": "\"Så ha ei god jul då!\"",
+        "link": "/tenorane-b7yrc8p",
+        "category": "Konsert",
+        "begin": "2026-12-09 19:00:00",
+        "features": [
+         {
+          "name": null,
+          "highlight": false
+         }
+        ],
+        "tickets": [
+         {
+          "id": "e-1690000096002",
+          "date": "2026-12-09 19:00:00",
+          "location": "Storsalen",
+          "link": "https://checkout.ebillett.no/169/events/96002/purchase?kanal=dxf",
+          "count": 396,
+          "ticketSaleType": "normal",
+          "eventTags": []
+         }
+        ],
+        "properties": [
+         {
+          "property": "",
+          "value": ""
+         }
+        ]
+       },
+       {
+        "id": "87777_culture_culture",
+        "title": "Olsen & Jensens viseklubb:If Terje Jensen makes it through December",
+        "image": "https://mff.dx.no/202889.jpg?w=370&h=250&fit=crop&fit=crop&crop=faces,top&crop=faces,top&auto=compress",
+        "description": "Viseklubb",
+        "link": "/olsen-jensens-viseklubbif-terje-jensen-makes-it-through-d-ax9n1j",
+        "category": "Konsert",
+        "begin": "2026-12-12 16:00:00",
+        "features": [
+         {
+          "name": null,
+          "highlight": false
+         }
+        ],
+        "tickets": [
+         {
+          "id": "e-1690000099455",
+          "date": "2026-12-12 16:00:00",
+          "location": "Osvald Pub",
+          "link": "https://checkout.ebillett.no/169/events/99455/purchase?kanal=dxf",
+          "count": 116,
+          "ticketSaleType": "normal",
+          "eventTags": []
+         }
+        ],
+        "properties": [
+         {
+          "property": "",
+          "value": ""
+         }
+        ]
+       },
+       {
+        "id": "88179_culture_culture",
+        "title": "Gospelkoret Voice Of Joy",
+        "image": "https://mff.dx.no/204193.jpg?w=370&h=250&fit=crop&fit=crop&crop=faces,top&crop=faces,top&auto=compress",
+        "description": "Julen nærmer seg, og Voice of Joy inviterer deg til en stemningsfull julekonsert som setter deg i julestemning!",
+        "link": "/gospelkoret-voice-of-joy-dg27zf",
+        "category": "Konsert",
+        "begin": "2026-12-15 19:00:00",
+        "features": [
+         {
+          "name": null,
+          "highlight": false
+         }
+        ],
+        "tickets": [
+         {
+          "id": "e-1690000098589",
+          "date": "2026-12-15 19:00:00",
+          "location": "Storsalen",
+          "link": "https://checkout.ebillett.no/169/events/98589/purchase?kanal=dxf",
+          "count": 400,
+          "ticketSaleType": "normal",
+          "eventTags": []
+         }
+        ],
+        "properties": [
+         {
+          "property": "",
+          "value": ""
+         }
+        ]
+       },
+       {
+        "id": "84509_culture_culture",
+        "title": "BJØRN & BJARTE, DEN TØFFE & DEN SARTE (18 år)",
+        "image": "https://mff.dx.no/194324.jpg?w=370&h=250&fit=crop&fit=crop&crop=faces,top&crop=faces,top&auto=compress",
+        "description": "BJØRN EIDSVÅG OG BJARTE TJØSTHEIM PÅ TURNÉ – LATTER, MUSIKK OG EIN STREIF AV NÅDE",
+        "link": "/bjorn-bjarte-den-toffe-den-sarte-18-ar-tc5q6w",
+        "category": "Konsert",
+        "begin": "2026-12-17 19:00:00",
+        "features": [
+         {
+          "name": null,
+          "highlight": false
+         }
+        ],
+        "tickets": [
+         {
+          "id": "e-1690000096979",
+          "date": "2026-12-17 19:00:00",
+          "location": "Storsalen",
+          "link": "https://checkout.ebillett.no/169/events/96979/purchase?kanal=dxf",
+          "count": 292,
+          "ticketSaleType": "normal",
+          "eventTags": []
+         }
+        ],
+        "properties": [
+         {
+          "property": "",
+          "value": ""
+         }
+        ]
+       },
+       {
+        "id": "87717_culture_culture",
+        "title": "D`AccorD Juleshow",
+        "image": "https://mff.dx.no/206836.jpg?w=370&h=250&fit=crop&fit=crop&crop=faces,top&crop=faces,top&auto=compress",
+        "description": "D`AccorD Juleshow",
+        "link": "/daccord-juleshow-qn32tj",
+        "category": "Konsert",
+        "begin": "2026-12-18 22:00:00",
+        "features": [
+         {
+          "name": null,
+          "highlight": false
+         }
+        ],
+        "tickets": [
+         {
+          "id": "e-1690000099422",
+          "date": "2026-12-18 22:00:00",
+          "location": "Osvald Pub",
+          "link": "https://checkout.ebillett.no/169/events/99422/purchase?kanal=dxf",
+          "count": 120,
+          "ticketSaleType": "normal",
+          "eventTags": []
+         }
+        ],
+        "properties": [
+         {
+          "property": "",
+          "value": ""
+         }
+        ]
+       },
+       {
+        "id": "89425_culture_culture",
+        "title": "Viseklubben hyller Robert Sciluna-Delis",
+        "image": "https://mff.dx.no/208561.jpg?w=370&h=250&fit=crop&fit=crop&crop=faces,top&crop=faces,top&auto=compress",
+        "description": "Viseklubben",
+        "link": "/viseklubben-hyller-robert-sciluna-delis-yd59fs",
+        "category": "Konsert",
+        "begin": "2026-12-27 16:00:00",
+        "features": [
+         {
+          "name": null,
+          "highlight": false
+         }
+        ],
+        "tickets": [
+         {
+          "id": "e-1690000101005",
+          "date": "2026-12-27 16:00:00",
+          "location": "Osvald Pub",
+          "link": "https://checkout.ebillett.no/169/events/101005/purchase?kanal=dxf",
+          "count": 120,
+          "ticketSaleType": "normal",
+          "eventTags": []
+         }
+        ],
+        "properties": [
+         {
+          "property": "",
+          "value": ""
+         }
+        ]
+       },
+       {
+        "id": "47929_culture_culture",
+        "title": "Matti Røssland Trio",
+        "image": "https://mff.dx.no/116112.jpg?w=370&h=250&fit=crop&fit=crop&crop=faces,top&crop=faces,top&auto=compress",
+        "description": "Matti Røssland Trio\n20 årsaldersgrense",
+        "link": "/matti-rossland-trio-at-osvald-pub-hy8t4p",
+        "category": "Konsert",
+        "begin": "2027-01-22 20:00:00",
+        "features": [
+         {
+          "name": null,
+          "highlight": false
+         }
+        ],
+        "tickets": [
+         {
+          "id": "e-1690000100998",
+          "date": "2027-01-22 20:00:00",
+          "location": "Osvald Pub",
+          "link": "https://checkout.ebillett.no/169/events/100998/purchase?kanal=dxf",
+          "count": 120,
+          "ticketSaleType": "normal",
+          "eventTags": []
+         },
+         {
+          "id": "e-1690000100997",
+          "date": "2027-01-23 16:00:00",
+          "location": "Osvald Pub",
+          "link": "https://checkout.ebillett.no/169/events/100997/purchase?kanal=dxf",
+          "count": 116,
+          "ticketSaleType": "normal",
+          "eventTags": []
+         }
+        ],
+        "properties": [
+         {
+          "property": "",
+          "value": ""
+         }
+        ]
+       },
+       {
+        "id": "74342_culture_culture",
+        "title": "Slik takler du idiotene på jobb 2 (2027)",
+        "image": "https://mff.dx.no/173313.jpg?w=370&h=250&fit=crop&fit=crop&crop=faces,top&crop=faces,top&auto=compress",
+        "description": "Splitter nytt føredrag!",
+        "link": "/slik-takler-du-idiotene-pa-jobb-2-rd53xi",
+        "category": "Føredrag",
+        "begin": "2027-02-01 19:00:00",
+        "features": [
+         {
+          "name": null,
+          "highlight": false
+         }
+        ],
+        "tickets": [
+         {
+          "id": "e-1690000090377",
+          "date": "2027-02-01 19:00:00",
+          "location": "Storsalen",
+          "link": "https://checkout.ebillett.no/169/events/90377/purchase?kanal=dxf",
+          "count": 402,
+          "ticketSaleType": "normal",
+          "eventTags": []
+         }
+        ],
+        "properties": [
+         {
+          "property": "",
+          "value": ""
+         }
+        ]
+       },
+       {
+        "id": "89230_culture_culture",
+        "title": "Nils-Ingar Aadne: Tenk det (18 år)",
+        "image": "https://mff.dx.no/208211.jpg?w=370&h=250&fit=crop&fit=crop&crop=faces,top&crop=faces,top&auto=compress",
+        "description": "Live nation presenterer: Nils-Ingar Aadne - Tenk det.",
+        "link": "/standupkomiker-nils-ingar-aadne-nilsi-pm71ae",
+        "category": "Standup",
+        "begin": "2027-03-05 19:00:00",
+        "features": [
+         {
+          "name": null,
+          "highlight": false
+         }
+        ],
+        "tickets": [
+         {
+          "id": "e-1690000099470",
+          "date": "2027-03-05 19:00:00",
+          "location": "Storsalen",
+          "link": "https://checkout.ebillett.no/169/events/99470/purchase?kanal=dxf",
+          "count": 382,
+          "ticketSaleType": "normal",
+          "eventTags": []
+         }
+        ],
+        "properties": [
+         {
+          "property": "",
+          "value": ""
+         }
+        ]
+       },
+       {
+        "id": "86854_culture_culture",
+        "title": "Riksteatret: Kakejazz",
+        "image": "https://mff.dx.no/201088.jpg?w=370&h=250&fit=crop&fit=crop&crop=faces,top&crop=faces,top&auto=compress",
+        "description": "Når barna får styra showet!",
+        "link": "/riksteatret-kakejazz-sy34lq",
+        "category": "Teater",
+        "begin": "2027-03-12 18:00:00",
+        "features": [
+         {
+          "name": null,
+          "highlight": false
+         }
+        ],
+        "tickets": [
+         {
+          "id": "e-1690000097863",
+          "date": "2027-03-12 18:00:00",
+          "location": "Storsalen",
+          "link": "https://checkout.ebillett.no/169/events/97863/purchase?kanal=dxf",
+          "count": 388,
+          "ticketSaleType": "normal",
+          "eventTags": []
+         }
+        ],
+        "properties": [
+         {
+          "property": "",
+          "value": ""
+         }
+        ]
+       },
+       {
+        "id": "85765_culture_culture",
+        "title": "The Magic of Alexx Alexxander 2.0",
+        "image": "https://mff.dx.no/196946.jpg?w=370&h=250&fit=crop&fit=crop&crop=faces,top&crop=faces,top&auto=compress",
+        "description": "Velkommen til ei magisk showoppleving med smak av Las Vegas!",
+        "link": "/alexx-alexander-rf46hn",
+        "category": "Scenemønstring",
+        "begin": "2027-03-13 19:00:00",
+        "features": [
+         {
+          "name": null,
+          "highlight": false
+         }
+        ],
+        "tickets": [
+         {
+          "id": "e-1690000097752",
+          "date": "2027-03-13 19:00:00",
+          "location": "Storsalen",
+          "link": "https://checkout.ebillett.no/169/events/97752/purchase?kanal=dxf",
+          "count": 394,
+          "ticketSaleType": "normal",
+          "eventTags": []
+         }
+        ],
+        "properties": [
+         {
+          "property": "",
+          "value": ""
+         }
+        ]
+       },
+       {
+        "id": "89777_culture_culture",
+        "title": "Kristian Valen: BARE VISVAS (18)",
+        "image": "https://mff.dx.no/208567.jpg?w=370&h=250&fit=crop&fit=crop&crop=faces,top&crop=faces,top&auto=compress",
+        "description": "Kristian Valen endeleg tilbake med eit splitter nytt show!",
+        "link": "/kristian-valen-c8b4ddm",
+        "category": "Show",
+        "begin": "2027-12-16 19:00:00",
+        "features": [
+         {
+          "name": null,
+          "highlight": false
+         }
+        ],
+        "tickets": [
+         {
+          "id": "e-1690000101248",
+          "date": "2027-12-16 19:00:00",
+          "location": "Storsalen",
+          "link": "https://checkout.ebillett.no/169/events/101248/purchase?kanal=dxf",
+          "count": 396,
+          "ticketSaleType": "normal",
+          "eventTags": []
+         }
+        ],
+        "properties": [
+         {
+          "property": "",
+          "value": ""
+         }
+        ]
+       }
+      ],
+      "limit": 0,
+      "showMoreLinkTitle": "",
+      "showMoreLinkUrl": ""
+     },
+     "place": {
+      "order": 1,
+      "column": 0,
+      "row": 1
+     },
+     "hide": false,
+     "metadata": {
+      "properties": [
+       {
+        "name": "title",
+        "type": "string",
+        "icon": "title",
+        "hidden": false
+       },
+       {
+        "name": "subtitle",
+        "type": "markdown",
+        "icon": "short_text",
+        "hidden": false
+       },
+       {
+        "name": "filter",
+        "type": "object",
+        "properties": [
+         {
+          "name": "from",
+          "type": "date",
+          "hidden": false
+         },
+         {
+          "name": "to",
+          "type": "date",
+          "hidden": false
+         },
+         {
+          "name": "display",
+          "type": "boolean",
+          "icon": "looks_3",
+          "hidden": false
+         }
+        ],
+        "icon": "filter_list",
+        "hidden": false
+       },
+       {
+        "name": "events",
+        "type": "collection",
+        "prototype": {
+         "type": "object",
+         "properties": [
+          {
+           "name": "id",
+           "type": "string",
+           "hidden": false
+          },
+          {
+           "name": "title",
+           "type": "string",
+           "hidden": false
+          },
+          {
+           "name": "image",
+           "type": "image",
+           "hidden": false
+          },
+          {
+           "name": "description",
+           "type": "string",
+           "hidden": false
+          },
+          {
+           "name": "link",
+           "type": "string",
+           "hidden": false
+          },
+          {
+           "name": "category",
+           "type": "string",
+           "hidden": false
+          },
+          {
+           "name": "begin",
+           "type": "date",
+           "hidden": false
+          },
+          {
+           "name": "features",
+           "type": "array",
+           "prototype": {
+            "type": "object",
+            "properties": [
+             {
+              "name": "name",
+              "type": "string",
+              "hidden": false
+             },
+             {
+              "name": "highlight",
+              "type": "boolean",
+              "hidden": false
+             }
+            ]
+           },
+           "hidden": false
+          },
+          {
+           "name": "tickets",
+           "type": "array",
+           "prototype": {
+            "type": "object",
+            "properties": [
+             {
+              "name": "id",
+              "type": "string",
+              "hidden": false
+             },
+             {
+              "name": "date",
+              "type": "date",
+              "hidden": false
+             },
+             {
+              "name": "location",
+              "type": "string",
+              "hidden": false
+             },
+             {
+              "name": "link",
+              "type": "string",
+              "hidden": false
+             },
+             {
+              "name": "count",
+              "type": "number",
+              "hidden": false
+             },
+             {
+              "name": "ticketSaleType",
+              "type": "string",
+              "hidden": false
+             },
+             {
+              "name": "eventTags",
+              "type": "array",
+              "prototype": {
+               "type": "string",
+               "hidden": false
+              },
+              "hidden": false
+             }
+            ]
+           }
+          },
+          {
+           "name": "properties",
+           "type": "array",
+           "prototype": {
+            "type": "object",
+            "properties": [
+             {
+              "name": "property",
+              "type": "string",
+              "hidden": false
+             },
+             {
+              "name": "value",
+              "type": "string",
+              "hidden": false
+             }
+            ]
+           },
+           "hidden": false
+          }
+         ]
+        },
+        "icon": "event_seat",
+        "hidden": false
+       },
+       {
+        "name": "limit",
+        "type": "number",
+        "icon": "last_page",
+        "hidden": false
+       },
+       {
+        "name": "showMoreLinkTitle",
+        "type": "string",
+        "icon": "title",
+        "hidden": false
+       },
+       {
+        "name": "showMoreLinkUrl",
+        "type": "string",
+        "icon": "link",
+        "hidden": false
+       }
+      ]
+     }
+    }
+   ],
+   "meta": {
+    "locale": "nb",
+    "bindings": {
+     "keywords": {
+      "binding": "Stord kulturhus, kulturprogram, kultur, program, programoversikt",
+      "source": null
+     },
+     "title": {
+      "source": null,
+      "binding": "Stord kulturhus | Kulturprogram"
+     },
+     "description": {
+      "source": null,
+      "binding": "Oversikt over kulturprogrammet for Stord kulturhus"
+     }
+    },
+    "title": "Stord kulturhus | Kulturprogram",
+    "description": "Oversikt over kulturprogrammet for Stord kulturhus",
+    "keywords": "Stord kulturhus, kulturprogram, kultur, program, programoversikt",
+    "image": "",
+    "facebookVerificationCode": ""
+   },
+   "gaTrackingId": "UA-126278151-17",
+   "facebookPixelId": "",
+   "template": {
+    "rows": [
+     {
+      "index": 0,
+      "container": false,
+      "columns": [
+       {
+        "index": 0,
+        "screen": {
+         "lg": {
+          "span": 12,
+          "order": 0
+         },
+         "xs": {
+          "order": 0,
+          "span": 12
+         },
+         "md": {
+          "span": 12,
+          "order": 0
+         }
+        }
+       }
+      ]
+     },
+     {
+      "columns": [
+       {
+        "index": 0,
+        "screen": {
+         "lg": {
+          "span": 12,
+          "order": 0
+         },
+         "xs": {
+          "order": 0,
+          "span": 12
+         },
+         "md": {
+          "span": 12,
+          "order": 0
+         }
+        }
+       }
+      ],
+      "index": 1,
+      "container": true
+     }
+    ]
+   },
+   "theme": {
+    "logo": "https://dx-cw-static-files.imgix.net/169/stord-kulturhus-logo.png",
+    "logoAlt": "https://dx-cw-static-files.imgix.net/169/stord-kulturhus-logo.png",
+    "id": "cw-website-theme-beta",
+    "train": "v1",
+    "footer": [
+     {
+      "items": [
+       {
+        "value": "<strong>Kontakt oss</strong>",
+        "type": "title",
+        "order": 0
+       },
+       {
+        "value": "Stord kulturhus: <a style=\"display: inline\" href=\"tel:53 49 69 66\">53 49 69 66</a>",
+        "type": "text",
+        "order": 1
+       },
+       {
+        "value": "Kulturhusvert/vaktmeister: <a style=\"display: inline\" href=\"tel:91 00 03 93\">91 00 03 93</a>",
+        "type": "text",
+        "order": 2
+       },
+       {
+        "type": "text",
+        "value": "E-post til <a style=\"display: inline\" href=\"mailto:kulturhuset@stord.kommune.no\">Stord kulturhus</a>",
+        "order": 3
+       },
+       {
+        "href": "mailto:kino@fredrikstad.kommune.no",
+        "order": 4,
+        "type": "text",
+        "value": "E-post til <a style=\"display: inline\" href=\"mailto:kino@stord.kommune.no\">Stord kommunale kino</a> <br>&nbsp;"
+       },
+       {
+        "type": "text",
+        "value": "Postadresse: Stord kulturhus, Pb 264, 5403 Stord",
+        "order": 5
+       },
+       {
+        "value": "Leveringsadresse: Stord kulturhus, Hamnegata 1, 5411 Stord <br>&nbsp;",
+        "type": "text",
+        "order": 6
+       },
+       {
+        "value": "Stord kommune sitt sentralbord: <a style=\"display: inline\" href=\"tel:53 49 66 00\">53 49 66 00</a>",
+        "type": "text",
+        "order": 7
+       },
+       {
+        "value": "<a style=\"display: inline\" href=\"https://www.stord.kommune.no/\">Stord kommune</a>",
+        "order": 8,
+        "type": "text"
+       },
+       {
+        "type": "text",
+        "order": 9,
+        "value": "E-post: <a style=\"display: inline\" href=\"mailto:post@stord.kommune.no\">post@stord.kommune.no</a>"
+       }
+      ],
+      "locale": "nb",
+      "order": 0,
+      "title": "Kontakt"
+     },
+     {
+      "locale": "nb",
+      "title": "Sosiale medier",
+      "order": 1,
+      "items": [
+       {
+        "type": "title",
+        "order": 0,
+        "value": "<strong>Stord i sosiale medier</strong>"
+       },
+       {
+        "type": "html",
+        "value": "<div style=\"margin-top: 10px;\">   <a style=\"display: inline\" href=\"https://www.instagram.com/explore/locations/13509136/?hl=en\"><img style=\"width: 29px; margin-right: 8px;\" src=\"https://dx-cw-static-files.imgix.net/118/instagram_icon.png\"></a>     <a style=\"display: inline\" href=\"https://www.facebook.com/stord.kulturhus/\"><img style=\"width: 29px;\" src=\"https://dx-cw-static-files.imgix.net/118/fb_icon_325x325.png\"></a> </div>",
+        "order": 1
+       }
+      ]
+     },
+     {
+      "items": [
+       {
+        "value": "Tilgjengelegheitserklæring (nynorsk)",
+        "type": "link",
+        "href": "https://uustatus.no/nn/erklaringer/publisert/76c375bf-ca25-4624-bba0-86ce1ecaf1ed",
+        "order": 0
+       }
+      ],
+      "title": "Tilgjengeleghetserklæring",
+      "order": 2,
+      "locale": "nb"
+     }
+    ],
+    "menu": [
+     {
+      "place": "header",
+      "locale": "nb",
+      "path": "/kulturprogram",
+      "order": 0,
+      "id": "3",
+      "label": "Kulturprogram",
+      "parent": ""
+     },
+     {
+      "openInNewWindow": false,
+      "order": 0,
+      "id": "1644401775422638",
+      "label": "Om huset",
+      "locale": "nb",
+      "place": "header",
+      "path": "/om-huset",
+      "parent": "1581340925226183"
+     },
+     {
+      "place": "header",
+      "openInNewWindow": false,
+      "order": 0,
+      "id": "1621508635935911",
+      "path": "/utleige",
+      "label": "Utleige",
+      "parent": "1581340925226183",
+      "locale": "nb"
+     },
+     {
+      "label": "For arrangør",
+      "order": 0,
+      "openInNewWindow": false,
+      "locale": "nb",
+      "id": "1621507215045371",
+      "parent": "1581340925226183",
+      "path": "/for-arrangor",
+      "place": "header"
+     },
+     {
+      "place": "header",
+      "locale": "nb",
+      "order": 0,
+      "parent": "158134707489661",
+      "path": "https://www.stord.kulturhus.no/offentleg-bading-d4ljf8/",
+      "id": "1602535435818718",
+      "label": "Kjøp badebillettar"
+     },
+     {
+      "place": "header",
+      "id": "1575468836747701",
+      "path": "/kinoprogram",
+      "locale": "nb",
+      "label": "Kinoprogram",
+      "order": 0,
+      "parent": "2"
+     },
+     {
+      "place": "header",
+      "path": "/pa-kino-na",
+      "order": 0,
+      "parent": "2",
+      "label": "På kino no",
+      "locale": "nb",
+      "id": "1575477963836817"
+     },
+     {
+      "place": "header",
+      "order": 1,
+      "id": "2",
+      "locale": "nb",
+      "path": "/kinoprogram",
+      "parent": "",
+      "label": "Kino"
+     },
+     {
+      "id": "1602535475065485",
+      "label": "Om symjehallen",
+      "locale": "nb",
+      "place": "header",
+      "parent": "158134707489661",
+      "order": 1,
+      "path": "/symjehallen"
+     },
+     {
+      "parent": "",
+      "place": "header",
+      "label": "Symjehallen",
+      "order": 2,
+      "path": "#",
+      "id": "158134707489661",
+      "locale": "nb"
+     },
+     {
+      "parent": "1581340925226183",
+      "locale": "nb",
+      "path": "/kontakt-oss",
+      "place": "header",
+      "label": "Kontakt oss",
+      "id": "1581340801418546",
+      "order": 3
+     },
+     {
+      "label": "Kommande filmar",
+      "id": "157546874131154",
+      "place": "header",
+      "parent": "2",
+      "locale": "nb",
+      "order": 3,
+      "path": "/kommende-filmer"
+     },
+     {
+      "place": "header",
+      "id": "1581340925226183",
+      "path": "/om-huset",
+      "label": "Om huset",
+      "locale": "nb",
+      "order": 3,
+      "parent": ""
+     },
+     {
+      "id": "1581340911033498",
+      "locale": "nb",
+      "parent": "1581340925226183",
+      "place": "header",
+      "path": "/billettsalet",
+      "order": 4,
+      "label": "Billettsalet"
+     },
+     {
+      "label": "Aldersgrenser",
+      "openInNewWindow": false,
+      "path": "/aldersgrenser",
+      "place": "header",
+      "id": "1641548005872357",
+      "order": 4,
+      "parent": "2",
+      "locale": "nb"
+     },
+     {
+      "id": "1614362152171155",
+      "path": "https://www.stord.kommune.no/stord-kulturskule.590871.nn.html",
+      "parent": "",
+      "locale": "nb",
+      "place": "header",
+      "order": 4,
+      "openInNewWindow": true,
+      "label": "Kulturskulen"
+     },
+     {
+      "order": 5,
+      "label": "Gåvekort",
+      "path": "https://checkout.ebillett.no/169/giftcard",
+      "place": "header",
+      "parent": "1581340925226183",
+      "id": "1581347111162505",
+      "locale": "nb"
+     },
+     {
+      "path": "https://www.stord.kommune.no/bibliotek.426840.nn.html",
+      "label": "Biblioteket",
+      "place": "header",
+      "order": 5,
+      "parent": "",
+      "id": "1614362185633632",
+      "openInNewWindow": true,
+      "locale": "nb"
+     },
+     {
+      "place": "header",
+      "label": "Falturiltu - nynorsk barne- og ungdomsbokfestival",
+      "parent": "",
+      "openInNewWindow": true,
+      "path": "https://www.falturiltu.no",
+      "locale": "nb",
+      "order": 6,
+      "id": "1624965244965596"
+     },
+     {
+      "path": "https://www.stord.kommune.no/teaterfestivalen.426879.nn.html",
+      "locale": "nb",
+      "order": 7,
+      "parent": "",
+      "label": "Teaterfestivalen",
+      "openInNewWindow": true,
+      "id": "1624965331409910",
+      "place": "header"
+     },
+     {
+      "parent": "",
+      "locale": "nb",
+      "order": 0,
+      "label": "Personvernerklæring",
+      "path": "/article/personvernerklaering",
+      "place": "footer",
+      "id": "4"
+     },
+     {
+      "id": "5",
+      "path": "/article/info-om-cookies",
+      "parent": "",
+      "label": "Info om cookies",
+      "place": "footer",
+      "order": 1,
+      "locale": "nb"
+     }
+    ],
+    "variant": "variant-29",
+    "search": {
+     "submitPath": "/search",
+     "enabled": true
+    },
+    "language": {
+     "languageIcon": "",
+     "submitPath": "",
+     "enabled": false
+    },
+    "favicon": "https://dx-cw-static-files.imgix.net/169/stord-kulturhus-favicon.png",
+    "name": "cw-website-theme-beta"
+   },
+   "locale": {
+    "enabled": [
+     "nb"
+    ],
+    "available": [
+     "nb"
+    ],
+    "default": "nb"
+   },
+   "activeLocale": "nb",
+   "partners": [
+    169
+   ],
+   "preferredLanguage": "nn",
+   "host": "www.stord.kulturhus.no"
+  }
+ },
+ "staticQueryHashes": [],
+ "slicesMap": {}
+}
