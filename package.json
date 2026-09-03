@@ -26,7 +26,7 @@
 		"db:logs": "./scripts/db.sh logs",
 		"db:psql": "./scripts/db.sh psql",
 		"db:url": "./scripts/db.sh url",
-		"ingest": "pnpm run ingest:detskjer && pnpm run ingest:mec && pnpm run ingest:checkin && pnpm run ingest:kyrkja && pnpm run ingest:kulturhus && pnpm run ingest:fjordnorway && pnpm run ingest:dnt && pnpm run ingest:hvl && pnpm run ingest:afa",
+		"ingest": "pnpm run ingest:detskjer && pnpm run ingest:mec && pnpm run ingest:checkin && pnpm run ingest:kyrkja && pnpm run ingest:kulturhus && pnpm run ingest:fjordnorway && pnpm run ingest:dnt && pnpm run ingest:hvl && pnpm run ingest:afa && pnpm run ingest:fotball",
 		"ingest:detskjer": "pnpm --filter @hendingar/importer-detskjer ingest",
 		"ingest:mec": "pnpm --filter @hendingar/importer-mec ingest",
 		"ingest:checkin": "pnpm --filter @hendingar/importer-checkin ingest",
@@ -36,6 +36,7 @@
 		"ingest:dnt": "pnpm --filter @hendingar/importer-dnt ingest",
 		"ingest:hvl": "pnpm --filter @hendingar/importer-hvl ingest",
 		"ingest:afa": "pnpm --filter @hendingar/importer-aktivitetforalle ingest",
+		"ingest:fotball": "pnpm --filter @hendingar/importer-fotball ingest",
 		"verifier:dev": "cd services/verifier && ./.venv/bin/verifier dev",
 		"verifier:eval": "cd services/verifier && ./.venv/bin/python evals/run.py",
 		"db:bootstrap": "pnpm run db:up && pnpm run db:migrate && pnpm run db:seed && pnpm run db:sources && pnpm run ingest && pnpm run consolidate"
