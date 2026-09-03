@@ -1,6 +1,6 @@
 import type { CategorySlug } from '@hendingar/core/taxonomy';
 import { CATEGORY_SLUGS } from '@hendingar/core/taxonomy';
-import type { UpstreamEvent } from './api.ts';
+import { SOURCE, type UpstreamEvent } from './api.ts';
 
 /**
  * Pure mapping: upstream shape → our shape. No I/O, no clock, no randomness — so it is fully
@@ -158,13 +158,13 @@ export function mapEvent(input: UpstreamEvent): MappedEvent | MapFailure {
 		 * We store the poster URL and hotlink it from the source's own CDN — we never copy the file
 		 * onto our infrastructure.
 		 *
-		 * `imageRightsVerified` is false for every record this source returns, which in practice
-		 * means the publisher does not use the field rather than that the rights are absent. The
-		 * flag is still recorded per event so a future policy can act on it, and so the honest
-		 * state is visible rather than inferred.
+		 * Rights come from `SOURCE`, not from the response. `imageRightsVerified` is false on every
+		 * record this API returns, which means the publisher does not populate the field rather
+		 * than that permission is absent — so reading it understated a permission we actually hold
+		 * from Innocode / Polaris. The agreement is the fact; the field is noise.
 		 */
 		posterUrl: safeUrl(input.posterUrls[0] ?? null),
-		posterRightsVerified: input.imageRightsVerified,
+		posterRightsVerified: SOURCE.posterRightsCleared,
 		sourceUrl: `https://detskjer.sunnhordland.no/events/${input.eventSlug}`
 	};
 }

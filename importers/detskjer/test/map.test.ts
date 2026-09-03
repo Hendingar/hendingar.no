@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { CATEGORY_SLUGS } from '@hendingar/core/taxonomy';
-import { collectPages, upstreamPageSchema, type FetchPage } from '../src/api.ts';
+import { collectPages, upstreamPageSchema, type FetchPage, SOURCE } from '../src/api.ts';
 import { MAPPED_SLUGS, isFailure, mapCategory, mapEvent, slugifyVenue } from '../src/map.ts';
 
 /** Committed fixtures, captured from the live API. No test here touches the network. */
@@ -138,22 +138,25 @@ describe('event mapping', () => {
 		if (!isFailure(mapped)) expect(mapped.startsAt.toISOString()).toBe('2026-09-12T18:00:00.000Z');
 	});
 
-	it('carries the poster URL and records the rights flag separately', () => {
+	it('carries the poster URL, and takes rights from the agreement not the response', () => {
 		const raw = {
 			...firstEvent(),
 			imageRightsVerified: false,
 			posterUrls: ['https://example.com/poster.jpg']
 		};
 		const mapped = mapEvent(raw);
-		if (!isFailure(mapped)) {
-			// Hotlinked, never copied onto our infrastructure.
-			expect(mapped.posterUrl).toBe('https://example.com/poster.jpg');
-			// The flag is preserved so a future policy can act on it.
-			expect(mapped.posterRightsVerified).toBe(false);
-		}
+		if (isFailure(mapped)) throw new Error('should have mapped');
+		// Hotlinked, never copied onto our infrastructure.
+		expect(mapped.posterUrl).toBe('https://example.com/poster.jpg');
+		// `imageRightsVerified` is false on every record this API returns, so it reflects a field
+		// the publisher never populates rather than a rights position. Reading it understated a
+		// permission we hold from Innocode / Polaris, so the recorded agreement wins — and the
+		// response cannot move it in either direction.
+		expect(mapped.posterRightsVerified).toBe(SOURCE.posterRightsCleared);
 
-		const ok = mapEvent({ ...raw, imageRightsVerified: true });
-		if (!isFailure(ok)) expect(ok.posterRightsVerified).toBe(true);
+		const claimed = mapEvent({ ...raw, imageRightsVerified: true });
+		if (isFailure(claimed)) throw new Error('should have mapped');
+		expect(claimed.posterRightsVerified).toBe(SOURCE.posterRightsCleared);
 	});
 
 	it('still refuses a poster that is not an http url', () => {
