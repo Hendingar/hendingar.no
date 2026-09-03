@@ -75,6 +75,31 @@ skjer_ for Polaris Media's local titles. So the same importer likely unlocks a d
 regions at once. **If you spot a source that looks like a white-label of something we already
 support, say so** — it's usually a config entry rather than a new scraper.
 
+### When the endpoint is in the bundle, not the URL bar
+
+Sometimes the fetch happens on a click you have not made yet, so reloading the page shows nothing
+useful in the Network tab. The endpoint is still there — in the JavaScript.
+
+`dnt.no/aktivitetskalender` renders a React island and no events at all server-side. Its bundle
+holds two strings:
+
+```bash
+curl -s https://www.dnt.no/assets/js/main.<hash>.js \
+  | grep -oE '"/[a-zA-Z0-9_./-]*(api|search|activit)[a-zA-Z0-9_./-]*"' | sort -u
+# → "/api/activities"   the listing, taking the page's own query string
+# → "/api/search"
+```
+
+`/api/activities` accepts the very parameters the reader sees in their address bar, so the filtered
+calendar URL a turlag publishes is also the API call. **Grep the bundle for path-shaped strings**
+before concluding a site has no API.
+
+**And check that the per-item page actually loads.** DNT's listing gives every activity a tidy
+`/aktiviteter-fra-deltager/…` URL, and all of them return 500 — the calendar opens a modal instead
+of navigating, so nobody upstream has ever followed one. The modal fills itself from a _second_
+endpoint (`/api/search/activitydetails?id=…`), which is where the description and the working
+outbound link live. A URL existing in a response is not evidence that it resolves; fetch one.
+
 ## What we already collect
 
 Live status — every source, its method, its schedule, and what the last run actually did:
