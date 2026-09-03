@@ -301,7 +301,16 @@ export const events = pgTable(
 		// Makes materialising idempotent: topping up a series can never double-write a day.
 		uniqueIndex('events_series_starts_at_idx').on(t.seriesId, t.startsAt),
 		index('events_starts_at_idx').on(t.startsAt),
-		index('events_status_starts_at_idx').on(t.status, t.startsAt)
+		index('events_status_starts_at_idx').on(t.status, t.startsAt),
+		/*
+		 * Every duplicate pointing at a canonical row.
+		 *
+		 * Three things walk the group by this column and had no index to do it with: the source
+		 * filter's EXISTS, the event page's "reported by" list, and now the source marks on every
+		 * tile in a listing. The last one is per-row, so a sequential scan per tile is the
+		 * difference between a listing that scales and one that quietly stops.
+		 */
+		index('events_duplicate_of_idx').on(t.duplicateOfId)
 	]
 );
 

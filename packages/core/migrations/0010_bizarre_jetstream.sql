@@ -1,0 +1,1 @@
+CREATE INDEX "events_duplicate_of_idx" ON "events" USING btree ("duplicate_of_id");

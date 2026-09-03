@@ -200,6 +200,28 @@ test('an event reported by two sources is listed once', async ({ request }) => {
 	expect(listings.length, 'the same event must not appear twice').toBe(1);
 });
 
+test('a consolidated tile carries a mark for every source that reported it', async ({ page }) => {
+	await page.goto('/hendingar');
+
+	/*
+	 * The seed's duplicate pair, which consolidation collapses into one tile.
+	 *
+	 * Showing a single mark there would credit whichever importer happened to run first — the
+	 * canonical row is picked by lowest id, an arbitrary tiebreak — and would hide the most useful
+	 * thing an index can say, which is that more than one calendar agrees this is on.
+	 */
+	const tile = page.locator('article.tile').filter({ hasText: 'Bård Tufte Johansen' });
+	await expect(tile).toHaveCount(1);
+
+	// `.icon` covers both renderings: the hotlinked favicon and the initials fallback.
+	const marks = tile.locator('.tile__src .icon');
+	expect(await marks.count(), 'one mark per reporting source').toBe(2);
+
+	// Named for a pointer user, since the marks themselves are decorative.
+	const title = await tile.locator('.tile__src').getAttribute('title');
+	expect(title, 'the tooltip must name both sources').toMatch(/^Kjelder: .+,/);
+});
+
 test('the event page credits every source that reported it', async ({ page, request }) => {
 	// Navigate by the href the listing actually rendered rather than by clicking and waiting on a
 	// URL pattern: `/hendingar` and `/hending/` are one character apart, and a wait that matches

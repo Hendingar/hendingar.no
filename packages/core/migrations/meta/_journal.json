@@ -71,6 +71,13 @@
       "when": 1788426938461,
       "tag": "0009_glossy_mojo",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1788431577926,
+      "tag": "0010_bizarre_jetstream",
+      "breakpoints": true
     }
   ]
 }
