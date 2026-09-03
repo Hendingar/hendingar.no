@@ -47,6 +47,20 @@ test('every tile has a thumbnail and offers more', async ({ page }) => {
 	await expect(page.getByRole('link', { name: 'Vis fleire' })).toBeVisible();
 });
 
+test('an imported tile shows the mark of the source it came from', async ({ page }) => {
+	await page.goto('/');
+	const marks = page.locator('article.tile .tile__src');
+	// Every seeded event is imported, so every tile carries a mark. A published submission would
+	// legitimately have none — the assertion is that imported events never lose their attribution,
+	// which is the README's "we are an index, not a replacement" made visible on the card.
+	expect(await marks.count()).toBeGreaterThan(0);
+	for (const mark of await marks.all()) {
+		// The source is named for a pointer user even though the icon is decorative for a reader.
+		await expect(mark).toHaveAttribute('title', /^Kjelde: .+/);
+		expect(await mark.locator('.icon').count()).toBe(1);
+	}
+});
+
 test('a source is one compact row until you open it', async ({ page }) => {
 	await page.goto('/datasamling');
 	await expect(page.getByRole('heading', { level: 1, name: /datasamling/i })).toBeVisible();
@@ -83,20 +97,30 @@ test('the submission log lists what people sent and what was decided', async ({ 
 	await page.goto('/datasamling');
 	const log = page.locator('.log');
 	await expect(log).toBeVisible();
-	expect(await log.locator('.entry').count()).toBeGreaterThan(0);
-	// Seeded: one pending photo submission and one rejected form submission.
-	await expect(log).toContainText('Quiz på Kaikanten');
-	await expect(log).toContainText('Til gjennomgang');
+	const entries = await log.locator('.entry').all();
+	// Structure, not specific rows. The log shows only the five most recent submissions, and the
+	// submission specs run in parallel with this file — asserting on a seeded title meant asserting
+	// that nothing else had been submitted yet, which is a race, not a requirement.
+	expect(entries.length).toBeGreaterThan(0);
+	expect(entries.length).toBeLessThanOrEqual(5);
+	for (const entry of entries) {
+		await expect(entry).toHaveAttribute('data-status', /published|pending|rejected/);
+		await expect(entry.locator('.entry__method')).toHaveCount(1);
+		await expect(entry.locator('.entry__status')).not.toBeEmpty();
+	}
 });
 
-test('a rejected submission is listed but its title is withheld', async ({ page }) => {
+test('a rejected submission never has its text republished', async ({ page }) => {
 	await page.goto('/datasamling');
-	const rejected = page.locator('.entry[data-status="rejected"]').first();
-	await expect(rejected).toBeVisible();
-	// Retained as evidence, not republished — reprinting what we judged to be spam would defeat
-	// rejecting it. The seed's rejected row is advertising copy, so assert it never reaches the page.
-	await expect(rejected).toContainText('Tilbakehalden tittel');
+	// The mapping rule itself is unit-tested in packages/core (publicSubmissionTitle) because
+	// whether a given rejected row is inside the five-row window depends on what else was
+	// submitted. What is always true, and worth asserting on the real page, is the outcome:
+	// the seed's rejected row is advertising copy, and it must never appear anywhere.
 	await expect(page.locator('body')).not.toContainText('BILLIGE KLOKKER');
+	// And any rejected row that IS on screen shows the placeholder rather than its own title.
+	for (const rejected of await page.locator('.entry[data-status="rejected"]').all()) {
+		await expect(rejected).toContainText('Tilbakehalden tittel');
+	}
 });
 
 test('site navigation reaches both pages', async ({ page }) => {

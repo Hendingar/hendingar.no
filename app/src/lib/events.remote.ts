@@ -38,6 +38,13 @@ export const listEvents = query(
 					venueTimeZone: venues.timezone,
 					municipality: venues.municipality,
 					posterUrl: events.posterUrl,
+					/*
+					 * The source, so a tile can show whose calendar an event came from. We are an index, not a
+					 * replacement — a tile that shows no origin quietly claims the event as ours. Null for human
+					 * submissions, which have no source row.
+					 */
+					sourceName: sources.name,
+					sourceIconUrl: sources.iconUrl,
 					// Same day-grouping columns as listUpcoming, so one component renders both listings
 					// instead of /hendingar having a second, plainer list that drifts from the front page.
 					localDate: sql<string>`
@@ -53,6 +60,7 @@ export const listEvents = query(
 				})
 				.from(events)
 				.leftJoin(venues, eq(events.venueId, venues.id))
+				.leftJoin(sources, eq(events.sourceId, sources.id))
 				.where(
 					and(
 						eq(events.status, 'published'),
@@ -113,6 +121,8 @@ export const listUpcoming = query(z.number().int().min(1).max(60).default(24), a
 			venueTimeZone: venues.timezone,
 			municipality: venues.municipality,
 			posterUrl: events.posterUrl,
+			sourceName: sources.name,
+			sourceIconUrl: sources.iconUrl,
 			/*
 			 * The calendar day AT THE VENUE, resolved in SQL. Grouping by day is a calendar
 			 * question, not an instant one — deriving it in JS from the server's clock would put a
@@ -135,6 +145,7 @@ export const listUpcoming = query(z.number().int().min(1).max(60).default(24), a
 		})
 		.from(events)
 		.leftJoin(venues, eq(events.venueId, venues.id))
+		.leftJoin(sources, eq(events.sourceId, sources.id))
 		.where(
 			and(
 				eq(events.status, 'published'),

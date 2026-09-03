@@ -2,7 +2,7 @@
 	import { formatEventTime } from '@hendingar/core/datetime';
 	import { describeCron, freshness, nextCronRun } from '@hendingar/core/schedule';
 	import RunStrip from './RunStrip.svelte';
-	import SourceIcon from './SourceIcon.svelte';
+	import SourceIcon from '../SourceIcon.svelte';
 	import type { CollectedSource } from '../../collection.remote';
 
 	/**
