@@ -143,6 +143,24 @@ jobs:
             --query properties.outputs -o json > verifier-outputs.json
           echo "url=$(jq -r .verifierUrl.value verifier-outputs.json)" >> "$GITHUB_OUTPUT"
 
+      # Read the custom domains BEFORE deploying, so the template can hand them straight back.
+      #
+      # ARM removes what a template does not declare. The first deploy after hendingar.no, www and
+      # dev were bound unbound all three: the certificates survived in the environment, but the app
+      # stopped answering on every name a visitor actually uses — and the deploy reported success,
+      # because the smoke test only ever hit the default azurecontainerapps.io FQDN.
+      - name: Capture bound custom domains
+        id: domains
+        run: |
+          az containerapp show --name "ca-$APP-$ENV_NAME" --resource-group "$RG" \
+            --query 'properties.configuration.ingress.customDomains' -o json > domains.raw.json 2>/dev/null \
+            || echo 'null' > domains.raw.json
+          # `null` (no app yet, or nothing bound) becomes []; the template reads empty as "leave alone".
+          jq 'if . == null then [] else . end' domains.raw.json > domains.json
+          echo "count=$(jq 'length' domains.json)" >> "$GITHUB_OUTPUT"
+          echo "first=$(jq -r '[.[].name] | first // empty' domains.json)" >> "$GITHUB_OUTPUT"
+          echo "bound: $(jq -r '[.[].name] | join(", ")' domains.json)"
+
       - name: Deploy application
         id: app
         run: |
@@ -159,6 +177,7 @@ jobs:
               postgresAdminUser="${{ steps.infra.outputs.postgresAdminUserOut }}" \
               postgresAdminPassword="${{ secrets.POSTGRES_ADMIN_PASSWORD }}" \
               verifierUrl="${{ steps.verifier.outputs.url }}" \
+              customDomains="$(cat domains.json)" \
             --query properties.outputs -o json > app-outputs.json
           echo "url=$(jq -r .appUrl.value app-outputs.json)" >> "$GITHUB_OUTPUT"
           echo "name=$(jq -r .containerAppName.value app-outputs.json)" >> "$GITHUB_OUTPUT"
@@ -194,6 +213,25 @@ jobs:
               exit 1
             }
           done
+
+          # A bound hostname, not just the default FQDN. Visitors arrive on hendingar.no; a deploy
+          # that unbinds it leaves the *.azurecontainerapps.io URL answering perfectly while the
+          # real site is dark. That exact failure shipped once and this step is why it cannot again.
+          HOST="${{ steps.domains.outputs.first }}"
+          if [ -n "$HOST" ]; then
+            echo "checking bound hostname https://$HOST/"
+            code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 25 "https://$HOST/" || echo 000)
+            if [ "$code" != "200" ]; then
+              echo "::error::https://$HOST/ returned $code — the custom domain is not serving."
+              echo "Bound now: $(az containerapp show --name "${{ steps.app.outputs.name }}" \
+                --resource-group "$RG" \
+                --query 'properties.configuration.ingress.customDomains[].name' -o tsv || true)"
+              exit 1
+            fi
+            echo "custom domain ok"
+          else
+            echo "no custom domain bound — skipping hostname check"
+          fi
           echo "content ok"
 
       - name: Summary
