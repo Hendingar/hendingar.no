@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { page } from '$app/state';
 	import { CATEGORY_SLUGS, categoryLabel, type CategorySlug } from '@hendingar/core/taxonomy';
-	import EventsByDay from '../../lib/components/EventsByDay.svelte';
+	import InfiniteList from '../../lib/components/InfiniteList.svelte';
 	import SourceIcon from '../../lib/components/SourceIcon.svelte';
 	import { listCategoryCounts, listEvents, listSourceCounts } from '../../lib/events.remote';
 	import { heartCounts } from '../../lib/hearts.remote';
@@ -67,7 +67,18 @@
 	 * query and awaiting it in the template keeps the dependency live while still suspending the
 	 * component on the server, so the filtered list is server-rendered too.
 	 */
-	const filtered = $derived(listEvents({ limit: 100, category: active, source: activeSource }));
+	/**
+	 * One screenful and a bit, not the whole hundred.
+	 *
+	 * The page used to ask for 100 events and stop dead there, with nothing beyond. A smaller first
+	 * page renders and paints faster, and `InfiniteList` fetches the next one before the reader
+	 * reaches the bottom — so the list is both quicker to appear and no longer has an end.
+	 */
+	const PAGE_SIZE = 24;
+
+	const filtered = $derived(
+		listEvents({ limit: PAGE_SIZE, offset: 0, category: active, source: activeSource })
+	);
 
 	/*
 	 * Heart counts for whatever the filter produced, chained off the same promise.
@@ -167,7 +178,14 @@
 		</p>
 	{:else}
 		<!-- headingLevel 2 so each day nests under this page's h1. -->
-		<EventsByDay events={await filtered} headingLevel={2} hearts={await hearts} />
+		<InfiniteList
+			first={await filtered}
+			firstHearts={await hearts}
+			pageSize={PAGE_SIZE}
+			category={active}
+			source={activeSource}
+			headingLevel={2}
+		/>
 	{/if}
 </div>
 

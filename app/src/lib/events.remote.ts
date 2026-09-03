@@ -54,7 +54,7 @@ function sourceMarksFor(eventId: SQL | AnyColumn) {
 
 export const listEvents = query(
 	eventQuerySchema,
-	async ({ from, to, category, source, municipality, limit }) => {
+	async ({ from, to, category, source, municipality, limit, offset }) => {
 		const since = from ? new Date(from) : new Date();
 
 		return (
@@ -131,6 +131,7 @@ export const listEvents = query(
 				// Ordered by the same effective instant the grouping uses, so day groups stay contiguous.
 				.orderBy(sql`greatest(${events.startsAt}, now())`, asc(events.startsAt))
 				.limit(limit)
+				.offset(offset)
 		);
 	}
 );

@@ -108,6 +108,42 @@ test('the count is public; the list of what you hearted is not', async ({ page, 
 	await other.close();
 });
 
+test('hearting and un-hearting quickly leaves it un-hearted', async ({ page }) => {
+	/*
+	 * The regression this exists for.
+	 *
+	 * The button used to drop a tap that arrived while a request was in flight, and to undo the
+	 * local change if that request failed. Together those left the event hearted after a fast
+	 * heart-then-unheart — a race that only showed up on a slow enough round trip, which is why it
+	 * passed locally and failed in CI.
+	 */
+	/*
+	 * Latency, injected.
+	 *
+	 * Without it this passes against the broken version too: locally the round trip is fast enough
+	 * that the second tap always lands after the first has settled. CI was slow enough to catch it,
+	 * which is a terrible way to find out. Delaying the write makes the race deterministic here.
+	 */
+	await page.route('**/*', async (route) => {
+		if (route.request().method() === 'POST') {
+			await new Promise((r) => setTimeout(r, 400));
+		}
+		await route.continue();
+	});
+
+	await page.goto('/hendingar');
+	const heart = tile(page, 4).locator('button.heart');
+
+	for (let i = 0; i < 4; i += 1) {
+		await heart.click();
+		await heart.click();
+	}
+
+	await expect(heart).toHaveAttribute('aria-pressed', 'false');
+	await page.goto('/hjarta');
+	await expect(page.getByText(/ikkje hjarta noko enno/i)).toBeVisible();
+});
+
 test('an empty Hjarta page says so rather than showing an empty grid', async ({ page }) => {
 	await page.goto('/hjarta');
 	await expect(page.getByText(/ikkje hjarta noko enno/i)).toBeVisible();

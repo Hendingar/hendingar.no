@@ -72,7 +72,18 @@ export const eventQuerySchema = z.object({
 		.regex(/^[a-z0-9-]+$/, 'must be a source slug')
 		.optional(),
 	municipality: z.string().trim().max(100).optional(),
-	limit: z.number().int().min(1).max(100).default(50)
+	limit: z.number().int().min(1).max(100).default(50),
+	/**
+	 * How many rows to skip, for paging a long listing.
+	 *
+	 * Offset rather than a cursor, deliberately. The listing is ordered by
+	 * `greatest(starts_at, now())` so that an event already under way sorts under today rather than
+	 * under the day it began — a computed key, which a cursor would have to reproduce exactly in
+	 * two places to stay correct. An offset re-reads a slightly different window if the data shifts
+	 * between requests, and for a calendar that changes once a day that is a far smaller problem
+	 * than a cursor quietly disagreeing with the sort.
+	 */
+	offset: z.number().int().min(0).max(5000).default(0)
 });
 
 export type EventQuery = z.infer<typeof eventQuerySchema>;
