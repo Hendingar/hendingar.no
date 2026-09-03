@@ -87,6 +87,9 @@ jobs:
       # linked sources at all, and every spec covering them fails here while passing on a laptop
       # where someone happened to run it by hand.
       - run: pnpm db:sources
+      # Cross-source duplicates are marked after the data exists, exactly as in production. Without
+      # this the e2e job would test a listing that has never been consolidated.
+      - run: pnpm consolidate
       - run: pnpm --filter @hendingar/app test:e2e:install
       - run: pnpm test:e2e
       - uses: actions/upload-artifact@v4

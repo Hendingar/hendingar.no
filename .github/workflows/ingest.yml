@@ -154,6 +154,18 @@ jobs:
             pnpm --filter @hendingar/importer-kulturhus ingest | tee -a result.txt
           fi
 
+      # After every importer, never inside one: an importer sees a single source and cannot know
+      # what the others said. Skipped on a dry run, which must write nothing.
+      - name: Consolidate duplicates across sources
+        if: always() && steps.fw.outputs.opened == 'true' && inputs.dry_run != true
+        env:
+          PGHOST: ${{ steps.pg.outputs.fqdn }}
+        run: |
+          DATABASE_URL=$(PW="${{ secrets.POSTGRES_ADMIN_PASSWORD }}" python3 -c \
+            'import os,urllib.parse as u; print("postgres://hendingar:%s@%s:5432/hendingar?sslmode=require" % (u.quote(os.environ["PW"], safe=""), os.environ["PGHOST"]))')
+          export DATABASE_URL
+          pnpm consolidate | tee -a result.txt
+
       # A separate always() step: a bash EXIT trap does not survive SIGKILL, and a leaked rule
       # leaves a recycled public runner IP allowed against the database.
       - name: Close firewall

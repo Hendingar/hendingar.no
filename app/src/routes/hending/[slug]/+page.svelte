@@ -1,4 +1,5 @@
 <script lang="ts">
+	import SourceIcon from '../../../lib/components/SourceIcon.svelte';
 	import { error } from '@sveltejs/kit';
 	import { page } from '$app/state';
 	import { categoryLabel } from '@hendingar/core/taxonomy';
@@ -199,26 +200,59 @@
 					<a class="btn btn--solid" href={event.ctaUrl} rel="noopener nofollow">Billettar</a>
 				{/if}
 
-				<p class="ev__source">
-					{#if event.sourceUrl}
-						<a href={event.sourceUrl} rel="noopener">Sjå hos kjelda →</a>
-					{/if}
-					{#if event.sourceAttribution}
-						<span class="muted">
-							Henta frå {event.sourceAttribution}.
-						</span>
-					{:else}
+				{#if event.reportedBy.length > 0}
+					<!--
+						Every source that reported this event, not only the row that happened to win.
+
+						Several calendars carry the same concert, and the canonical row is chosen by
+						lowest id — an arbitrary tiebreak. Crediting just that one would name whichever
+						importer ran first and silently drop the rest. Being an index, "three places
+						say this is on" is the useful part.
+					-->
+					<div class="ev__sources">
+						<p class="label">{event.reportedBy.length > 1 ? 'Kjelder' : 'Kjelde'}</p>
+						<ul class="sources">
+							{#each event.reportedBy as src (src.slug)}
+								<li>
+									<SourceIcon src={src.iconUrl} name={src.name} size="1rem" />
+									{#if src.eventUrl}
+										<a href={src.eventUrl} rel="noopener">{src.attribution}</a>
+									{:else}
+										<a href={src.siteUrl} rel="noopener">{src.attribution}</a>
+									{/if}
+								</li>
+							{/each}
+						</ul>
+					</div>
+				{:else}
+					<p class="ev__source">
 						<span class="muted">
 							Sendt inn av ein person{event.submissionMethod === 'photo' ? ' frå eit bilete' : ''}.
 						</span>
-					{/if}
-				</p>
+					</p>
+				{/if}
 			</aside>
 		</div>
 	</div>
 </article>
 
 <style>
+	.ev__sources {
+		margin-block-start: 1.1rem;
+	}
+	.sources {
+		list-style: none;
+		margin: 0.35rem 0 0;
+		padding: 0;
+		display: grid;
+		gap: 0.35rem;
+	}
+	.sources li {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+	}
+
 	.ev {
 		padding-block: clamp(1.5rem, 4vw, 3rem) var(--section-y);
 		container-type: inline-size;

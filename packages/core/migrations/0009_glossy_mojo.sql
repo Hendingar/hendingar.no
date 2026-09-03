@@ -1,0 +1,1 @@
+ALTER TABLE "events" ADD COLUMN "duplicate_of_id" integer;

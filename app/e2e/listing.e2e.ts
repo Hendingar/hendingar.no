@@ -186,3 +186,39 @@ test('the day heading stays visible while its events scroll past', async ({ page
 	});
 	expect(pinned, 'exactly one day heading is pinned at the top').toBe(1);
 });
+
+test('an event reported by two sources is listed once', async ({ request }) => {
+	const html = await (await request.get('/hendingar')).text();
+	/*
+	 * The seed carries the same show from two sources, spelled differently — one with an age limit.
+	 *
+	 * Counted on the title LINK, not on the title text: a generated thumbnail also carries the
+	 * title in its `aria-label`, so a plain text match finds every tile twice and would have failed
+	 * whatever the consolidation did.
+	 */
+	const listings = html.match(/class="tile__link[^"]*"[^>]*>Bård Tufte Johansen/g) ?? [];
+	expect(listings.length, 'the same event must not appear twice').toBe(1);
+});
+
+test('the event page credits every source that reported it', async ({ page, request }) => {
+	// Navigate by the href the listing actually rendered rather than by clicking and waiting on a
+	// URL pattern: `/hendingar` and `/hending/` are one character apart, and a wait that matches
+	// the page you are already on passes without going anywhere.
+	const html = await (await request.get('/hendingar')).text();
+	const href = /href="(\/hending\/[^"]+)"[^>]*>Bård Tufte Johansen/.exec(html)?.[1];
+	expect(href, 'the consolidated event should be listed').toBeTruthy();
+	await page.goto(href!);
+
+	/*
+	 * The canonical row is chosen by lowest id — an arbitrary tiebreak — so naming only its source
+	 * would credit whichever importer happened to run first and drop the other.
+	 *
+	 * Scoped to the list itself. "Kjelder" is also the main navigation label, so asserting on that
+	 * text alone passes on every page on the site.
+	 */
+	const sources = page.locator('ul.sources');
+	await expect(sources).toBeVisible();
+	expect(await sources.locator('li').count(), 'both sources must be credited').toBe(2);
+	// Each links out, because crediting a source without pointing at it is not credit.
+	expect(await sources.locator('li a').count()).toBe(2);
+});
