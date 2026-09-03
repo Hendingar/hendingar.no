@@ -124,3 +124,65 @@ test('the source filter names which calendar the list is from', async ({ page })
 	// "Alle hendingar" while showing one library's events would describe the page inaccurately.
 	await expect(page.getByText(/frå\s+Bømlo folkebibliotek/i)).toBeVisible();
 });
+
+test('a phone shows several events at once, not one card per screenful', async ({ page }) => {
+	await page.setViewportSize({ width: 390, height: 844 });
+	await page.goto('/hendingar');
+
+	const tile = page.locator('article.tile').first();
+	const box = (await tile.boundingBox())!;
+	// The poster-on-top card was 315px tall here, so 2.7 events fitted on screen and finding next
+	// Friday meant scrolling past pictures. As a row it is under half that. Asserting a budget
+	// rather than an exact number: the point is density, not a specific design.
+	expect(box.height, 'an event row must fit several to a screen').toBeLessThan(200);
+
+	// Text left, thumbnail right — a row, not a stack. If the thumbnail is above the title the
+	// layout has fallen back to the card and the height assertion above is the only thing left
+	// holding it, which it would not for long.
+	const thumb = (await tile.locator('.thumb').boundingBox())!;
+	const title = (await tile.locator('.tile__t').boundingBox())!;
+	expect(thumb.x, 'the thumbnail sits beside the text').toBeGreaterThan(title.x);
+	expect(Math.abs(thumb.y - title.y), 'the thumbnail is not stacked above the title').toBeLessThan(
+		box.height
+	);
+});
+
+test('the category filters do not eat the screen on a phone', async ({ page }) => {
+	await page.setViewportSize({ width: 390, height: 844 });
+	await page.goto('/hendingar');
+
+	const filters = page.getByRole('navigation', { name: 'Filtrer på kategori' });
+	const box = (await filters.boundingBox())!;
+	// Wrapped, sixteen chips were 271px — a third of the viewport spent on a control before a
+	// single event was visible. One scrollable row is about 40px.
+	expect(box.height, 'filters must not wrap into a block').toBeLessThan(80);
+
+	// It scrolls sideways rather than shrinking the chips into unreadable slivers...
+	const scrollable = await filters.evaluate(
+		(el) => el.scrollWidth > el.clientWidth && getComputedStyle(el).overflowX === 'auto'
+	);
+	expect(scrollable, 'the chip row scrolls instead of wrapping').toBe(true);
+	// ...and the page itself still does not scroll sideways, which is the trap here.
+	const overflow = await page.evaluate(
+		() => document.documentElement.scrollWidth - document.documentElement.clientWidth
+	);
+	expect(overflow, 'a sideways-scrolling child must not drag the page with it').toBe(0);
+});
+
+test('the day heading stays visible while its events scroll past', async ({ page }) => {
+	await page.setViewportSize({ width: 390, height: 844 });
+	await page.goto('/hendingar');
+	await page.evaluate(() => window.scrollTo(0, 900));
+	await page.waitForTimeout(250);
+
+	// Density created this problem: at five or six events a screen, a day runs well past the
+	// heading that names it, and the list stops answering "which day is this".
+	const pinned = await page.evaluate(() => {
+		const hs = [...document.querySelectorAll('.day__h')];
+		return hs.filter((h) => {
+			const r = h.getBoundingClientRect();
+			return r.top >= -1 && r.top < 60;
+		}).length;
+	});
+	expect(pinned, 'exactly one day heading is pinned at the top').toBe(1);
+});

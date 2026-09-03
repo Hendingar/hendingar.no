@@ -129,6 +129,66 @@
 	}
 	/* Everything above is decoration on top of a working card. Anyone who has asked their system
 	   for less movement gets the colour change and none of the motion. */
+	/*
+	 * Below the grid's first breakpoint the tile becomes a row: text left, a square thumbnail
+	 * right.
+	 *
+	 * Measured, not guessed. The poster-on-top card is 315px tall on a 390x844 phone, so 2.7
+	 * events fit on screen and finding next Friday means a lot of scrolling past pictures. As a
+	 * row it is about a third of that. The poster still earns its place at wider widths, where
+	 * there is room for it beside its neighbours.
+	 *
+	 * A media query rather than a container query, deliberately: the tile is FULL width on a phone
+	 * and NARROW in a desktop grid column, so its own width says nothing about which layout it is
+	 * in — a container query here fires on exactly the wrong one. 34rem matches where
+	 * EventsByDay's grid actually goes multi-column.
+	 */
+	@media (width < 34rem) {
+		.tile {
+			grid-template-columns: minmax(0, 1fr) 5.5rem;
+			grid-template-rows: auto;
+		}
+		.tile__body {
+			grid-column: 1;
+			grid-row: 1;
+			padding: 0.6rem 0.7rem 0.65rem;
+			gap: 0.1rem;
+			align-content: center;
+		}
+		/* EventThumb's root element carries .thumb, so this reaches past the scoping boundary the
+		   same way the hover rule above already does. */
+		.tile > :global(.thumb) {
+			grid-column: 2;
+			grid-row: 1;
+			inline-size: 5.5rem;
+			block-size: 100%;
+			aspect-ratio: auto;
+			/* The rule moves from under the poster to beside it, so the row still reads as one
+			   object rather than two glued together. */
+			border-block-end: none;
+			border-inline-start: var(--rule) solid var(--peach-line);
+		}
+		.tile__t {
+			font-size: 1.05rem;
+			line-height: 1.15;
+		}
+		.tile__top {
+			font-size: var(--step-micro);
+		}
+		.tile__meta {
+			font-size: 0.8125rem;
+		}
+		/* Over a photograph now rather than over our own navy, so it needs its own ground to stay
+		   legible — without it the mark disappears into a bright poster. */
+		.tile__src {
+			inset-block-end: 0.3rem;
+			inset-inline-end: 0.3rem;
+			padding: 0.15rem;
+			background: color-mix(in srgb, var(--navy-900) 78%, transparent);
+			opacity: 0.9;
+		}
+	}
+
 	@media (prefers-reduced-motion: reduce) {
 		.tile,
 		.tile__src,

@@ -79,6 +79,28 @@
 		padding-block-end: 0.5rem;
 		border-block-end: var(--rule) solid var(--peach-line);
 	}
+	/*
+	 * The day heading sticks while you scroll its events.
+	 *
+	 * A consequence of the density work rather than decoration: fitting 5.6 events on a phone
+	 * instead of 2.7 means a day's worth of them now runs well past the heading that names it, so
+	 * "which day am I looking at" becomes the question the list stops answering. Sticky only on
+	 * narrow screens, where the grid is a single column and the answer genuinely scrolls away.
+	 *
+	 * It needs its own background: the events pass underneath, and a transparent heading over a
+	 * poster is unreadable.
+	 */
+	@media (width < 34rem) {
+		.day__h {
+			position: sticky;
+			inset-block-start: 0;
+			z-index: 2;
+			background: var(--navy-800);
+			margin-block-end: 0.55rem;
+			padding-block: 0.45rem 0.4rem;
+		}
+	}
+
 	.day__n {
 		font-family: var(--font-mono);
 		font-weight: 700;
