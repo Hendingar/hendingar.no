@@ -84,21 +84,35 @@ gh pr create --title "…" --body "…"      # end the body with the Claude Code
 State what you actually verified — counts, a second idempotent run, "56 e2e pass" — not "should
 work".
 
-## 4. Merge on green, and delete the branch in the same breath
+## 4. Merge on green — hand it to GitHub, not to yourself
 
-Watch the checks rather than polling by hand, and merge when they are all green:
+Arm server-side auto-merge the moment the PR exists:
 
 ```bash
-gh pr checks <N>
-gh pr merge <N> --squash --delete-branch
+gh pr merge <N> --squash --delete-branch --auto
 ```
 
-`--delete-branch` is not optional. It is what keeps the remote clean; skipping it is how the repo
-accumulated nine dangling branches that `git branch --merged` could not see.
+`--auto` is the whole point. GitHub merges the PR itself when the checks pass, whether or not this
+session is still alive, still watching, or still in the same conversation. `allow_auto_merge` and
+`delete_branch_on_merge` are enabled on the repo, so the branch is deleted either way.
 
-To let it run in the background, arm a Monitor that emits every terminal check state — success
-*and* failure — and merges only when every check is `pass` or `skipping`. A monitor that greps only
-for success stays silent through a failure, and silence looks exactly like "still running".
+If the checks are already green, the same command merges immediately.
+
+**Do not use a background Monitor to merge a PR.** It was tried and it silently did not fire —
+three PRs sat green and unmerged while the session reported them as "auto-merging". A watcher that
+merges is a promise that depends on the watcher still running, which is not something to promise.
+
+### Never say "merged" without looking
+
+The failure above was not the monitor, it was reporting an intention as an outcome. Before telling
+anyone a PR is merged:
+
+```bash
+gh pr list --state open --json number,title      # expect: not this one
+git branch -r | grep -v HEAD                     # expect: only origin/main
+```
+
+If a check is red, say so and fix it. "It should merge shortly" is not a status.
 
 ## 5. Prune locally
 
@@ -137,8 +151,8 @@ git push --force-with-lease
 - [ ] `pnpm verify` exits 0
 - [ ] e2e run against the CI database state, if the UI changed
 - [ ] any new guard proven to fail when the thing it guards is broken
-- [ ] PR merged, branch deleted on the remote
-- [ ] local branches pruned
+- [ ] PR actually merged — confirmed with `gh pr list --state open`, not assumed
+- [ ] branch gone from the remote, local branches pruned
 - [ ] for a new importer: it appears in `pnpm ingest`, in `.github/workflows/ingest.yml`, and a
       second run reports every row `unchanged`
 
