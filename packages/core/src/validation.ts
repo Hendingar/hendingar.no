@@ -57,6 +57,20 @@ export const eventQuerySchema = z.object({
 	from: isoWithOffset.optional(),
 	to: isoWithOffset.optional(),
 	category: categorySchema.optional(),
+	/**
+	 * A source slug, so a reader can ask for one calendar's events.
+	 *
+	 * Not validated against a list of known slugs: sources are rows, not a compile-time set, and a
+	 * slug that matches nothing must return an empty list rather than an error — the same treatment
+	 * a hand-edited `?kategori=` gets. The shape is constrained to what a slug can be so this
+	 * cannot become a way to smuggle anything into the query.
+	 */
+	source: z
+		.string()
+		.trim()
+		.max(100)
+		.regex(/^[a-z0-9-]+$/, 'must be a source slug')
+		.optional(),
 	municipality: z.string().trim().max(100).optional(),
 	limit: z.number().int().min(1).max(100).default(50)
 });

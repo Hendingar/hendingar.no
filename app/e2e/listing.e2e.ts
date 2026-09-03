@@ -76,3 +76,51 @@ test('no horizontal overflow on the listing at 320px', async ({ page }) => {
 		expect(overflow, `${path} at 320px`).toBe(0);
 	}
 });
+
+test('a source filter narrows the list in the server-rendered HTML', async ({ request }) => {
+	const all = await (await request.get('/hendingar')).text();
+	const filtered = await (await request.get('/hendingar?kjelde=bomlobibliotek')).text();
+
+	const count = (html: string) => html.match(/<article/g)?.length ?? 0;
+	expect(count(filtered)).toBeGreaterThan(0);
+	expect(count(filtered)).toBeLessThan(count(all));
+	// Server-rendered, like the category filter — it has to work with no JavaScript at all.
+	expect(filtered).toMatch(/aria-current="page"/);
+});
+
+test('an unknown source shows everything rather than erroring', async ({ request }) => {
+	const response = await request.get('/hendingar?kjelde=finnesikkje');
+	expect(response.status()).toBe(200);
+	const html = await response.text();
+	// Same treatment a hand-edited ?kategori= gets: sources are rows, not a compile-time set, so a
+	// slug nobody publishes under must fall back to the full list.
+	expect(html.match(/<article/g)?.length ?? 0).toBeGreaterThan(10);
+});
+
+test('the two filters compose instead of replacing each other', async ({ page }) => {
+	await page.goto('/hendingar?kategori=musikk');
+
+	const sources = page.getByRole('navigation', { name: 'Filtrer på kjelde' });
+	await expect(sources).toBeVisible();
+	// Pressing a source must keep the category. Dropping it would change the list in two ways at
+	// once, and neither chip would explain why.
+	const firstSource = sources.getByRole('link').nth(1);
+	const href = await firstSource.getAttribute('href');
+	expect(href, 'a source chip must carry the active category forward').toContain('kategori=musikk');
+	expect(href).toContain('kjelde=');
+
+	await firstSource.click();
+	await page.waitForURL(/kategori=musikk/);
+	await expect(page).toHaveURL(/kjelde=/);
+	// Both chips read as active, so the page says what it is showing.
+	await expect(
+		page.getByRole('navigation', { name: 'Filtrer på kategori' }).locator('[aria-current="page"]')
+	).toHaveText(/musikk/i);
+	await expect(sources.locator('[aria-current="page"]')).toHaveCount(1);
+});
+
+test('the source filter names which calendar the list is from', async ({ page }) => {
+	await page.goto('/hendingar?kjelde=bomlobibliotek');
+	// "Alle hendingar" while showing one library's events would describe the page inaccurately.
+	await expect(page.getByText(/frå\s+Bømlo folkebibliotek/i)).toBeVisible();
+});

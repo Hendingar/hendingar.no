@@ -22,7 +22,7 @@ import { db } from './server/db';
 
 export const listEvents = query(
 	eventQuerySchema,
-	async ({ from, to, category, municipality, limit }) => {
+	async ({ from, to, category, source, municipality, limit }) => {
 		const since = from ? new Date(from) : new Date();
 
 		return (
@@ -70,6 +70,8 @@ export const listEvents = query(
 						or(gte(events.startsAt, since), gte(events.endsAt, since)),
 						to ? lte(events.startsAt, new Date(to)) : undefined,
 						category ? eq(events.category, category) : undefined,
+						// The join is already there for the tile's source mark, so filtering is free.
+						source ? eq(sources.slug, source) : undefined,
 						municipality ? eq(venues.municipality, municipality) : undefined
 					)
 				)
@@ -79,6 +81,32 @@ export const listEvents = query(
 		);
 	}
 );
+
+/**
+ * How many upcoming events each source has, for the source filter.
+ *
+ * Same reasoning as `listCategoryCounts`: a chip that leads to an empty page is a worse control
+ * than one that tells you what it holds before you press it. Only sources with events appear, so a
+ * `link` row — which by definition has none — never shows up as a dead filter.
+ */
+export const listSourceCounts = query(async () => {
+	const now = new Date();
+	const rows = await db()
+		.select({
+			slug: sources.slug,
+			name: sources.name,
+			iconUrl: sources.iconUrl,
+			total: count(events.id)
+		})
+		.from(sources)
+		.innerJoin(events, eq(events.sourceId, sources.id))
+		.where(
+			and(eq(events.status, 'published'), or(gte(events.startsAt, now), gte(events.endsAt, now)))
+		)
+		.groupBy(sources.slug, sources.name, sources.iconUrl);
+
+	return rows.sort((a, b) => b.total - a.total || a.name.localeCompare(b.name, 'nb-NO'));
+});
 
 /**
  * What the site currently holds, for the front page.
