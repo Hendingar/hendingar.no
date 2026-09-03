@@ -19,6 +19,7 @@
 		"db:migrate": "pnpm --filter @hendingar/core db:migrate",
 		"db:reset": "./scripts/db.sh reset && pnpm run db:migrate && printf '\\n  Database is EMPTY. A seed-only database is not the product:\\n  no posters, one source, and /datasamling will under-report itself.\\n  Run: pnpm db:bootstrap   (or db:seed && db:sources && ingest)\\n\\n'",
 		"db:seed": "pnpm --filter @hendingar/core db:seed",
+		"consolidate": "pnpm --filter @hendingar/core consolidate",
 		"db:sources": "pnpm --filter @hendingar/core db:sources",
 		"db:up": "./scripts/db.sh up",
 		"db:down": "./scripts/db.sh down",
@@ -33,7 +34,7 @@
 		"ingest:kulturhus": "pnpm --filter @hendingar/importer-kulturhus ingest",
 		"verifier:dev": "cd services/verifier && ./.venv/bin/verifier dev",
 		"verifier:eval": "cd services/verifier && ./.venv/bin/python evals/run.py",
-		"db:bootstrap": "pnpm run db:up && pnpm run db:migrate && pnpm run db:seed && pnpm run db:sources && pnpm run ingest"
+		"db:bootstrap": "pnpm run db:up && pnpm run db:migrate && pnpm run db:seed && pnpm run db:sources && pnpm run ingest && pnpm run consolidate"
 	},
 	"devDependencies": {
 		"prettier": "^3.4.2",

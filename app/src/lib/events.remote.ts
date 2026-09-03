@@ -1,7 +1,7 @@
 import { error } from '@sveltejs/kit';
 import { query } from '$app/server';
 import { z } from 'zod';
-import { and, asc, count, eq, gte, lte, ne, or, sql } from 'drizzle-orm';
+import { and, asc, count, eq, gte, isNull, lte, ne, or, sql } from 'drizzle-orm';
 import { events, organizers, sources, venues, verifications } from '@hendingar/core/schema';
 import { eventQuerySchema } from '@hendingar/core/validation';
 import { categoryLabel } from '@hendingar/core/taxonomy';
@@ -64,14 +64,36 @@ export const listEvents = query(
 				.where(
 					and(
 						eq(events.status, 'published'),
+						/*
+						 * Only canonical rows.
+						 *
+						 * Several sources report the same concert; `pnpm consolidate` picks one row per
+						 * event and points the others at it. Without this the listing shows the same
+						 * evening twice under two spellings.
+						 */
+						isNull(events.duplicateOfId),
 						// An event that has started but not ended is still happening, and must stay
 						// visible. Filtering on startsAt alone hid a three-hour concert for its whole
 						// duration, and a weekend festival for the entire weekend.
 						or(gte(events.startsAt, since), gte(events.endsAt, since)),
 						to ? lte(events.startsAt, new Date(to)) : undefined,
 						category ? eq(events.category, category) : undefined,
-						// The join is already there for the tile's source mark, so filtering is free.
-						source ? eq(sources.slug, source) : undefined,
+						/*
+						 * Match the whole group, not just the row that won.
+						 *
+						 * Filtering on the canonical's own source alone would hide an event from the
+						 * venue that actually runs it whenever a newspaper's copy happened to have the
+						 * lower id — "Stord kulturhus" would stop listing its own concerts. So a
+						 * canonical matches if IT or any row pointing at it comes from that source.
+						 */
+						source
+							? sql`exists (
+									select 1 from ${events} as m
+									join ${sources} as ms on ms.id = m.source_id
+									where (m.id = ${events.id} or m.duplicate_of_id = ${events.id})
+										and ms.slug = ${source}
+								)`
+							: undefined,
 						municipality ? eq(venues.municipality, municipality) : undefined
 					)
 				)
@@ -101,7 +123,11 @@ export const listSourceCounts = query(async () => {
 		.from(sources)
 		.innerJoin(events, eq(events.sourceId, sources.id))
 		.where(
-			and(eq(events.status, 'published'), or(gte(events.startsAt, now), gte(events.endsAt, now)))
+			and(
+				eq(events.status, 'published'),
+				isNull(events.duplicateOfId),
+				or(gte(events.startsAt, now), gte(events.endsAt, now))
+			)
 		)
 		.groupBy(sources.slug, sources.name, sources.iconUrl);
 
@@ -126,7 +152,11 @@ export const siteStatus = query(async () => {
 		.select({ total: count() })
 		.from(events)
 		.where(
-			and(eq(events.status, 'published'), or(gte(events.startsAt, now), gte(events.endsAt, now)))
+			and(
+				eq(events.status, 'published'),
+				isNull(events.duplicateOfId),
+				or(gte(events.startsAt, now), gte(events.endsAt, now))
+			)
 		);
 
 	// Only sources we actually collect. A `link` row is a signpost, not a feed, and counting it
@@ -169,7 +199,11 @@ export const listCategoryCounts = query(async () => {
 		.select({ category: events.category, total: count() })
 		.from(events)
 		.where(
-			and(eq(events.status, 'published'), or(gte(events.startsAt, now), gte(events.endsAt, now)))
+			and(
+				eq(events.status, 'published'),
+				isNull(events.duplicateOfId),
+				or(gte(events.startsAt, now), gte(events.endsAt, now))
+			)
 		)
 		.groupBy(events.category);
 
@@ -225,6 +259,8 @@ export const listUpcoming = query(z.number().int().min(1).max(60).default(24), a
 		.where(
 			and(
 				eq(events.status, 'published'),
+				// One row per event — see listEvents.
+				isNull(events.duplicateOfId),
 				// Still-running events belong to today.
 				or(gte(events.startsAt, new Date()), gte(events.endsAt, new Date()))
 			)
@@ -283,6 +319,27 @@ export const getEvent = query(z.number().int().positive(), async (id) => {
 
 	if (!row) error(404, 'Fann ikkje hendinga');
 
+	/*
+	 * Every source that reported this event, not just the one whose row won.
+	 *
+	 * "Three places say this is on" is information, and an index that quietly discards two of them
+	 * is throwing away the thing it is for. The canonical row is arbitrary — the lowest id — so
+	 * naming only its source would credit whichever importer happened to run first.
+	 */
+	const reportedBy = await database
+		.select({
+			slug: sources.slug,
+			name: sources.name,
+			iconUrl: sources.iconUrl,
+			attribution: sources.attribution,
+			siteUrl: sources.url,
+			eventUrl: events.sourceUrl
+		})
+		.from(events)
+		.innerJoin(sources, eq(events.sourceId, sources.id))
+		.where(or(eq(events.id, id), eq(events.duplicateOfId, id)))
+		.orderBy(asc(sources.name));
+
 	const checks = await database
 		.select({
 			check: verifications.check,
@@ -296,7 +353,7 @@ export const getEvent = query(z.number().int().positive(), async (id) => {
 		.where(eq(verifications.eventId, id))
 		.orderBy(asc(verifications.id));
 
-	return { ...row, checks };
+	return { ...row, checks, reportedBy };
 });
 
 export type EventDetail = Awaited<ReturnType<typeof getEvent>>;

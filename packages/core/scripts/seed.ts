@@ -276,6 +276,46 @@ await db
 	.onConflictDoNothing({ target: [events.sourceId, events.externalId] });
 
 /*
+ * The same event, reported by both sources — because consolidation is invisible until something
+ * needs consolidating.
+ *
+ * Titles differ the way they really do: one carries an age limit the other omits. `pnpm
+ * consolidate` should keep one row and point the other at it, and the event's own page should then
+ * credit both. Without this pair in the seed, every spec covering that behaviour passes vacuously.
+ */
+const duplicateStart = daysFromNow(6, 20);
+
+await db
+	.insert(events)
+	.values([
+		{
+			sourceId: source.id,
+			externalId: 'seed-dup-a',
+			title: 'Bård Tufte Johansen — Prøver å være positiv',
+			category: 'stand-up',
+			startsAt: duplicateStart,
+			endsAt: daysFromNow(6, 22),
+			venueId: venue.id,
+			status: 'published',
+			posterUrl: POSTER,
+			posterRightsVerified: true
+		},
+		{
+			sourceId: library.id,
+			externalId: 'seed-dup-b',
+			title: 'Bård Tufte Johansen — Prøver å være positiv (18 år)',
+			category: 'stand-up',
+			startsAt: duplicateStart,
+			endsAt: daysFromNow(6, 22),
+			venueId: libraryVenue.id,
+			status: 'published',
+			posterUrl: null,
+			posterRightsVerified: false
+		}
+	])
+	.onConflictDoNothing({ target: [events.sourceId, events.externalId] });
+
+/*
  * Two human submissions, so /datasamling's submission log is not empty on a machine that has only
  * ever run the seed — the same reason the source metadata is registered here.
  *
@@ -369,6 +409,6 @@ const [{ count } = { count: 0 }] = await db
 	.limit(1);
 
 console.log(
-	`seeded: 2 sources, 3 venues, ${4 + fillerEvents.length + libraryEvents.length} events, ${submissionSeeds.length} submissions, ${existingRun ? 0 : seedRuns.length + librarySeedRuns.length} runs (sample id ${count})`
+	`seeded: 2 sources, 3 venues, ${4 + fillerEvents.length + libraryEvents.length + 2} events, ${submissionSeeds.length} submissions, ${existingRun ? 0 : seedRuns.length + librarySeedRuns.length} runs (sample id ${count})`
 );
 process.exit(0);

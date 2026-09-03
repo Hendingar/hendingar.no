@@ -260,6 +260,22 @@ export const events = pgTable(
 		posterUrl: text('poster_url'),
 		/** Do not re-host a poster whose rights are unverified (issue #3). */
 		posterRightsVerified: boolean('poster_rights_verified').notNull().default(false),
+		/**
+		 * The event this one duplicates, when several sources list the same thing.
+		 *
+		 * A tourism board, a venue's own programme and a newspaper calendar all carry the same
+		 * concert, spelled three ways. Listings show only rows where this is null; the event's own
+		 * page follows it the other way to name every source that reported it. We are an index, so
+		 * "three places say this is on" is information, not noise to throw away.
+		 *
+		 * A column rather than a link table because it is additive, which the expand/contract rule
+		 * requires (ADR 0010) — and because one canonical row with pointers answers both questions
+		 * a reader has: show me each event once, and tell me who says so.
+		 *
+		 * Chosen by `pnpm consolidate`, never by an importer: an importer sees one source and
+		 * cannot know what the others said.
+		 */
+		duplicateOfId: integer('duplicate_of_id'),
 
 		status: eventStatusEnum('status').notNull().default('pending'),
 		/** Why the verification agent reached its conclusion — auditable, not a black box. */
