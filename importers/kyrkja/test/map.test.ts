@@ -3,7 +3,14 @@ import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { CATEGORY_SLUGS } from '@hendingar/core/taxonomy';
 import { INSTANCES, extractCalendarHtml, instanceBySlug, parseCalendar } from '../src/api.ts';
-import { DEFAULT_CATEGORY, isFailure, mapCategory, mapEvent, slugifyVenue } from '../src/map.ts';
+import {
+	DEFAULT_CATEGORY,
+	isFailure,
+	isPrivateOccasion,
+	mapCategory,
+	mapEvent,
+	slugifyVenue
+} from '../src/map.ts';
 
 /**
  * Against the committed real page. No network (CLAUDE.md rule 6).
@@ -169,5 +176,81 @@ describe('instances', () => {
 		expect(new Set(slugs).size).toBe(slugs.length);
 		// The directory lists this same slug as a linked source; diverging would create a second row.
 		expect(instanceBySlug('bomlo-kyrkja')).toBeTruthy();
+	});
+});
+
+/*
+ * The second parish, on the same module. Added as a fixture rather than trusted to behave like
+ * Bømlo: "same platform" is a hypothesis until a committed page proves it, and this one differs in
+ * ways that mattered — it labels almost every event, and it emits numeric entities everywhere.
+ */
+const stordInstance = instanceBySlug('stord-kyrkja')!;
+const stordPage = readFileSync(
+	fileURLToPath(new URL('./fixtures/stord-kalender.html', import.meta.url)),
+	'utf-8'
+);
+const stord = parseCalendar(extractCalendarHtml(stordPage)!, stordInstance.url);
+
+describe('Stord parish, on the same module', () => {
+	it('parses with the Bømlo parser, unchanged', () => {
+		expect(stord.events.length).toBeGreaterThan(100);
+		expect(stord.rejected).toEqual([]);
+	});
+
+	it('maps every event without a rejection', () => {
+		for (const raw of stord.events) {
+			const mapped = mapEvent(raw, stordInstance);
+			expect(isFailure(mapped) ? mapped.problem : null).toBeNull();
+		}
+	});
+
+	it('gives each occurrence its own link on the parish site', () => {
+		for (const event of stord.events.slice(0, 20)) {
+			expect(event.href).toContain('kyrkjastord.no');
+			expect(event.occurrenceId).toMatch(/^[0-9a-f-]{36}$/);
+		}
+	});
+});
+
+describe('decodeEntities', () => {
+	it('decodes the numeric references DNN emits', () => {
+		/*
+		 * The regression this was written for. `decodeEntities` was a list of nine literal
+		 * replacements that happened to include `&#39;`, so `B&#248;mlo Kn&#248;ttekor` was
+		 * published exactly like that — twenty-eight of Bømlo's seventy-six events, live.
+		 */
+		for (const event of [...parsed.events, ...stord.events]) {
+			expect(event.title, `undecoded entity in ${event.title}`).not.toMatch(/&#?\w+;/);
+			expect(event.location ?? '').not.toMatch(/&#?\w+;/);
+		}
+	});
+
+	it('actually produces the Norwegian letters, not just an absence of ampersands', () => {
+		const titles = [...parsed.events, ...stord.events].map((e) => e.title).join(' ');
+		expect(titles).toMatch(/ø/);
+		expect(titles).toMatch(/å/);
+		expect(titles).toMatch(/æ/);
+	});
+});
+
+describe('isPrivateOccasion', () => {
+	it('withholds funerals and weddings', () => {
+		// The parish lists them because the church is booked, not as something to attend.
+		for (const label of ['Gravferd', 'gravferd', 'Vigsel', 'Bisetjing', 'Begravelse']) {
+			expect(isPrivateOccasion(label)).toBe(true);
+		}
+	});
+
+	it('keeps everything a reader could actually go to', () => {
+		for (const label of ['Gudsteneste', 'Konsert/musikkarrangement', 'Kulturarrangement', '']) {
+			expect(isPrivateOccasion(label)).toBe(false);
+		}
+	});
+
+	it('finds real ones to withhold in the Stord calendar', () => {
+		// A guard that would pass on any input is not a guard: the fixture must contain the case.
+		const withheld = stord.events.filter((e) => isPrivateOccasion(e.label));
+		expect(withheld.length).toBeGreaterThan(0);
+		expect(stord.events.length - withheld.length).toBeGreaterThan(100);
 	});
 });
