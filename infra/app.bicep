@@ -21,6 +21,20 @@ param postgresAdminPassword string
 @description('Internal URL of the verifier service. Empty is valid and supported: submission still works, and everything routes to the human queue.')
 param verifierUrl string = ''
 
+@description('''
+Custom domains bound to this app, as Microsoft.App ingress customDomains entries
+({ name, certificateId, bindingType }).
+
+This exists because ARM is declarative: a property the template omits is a property ARM removes.
+Deploying without it silently unbound hendingar.no, www and dev — the certificates survived, but
+the site stopped answering on every name a visitor actually uses, and nothing failed to make that
+visible. The deploy workflow reads whatever is currently bound and passes it straight back, so a
+hostname bound with `az containerapp hostname bind` outlives the next deploy.
+
+Empty is correct for a fresh environment, where no certificate exists yet to bind against.
+''')
+param customDomains array = []
+
 var dbName = appName
 var tags = {
   project: 'hendingar.no'
@@ -47,6 +61,8 @@ resource app 'Microsoft.App/containerApps@2024-03-01' = {
         targetPort: 8080
         transport: 'auto'
         allowInsecure: false
+        // null, not [], when empty: an empty array is still an instruction to unbind everything.
+        customDomains: empty(customDomains) ? null : customDomains
       }
       registries: [
         {
