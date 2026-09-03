@@ -7,3 +7,7 @@ package-lock.json
 packages/core/migrations/
 .claude/skills/
 .claude/settings.local.json
+
+# Captured upstream responses. Reformatting one would stop it being what the server actually
+# sent, which is the only reason it is worth committing.
+importers/*/test/fixtures/
