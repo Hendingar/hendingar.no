@@ -22,7 +22,8 @@
 		'json-api': 'JSON-API',
 		feed: 'iCal / RSS',
 		html: 'HTML-parsing',
-		manual: 'Manuell'
+		manual: 'Manuell',
+		link: 'Berre lenkje'
 	};
 
 	const STATE_LABEL: Record<string, string> = {
@@ -32,23 +33,37 @@
 		never: 'Ikkje køyrt'
 	};
 
+	/*
+	 * A linked source is not a broken one.
+	 *
+	 * `freshness` would call it 'never' and the row would read "Ikkje køyrt", which is the same
+	 * words an importer that has silently stopped would show. These are different facts and the
+	 * page must not blur them: one is a gap we have chosen and explained, the other is a failure.
+	 */
+	const linkOnly = $derived(source.kind === 'link');
 	const state = $derived(freshness(source.lastRunAt, source.scheduleCron, now));
 	const last = $derived(source.runs[0]);
 	const next = $derived(nextCronRun(source.scheduleCron, now));
 	const schedule = $derived(describeCron(source.scheduleCron));
 </script>
 
-<details class="row">
+<!-- data-kind so a collected row and a linked one are distinguishable without reading text. -->
+<details class="row" data-kind={source.kind}>
 	<summary class="row__summary">
 		<SourceIcon src={source.iconUrl} name={source.name} />
 		<span class="row__id">
 			<span class="row__name">{source.name}</span>
 			<span class="row__meta">
-				{source.region} · {KIND_LABEL[source.kind] ?? source.kind} · {source.eventsUpcoming} framover
+				{source.region} · {KIND_LABEL[source.kind] ?? source.kind}
+				{#if !linkOnly}
+					· {source.eventsUpcoming} framover
+				{/if}
 			</span>
 		</span>
 		<span class="row__when">
-			{#if source.lastRunAt}
+			{#if linkOnly}
+				—
+			{:else if source.lastRunAt}
 				<time datetime={source.lastRunAt.toISOString()}>
 					{formatEventTime(source.lastRunAt, 'Europe/Oslo', 'card')}
 				</time>
@@ -57,71 +72,94 @@
 			{/if}
 		</span>
 		<!-- The word carries the state, not colour alone — the palette is a single hue. -->
-		<span class="state" data-state={state}>{STATE_LABEL[state]}</span>
+		{#if linkOnly}
+			<span class="state" data-state="link">Ikkje henta</span>
+		{:else}
+			<span class="state" data-state={state}>{STATE_LABEL[state]}</span>
+		{/if}
 	</summary>
 
 	<div class="row__body">
-		<dl class="facts">
-			<div>
-				<dt>Rytme</dt>
-				<dd>{schedule ?? 'ikkje planlagt'}</dd>
-			</div>
-			<div>
-				<dt>Neste</dt>
-				<dd>
-					{#if next}
-						<time datetime={next.toISOString()}>{formatEventTime(next, 'Europe/Oslo', 'card')}</time
-						>
-					{:else}
-						—
-					{/if}
-				</dd>
-			</div>
-			<div>
-				<dt>Hendingar</dt>
-				<dd>{source.eventsTotal} totalt</dd>
-			</div>
-			<div>
-				<dt>Publisering</dt>
-				<dd>{source.trusted ? 'direkte' : 'til verifisering'}</dd>
-			</div>
-		</dl>
+		{#if linkOnly}
+			<p class="why">{source.note}</p>
+			<p class="visit">
+				<a class="btn" href={source.url} rel="noopener">Opne {source.name}</a>
+			</p>
+			<p class="attribution">
+				Vi hentar ikkje herifrå. Lenkja går til kjelda si eiga side, som er den einaste oppdaterte
+				staden for desse hendingane.
+			</p>
+		{:else}
+			<dl class="facts">
+				<div>
+					<dt>Rytme</dt>
+					<dd>{schedule ?? 'ikkje planlagt'}</dd>
+				</div>
+				<div>
+					<dt>Neste</dt>
+					<dd>
+						{#if next}
+							<time datetime={next.toISOString()}
+								>{formatEventTime(next, 'Europe/Oslo', 'card')}</time
+							>
+						{:else}
+							—
+						{/if}
+					</dd>
+				</div>
+				<div>
+					<dt>Hendingar</dt>
+					<dd>{source.eventsTotal} totalt</dd>
+				</div>
+				<div>
+					<dt>Publisering</dt>
+					<dd>{source.trusted ? 'direkte' : 'til verifisering'}</dd>
+				</div>
+			</dl>
 
-		{#if source.endpoint}
-			<p class="endpoint">
-				<span class="visually-hidden">Endepunkt: </span><code>{source.endpoint}</code>
+			{#if source.endpoint}
+				<p class="endpoint">
+					<span class="visually-hidden">Endepunkt: </span><code>{source.endpoint}</code>
+				</p>
+			{/if}
+
+			{#if source.runs.length > 0}
+				<div class="runs">
+					<p class="label">Siste {source.runs.length} køyringar</p>
+					<RunStrip runs={source.runs} />
+					{#if last}
+						<p class="runs__last">
+							{last.created} nye · {last.updated} endra · {last.unchanged} uendra
+							{#if last.rejected > 0}
+								· <strong>{last.rejected} avviste</strong>
+							{/if}
+							{#if last.durationMs}
+								<span class="muted">({(last.durationMs / 1000).toFixed(1)} s)</span>
+							{/if}
+						</p>
+					{/if}
+					{#if last?.message}
+						<p class="runs__msg">{last.message}</p>
+					{/if}
+				</div>
+			{/if}
+
+			<p class="attribution">
+				Data frå <a href={source.url}>{source.attribution}</a>. Kvar hending lenkjer tilbake til
+				kjelda.
 			</p>
 		{/if}
-
-		{#if source.runs.length > 0}
-			<div class="runs">
-				<p class="label">Siste {source.runs.length} køyringar</p>
-				<RunStrip runs={source.runs} />
-				{#if last}
-					<p class="runs__last">
-						{last.created} nye · {last.updated} endra · {last.unchanged} uendra
-						{#if last.rejected > 0}
-							· <strong>{last.rejected} avviste</strong>
-						{/if}
-						{#if last.durationMs}
-							<span class="muted">({(last.durationMs / 1000).toFixed(1)} s)</span>
-						{/if}
-					</p>
-				{/if}
-				{#if last?.message}
-					<p class="runs__msg">{last.message}</p>
-				{/if}
-			</div>
-		{/if}
-
-		<p class="attribution">
-			Data frå <a href={source.url}>{source.attribution}</a>. Kvar hending lenkjer tilbake til
-			kjelda.
-		</p>
 	</div>
 </details>
 
 <style>
+	.why {
+		margin: 0 0 0.9rem;
+		max-inline-size: 62ch;
+	}
+	.visit {
+		margin: 0 0 0.9rem;
+	}
 	.row {
 		border-block-end: var(--rule) solid var(--peach-line);
 	}
@@ -172,6 +210,14 @@
 		padding: 0.3em 0.6em;
 		border: var(--rule) solid var(--peach-line);
 		white-space: nowrap;
+	}
+	/*
+	 * Outlined, not filled: a linked source is neither healthy nor broken, and giving it the peach
+	 * fill of 'fresh' would read as "collected and fine" at a glance — exactly the wrong claim.
+	 */
+	.state[data-state='link'] {
+		border-style: dashed;
+		opacity: 0.75;
 	}
 	.state[data-state='fresh'] {
 		background: var(--peach);

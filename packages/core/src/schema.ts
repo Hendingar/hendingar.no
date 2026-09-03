@@ -30,7 +30,16 @@ export const sourceKindEnum = pgEnum('source_kind', [
 	'json-api', // an undocumented or public JSON endpoint — the cheapest and most stable
 	'feed', // iCal or RSS
 	'html', // parsed markup, brittle by nature
-	'manual' // human submissions
+	'manual', // human submissions
+	/*
+	 * Known, published, and NOT collected — we link to it and say so.
+	 *
+	 * A calendar we cannot import is still information a reader wants, and leaving it off the page
+	 * makes /datasamling claim a completeness we do not have. Naming it as a link is honest in both
+	 * directions: the reader gets somewhere useful, and the gap stays visible instead of being an
+	 * absence nobody can see. These rows have no endpoint, no schedule and no runs.
+	 */
+	'link'
 ]);
 
 export const ingestRunStatusEnum = pgEnum('ingest_run_status', [
@@ -94,6 +103,15 @@ export const sources = pgTable('sources', {
 	 */
 	trusted: boolean('trusted').notNull().default(false),
 	active: boolean('active').notNull().default(true),
+	/**
+	 * One sentence on the source's standing, shown verbatim on /datasamling.
+	 *
+	 * Its job is the `link` case: saying a calendar is not collected invites the obvious question,
+	 * and "renders only in the browser, so there is nothing to read" answers it. The page already
+	 * explains its method for everything else; a silent gap would be the one thing it does not
+	 * account for.
+	 */
+	note: text('note'),
 	lastRunAt: timestamp('last_run_at', { withTimezone: true })
 });
 

@@ -41,6 +41,7 @@ async function upsertSource(db: Db, instance: MecInstance) {
 		endpoint: instance.endpoint,
 		kind: 'html' as const,
 		scheduleCron: instance.scheduleCron,
+		iconUrl: instance.iconUrl,
 		trusted: instance.trusted
 	};
 	const [row] = await db

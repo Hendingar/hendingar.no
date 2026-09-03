@@ -19,6 +19,7 @@
 		"db:migrate": "pnpm --filter @hendingar/core db:migrate",
 		"db:reset": "./scripts/db.sh reset && pnpm run db:migrate",
 		"db:seed": "pnpm --filter @hendingar/core db:seed",
+		"db:sources": "pnpm --filter @hendingar/core db:sources",
 		"db:up": "./scripts/db.sh up",
 		"db:down": "./scripts/db.sh down",
 		"db:logs": "./scripts/db.sh logs",
@@ -29,7 +30,7 @@
 		"ingest:mec": "pnpm --filter @hendingar/importer-mec ingest",
 		"verifier:dev": "cd services/verifier && ./.venv/bin/verifier dev",
 		"verifier:eval": "cd services/verifier && ./.venv/bin/python evals/run.py",
-		"db:bootstrap": "pnpm run db:up && pnpm run db:migrate && pnpm run db:seed && pnpm run ingest"
+		"db:bootstrap": "pnpm run db:up && pnpm run db:migrate && pnpm run db:seed && pnpm run db:sources && pnpm run ingest"
 	},
 	"devDependencies": {
 		"prettier": "^3.4.2",
