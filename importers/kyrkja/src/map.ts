@@ -32,6 +32,25 @@ const CATEGORY_BY_LABEL: Record<string, CategorySlug> = {
 	teater: 'teater'
 };
 
+/**
+ * Labels this site does not publish, however public the parish calendar is.
+ *
+ * A funeral and a wedding are on the calendar for a practical reason — the church is occupied —
+ * and not as something to attend. Republishing "Gravferd, Stord kyrkje, 10:30" in a what's-on feed
+ * puts a family's bereavement in a list people browse for a night out, and invites strangers to
+ * both. The parish has a reason to list them and we do not have a reason to repeat them.
+ *
+ * This is a judgement about the kind of occasion, not about the source, so it lives here with the
+ * other label rules rather than in one parish's config: the next parish will label the same things
+ * the same way.
+ */
+const PRIVATE_LABELS = new Set(['gravferd', 'vigsel', 'bisettelse', 'bisetjing', 'begravelse']);
+
+/** True when the calendar has told us this is a private family occasion. */
+export function isPrivateOccasion(label: string): boolean {
+	return PRIVATE_LABELS.has(label.trim().toLowerCase());
+}
+
 export function mapCategory(label: string): CategorySlug {
 	const key = label.trim().toLowerCase();
 	if (!key) return DEFAULT_CATEGORY;

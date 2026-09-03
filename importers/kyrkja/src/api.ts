@@ -28,6 +28,20 @@ export type KyrkjaInstance = {
 
 export const INSTANCES: readonly KyrkjaInstance[] = [
 	{
+		slug: 'stord-kyrkja',
+		name: 'Stord kyrkjelege fellesråd',
+		url: 'https://www.kyrkjastord.no/Kalender',
+		region: 'Sunnhordland',
+		attribution: 'Stord kyrkjelege fellesråd',
+		timezone: 'Europe/Oslo',
+		venueFallback: 'Stord kyrkjelege fellesråd',
+		iconUrl: 'https://www.kyrkjastord.no/favicon.ico',
+		scheduleCron: '0 5 * * *',
+		trusted: true,
+		// As Bømlo: the calendar carries no images, so there is nothing to have rights over.
+		posterRightsCleared: false
+	},
+	{
 		slug: 'bomlo-kyrkja',
 		name: 'Bømlo kyrkjelege fellesråd',
 		url: 'https://bomlo.kyrkja.no/Kalender',
@@ -65,18 +79,48 @@ export type RawEvent = {
 
 export type ParsedCalendar = { events: RawEvent[]; rejected: string[] };
 
-/** Entities appear inside the escaped HTML; only the handful DNN actually emits. */
+const NAMED_ENTITIES: Record<string, string> = {
+	nbsp: ' ',
+	amp: '&',
+	lt: '<',
+	gt: '>',
+	quot: '"',
+	apos: "'",
+	oslash: 'ø',
+	Oslash: 'Ø',
+	aring: 'å',
+	Aring: 'Å',
+	aelig: 'æ',
+	AElig: 'Æ'
+};
+
+/**
+ * Entities inside the escaped calendar HTML.
+ *
+ * Numeric references are handled generically, and that is the whole point. This used to be a list
+ * of nine literal replacements which happened to include `&#39;` — so a title reading
+ * `B&#248;mlo Kn&#248;ttekor` sailed through and was published exactly like that. Twenty-eight of
+ * Bømlo's seventy-six events carried one, live on the site, because the module emits `&#248;` for
+ * ø in some fields and the literal character in others.
+ *
+ * A per-entity list cannot be complete: DNN writes whatever the parish typed into its editor, and
+ * the next parish will type a character this one never did.
+ */
 function decodeEntities(value: string): string {
-	return value
-		.replace(/&nbsp;/g, ' ')
-		.replace(/&amp;/g, '&')
-		.replace(/&lt;/g, '<')
-		.replace(/&gt;/g, '>')
-		.replace(/&quot;/g, '"')
-		.replace(/&#39;/g, "'")
-		.replace(/&oslash;/g, 'ø')
-		.replace(/&aring;/g, 'å')
-		.replace(/&aelig;/g, 'æ');
+	return value.replace(/&(#x?[0-9a-fA-F]+|[a-zA-Z]+);/g, (match, body: string) => {
+		if (body.startsWith('#')) {
+			const code =
+				body[1] === 'x' || body[1] === 'X'
+					? Number.parseInt(body.slice(2), 16)
+					: Number.parseInt(body.slice(1), 10);
+			// Rejecting the impossible rather than throwing: an out-of-range reference is a broken
+			// page, and leaving the text as written is more honest than emitting U+FFFD.
+			return Number.isFinite(code) && code > 0 && code <= 0x10ffff
+				? String.fromCodePoint(code)
+				: match;
+		}
+		return NAMED_ENTITIES[body] ?? match;
+	});
 }
 
 const clean = (value: string) => decodeEntities(value).replace(/\s+/g, ' ').trim();

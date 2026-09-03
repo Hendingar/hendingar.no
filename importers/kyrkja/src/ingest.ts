@@ -9,7 +9,7 @@ import {
 	type FetchCalendar,
 	type KyrkjaInstance
 } from './api.ts';
-import { isFailure, mapEvent, type MappedEvent } from './map.ts';
+import { type MappedEvent, isFailure, isPrivateOccasion, mapEvent } from './map.ts';
 
 /**
  * Deterministic: fetch → validate → map → upsert. No language model touches this path.
@@ -136,6 +136,8 @@ export async function ingestInstance(
 	let updated = 0;
 	let unchanged = 0;
 	let rejected = 0;
+	// Private family occasions we deliberately do not republish — see isPrivateOccasion.
+	let withheld = 0;
 	const problems: string[] = [];
 
 	try {
@@ -160,6 +162,17 @@ export async function ingestInstance(
 		const seen = new Set<string>();
 
 		for (const raw of parsed.events) {
+			/*
+			 * A funeral or a wedding is on the parish calendar because the church is booked, not
+			 * because anyone should turn up. Skipped before it is counted as fetched: it is not a
+			 * row we failed to read, it is a row we chose not to republish, and `rejected` must go
+			 * on meaning "the source changed shape".
+			 */
+			if (isPrivateOccasion(raw.label)) {
+				withheld += 1;
+				continue;
+			}
+
 			fetched += 1;
 			const mapped = mapEvent(raw, instance);
 			if (isFailure(mapped)) {
@@ -247,7 +260,18 @@ export async function ingestInstance(
 		const status: IngestResult['status'] = rejected > 0 ? 'partial' : 'success';
 		const finishedAt = now();
 		const durationMs = finishedAt.getTime() - startedAt.getTime();
-		const message = problems.length ? problems.join('; ').slice(0, 2000) : null;
+		/*
+		 * The withheld count is recorded even on a clean run.
+		 *
+		 * It is the only place the decision not to republish funerals and weddings is visible. A
+		 * run that suddenly withholds nothing means the parish relabelled them, and that should be
+		 * noticeable on /datasamling rather than a silent change in what we publish.
+		 */
+		const notes = [
+			withheld > 0 ? `${withheld} private occasions withheld (gravferd/vigsel)` : null,
+			...problems
+		].filter(Boolean);
+		const message = notes.length ? notes.join('; ').slice(0, 2000) : null;
 
 		if (!dryRun) {
 			await db
