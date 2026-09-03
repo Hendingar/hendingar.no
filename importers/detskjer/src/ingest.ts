@@ -44,6 +44,7 @@ async function upsertSource(db: Db) {
 			attribution: SOURCE.attribution,
 			kind: 'json-api',
 			scheduleCron: '0 5 * * *',
+			iconUrl: SOURCE.iconUrl,
 			// Editorially moderated upstream — see the column comment in schema.ts.
 			trusted: true
 		})
@@ -55,6 +56,10 @@ async function upsertSource(db: Db) {
 				endpoint: SOURCE.endpoint,
 				kind: 'json-api',
 				scheduleCron: '0 5 * * *',
+				// In the update as well as the insert. A field written only on insert can never be
+				// corrected on a row that already exists — the same trap that left
+				// `posterRightsVerified` stuck until the change-detection fix.
+				iconUrl: SOURCE.iconUrl,
 				trusted: true
 			}
 		})

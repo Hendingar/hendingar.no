@@ -78,6 +78,25 @@ export const INSTANCES: readonly MecInstance[] = [
 		iconUrl: 'https://mosteramfi.no/wp-content/uploads/2020/09/cropped-favicon.png',
 		posterRightsCleared: true,
 		trusted: true
+	},
+	{
+		slug: 'sunnhordland-museum',
+		name: 'Sunnhordland museum',
+		url: 'https://sunnhordland.museum.no/aktivitetskalender/',
+		endpoint: 'https://sunnhordland.museum.no/aktivitetskalender/',
+		region: 'Sunnhordland',
+		attribution: 'Sunnhordland museum',
+		timezone: 'Europe/Oslo',
+		venueFallback: 'Sunnhordland museum',
+		scheduleCron: '0 5 * * *',
+		/*
+		 * The site declares no favicon at all — no <link rel="icon">, no /favicon.ico, and the
+		 * WordPress `site_icon_url` is empty. Null rather than a guessed path, so SourceIcon shows
+		 * initials instead of a broken image.
+		 */
+		iconUrl: null,
+		trusted: true,
+		posterRightsCleared: true
 	}
 ];
 

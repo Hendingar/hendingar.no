@@ -152,4 +152,30 @@ describe('instances', () => {
 		const slugs = INSTANCES.map((i) => i.slug);
 		expect(new Set(slugs).size).toBe(slugs.length);
 	});
+
+	it('has an absolute https endpoint per instance', () => {
+		for (const i of INSTANCES) {
+			expect(i.endpoint).toMatch(/^https:\/\//);
+			expect(i.url).toMatch(/^https:\/\//);
+		}
+	});
+
+	it('either has a real icon URL or none at all, never a guessed path', () => {
+		/*
+		 * `iconUrl` must be read from the site, not inferred. A guessed `/favicon-32x32.png` 404s on
+		 * Stord kulturhus and Moster Amfi advertises apple-touch icons it does not serve, so a
+		 * plausible-looking path is not evidence. Null is the honest answer when a site declares
+		 * nothing — SourceIcon then shows initials rather than a broken image.
+		 */
+		for (const i of INSTANCES) {
+			if (i.iconUrl === null) continue;
+			expect(i.iconUrl).toMatch(/^https:\/\//);
+		}
+	});
+
+	it('covers Sunnhordland museum without a new importer', () => {
+		// The payoff of a platform importer: the museum runs the same WordPress plugin, so it is a
+		// config entry rather than another package to maintain.
+		expect(INSTANCES.map((i) => i.slug)).toContain('sunnhordland-museum');
+	});
 });

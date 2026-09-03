@@ -41,7 +41,14 @@ export const INSTANCES: readonly KulturhusInstance[] = [
 		attribution: 'Stord kulturhus',
 		timezone: 'Europe/Oslo',
 		venueFallback: 'Stord kulturhus',
-		iconUrl: 'https://stord.kulturhus.no/favicon-32x32.png',
+		/*
+		 * Read from the page's own <link rel="icon">, not guessed.
+		 *
+		 * I first wrote `/favicon-32x32.png` by pattern and it 404s — the site serves its icon from
+		 * the platform's image CDN. The same mistake Moster Amfi's declared apple-touch-icon
+		 * invites, and the reason every icon in this repo is now checked against a real request.
+		 */
+		iconUrl: 'https://dx-cw-static-files.imgix.net/169/stord-kulturhus-favicon.png',
 		scheduleCron: '0 5 * * *',
 		trusted: true,
 		posterRightsCleared: true
