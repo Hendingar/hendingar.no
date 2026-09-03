@@ -6,10 +6,12 @@
 	<div class="shell">
 		<p class="label">Innsending</p>
 		<h2 id="h-verify" class="display verify__h">Open innsending,<br />utan søppel</h2>
+		<!-- Short on purpose. The five checks below say what the checks are; a lede that also
+		     described them was the same information twice, and the second telling is the one a
+		     reader skips. -->
 		<p class="verify__lede">
-			Alle kan sende inn ei hending, utan konto. Før ho blir synleg går ho gjennom fem kontrollar.
-			Er noko usikkert, ventar hendinga på eit menneske — vi kastar ho ikkje, og vi publiserer ho
-			ikkje på tvil.
+			Alle kan sende inn, utan konto. Fem kontrollar før hendinga blir synleg. Er noko usikkert,
+			avgjer eit menneske.
 		</p>
 		<ol class="steps">
 			{#each PIPELINE as step, i (step.name)}
@@ -23,9 +25,10 @@
 		<p class="verify__cta">
 			<a class="btn btn--solid" href="/send-inn">Send inn ei hending</a>
 		</p>
+		<!-- Kept, shortened: the checks above involve a model, imports never do, and a reader who
+		     has just read "fem kontrollar" has no way to know that distinction unless we draw it. -->
 		<p class="fineprint">
-			Når vi hentar frå ein kalender er det rein kopiering — ingen språkmodell er involvert, og vi
-			finn aldri opp ei hending som ikkje står i kjelda.
+			Import frå ein kalender er rein kopiering — ingen språkmodell.
 			<a href="/datasamling">Sjå kva vi hentar inn, og når →</a>
 		</p>
 	</div>

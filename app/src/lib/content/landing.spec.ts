@@ -1,12 +1,16 @@
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
-import { DOES_NOT, MANIFEST, PIPELINE } from './landing.ts';
+import { MANIFEST, PIPELINE } from './landing.ts';
 
 /**
- * The landing copy restates README.md#what-it-does-not-do and the README's verification table.
- * That duplication is deliberate for now (see landing.ts) but it must not silently drift, so this
- * test fails when the README's non-goals and the page's non-goals stop matching.
+ * The landing copy restates the README's verification table. That duplication is deliberate for
+ * now (see landing.ts) but it must not silently drift, so this test fails when the two stop
+ * matching.
+ *
+ * The non-goals used to be mirrored here too, from README.md#what-it-does-not-do. That section of
+ * the page is gone, so there is no second copy left to drift — the README is the only statement of
+ * them now, which is where they were binding all along.
  */
 const readme = readFileSync(
 	fileURLToPath(new URL('../../../../README.md', import.meta.url)),
@@ -27,29 +31,7 @@ function section(from: string, to: string): string {
 	return readme.slice(start, end);
 }
 
-function readmeNonGoalTerms(): string[] {
-	const body = section('## What it does not do', '## Agentic verification');
-	return [...body.matchAll(/^- \*\*(?:A |An )?([^*]+?)\*\*/gim)].map((m) =>
-		m[1].trim().toLowerCase()
-	);
-}
-
 describe('landing content', () => {
-	it('has a non-goal for every non-goal the README declares', () => {
-		const inReadme = readmeNonGoalTerms();
-		expect(inReadme.length).toBeGreaterThan(0);
-		expect(DOES_NOT.length).toBe(inReadme.length);
-	});
-
-	it('has unique, non-empty claims', () => {
-		const terms = DOES_NOT.map((c) => c.term);
-		expect(new Set(terms).size).toBe(terms.length);
-		for (const claim of DOES_NOT) {
-			expect(claim.term.length).toBeGreaterThan(2);
-			expect(claim.body.length).toBeGreaterThan(10);
-		}
-	});
-
 	it('has a pipeline step for every stage the README documents', () => {
 		// Count the rows of the verification table structurally. Matching stage names would be
 		// brittle in both directions: prettier pads the cells, and the landing copy is Nynorsk
