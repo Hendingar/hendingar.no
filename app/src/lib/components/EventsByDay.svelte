@@ -79,8 +79,8 @@
 				identical posters spend a screenful saying one thing. Each time is still its own
 				event with its own page — the grouping is presentation only.
 			-->
-			{#each stackOccurrences(day.events) as stack (stack.lead.id)}
-				<li>
+			{#each stackOccurrences(day.events) as stack, i (stack.lead.id)}
+				<li class="rise" style:--rise-delay="{Math.min(i, 7) * 45}ms">
 					<EventTile
 						event={stack.lead}
 						occurrences={stack.occurrences}

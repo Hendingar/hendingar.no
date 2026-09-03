@@ -112,7 +112,7 @@
 		font-family: var(--font-mono);
 		font-size: var(--step-micro);
 		line-height: 1;
-		transition: color 140ms ease;
+		transition: color var(--dur-fast) ease;
 	}
 	.heart:hover,
 	.heart:focus-visible {
@@ -129,10 +129,44 @@
 		stroke: currentColor;
 		stroke-width: 1.7;
 		stroke-linejoin: round;
-		transition: fill 140ms ease;
+		transition:
+			fill var(--dur-fast) ease,
+			transform var(--dur-fast) var(--ease-out);
 	}
 	.heart--on .heart__mark {
 		fill: currentColor;
+	}
+
+	/*
+	 * The pop is on the mark, not the button.
+	 *
+	 * Scaling the whole button would shift the count beside it, and a number that jumps while it is
+	 * changing is exactly the thing a reader is trying to read. `--ease-spring` overshoots slightly,
+	 * which is what makes a tap feel answered rather than merely registered.
+	 */
+	.heart--on .heart__mark {
+		animation: heart-pop var(--dur-base) var(--ease-spring);
+	}
+
+	@keyframes heart-pop {
+		0% {
+			transform: scale(1);
+		}
+		45% {
+			transform: scale(1.32);
+		}
+		100% {
+			transform: scale(1);
+		}
+	}
+
+	.heart:active .heart__mark {
+		transform: scale(0.88);
+	}
+
+	.heart__n {
+		/* Slides up as it lands, so an incrementing number reads as a change rather than a redraw. */
+		animation: rise var(--dur-base) var(--ease-out) both;
 	}
 	.heart--large .heart__mark {
 		inline-size: 1.5rem;

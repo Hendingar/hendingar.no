@@ -215,7 +215,7 @@
 		/* A third party's mark: dimmed so it sits inside our palette rather than competing with
 		   the title, and brought up on hover when the reader is actually looking at this card. */
 		opacity: 0.55;
-		transition: opacity 160ms ease;
+		transition: opacity var(--dur-fast) ease;
 	}
 	.tile:hover .tile__src {
 		opacity: 1;
@@ -258,9 +258,9 @@
 	 */
 	.tile {
 		transition:
-			transform 180ms ease,
-			border-color 180ms ease,
-			box-shadow 180ms ease;
+			transform var(--dur-base) var(--ease-out),
+			border-color var(--dur-base) ease,
+			box-shadow var(--dur-base) ease;
 	}
 	.tile:hover {
 		transform: translateY(-3px);
@@ -274,7 +274,7 @@
 		transform: scale(1.03);
 	}
 	:global(.tile .thumb) {
-		transition: transform 220ms ease;
+		transition: transform var(--dur-base) var(--ease-out);
 	}
 	/* Everything above is decoration on top of a working card. Anyone who has asked their system
 	   for less movement gets the colour change and none of the motion. */
