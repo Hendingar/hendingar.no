@@ -28,9 +28,7 @@ test('scrolling appends more events without repeating any', async ({ page }) => 
 	expect(first).toBeGreaterThan(3);
 
 	await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
-	await expect
-		.poll(async () => tiles(page), { timeout: 10_000 })
-		.toBeGreaterThan(first);
+	await expect.poll(async () => tiles(page), { timeout: 10_000 }).toBeGreaterThan(first);
 
 	/*
 	 * No repeats.
