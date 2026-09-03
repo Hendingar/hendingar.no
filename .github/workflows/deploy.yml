@@ -37,6 +37,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # `workflow_run` is already pinned to main, but `workflow_dispatch` accepts any ref — so
+      # without this, a dev branch could be deployed to the environment hendingar.no serves by
+      # picking it from a dropdown. Iterating on a branch must never be able to reach Azure.
+      - name: Refuse to deploy anything but main
+        run: |
+          if [ "${{ github.ref }}" != "refs/heads/main" ]; then
+            echo "::error::Deploy runs from main only — this ref is ${{ github.ref }}."
+            exit 1
+          fi
+
       - uses: azure/login@v2
         with:
           client-id: ${{ vars.AZURE_CLIENT_ID }}
@@ -97,6 +107,15 @@ jobs:
         run: |
           corepack enable
           pnpm install --frozen-lockfile
+
+          # Expand/contract, checked again here rather than trusted from CI.
+          #
+          # Migrations are applied BEFORE the new revision is healthy, so for a window the OLD code
+          # runs against the NEW schema. That is safe only while every migration is additive. CI
+          # already gates this on every PR; repeating it costs a second and means a migration can
+          # never reach the database because someone merged past a red check or dispatched by hand.
+          # Failing here leaves the database untouched — the one state we can always recover from.
+          pnpm --filter @hendingar/core exec vitest run test/migration-safety.test.ts
           # Build the URL in python so special characters in the password are percent-encoded, and
           # take the username from the deployment output rather than hardcoding it.
           DATABASE_URL=$(PW="${{ secrets.POSTGRES_ADMIN_PASSWORD }}" python3 -c \
