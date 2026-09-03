@@ -108,6 +108,22 @@ jobs:
             pnpm --filter @hendingar/importer-mec ingest | tee -a result.txt
           fi
 
+      # `always()` for the same reason: independent sources sharing a runner.
+      - name: Ingest Checkin.no venues
+        if: always() && steps.fw.outputs.opened == 'true'
+        env:
+          PGHOST: ${{ steps.pg.outputs.fqdn }}
+          INGEST_TRIGGER: ${{ github.event_name == 'schedule' && 'schedule' || 'manual' }}
+        run: |
+          DATABASE_URL=$(PW="${{ secrets.POSTGRES_ADMIN_PASSWORD }}" python3 -c \
+            'import os,urllib.parse as u; print("postgres://hendingar:%s@%s:5432/hendingar?sslmode=require" % (u.quote(os.environ["PW"], safe=""), os.environ["PGHOST"]))')
+          export DATABASE_URL
+          if [ "${{ inputs.dry_run }}" = "true" ]; then
+            pnpm --filter @hendingar/importer-checkin ingest -- --dry-run | tee -a result.txt
+          else
+            pnpm --filter @hendingar/importer-checkin ingest | tee -a result.txt
+          fi
+
       # A separate always() step: a bash EXIT trap does not survive SIGKILL, and a leaked rule
       # leaves a recycled public runner IP allowed against the database.
       - name: Close firewall

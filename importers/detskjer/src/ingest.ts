@@ -107,11 +107,23 @@ export async function ingest(
 	const startedAt = now();
 	const source = await upsertSource(db);
 
-	const [run] = await db
-		.insert(ingestRuns)
-		.values({ sourceId: source.id, startedAt, status: 'running', trigger, revision })
-		.returning({ id: ingestRuns.id });
-	if (!run) throw new Error('could not open an ingest run');
+	/*
+	 * A dry run opens no run row.
+	 *
+	 * The row is inserted as `running` and only closed on the success path, so a dry run used to
+	 * leave one permanently `running` — /datasamling then showed an import that never finished and
+	 * never happened. A flag that promises to write nothing must not write the one row the status
+	 * board is built from.
+	 */
+	let runId = -1;
+	if (!dryRun) {
+		const [run] = await db
+			.insert(ingestRuns)
+			.values({ sourceId: source.id, startedAt, status: 'running', trigger, revision })
+			.returning({ id: ingestRuns.id });
+		if (!run) throw new Error('could not open an ingest run');
+		runId = run.id;
+	}
 
 	let fetched = 0;
 	let created = 0;
@@ -240,12 +252,12 @@ export async function ingest(
 					durationMs,
 					message
 				})
-				.where(eq(ingestRuns.id, run.id));
+				.where(eq(ingestRuns.id, runId));
 			await db.update(sources).set({ lastRunAt: finishedAt }).where(eq(sources.id, source.id));
 		}
 
 		return {
-			runId: run.id,
+			runId,
 			status,
 			fetched,
 			created,
@@ -258,6 +270,8 @@ export async function ingest(
 	} catch (error) {
 		const finishedAt = now();
 		const message = error instanceof Error ? error.message : String(error);
+		// Nothing to close if the run was never opened.
+		if (dryRun) throw error;
 		await db
 			.update(ingestRuns)
 			.set({
@@ -271,7 +285,7 @@ export async function ingest(
 				durationMs: finishedAt.getTime() - startedAt.getTime(),
 				message: message.slice(0, 2000)
 			})
-			.where(eq(ingestRuns.id, run.id));
+			.where(eq(ingestRuns.id, runId));
 		throw error;
 	}
 }

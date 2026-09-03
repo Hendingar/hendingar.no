@@ -23,17 +23,12 @@ export type LinkedSource = {
 	note: string;
 };
 
+/*
+ * Kulleseidkanalen has graduated out of this list: importers/checkin now collects it through the
+ * Checkin.no GraphQL API. The importer upserts the same slug, so the row changes kind in place —
+ * which is why `pnpm db:sources` skips any slug an importer has taken over.
+ */
 export const LINKED_SOURCES: readonly LinkedSource[] = [
-	{
-		slug: 'kulleseidkanalen',
-		name: 'Kulleseidkanalen gjestehamn',
-		url: 'https://kulleseidkanalen.no/vare-arrangement/',
-		region: 'Sunnhordland',
-		attribution: 'Kulleseidkanalen gjestehamn',
-		iconUrl:
-			'https://kulleseidkanalen.no/wp-content/uploads/2020/07/cropped-FAVICON-2_Kulleseidkanalen_Gjestehamn-1-192x192.png',
-		note: 'Programmet ligg i ein billettkalender frå Checkin.no som krev at du godtek informasjonskapslar. Vi har funne datakjelda og planlegg å hente herifrå.'
-	},
 	{
 		slug: 'riksteatret-bomlo',
 		name: 'Riksteatret på Bømlo',

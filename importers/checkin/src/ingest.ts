@@ -1,16 +1,21 @@
 import { and, eq } from 'drizzle-orm';
 import { createDb, type Db } from '@hendingar/core/db';
 import { events, ingestRuns, sources, venues } from '@hendingar/core/schema';
-import { fetchListing, parseListing, postIdFor, type FetchListing } from './api.ts';
-import { INSTANCES, type MecInstance } from './instances.ts';
+import {
+	ENDPOINT,
+	INSTANCES,
+	fetchEvents,
+	responseSchema,
+	type CheckinInstance,
+	type FetchEvents
+} from './api.ts';
 import { isFailure, mapEvent, type MappedEvent } from './map.ts';
 
 /**
- * Deterministic: fetch → parse → validate → upsert. No language model touches this path.
+ * Deterministic: fetch → validate → map → upsert. No language model touches this path.
  *
- * One `ingest_runs` row per instance per execution, including failures — /datasamling renders that
- * table, and a source that stops reporting must become visible rather than quietly stale. Two
- * instances therefore produce two rows and two lines on the page, not one combined run.
+ * One `ingest_runs` row per venue per execution, including failures — /datasamling renders that
+ * table, and a source that stops reporting must become visible rather than quietly stale.
  */
 
 export type IngestResult = {
@@ -27,19 +32,25 @@ export type IngestResult = {
 };
 
 export type IngestOptions = {
-	read?: FetchListing;
+	read?: FetchEvents;
 	trigger?: string;
 	revision?: string | null;
 	dryRun?: boolean;
 	now?: () => Date;
 };
 
-async function upsertSource(db: Db, instance: MecInstance) {
+async function upsertSource(db: Db, instance: CheckinInstance) {
 	const shared = {
 		name: instance.name,
 		url: instance.url,
-		endpoint: instance.endpoint,
-		kind: 'html' as const,
+		endpoint: ENDPOINT,
+		/*
+		 * Replaces the note this row carried while it was a `link`, which said we did NOT collect
+		 * it. Graduating a source without clearing that would leave /datasamling explaining why we
+		 * cannot fetch a calendar it is, at that moment, showing fresh events from.
+		 */
+		note: `GraphQL, customerId ${instance.customerId}. Sida til staden viser programmet i ein Checkin-widget, så vi hentar frå API-et under.`,
+		kind: 'json-api' as const,
 		/*
 		 * Explicitly active.
 		 *
@@ -67,7 +78,7 @@ async function upsertSource(db: Db, instance: MecInstance) {
 	return row;
 }
 
-async function venueIdFor(db: Db, mapped: MappedEvent, instance: MecInstance) {
+async function venueIdFor(db: Db, mapped: MappedEvent, instance: CheckinInstance) {
 	if (!mapped.venueName || !mapped.venueSlug) return null;
 	const [row] = await db
 		.insert(venues)
@@ -87,11 +98,11 @@ async function venueIdFor(db: Db, mapped: MappedEvent, instance: MecInstance) {
 
 export async function ingestInstance(
 	connectionString: string,
-	instance: MecInstance,
+	instance: CheckinInstance,
 	options: IngestOptions = {}
 ): Promise<IngestResult> {
 	const {
-		read = fetchListing,
+		read = fetchEvents,
 		trigger = 'manual',
 		revision = null,
 		dryRun = false,
@@ -128,22 +139,26 @@ export async function ingestInstance(
 	const problems: string[] = [];
 
 	try {
-		const listing = parseListing(await read(instance));
-		for (const problem of listing.rejected) {
-			rejected += 1;
-			if (problems.length < 10) problems.push(`invalid ld+json: ${problem}`);
+		/*
+		 * Validate the whole envelope before mapping anything. A GraphQL API answers 200 with a
+		 * changed shape just as happily as with the right one, and mapping first would turn that
+		 * into a quiet run of zero events rather than a loud failure.
+		 */
+		const parsed = responseSchema.safeParse(await read(instance, startedAt));
+		if (!parsed.success) {
+			throw new Error(
+				`unexpected response shape: ${parsed.error.issues
+					.map((i) => `${i.path.join('.')}: ${i.message}`)
+					.join('; ')
+					.slice(0, 400)}`
+			);
 		}
 
-		/*
-		 * MEC prints the same occurrence more than once on a page — the listing this was built
-		 * against repeated five posts across twelve cards, and a card can appear in both a
-		 * "featured" strip and the main list. De-duplicating keeps the run counts honest.
-		 */
 		const seen = new Set<string>();
 
-		for (const raw of listing.events) {
+		for (const raw of parsed.data.data.allEventRegistrations.data) {
 			fetched += 1;
-			const mapped = mapEvent(raw, postIdFor(listing, raw.url), instance);
+			const mapped = mapEvent(raw, instance);
 			if (isFailure(mapped)) {
 				rejected += 1;
 				if (problems.length < 10)
