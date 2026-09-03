@@ -1,0 +1,1613 @@
+{
+	"currentPageUrl": null,
+	"activityPageList": null,
+	"pageHits": [
+		{
+			"id": 597552,
+			"pageTitle": "T 2 Kyvikjo - Grov- rundtur",
+			"published": "0001-01-01T00:00:00",
+			"publishDateString": {
+				"text": "Publisert",
+				"date": "02. mars 2026"
+			},
+			"url": "/aktiviteter-fra-deltager/stord-fitjar-turlag/t-2-kyvikjo---grov--rundtur/",
+			"ingress": "",
+			"tag": {
+				"tagName": null,
+				"color": null
+			},
+			"pageType": "ActivityPage",
+			"media": {
+				"description": null,
+				"url": "",
+				"photographer": null
+			},
+			"serviceLevels": null,
+			"serviceLevel": null,
+			"grading": "",
+			"level": "Enkel",
+			"distance": 0,
+			"areas": null,
+			"activityType": "",
+			"activityViewModel": {
+				"eventLocation": "Vabakkjen / Stord",
+				"imageUrl": "/images/pattern.svg",
+				"subTypes": "",
+				"mainType": "Fellestur",
+				"targetGroups": "Seniorer",
+				"organizerGroups": "457",
+				"duration": "Dagsaktivitet",
+				"start": "2026-10-14T10:00:00.157+02:00",
+				"end": "2026-10-14T14:15:00.157+02:00",
+				"startDate": "14. okt.",
+				"endDate": "14. okt.",
+				"startTime": "10:00",
+				"endTime": "14:15",
+				"displayEndTime": true,
+				"registeredParticipants": 0,
+				"maxAllowedRegistrations": 0,
+				"showMaxAllowed": false,
+				"isFull": false,
+				"hasWaitinglist": false,
+				"isCancelled": false,
+				"isOverdue": false,
+				"isSignup": false,
+				"registrationStart": "2026-03-02T13:30:53.91+01:00",
+				"registrationEnd": null
+			},
+			"organizorName": "",
+			"coOrganizorNames": []
+		},
+		{
+			"id": 584703,
+			"pageTitle": "T2: Paddeveien - Mølstrevåg",
+			"published": "0001-01-01T00:00:00",
+			"publishDateString": {
+				"text": "Publisert",
+				"date": "23. desember 2025"
+			},
+			"url": "/aktiviteter-fra-deltager/stord-fitjar-turlag/t2-paddeveien---molstrevag/",
+			"ingress": "",
+			"tag": {
+				"tagName": null,
+				"color": null
+			},
+			"pageType": "ActivityPage",
+			"media": {
+				"description": null,
+				"url": "",
+				"photographer": null
+			},
+			"serviceLevels": null,
+			"serviceLevel": null,
+			"grading": "",
+			"level": "Enkel",
+			"distance": 0,
+			"areas": null,
+			"activityType": "",
+			"activityViewModel": {
+				"eventLocation": "Vabakken; kl: 10:00",
+				"imageUrl": "/images/pattern.svg",
+				"subTypes": ", Fottur",
+				"mainType": "Fellestur",
+				"targetGroups": "Seniorer",
+				"organizerGroups": "457",
+				"duration": "Dagsaktivitet",
+				"start": "2026-10-28T00:00:00.05+01:00",
+				"end": "2026-10-28T01:00:00.05+01:00",
+				"startDate": "28. okt.",
+				"endDate": "28. okt.",
+				"startTime": "00:00",
+				"endTime": "01:00",
+				"displayEndTime": true,
+				"registeredParticipants": 0,
+				"maxAllowedRegistrations": 0,
+				"showMaxAllowed": false,
+				"isFull": false,
+				"hasWaitinglist": false,
+				"isCancelled": false,
+				"isOverdue": false,
+				"isSignup": true,
+				"registrationStart": "2025-12-23T12:09:46.213+01:00",
+				"registrationEnd": null
+			},
+			"organizorName": "",
+			"coOrganizorNames": []
+		},
+		{
+			"id": 599200,
+			"pageTitle": "T1 - Kålasletto - Siggjo - rundtur.",
+			"published": "0001-01-01T00:00:00",
+			"publishDateString": {
+				"text": "Publisert",
+				"date": "11. mars 2026"
+			},
+			"url": "/aktiviteter-fra-deltager/stord-fitjar-turlag/t1---kalasletto---siggjo---rundtur/",
+			"ingress": "",
+			"tag": {
+				"tagName": null,
+				"color": null
+			},
+			"pageType": "ActivityPage",
+			"media": {
+				"description": null,
+				"url": "",
+				"photographer": null
+			},
+			"serviceLevels": null,
+			"serviceLevel": null,
+			"grading": "",
+			"level": "Middels",
+			"distance": 0,
+			"areas": null,
+			"activityType": "",
+			"activityViewModel": {
+				"eventLocation": "Vabakkjen / Stord",
+				"imageUrl": "/images/pattern.svg",
+				"subTypes": ", Fottur",
+				"mainType": "Fellestur",
+				"targetGroups": "Seniorer",
+				"organizerGroups": "457",
+				"duration": "Dagsaktivitet",
+				"start": "2026-10-28T00:00:00.57+01:00",
+				"end": "2026-10-28T01:00:00.57+01:00",
+				"startDate": "28. okt.",
+				"endDate": "28. okt.",
+				"startTime": "00:00",
+				"endTime": "01:00",
+				"displayEndTime": true,
+				"registeredParticipants": 0,
+				"maxAllowedRegistrations": 0,
+				"showMaxAllowed": false,
+				"isFull": false,
+				"hasWaitinglist": false,
+				"isCancelled": false,
+				"isOverdue": false,
+				"isSignup": false,
+				"registrationStart": "2026-03-11T11:37:31.877+01:00",
+				"registrationEnd": null
+			},
+			"organizorName": "",
+			"coOrganizorNames": []
+		},
+		{
+			"id": 611657,
+			"pageTitle": "Fitjartur,  Veten Austevoll",
+			"published": "0001-01-01T00:00:00",
+			"publishDateString": {
+				"text": "Publisert",
+				"date": "09. juni 2026"
+			},
+			"url": "/aktiviteter-fra-deltager/stord-fitjar-turlag/fitjartur--veten-austevoll/",
+			"ingress": "",
+			"tag": {
+				"tagName": null,
+				"color": null
+			},
+			"pageType": "ActivityPage",
+			"media": {
+				"description": null,
+				"url": "",
+				"photographer": null
+			},
+			"serviceLevels": null,
+			"serviceLevel": null,
+			"grading": "",
+			"level": "Middels",
+			"distance": 0,
+			"areas": null,
+			"activityType": "",
+			"activityViewModel": {
+				"eventLocation": "Vinnesvatnet / Austevoll",
+				"imageUrl": "/images/pattern.svg",
+				"subTypes": "",
+				"mainType": "Fellestur",
+				"targetGroups": "Seniorer",
+				"organizerGroups": "471",
+				"duration": "Dagsaktivitet",
+				"start": "2026-11-04T09:10:00.017+01:00",
+				"end": "2026-11-04T14:00:00.017+01:00",
+				"startDate": "04. nov.",
+				"endDate": "04. nov.",
+				"startTime": "09:10",
+				"endTime": "14:00",
+				"displayEndTime": true,
+				"registeredParticipants": 0,
+				"maxAllowedRegistrations": 0,
+				"showMaxAllowed": false,
+				"isFull": false,
+				"hasWaitinglist": false,
+				"isCancelled": false,
+				"isOverdue": false,
+				"isSignup": false,
+				"registrationStart": "2026-06-09T12:08:02.583+02:00",
+				"registrationEnd": null
+			},
+			"organizorName": "",
+			"coOrganizorNames": []
+		},
+		{
+			"id": 599202,
+			"pageTitle": "T1 - Vatna - Vad - Fjellstovo - Vatnadalen",
+			"published": "0001-01-01T00:00:00",
+			"publishDateString": {
+				"text": "Publisert",
+				"date": "11. mars 2026"
+			},
+			"url": "/aktiviteter-fra-deltager/stord-fitjar-turlag/t1---vatna---vad---fjellstovo---vatnadalen/",
+			"ingress": "",
+			"tag": {
+				"tagName": null,
+				"color": null
+			},
+			"pageType": "ActivityPage",
+			"media": {
+				"description": null,
+				"url": "",
+				"photographer": null
+			},
+			"serviceLevels": null,
+			"serviceLevel": null,
+			"grading": "",
+			"level": "Middels",
+			"distance": 0,
+			"areas": null,
+			"activityType": "",
+			"activityViewModel": {
+				"eventLocation": "Vabakkjen / Stord",
+				"imageUrl": "/images/pattern.svg",
+				"subTypes": ", Fottur",
+				"mainType": "Fellestur",
+				"targetGroups": "Seniorer",
+				"organizerGroups": "457",
+				"duration": "Dagsaktivitet",
+				"start": "2026-11-11T00:00:00.343+01:00",
+				"end": "2026-11-11T01:00:00.343+01:00",
+				"startDate": "11. nov.",
+				"endDate": "11. nov.",
+				"startTime": "00:00",
+				"endTime": "01:00",
+				"displayEndTime": true,
+				"registeredParticipants": 0,
+				"maxAllowedRegistrations": 0,
+				"showMaxAllowed": false,
+				"isFull": false,
+				"hasWaitinglist": false,
+				"isCancelled": false,
+				"isOverdue": false,
+				"isSignup": false,
+				"registrationStart": "2026-03-11T11:45:42.94+01:00",
+				"registrationEnd": null
+			},
+			"organizorName": "",
+			"coOrganizorNames": []
+		},
+		{
+			"id": 597558,
+			"pageTitle": "T2 Skjephaugen - rundtur på nye og gamle stiar",
+			"published": "0001-01-01T00:00:00",
+			"publishDateString": {
+				"text": "Publisert",
+				"date": "02. mars 2026"
+			},
+			"url": "/aktiviteter-fra-deltager/stord-fitjar-turlag/t2-skjephaugen---rundtur-pa-nye-og-gamle-stiar/",
+			"ingress": "",
+			"tag": {
+				"tagName": null,
+				"color": null
+			},
+			"pageType": "ActivityPage",
+			"media": {
+				"description": null,
+				"url": "",
+				"photographer": null
+			},
+			"serviceLevels": null,
+			"serviceLevel": null,
+			"grading": "",
+			"level": "Enkel",
+			"distance": 0,
+			"areas": null,
+			"activityType": "",
+			"activityViewModel": {
+				"eventLocation": "Vabakkjen / Stord",
+				"imageUrl": "/images/pattern.svg",
+				"subTypes": "",
+				"mainType": "Fellestur",
+				"targetGroups": "Seniorer",
+				"organizerGroups": "457",
+				"duration": "Dagsaktivitet",
+				"start": "2026-11-11T10:00:00.813+01:00",
+				"end": "2026-11-11T14:00:00.813+01:00",
+				"startDate": "11. nov.",
+				"endDate": "11. nov.",
+				"startTime": "10:00",
+				"endTime": "14:00",
+				"displayEndTime": true,
+				"registeredParticipants": 0,
+				"maxAllowedRegistrations": 0,
+				"showMaxAllowed": false,
+				"isFull": false,
+				"hasWaitinglist": false,
+				"isCancelled": false,
+				"isOverdue": false,
+				"isSignup": false,
+				"registrationStart": "2026-03-02T13:41:23.143+01:00",
+				"registrationEnd": null
+			},
+			"organizorName": "",
+			"coOrganizorNames": []
+		}
+	],
+	"typeFacets": [
+		{
+			"filterKey": "MainType",
+			"filterName": "Fellestur",
+			"filterId": "320",
+			"parentId": null,
+			"count": 16
+		}
+	],
+	"subTypeFacets": [
+		{
+			"filterKey": "SubTypeFacets",
+			"filterName": "Fottur",
+			"filterId": "345",
+			"parentId": "320",
+			"count": 5
+		}
+	],
+	"durationFacets": [
+		{
+			"filterKey": "DurationFacet",
+			"filterName": "Dagsaktivitet",
+			"filterId": "none",
+			"parentId": null,
+			"count": 14
+		},
+		{
+			"filterKey": "DurationFacet",
+			"filterName": "2-3 dager",
+			"filterId": "twothree",
+			"parentId": null,
+			"count": 2
+		}
+	],
+	"associationFacets": [
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "31456",
+			"filterId": "31456",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "33423",
+			"filterId": "33423",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "33941",
+			"filterId": "33941",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "Asker Turlag",
+			"filterId": "25181",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "Askøy Turlag",
+			"filterId": "25195",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "Aurland turlag",
+			"filterId": "25114",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "Aurlandsdalen Turisthytte",
+			"filterId": "33005",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "Aust-Agder Turistforening",
+			"filterId": "24884",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "Balestrand og Høyanger turlag",
+			"filterId": "25116",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "Balsfjord og Omegn Turlag",
+			"filterId": "25080",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "Bamble turlag",
+			"filterId": "25247",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "Beiarn turlag",
+			"filterId": "25336",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "Bergen og Hordaland Turlag",
+			"filterId": "24939",
+			"parentId": null,
+			"count": 2
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "Breivoll Gård",
+			"filterId": "26376",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "Brurskanken turlag",
+			"filterId": "26239",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "Bærum Turlag",
+			"filterId": "25191",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "Bømlo Turlag",
+			"filterId": "25197",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "Dalane turlag",
+			"filterId": "25107",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "Den Norske Turistforening",
+			"filterId": "25377",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "DNT Alta og Omegn",
+			"filterId": "24871",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "DNT Bodø og Omegn",
+			"filterId": "24895",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "DNT Drammen og Omegn",
+			"filterId": "25019",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "DNT Finnskogen og Omegn",
+			"filterId": "25018",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "DNT FO Elverum",
+			"filterId": "25147",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "DNT FO Kongsvinger og Eidskog",
+			"filterId": "25148",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "DNT FO Solør",
+			"filterId": "25146",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "DNT Gjøvik og omegn",
+			"filterId": "24878",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "DNT Gudbrandsdalen",
+			"filterId": "24877",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "DNT Hadeland",
+			"filterId": "25412",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "DNT Halden og Omegn",
+			"filterId": "25023",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "DNT Harstad og Omegn",
+			"filterId": "24958",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "DNT Horten",
+			"filterId": "25374",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "DNT Indre Østfold",
+			"filterId": "24885",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "DNT Lillehammer",
+			"filterId": "23852",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "DNT Narvik",
+			"filterId": "24903",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "DNT Nedre Glomma",
+			"filterId": "25021",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "DNT Nord-Trøndelag",
+			"filterId": "24930",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "DNT Nord-Østerdal",
+			"filterId": "24907",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "DNT Odal",
+			"filterId": "25404",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "DNT Oslo og Omegn",
+			"filterId": "23919",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "DNT Rana og omegn",
+			"filterId": "25331",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "DNT Ringerike",
+			"filterId": "25028",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "DNT Romsdal",
+			"filterId": "25068",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "DNT Sandefjord",
+			"filterId": "25399",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "DNT Skien Turlag",
+			"filterId": "25363",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "DNT Sogn og Fjordane",
+			"filterId": "24876",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "DNT Stavanger og omegn",
+			"filterId": "24873",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "DNT Stord-Fitjar",
+			"filterId": "25194",
+			"parentId": null,
+			"count": 14
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "DNT Sunnmøre",
+			"filterId": "24904",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "DNT Sør",
+			"filterId": "24880",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "DNT Sør-Helgeland",
+			"filterId": "25020",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "DNT Telemark",
+			"filterId": "24894",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "DNT Tønsberg og Omegn",
+			"filterId": "24893",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "DNT Vaksdal",
+			"filterId": "25203",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "DNT Valdres",
+			"filterId": "24896",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "DNT Vansjø",
+			"filterId": "24882",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "DNT Vesterålen",
+			"filterId": "24869",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "DNT Vestfold",
+			"filterId": "24899",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "DNT Øygarden",
+			"filterId": "25201",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "Eidfjord Turlag",
+			"filterId": "25205",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "Eidsvoll Turlag",
+			"filterId": "25185",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "Etne Turlag",
+			"filterId": "25238",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "Finsehytta",
+			"filterId": "26219",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "Flekkefjord og Oplands turistforening",
+			"filterId": "25375",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "Flora Turlag",
+			"filterId": "25117",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "Fondsbu",
+			"filterId": "26200",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "Fosen Turlag",
+			"filterId": "25144",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "Frogn Turlag",
+			"filterId": "32834",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "Frøya Turlag",
+			"filterId": "25145",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "Fyresdal Turlag",
+			"filterId": "0",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "Gautefall turlag",
+			"filterId": "25354",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "Geiterygghytta",
+			"filterId": "26202",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "Gildeskål turlag",
+			"filterId": "25337",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "Gjendebu",
+			"filterId": "27287",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "Gjendesheim",
+			"filterId": "25504",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "Gjerdrum Turlag",
+			"filterId": "25364",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "Glitterheim 125 år",
+			"filterId": "26346",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "Gyldenløve Kajakklubb",
+			"filterId": "25893",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "Hamar og Hedemarken Turistforening",
+			"filterId": "24883",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "Hammerfest og Omegn Turlag",
+			"filterId": "25424",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "Haugesund Turistforening",
+			"filterId": "24901",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "Haukeliseter",
+			"filterId": "25419",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "Havrefjell Turlag",
+			"filterId": "25378",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "Hemnes Turistforening",
+			"filterId": "25033",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "Hemsedal Turlag",
+			"filterId": "25874",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "Hitra Turlag",
+			"filterId": "25143",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "Hjelmeland turlag",
+			"filterId": "25111",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "Holmestrand og Omegn Turistforening",
+			"filterId": "25385",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "Indre Nordfjord turlag",
+			"filterId": "25118",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "Indre Sunnfjord Turlag",
+			"filterId": "25119",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "Innherred Turlag",
+			"filterId": "25104",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "Iungsdalshytta",
+			"filterId": "26220",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "Jæren turlag",
+			"filterId": "25108",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "Keipen Turlag",
+			"filterId": "25120",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "Kobberhaughytta",
+			"filterId": "26199",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "Kongsberg og Omegns Turistforening",
+			"filterId": "24875",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "Kragerø turlag",
+			"filterId": "25372",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "Kristiansund og Nordmøre Turistforening",
+			"filterId": "24897",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "Kvam Turlag",
+			"filterId": "25206",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "Kvinnherad Turlag",
+			"filterId": "25199",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "Kviteseid turlag",
+			"filterId": "25356",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "Larvik og Omegns Turistforening",
+			"filterId": "24900",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "Lillestrøm og Rælingen Turlag",
+			"filterId": "25183",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "Liomseter",
+			"filterId": "30667",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "Lofoten turlag",
+			"filterId": "24931",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "Luster Turlag",
+			"filterId": "25130",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "Lærdal turlag",
+			"filterId": "25122",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "Lødingen og Vestbygd Turlag",
+			"filterId": "26086",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "Lørenskog Turlag",
+			"filterId": "25184",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "Meløy turlag",
+			"filterId": "25338",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "Midtre Nordfjord Turlag",
+			"filterId": "25123",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "Namdal Turlag",
+			"filterId": "25103",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "Nannestad Turlag",
+			"filterId": "25182",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "Nesodden Turlag",
+			"filterId": "25190",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "Nord-Troms turlag",
+			"filterId": "25330",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "Nordhordland Turlag",
+			"filterId": "25210",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "Nordre Follo Turlag",
+			"filterId": "25353",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "Notodden og Hjartdal Turlag",
+			"filterId": "25362",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "Nørdstedalseter",
+			"filterId": "30544",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "Odda/Ullensvang Turlag",
+			"filterId": "25200",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "Os Turlag",
+			"filterId": "25193",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "Osterøy Turlag",
+			"filterId": "25198",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "Porsgrunn Turlag",
+			"filterId": "29820",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "Randaberg turlag",
+			"filterId": "25113",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "Rennesøy og Finnøy turlag",
+			"filterId": "25112",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "Rondvassbu",
+			"filterId": "30339",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "Saltdal turlag",
+			"filterId": "25334",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "Samnanger Turlag",
+			"filterId": "25207",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "Sandnes turlag",
+			"filterId": "25106",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "Sauda Turlag",
+			"filterId": "25232",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "Seljord turlag",
+			"filterId": "25357",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "Senja turlag",
+			"filterId": "25373",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "Siljan turlag",
+			"filterId": "25358",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "Skarven Turlag",
+			"filterId": "25105",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "Snøheim",
+			"filterId": "27526",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "Sogndal Turlag",
+			"filterId": "25124",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "Sola turlag",
+			"filterId": "31444",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "Sota Sæter",
+			"filterId": "26201",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "Strand og Forsand turlag",
+			"filterId": "25110",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "Suldal turlag",
+			"filterId": "25109",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "Svukuriset 100 år",
+			"filterId": "27525",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "Sør-Varanger Turlag",
+			"filterId": "24902",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "Tinn og Rjukan turlag",
+			"filterId": "25359",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "Tokke turlag",
+			"filterId": "25360",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "Troms Turlag",
+			"filterId": "25003",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "Trondhjems Turistforening",
+			"filterId": "24872",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "Turkameratene Nittedal Turlag",
+			"filterId": "25187",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "Tysnes Turlag",
+			"filterId": "25202",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "Ullensaker Turlag",
+			"filterId": "25188",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "Ulvik Turlag",
+			"filterId": "25204",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "Varangerhalvøya turlag",
+			"filterId": "25410",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "Vestby Turlag",
+			"filterId": "25189",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "Vik turlag",
+			"filterId": "25125",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "Vindafjord turlag",
+			"filterId": "25233",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "Vinje turlag",
+			"filterId": "25361",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "Voss Utferdslag",
+			"filterId": "24898",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "Ytre Nordfjord turlag",
+			"filterId": "25127",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "Ytre Sogn turlag",
+			"filterId": "25128",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "Ål Turlag",
+			"filterId": "25875",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "Årdal Turlag",
+			"filterId": "25129",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "OrganizerIdFacet",
+			"filterName": "Ås Turlag",
+			"filterId": "25365",
+			"parentId": null,
+			"count": 0
+		}
+	],
+	"targetGroupFacets": [
+		{
+			"filterKey": "TargetGroupFacets",
+			"filterName": "Barn",
+			"filterId": "Barn",
+			"parentId": null,
+			"count": 1
+		},
+		{
+			"filterKey": "TargetGroupFacets",
+			"filterName": "Funksjonshemmede",
+			"filterId": "Funksjonshemmede",
+			"parentId": null,
+			"count": 1
+		},
+		{
+			"filterKey": "TargetGroupFacets",
+			"filterName": "Seniorer",
+			"filterId": "Seniorer",
+			"parentId": null,
+			"count": 14
+		}
+	],
+	"organizerGroupFacets": [
+		{
+			"filterKey": "OrganizerGroupFacets",
+			"filterName": "Barnas Turlag",
+			"filterId": "455",
+			"parentId": null,
+			"count": 1
+		},
+		{
+			"filterKey": "OrganizerGroupFacets",
+			"filterName": "DNT Senior",
+			"filterId": "457",
+			"parentId": null,
+			"count": 13
+		},
+		{
+			"filterKey": "OrganizerGroupFacets",
+			"filterName": "Tilrettelagt",
+			"filterId": "458",
+			"parentId": null,
+			"count": 1
+		}
+	],
+	"levelFacets": [
+		{
+			"filterKey": "LevelFacets",
+			"filterName": "Enkel",
+			"filterId": "1",
+			"parentId": null,
+			"count": 5
+		},
+		{
+			"filterKey": "LevelFacets",
+			"filterName": "Middels",
+			"filterId": "2",
+			"parentId": null,
+			"count": 9
+		},
+		{
+			"filterKey": "LevelFacets",
+			"filterName": "Krevende",
+			"filterId": "3",
+			"parentId": null,
+			"count": 2
+		}
+	],
+	"areaFacets": [],
+	"municipalityFacets": [
+		{
+			"filterKey": "MunicipalityFacets",
+			"filterName": "Bømlo",
+			"filterId": "4613",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "MunicipalityFacets",
+			"filterName": "Stord",
+			"filterId": "4614",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "MunicipalityFacets",
+			"filterName": "Bjørnafjorden",
+			"filterId": "4624",
+			"parentId": null,
+			"count": 0
+		},
+		{
+			"filterKey": "MunicipalityFacets",
+			"filterName": "Austevoll",
+			"filterId": "4625",
+			"parentId": null,
+			"count": 0
+		}
+	],
+	"latitude": null,
+	"longitude": null,
+	"pageCount": 2,
+	"category": null,
+	"page": "2",
+	"totalMatching": 16,
+	"pageSize": 10,
+	"activityFilter": null
+}
