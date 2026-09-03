@@ -126,11 +126,13 @@ export function mapEvent(
 		ctaUrl: safeUrl(input.offers?.url),
 		/*
 		 * Hotlinked from the site's own media library, never copied onto our infrastructure.
-		 * MEC states nothing about image rights, so the flag stays false: an unstated right is not
-		 * a granted one, and issue #3 is explicit that we do not re-host on an assumption.
+		 *
+		 * MEC itself states nothing about image rights, so this cannot be read from the page — it
+		 * comes from the instance config, which records whether that particular venue has agreed.
+		 * An unstated right is still not a granted one; a stated one is.
 		 */
 		posterUrl: safeUrl(input.image),
-		posterRightsVerified: false,
+		posterRightsVerified: instance.posterRightsCleared,
 		sourceUrl
 	};
 }

@@ -168,6 +168,7 @@ export async function ingestInstance(
 					venueId: events.venueId,
 					ctaUrl: events.ctaUrl,
 					posterUrl: events.posterUrl,
+					posterRightsVerified: events.posterRightsVerified,
 					status: events.status
 				})
 				.from(events)
@@ -189,6 +190,7 @@ export async function ingestInstance(
 				existing.venueId === values.venueId &&
 				existing.ctaUrl === values.ctaUrl &&
 				existing.posterUrl === values.posterUrl &&
+				existing.posterRightsVerified === values.posterRightsVerified &&
 				existing.status === values.status;
 
 			if (same) {

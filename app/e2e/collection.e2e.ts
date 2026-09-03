@@ -70,10 +70,12 @@ test('a source is one compact row until you open it', async ({ page }) => {
 	// Scannable without opening: who it is, how we collect it.
 	await expect(row).toContainText('JSON-API');
 	// The detail is deliberately not on screen yet — that is the whole point of the change.
-	await expect(page.getByText(/dagleg \d{2}:\d{2} UTC/)).toBeHidden();
+	// Scoped to this row: with more than one collected source, a page-wide text match resolves to
+	// every source's schedule and says nothing about whether THIS row is closed.
+	await expect(row.getByText(/dagleg \d{2}:\d{2} UTC/)).toBeHidden();
 
 	await row.locator('summary').click();
-	await expect(page.getByText(/dagleg \d{2}:\d{2} UTC/)).toBeVisible();
+	await expect(row.getByText(/dagleg \d{2}:\d{2} UTC/)).toBeVisible();
 	await expect(row).toContainText('detskjer.sunnhordland.no/api/events');
 });
 
