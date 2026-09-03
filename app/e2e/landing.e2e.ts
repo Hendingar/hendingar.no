@@ -71,17 +71,28 @@ test('the front page says what the list covers, in the server-rendered HTML', as
 
 test('the front page does not advertise features that do not exist', async ({ request }) => {
 	const html = await (await request.get('/')).text();
-	// It once promised a map, RSS/iCal per location and a searchable list under a heading reading
-	// "Kva det gjer". None of the three is built. Anything unbuilt must appear under the
-	// "Ikkje bygd enno" heading instead, so a reader can tell a plan from a promise.
-	const planned = html.match(/Ikkje bygd enno[\s\S]*?<\/ul>/)?.[0] ?? '';
-	expect(planned, 'planned features must be listed as planned').toMatch(/Kart/i);
 
-	// The "what we do" list must not contain them. Slice it out and check it alone.
-	const does = html.match(/Kva vi gjer[\s\S]*?<\/ul>/)?.[0] ?? '';
-	expect(does, 'the "what we do" list must be present').not.toBe('');
+	// The page once promised a map, RSS/iCal and a searchable list under a heading reading "Kva
+	// det gjer". None of the three is built. That section has since been removed altogether — but
+	// this guard was never about the section, it was about the claim, so it now reads everything
+	// the page says about *us* rather than one list inside it.
+	//
+	// Sliced from the hero, which is where the event content ends. An imported event may quite
+	// legitimately be a "Kart og kompass-kurs" — DNT runs them — and that is a fact about
+	// Sunnhordland, not a promise about this software. Matching the whole document would fail the
+	// day someone in the region schedules one.
+	const heroAt = html.search(/<header[^>]*class="hero/);
+	expect(heroAt, 'the page must still introduce itself after the events').toBeGreaterThan(-1);
+
+	// Read the words, not the markup. Matching raw HTML fails on `label--vertical`, which contains
+	// "ical" — the assertion is about what the page *says*, so strip everything that is not said.
+	const about = html
+		.slice(heroAt)
+		.replace(/<(script|style|svg)[\s\S]*?<\/\1>/gi, '')
+		.replace(/<[^>]+>/g, ' ');
+
 	for (const absent of [/\bkart\b/i, /\bRSS\b/, /iCal/i, /søkbar/i]) {
-		expect(does, `"what we do" must not claim ${absent}`).not.toMatch(absent);
+		expect(about, `the front page must not claim ${absent}`).not.toMatch(absent);
 	}
 });
 

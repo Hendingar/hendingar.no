@@ -3,7 +3,6 @@
 	import CoverageStatus from '../lib/components/landing/CoverageStatus.svelte';
 	import Hero from '../lib/components/landing/Hero.svelte';
 	import ManifestBand from '../lib/components/landing/ManifestBand.svelte';
-	import ClaimsSplit from '../lib/components/landing/ClaimsSplit.svelte';
 	import VerifyPipeline from '../lib/components/landing/VerifyPipeline.svelte';
 	import CallToAction from '../lib/components/landing/CallToAction.svelte';
 </script>
@@ -23,6 +22,13 @@
 	seven sections, five of them about us, with the event list appearing twice either side of the
 	manifesto. On a site whose job is answering "what is on", that ratio was inverted, and the
 	second list was the same query with a smaller limit.
+
+	The claims split ("Samlar alt" / "Og kva vi ikkje er") is gone for the same reason. It restated
+	in two columns of prose what the page already demonstrates: every event carries its source, the
+	filter is a link, and the manifest band says the three things we promise. Declaring "vi er ein
+	indeks, ikkje ein erstatning" underneath a list that links every row to its source is the site
+	explaining itself instead of working. The non-goals are still binding — they live in
+	README.md#what-it-does-not-do, which is where they are load-bearing.
 
 	`CoverageStatus` sits directly under the list rather than on /datasamling alone, because "is
 	this everything?" is the first question the list provokes and the honest answer was two clicks
@@ -47,6 +53,5 @@
 
 <Hero />
 <ManifestBand />
-<ClaimsSplit />
 <VerifyPipeline />
 <CallToAction />
