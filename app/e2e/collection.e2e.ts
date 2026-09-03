@@ -79,10 +79,27 @@ test('a source is one compact row until you open it', async ({ page }) => {
 
 test('datasamling shows run history rather than claiming a status', async ({ page }) => {
 	await page.goto('/datasamling');
-	await page.locator('details.row').first().locator('summary').click();
+	// A *collected* row, not merely the first one: sources are ordered by name, and a linked
+	// source that we deliberately do not collect has no run history to show.
+	await page.locator('details.row:not([data-kind="link"])').first().locator('summary').click();
 	const strip = page.getByRole('list', { name: /siste køyringar/i });
 	await expect(strip).toBeVisible();
 	expect(await strip.locator('li').count()).toBeGreaterThan(0);
+});
+
+test('a source we do not collect says so and links out instead', async ({ page }) => {
+	await page.goto('/datasamling');
+	const linked = page.locator('details.row[data-kind="link"]');
+	expect(await linked.count()).toBeGreaterThan(0);
+
+	const first = linked.first();
+	// The chip must not read like a broken importer — "Ikkje køyrt" is what a stopped one shows.
+	await expect(first.locator('.state')).toHaveText('Ikkje henta');
+	await first.locator('summary').click();
+	// No run strip, because there are no runs to claim.
+	await expect(first.getByRole('list', { name: /siste køyringar/i })).toHaveCount(0);
+	// And the point of listing it at all: somewhere for a reader to go.
+	await expect(first.getByRole('link', { name: /^Opne / })).toBeVisible();
 });
 
 test('every source row carries an icon or its initials', async ({ page }) => {

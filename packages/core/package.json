@@ -20,6 +20,7 @@
 		"test": "vitest run",
 		"db:generate": "drizzle-kit generate",
 		"db:migrate": "drizzle-kit migrate",
+		"db:sources": "node --env-file-if-exists=../../.env --experimental-strip-types scripts/sources.ts",
 		"db:seed": "node --env-file-if-exists=../../.env --experimental-strip-types scripts/seed.ts"
 	},
 	"dependencies": {

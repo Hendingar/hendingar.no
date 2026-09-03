@@ -27,6 +27,7 @@ export const listCollection = query(async () => {
 			scheduleCron: sources.scheduleCron,
 			trusted: sources.trusted,
 			active: sources.active,
+			note: sources.note,
 			attribution: sources.attribution,
 			lastRunAt: sources.lastRunAt
 		})

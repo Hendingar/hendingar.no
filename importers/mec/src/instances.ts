@@ -27,6 +27,13 @@ export type MecInstance = {
 	venueFallback: string;
 	scheduleCron: string;
 	/**
+	 * The site's own icon, hotlinked, so a tile and a source row carry its mark.
+	 *
+	 * Read from the page rather than guessed: Moster Amfi's `<link rel="apple-touch-icon">` points
+	 * at files it does not serve, and only the WordPress `site_icon_url` resolves.
+	 */
+	iconUrl: string | null;
+	/**
 	 * Editorially maintained by the venue itself, so imports publish directly rather than queueing
 	 * for review. See the `trusted` column comment in schema.ts.
 	 */
@@ -44,6 +51,7 @@ export const INSTANCES: readonly MecInstance[] = [
 		timezone: 'Europe/Oslo',
 		venueFallback: 'Bømlo folkebibliotek',
 		scheduleCron: '0 5 * * *',
+		iconUrl: 'https://www.bomlobibliotek.no/wp-content/uploads/2022/06/webloft-favicon.png',
 		trusted: true
 	},
 	{
@@ -56,6 +64,7 @@ export const INSTANCES: readonly MecInstance[] = [
 		timezone: 'Europe/Oslo',
 		venueFallback: 'Moster Amfi',
 		scheduleCron: '0 5 * * *',
+		iconUrl: 'https://mosteramfi.no/wp-content/uploads/2020/09/cropped-favicon.png',
 		trusted: true
 	}
 ];

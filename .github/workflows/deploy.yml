@@ -103,6 +103,10 @@ jobs:
             'import os,urllib.parse as u; print("postgres://%s:%s@%s:5432/hendingar?sslmode=require" % (u.quote(os.environ["PGUSER"], safe=""), u.quote(os.environ["PW"], safe=""), os.environ["PGHOST"]))')
           export DATABASE_URL
           pnpm db:migrate
+          # Reference data, not schema: the sources we link to but do not collect. Registered on
+          # every deploy so the list in packages/core is the single place they are edited, and
+          # deliberately a no-op for any slug an importer has since taken over.
+          pnpm db:sources
 
       # A separate always() step, not a bash `trap`: an EXIT trap does not run on SIGKILL, which is
       # what a cancelled run or a runner timeout delivers. A leaked rule leaves a recycled public
