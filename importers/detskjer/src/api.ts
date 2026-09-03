@@ -57,6 +57,15 @@ export const SOURCE = {
 	/** The whole region is CET/CEST. Recorded per venue so it survives expansion. */
 	timezone: 'Europe/Oslo',
 	/**
+	 * Their own favicon, from the `<link rel="icon">` on their site.
+	 *
+	 * Owned by the importer rather than only by the seed, which never runs in production — so the
+	 * icon arrived there by accident of whatever ran first. The 32px file, not the 196px one: it is
+	 * rendered at about 16px, and the larger version is eight times the bytes for no visible gain.
+	 */
+	iconUrl:
+		'https://superlocal-production.s3.eu-west-1.amazonaws.com/uploads/clients/header_style/1e6e4e2e-20e7-4390-a4cd-279f89e8b678/favicon/favicon-32.png',
+	/**
 	 * Innocode / Polaris Media have given us permission to use the event images.
 	 *
 	 * This has to be recorded here rather than read from the response, because the API's own
