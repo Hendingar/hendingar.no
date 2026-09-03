@@ -39,6 +39,19 @@ async function upsertSource(db: Db, site: AfaSite) {
 		url: listingUrl(site),
 		endpoint: eventsUrl(site),
 		kind: 'json-api' as const,
+		/*
+		 * Written on every run, not left to whatever was there before.
+		 *
+		 * This source was registered as a `link` first, with a note saying we could not collect
+		 * from it until events could be told from standing activities. That note survived the
+		 * graduation — `upsertSource` did not touch the column — so /datasamling went on telling
+		 * readers we collected nothing here while 121 events were being imported. A source's note
+		 * describes how we collect it, so the importer is what owns it.
+		 */
+		note:
+			'Portalen listar både enkelthendingar og faste, vekevise tilbod. Vi hentar berre ' +
+			'arrangement som er publiserte og har eit tidspunkt — dei faste tilboda blir ståande ' +
+			'hos kjelda.',
 		active: true,
 		scheduleCron: site.scheduleCron,
 		iconUrl: site.iconUrl,

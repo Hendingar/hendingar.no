@@ -39,14 +39,5 @@ export const LINKED_SOURCES: readonly LinkedSource[] = [
 		attribution: 'Riksteatret',
 		iconUrl: 'https://www.riksteatret.no/apple-touch-icon-precomposed.png',
 		note: 'Framsyningane til Riksteatret i Bømlo kulturhus. Sida er lesbar og vi planlegg å hente herifrå.'
-	},
-	{
-		slug: 'bomlo-aktivitetforalle',
-		name: 'Aktivitet for alle — Bømlo',
-		url: 'https://bomlo.aktivitetforalle.no/',
-		region: 'Sunnhordland',
-		attribution: 'Aktivitet for alle',
-		iconUrl: 'https://bomlo.aktivitetforalle.no/frontend/assets/img/icons/aktivitetforalle-512.png',
-		note: 'Ei oversikt over faste tilbod og lag, ikkje berre enkelthendingar. Vi må skilje det eine frå det andre før vi kan hente noko herifrå.'
 	}
 ];
