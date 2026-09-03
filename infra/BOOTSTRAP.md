@@ -333,9 +333,16 @@ choice:
 
 **A managed certificate validates once and never retries.** Create it before its DNS record
 exists and it stays `Pending` forever, even after the record is correct and visible on every
-nameserver — which is what an apex looks like if you add the `_acme-challenge` record after
-running the bind. There is no refresh: delete the certificate and create it again with the
-record already in place. Both hostnames here hit this, from opposite directions.
+nameserver.
+
+**Deleting and recreating it mints a NEW `validationToken`**, so the `_acme-challenge` record you
+just added no longer matches and the replacement times out too. That is a loop, and both apex
+attempts here went round it.
+
+**For the apex, use `--validation-method HTTP` instead.** The A record already points at the
+environment's inbound IP, so Azure answers the challenge itself and no DNS record is involved at
+all. That is what finally issued `hendingar.no`, after TXT validation had failed twice. Reserve
+TXT for a name that cannot be reached over HTTP.
 
 Getting this wrong fails _silently_. Binding a CNAME'd subdomain with `--validation-method TXT`
 creates a certificate that sits in `Pending` forever, waiting on an `_acme-challenge` record nobody

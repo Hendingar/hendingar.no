@@ -7,7 +7,9 @@
 	 */
 	const links = [
 		{ href: '/hendingar', label: 'Hendingar' },
-		{ href: '/datasamling', label: 'Datasamling' },
+		// "Datasamling" reads as data collection in the GDPR sense — the wrong question entirely.
+		// "Kjelder" is what the page is actually about. The URL is unchanged so existing links hold.
+		{ href: '/datasamling', label: 'Kjelder' },
 		{ href: '/send-inn', label: 'Send inn' }
 	];
 </script>

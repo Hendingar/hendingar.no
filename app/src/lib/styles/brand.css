@@ -215,27 +215,6 @@ body {
 	padding-inline-start: 1rem;
 }
 
-/* Segmented progress pills. */
-.pips {
-	display: flex;
-	gap: 0.4rem;
-	align-items: center;
-	padding: 0;
-	margin: 0;
-	list-style: none;
-}
-
-.pip {
-	inline-size: 2.6rem;
-	block-size: 0.9rem;
-	border: var(--rule) solid var(--peach);
-	border-radius: 999px;
-}
-
-.pip[data-on='true'] {
-	background: var(--peach);
-}
-
 /* Inverted block — peach paper, navy ink. Same measured ratio, flipped. */
 .invert {
 	background: var(--peach);

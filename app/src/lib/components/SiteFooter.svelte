@@ -11,7 +11,7 @@
 			<span aria-hidden="true">🇳🇴</span>
 		</p>
 		<p class="label">
-			<a href="/datasamling">Datasamling</a> ·
+			<a href="/datasamling">Kjelder og status</a> ·
 			<a href="/hendingar">Alle hendingar</a> ·
 			<a href="/send-inn">Send inn</a>
 		</p>

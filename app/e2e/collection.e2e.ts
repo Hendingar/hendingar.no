@@ -63,7 +63,7 @@ test('an imported tile shows the mark of the source it came from', async ({ page
 
 test('a source is one compact row until you open it', async ({ page }) => {
 	await page.goto('/datasamling');
-	await expect(page.getByRole('heading', { level: 1, name: /datasamling/i })).toBeVisible();
+	await expect(page.getByRole('heading', { level: 1, name: /kjelder/i })).toBeVisible();
 
 	const row = page.locator('details.row').filter({ hasText: /det skjer sunnhordland/i });
 	await expect(row).toBeVisible();
@@ -144,10 +144,10 @@ test('site navigation reaches both pages', async ({ page }) => {
 	await page.goto('/');
 	await page
 		.getByRole('navigation', { name: 'Hovudmeny' })
-		.getByRole('link', { name: 'Datasamling' })
+		.getByRole('link', { name: 'Kjelder' })
 		.click();
 	await expect(page).toHaveURL(/\/datasamling$/);
-	await expect(page.getByRole('link', { name: 'Datasamling' }).first()).toHaveAttribute(
+	await expect(page.getByRole('link', { name: /^Kjelder/ }).first()).toHaveAttribute(
 		'aria-current',
 		'page'
 	);
