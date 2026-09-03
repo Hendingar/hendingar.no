@@ -276,6 +276,33 @@ await db
 	.onConflictDoNothing({ target: [events.sourceId, events.externalId] });
 
 /*
+ * One event with a punishing title and a poster.
+ *
+ * The 320px overflow specs passed for months while the event page overflowed by 415px on real
+ * data, because every seeded event was short and posterless. A layout budget is only a budget if
+ * the fixture can actually exceed it — so this row carries the longest title and the compound word
+ * with no soft break in it that a real Norwegian listing throws at the page.
+ */
+await db
+	.insert(events)
+	.values({
+		sourceId: source.id,
+		externalId: 'seed-longest',
+		title:
+			'Viser, historie og humor «Frå Vestlandet til Amerika i 200 år» — ei framsyning om utferd',
+		description:
+			'Ein framsyning om utvandringshistoria. Meir informasjon på https://detskjer.sunnhordland.no/events/ein-svaert-lang-og-ubrytande-nettadresse-som-ikkje-har-nokon-mjuk-linjeskift-i-seg og hos arrangoerkontoret.',
+		category: 'litteratur',
+		startsAt: daysFromNow(2, 19),
+		endsAt: daysFromNow(2, 21),
+		venueId: venue.id,
+		status: 'published',
+		posterUrl: POSTER,
+		posterRightsVerified: true
+	})
+	.onConflictDoNothing({ target: [events.sourceId, events.externalId] });
+
+/*
  * The same event four times on one day, from ONE source.
  *
  * This is what public swimming looks like: four sessions you attend one of. Consolidation
@@ -435,6 +462,6 @@ const [{ count } = { count: 0 }] = await db
 	.limit(1);
 
 console.log(
-	`seeded: 2 sources, 3 venues, ${4 + fillerEvents.length + libraryEvents.length + 6} events, ${submissionSeeds.length} submissions, ${existingRun ? 0 : seedRuns.length + librarySeedRuns.length} runs (sample id ${count})`
+	`seeded: 2 sources, 3 venues, ${4 + fillerEvents.length + libraryEvents.length + 7} events, ${submissionSeeds.length} submissions, ${existingRun ? 0 : seedRuns.length + librarySeedRuns.length} runs (sample id ${count})`
 );
 process.exit(0);

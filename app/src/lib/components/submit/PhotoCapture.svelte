@@ -5,7 +5,17 @@
 	let {
 		enabled = true,
 		onextract
-	}: { enabled?: boolean; onextract: (draft: ExtractedEvent) => void } = $props();
+	}: {
+		enabled?: boolean;
+		/**
+		 * The image is handed up with the draft.
+		 *
+		 * It used to live only in this component, which sits inside the photo panel — and
+		 * extraction switches to the form panel, so the poster someone had just pasted disappeared
+		 * exactly when they needed it to check the fields against. The parent keeps it instead.
+		 */
+		onextract: (draft: ExtractedEvent, imageDataUrl: string | null) => void;
+	} = $props();
 
 	/**
 	 * Extraction takes three to fifteen seconds and used to show nothing at all, so the honest
@@ -118,7 +128,7 @@
 				return;
 			}
 			phase = 'idle';
-			onextract(result.draft);
+			onextract(result.draft, preview);
 			message = result.draft.note;
 		} catch (error) {
 			phase = 'error';

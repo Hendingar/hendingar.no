@@ -273,6 +273,15 @@
 	.ev__grid {
 		margin-block-start: clamp(1.5rem, 4vw, 2.5rem);
 		display: grid;
+		/*
+		 * `minmax(0, 1fr)`, not the implicit `auto`.
+		 *
+		 * A grid item's min-width is `auto`, so a single long word in a description sizes the whole
+		 * column to fit it and the page scrolls sideways. `min-inline-size: 0` on the child is not
+		 * enough — the COLUMN is what refuses to shrink. Measured: 415px of overflow at 320px on a
+		 * real event, which the seed never showed because its events are short and posterless.
+		 */
+		grid-template-columns: minmax(0, 1fr);
 		gap: clamp(1.5rem, 4vw, 3rem);
 		align-items: start;
 	}
@@ -298,6 +307,9 @@
 		display: grid;
 		gap: 0.9em;
 		max-inline-size: 68ch;
+		/* Belt and braces with the column fix: source descriptions carry bare URLs and compound
+		   Norwegian words that no soft break exists inside. */
+		overflow-wrap: anywhere;
 	}
 	.ev__desc :global(p) {
 		margin: 0;
