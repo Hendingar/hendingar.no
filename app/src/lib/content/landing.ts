@@ -26,22 +26,60 @@ export const MANIFEST: readonly string[] = [
 	'Data blir i Europa'
 ];
 
+/**
+ * What the site does TODAY. Present tense, and only things a visitor can actually do right now.
+ *
+ * This list used to promise a map, RSS and iCal, and call the listing searchable. None of the
+ * three exists — the README files feeds under a later phase, and there is no map library in the
+ * repo at all. Under a heading reading "Kva det gjer", that is the site misrepresenting itself in
+ * the one section whose whole job is being clear about what we do. Anything not built yet belongs
+ * in PLANNED, where it is labelled as a plan.
+ */
 export const DOES: readonly string[] = [
-	'Éi søkbar, geotagga liste i staden for tolv silo-ar.',
-	'Kven som helst kan leggje inn ei hending. Ingen konto.',
-	'Kart, så du ser kva som skjer nær deg.',
-	'RSS og iCal per stad — kalenderen din er ein førsteklasses klient.',
-	'Data i EU. GDPR ved arkitektur, ikkje ved personvernerklæring.'
+	'Hendingar frå fleire kalendrar samla i éi liste, sortert etter dag.',
+	'Filtrer på kategori. Filteret er ei lenkje, så du kan dele eller bokmerke det.',
+	'Kven som helst kan sende inn ei hending. Ingen konto, ingen innlogging.',
+	'Kvar hending lenkjer til kjelda si. Vi er ein indeks, ikkje ein erstatning.',
+	'Vi seier kvar tala kjem frå, og når vi henta dei sist.'
 ];
 
+/**
+ * Not built yet, and labelled as such.
+ *
+ * Keeping these visible is worth more than hiding them: they are the honest answer to "why can I
+ * not see this on a map", and a reader can tell the difference between a plan and a promise when
+ * we mark which is which.
+ */
+export const PLANNED: readonly string[] = [
+	'Kart over hendingar nær deg.',
+	'Fritekstsøk, ikkje berre kategoriar.',
+	'RSS og iCal, så kalenderen din kan abonnere direkte.'
+];
+
+/**
+ * Plain nouns a reader already knows.
+ *
+ * "Innhegning" was a metaphor about enclosure that nobody would search for, and the section was
+ * headed "Nektar resten" — brand voice describing a refusal, where the useful thing is simply
+ * saying what does not happen here.
+ */
 export const DOES_NOT: readonly Claim[] = [
-	{ term: 'Billettar', body: 'Ingen kasse, ingen gebyr. Lenkje til der billettane faktisk finst.' },
 	{
-		term: 'Sosialt nettverk',
-		body: 'Ingen følgjarar, ingen feed, ingen varsel som dreg deg tilbake.'
+		term: 'Vi sel ikkje billettar',
+		body: 'Ingen kasse og ingen gebyr. Vi lenkjer til der billettane faktisk finst.'
 	},
-	{ term: 'Reklame', body: 'Ingen annonsar, ingen sporing, ingen datasal. Aldri.' },
-	{ term: 'Innhegning', body: 'Konto er frivillig. Alt kan eksporterast. Å gå er lett med vilje.' }
+	{
+		term: 'Vi er ikkje eit sosialt nettverk',
+		body: 'Ingen følgjarar, ingen feed, ingen varsel som skal dra deg tilbake hit.'
+	},
+	{
+		term: 'Vi har ikkje reklame',
+		body: 'Ingen annonsar, ingen sporing, og vi sel ikkje data om deg. Aldri.'
+	},
+	{
+		term: 'Vi låser deg ikkje inne',
+		body: 'Du treng ingen konto. Kjeldekoden er open, og du kan alltid gå til kjelda sjølv.'
+	}
 ];
 
 /**

@@ -63,17 +63,19 @@ test('an imported tile shows the mark of the source it came from', async ({ page
 
 test('a source is one compact row until you open it', async ({ page }) => {
 	await page.goto('/datasamling');
-	await expect(page.getByRole('heading', { level: 1, name: /datasamling/i })).toBeVisible();
+	await expect(page.getByRole('heading', { level: 1, name: /kjelder/i })).toBeVisible();
 
 	const row = page.locator('details.row').filter({ hasText: /det skjer sunnhordland/i });
 	await expect(row).toBeVisible();
 	// Scannable without opening: who it is, how we collect it.
 	await expect(row).toContainText('JSON-API');
 	// The detail is deliberately not on screen yet — that is the whole point of the change.
-	await expect(page.getByText(/dagleg \d{2}:\d{2} UTC/)).toBeHidden();
+	// Scoped to this row: with more than one collected source, a page-wide text match resolves to
+	// every source's schedule and says nothing about whether THIS row is closed.
+	await expect(row.getByText(/dagleg \d{2}:\d{2} UTC/)).toBeHidden();
 
 	await row.locator('summary').click();
-	await expect(page.getByText(/dagleg \d{2}:\d{2} UTC/)).toBeVisible();
+	await expect(row.getByText(/dagleg \d{2}:\d{2} UTC/)).toBeVisible();
 	await expect(row).toContainText('detskjer.sunnhordland.no/api/events');
 });
 
@@ -144,10 +146,10 @@ test('site navigation reaches both pages', async ({ page }) => {
 	await page.goto('/');
 	await page
 		.getByRole('navigation', { name: 'Hovudmeny' })
-		.getByRole('link', { name: 'Datasamling' })
+		.getByRole('link', { name: 'Kjelder' })
 		.click();
 	await expect(page).toHaveURL(/\/datasamling$/);
-	await expect(page.getByRole('link', { name: 'Datasamling' }).first()).toHaveAttribute(
+	await expect(page.getByRole('link', { name: /^Kjelder/ }).first()).toHaveAttribute(
 		'aria-current',
 		'page'
 	);

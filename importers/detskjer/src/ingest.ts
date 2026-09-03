@@ -183,6 +183,7 @@ export async function ingest(
 						organizerId: events.organizerId,
 						ctaUrl: events.ctaUrl,
 						posterUrl: events.posterUrl,
+						posterRightsVerified: events.posterRightsVerified,
 						status: events.status
 					})
 					.from(events)
@@ -204,6 +205,7 @@ export async function ingest(
 					existing.organizerId === values.organizerId &&
 					existing.ctaUrl === values.ctaUrl &&
 					existing.posterUrl === values.posterUrl &&
+					existing.posterRightsVerified === values.posterRightsVerified &&
 					existing.status === values.status;
 
 				if (same) {

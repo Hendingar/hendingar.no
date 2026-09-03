@@ -34,6 +34,16 @@ export type MecInstance = {
 	 */
 	iconUrl: string | null;
 	/**
+	 * The venue has given us permission to use its event images.
+	 *
+	 * Recorded per source rather than assumed globally, because it is a fact about an agreement
+	 * with a named organisation and not a property of the software. We hotlink rather than re-host
+	 * either way, so today this only makes the permission auditable — but it becomes load-bearing
+	 * the moment anything caches or resizes an image, and at that point nobody should have to
+	 * reconstruct who agreed to what from memory.
+	 */
+	posterRightsCleared: boolean;
+	/**
 	 * Editorially maintained by the venue itself, so imports publish directly rather than queueing
 	 * for review. See the `trusted` column comment in schema.ts.
 	 */
@@ -52,6 +62,7 @@ export const INSTANCES: readonly MecInstance[] = [
 		venueFallback: 'Bømlo folkebibliotek',
 		scheduleCron: '0 5 * * *',
 		iconUrl: 'https://www.bomlobibliotek.no/wp-content/uploads/2022/06/webloft-favicon.png',
+		posterRightsCleared: true,
 		trusted: true
 	},
 	{
@@ -65,6 +76,7 @@ export const INSTANCES: readonly MecInstance[] = [
 		venueFallback: 'Moster Amfi',
 		scheduleCron: '0 5 * * *',
 		iconUrl: 'https://mosteramfi.no/wp-content/uploads/2020/09/cropped-favicon.png',
+		posterRightsCleared: true,
 		trusted: true
 	}
 ];

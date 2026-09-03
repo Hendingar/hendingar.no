@@ -32,9 +32,13 @@ pnpm ingest        # fetch every source — RUN THIS AFTER ANY RESET
 representative — several days, several categories, and six events carrying a poster — because day
 grouping and thumbnails are not observable without them, and the listing e2e specs assert both.
 Posters in the seed are a local same-origin file: a seed that hotlinked the source's CDN would
-make the browser specs depend on a third party's uptime. It is still not production volume, so
-`pnpm db:bootstrap` exists to get the full picture in one command; after a `db:reset`, run
-`pnpm ingest`.
+make the browser specs depend on a third party's uptime.
+
+**A seed-only database misreports the product, and it does so quietly.** It holds one source, so
+`/datasamling` lists a single collected row and the front page's coverage line says "1 kjelde";
+almost nothing has a poster, so the listing fills with generated tiles. Both look exactly like a
+regression in code that is in fact fine — this has already been reported as one. `pnpm db:reset`
+now prints what to run next, and `pnpm db:bootstrap` gets the whole picture in one command.
 
 ## Layout
 

@@ -2,7 +2,8 @@
 	import { page } from '$app/state';
 	import { CATEGORY_SLUGS, categoryLabel, type CategorySlug } from '@hendingar/core/taxonomy';
 	import EventsByDay from '../../lib/components/EventsByDay.svelte';
-	import { listCategoryCounts, listEvents } from '../../lib/events.remote';
+	import SourceIcon from '../../lib/components/SourceIcon.svelte';
+	import { listCategoryCounts, listEvents, listSourceCounts } from '../../lib/events.remote';
 
 	/**
 	 * The filter is a URL, not a client-side toggle.
@@ -19,6 +20,40 @@
 		return CATEGORY_SLUGS.includes(raw as CategorySlug) ? (raw as CategorySlug) : undefined;
 	});
 
+	/*
+	 * The source filter, also a URL.
+	 *
+	 * Sources are rows rather than a compile-time set, so this cannot be validated the way the
+	 * category is. It is checked against the counts we already fetched, which has the same effect —
+	 * a slug nobody publishes under falls back to showing everything — without a second query.
+	 */
+	const sourceCounts = await listSourceCounts();
+	const activeSource = $derived.by((): string | undefined => {
+		const raw = page.url.searchParams.get('kjelde');
+		return raw && sourceCounts.some((s) => s.slug === raw) ? raw : undefined;
+	});
+	const activeSourceName = $derived(
+		sourceCounts.find((s) => s.slug === activeSource)?.name ?? undefined
+	);
+
+	/**
+	 * Both filters compose, so a URL keeps whichever one you are not changing.
+	 *
+	 * Without this, pressing a source chip would silently drop the category you had chosen — the
+	 * list would change in two ways at once and neither chip would explain why.
+	 */
+	function filterHref(next: { kategori?: string | null; kjelde?: string | null }): string {
+		// Built by hand rather than with URLSearchParams: svelte/prefer-svelte-reactivity rightly
+		// bans a mutable instance of it in a component, and reaching for the reactive variant would
+		// be heavier machinery than a throwaway string of two known keys deserves.
+		const kategori = next.kategori === undefined ? active : next.kategori;
+		const kjelde = next.kjelde === undefined ? activeSource : next.kjelde;
+		const parts: string[] = [];
+		if (kategori) parts.push(`kategori=${encodeURIComponent(kategori)}`);
+		if (kjelde) parts.push(`kjelde=${encodeURIComponent(kjelde)}`);
+		return parts.length ? `/hendingar?${parts.join('&')}` : '/hendingar';
+	}
+
 	// Top-level await for the counts, which never change with the filter.
 	const counts = await listCategoryCounts();
 	const total = counts.reduce((n, c) => n + c.total, 0);
@@ -31,7 +66,7 @@
 	 * query and awaiting it in the template keeps the dependency live while still suspending the
 	 * component on the server, so the filtered list is server-rendered too.
 	 */
-	const filtered = $derived(listEvents({ limit: 100, category: active }));
+	const filtered = $derived(listEvents({ limit: 100, category: active, source: activeSource }));
 </script>
 
 <svelte:head>
@@ -46,20 +81,29 @@
 
 <div class="shell list">
 	<p class="label">Full liste</p>
+	<!-- The heading states both filters, because a page that says only "Musikk" while also
+	     filtered to one library is describing itself inaccurately. -->
 	<h1 class="display list__h">
 		{active ? categoryLabel(active) : 'Alle hendingar'}
 	</h1>
+	{#if activeSourceName}
+		<p class="list__scope">frå <strong>{activeSourceName}</strong></p>
+	{/if}
 
 	<nav class="filters" aria-label="Filtrer på kategori">
 		<!-- Links, not buttons: each filter is a real location. aria-current marks the active one
 		     so it is not signalled by colour alone. -->
-		<a class="chip" href="/hendingar" aria-current={active ? undefined : 'page'}>
+		<a
+			class="chip"
+			href={filterHref({ kategori: null })}
+			aria-current={active ? undefined : 'page'}
+		>
 			Alle <span class="chip__n">{total}</span>
 		</a>
 		{#each counts as category (category.slug)}
 			<a
 				class="chip"
-				href={`/hendingar?kategori=${category.slug}`}
+				href={filterHref({ kategori: category.slug })}
 				aria-current={active === category.slug ? 'page' : undefined}
 			>
 				{category.label} <span class="chip__n">{category.total}</span>
@@ -67,9 +111,43 @@
 		{/each}
 	</nav>
 
+	{#if sourceCounts.length > 1}
+		<!-- A second axis, only when there is more than one source to choose between: one chip that
+		     can only ever mean "everything" is furniture, not a control. -->
+		<nav class="filters filters--source" aria-label="Filtrer på kjelde">
+			<a
+				class="chip"
+				href={filterHref({ kjelde: null })}
+				aria-current={activeSource ? undefined : 'page'}
+			>
+				Alle kjelder
+			</a>
+			{#each sourceCounts as src (src.slug)}
+				<a
+					class="chip chip--source"
+					href={filterHref({ kjelde: src.slug })}
+					aria-current={activeSource === src.slug ? 'page' : undefined}
+				>
+					<SourceIcon src={src.iconUrl} name={src.name} size="1rem" />
+					{src.name} <span class="chip__n">{src.total}</span>
+				</a>
+			{/each}
+		</nav>
+	{/if}
+
 	{#if (await filtered).length === 0}
+		<!-- Names the combination that came up empty, because "no events" after two filters does not
+		     tell you which one to loosen. -->
 		<p class="empty">
-			Ingen hendingar i denne kategorien enno.
+			{#if active && activeSourceName}
+				Ingen {categoryLabel(active).toLowerCase()}-hendingar frå {activeSourceName} enno.
+			{:else if activeSourceName}
+				Ingen hendingar frå {activeSourceName} enno.
+			{:else if active}
+				Ingen hendingar i denne kategorien enno.
+			{:else}
+				Ingen hendingar enno.
+			{/if}
 			<a href="/hendingar">Sjå alle</a> eller <a href="/send-inn">send inn ei</a>.
 		</p>
 	{:else}
@@ -79,6 +157,21 @@
 </div>
 
 <style>
+	.list__scope {
+		margin: 0.35rem 0 0;
+		font-size: var(--step-body);
+		color: var(--peach-dim);
+	}
+	.filters--source {
+		margin-block-start: 0.6rem;
+	}
+	/* The icon rides inside the chip, so the chip has to lay out as a row rather than as text. */
+	.chip--source {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.45rem;
+	}
+
 	.list {
 		padding-block: clamp(2rem, 5vw, 4rem) var(--section-y);
 		container-type: inline-size;

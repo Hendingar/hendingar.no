@@ -43,19 +43,20 @@
 </script>
 
 <svelte:head>
-	<title>Datasamling — hendingar.no</title>
+	<title>Kjelder og status — hendingar.no</title>
 	<meta
 		name="description"
-		content="Kva vi hentar inn, kvar frå, kor ofte og korleis. Open status for datainnsamlinga i hendingar.no."
+		content="Kvar hendingane kjem frå, kor ofte vi hentar dei, kva som skjedde sist — og kva kalendrar vi ikkje klarer å hente."
 	/>
 </svelte:head>
 
 <div class="shell head">
 	<p class="label">Systemstatus</p>
-	<h1 class="display head__h">Datasamling</h1>
+	<h1 class="display head__h">Kjelder og status</h1>
 	<p class="head__lede">
-		Kva vi hentar, kvar frå, kor ofte — og kva som faktisk skjedde sist. Tala under kjem frå
-		køyringane sjølve, ikkje frå ei liste nokon har skrive.
+		Kvar hendingane kjem frå, kor ofte vi hentar dei, og kva som faktisk skjedde sist. Tala under
+		kjem frå køyringane sjølve, ikkje frå ei liste nokon har skrive — og kalendrar vi ikkje klarer å
+		hente står her òg, med grunnen.
 	</p>
 </div>
 
@@ -95,7 +96,7 @@
 </section>
 
 <section class="shell block" aria-labelledby="h-submissions">
-	<p class="label">01 — Innsendingar</p>
+	<p class="label">Innsendingar</p>
 	<h2 id="h-submissions" class="display block__h">Sendt inn av folk</h2>
 	<p class="block__lede">
 		Kva som er kome inn gjennom <a href="/send-inn">skjemaet</a> eller frå eit bilete, og kva dei fem
@@ -105,7 +106,7 @@
 </section>
 
 <section class="shell block" aria-labelledby="h-sources">
-	<p class="label">02 — Kjelder</p>
+	<p class="label">Kjelder</p>
 	<h2 id="h-sources" class="display block__h">Kvar det kjem frå</h2>
 	<p class="block__lede">
 		Éi linje per kjelde. Opne ei av dei for rytme, endepunkt og køyringshistorikk.
@@ -124,7 +125,7 @@
 
 <section class="method" aria-labelledby="h-method">
 	<div class="shell">
-		<p class="label">03 — Metode</p>
+		<p class="label">Metode</p>
 		<h2 id="h-method" class="display method__h">Korleis vi gjer det</h2>
 		<p class="method__lede">
 			Innhentinga er heilt deterministisk. Same kjelde inn gir same resultat ut, kvar gong.

@@ -4,11 +4,12 @@
 
 <section class="verify" aria-labelledby="h-verify">
 	<div class="shell">
-		<p class="label">03 — Verifisering</p>
+		<p class="label">Innsending</p>
 		<h2 id="h-verify" class="display verify__h">Open innsending,<br />utan søppel</h2>
 		<p class="verify__lede">
-			Innsende hendingar går gjennom eit agent-steg før dei blir synlege. Er noko usikkert, går det
-			til eit menneske. Agenten sorterer, folk avgjer.
+			Alle kan sende inn ei hending, utan konto. Før ho blir synleg går ho gjennom fem kontrollar.
+			Er noko usikkert, ventar hendinga på eit menneske — vi kastar ho ikkje, og vi publiserer ho
+			ikkje på tvil.
 		</p>
 		<ol class="steps">
 			{#each PIPELINE as step, i (step.name)}
@@ -23,8 +24,8 @@
 			<a class="btn btn--solid" href="/send-inn">Send inn ei hending</a>
 		</p>
 		<p class="fineprint">
-			Importørar er derimot heilt deterministiske — ingen språkmodell hentar data. Oppdikta
-			hendingar er verre enn ingen hendingar.
+			Når vi hentar frå ein kalender er det rein kopiering — ingen språkmodell er involvert, og vi
+			finn aldri opp ei hending som ikkje står i kjelda.
 			<a href="/datasamling">Sjå kva vi hentar inn, og når →</a>
 		</p>
 	</div>

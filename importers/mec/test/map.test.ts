@@ -103,11 +103,22 @@ describe('mapEvent', () => {
 		expect(mapped.endsAt).toBeNull();
 	});
 
-	it('never claims poster rights the source did not state', () => {
+	it('takes poster rights from the recorded agreement, never from the page', () => {
+		// MEC states nothing about image rights anywhere in its output, so this can only come from
+		// the instance config — which records whether that named venue actually agreed. Asserted
+		// both ways, because a flag that is only ever tested in its true state is not tested.
 		for (const m of mappedBibliotek) {
 			if (isFailure(m)) continue;
-			expect(m.posterRightsVerified).toBe(false);
+			expect(m.posterRightsVerified).toBe(bibliotekInstance.posterRightsCleared);
 		}
+
+		const withoutConsent = { ...bibliotekInstance, posterRightsCleared: false };
+		const e = bibliotek.events[0]!;
+		const mapped = mapEvent(e, postIdFor(bibliotek, e.url), withoutConsent);
+		if (isFailure(mapped)) throw new Error('should have mapped');
+		expect(mapped.posterRightsVerified).toBe(false);
+		// The URL is still stored either way: we hotlink, and rights govern reuse, not linking.
+		expect(mapped.posterUrl).toBe(e.image);
 	});
 
 	it('uses a category that exists in the taxonomy', () => {

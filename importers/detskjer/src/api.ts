@@ -55,7 +55,18 @@ export const SOURCE = {
 	region: 'Sunnhordland',
 	attribution: 'Det skjer Sunnhordland',
 	/** The whole region is CET/CEST. Recorded per venue so it survives expansion. */
-	timezone: 'Europe/Oslo'
+	timezone: 'Europe/Oslo',
+	/**
+	 * Innocode / Polaris Media have given us permission to use the event images.
+	 *
+	 * This has to be recorded here rather than read from the response, because the API's own
+	 * `imageRightsVerified` is `false` on every single record — the publisher does not populate the
+	 * field, so its value says nothing either way. Treating that as "rights denied" understated a
+	 * permission we actually hold; treating it as "rights granted" would have invented one. Neither
+	 * is readable from the data, so the agreement is the source of truth and it lives in the config
+	 * beside the source it belongs to.
+	 */
+	posterRightsCleared: true
 } as const;
 
 const USER_AGENT =

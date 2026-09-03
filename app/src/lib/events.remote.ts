@@ -1,7 +1,7 @@
 import { error } from '@sveltejs/kit';
 import { query } from '$app/server';
 import { z } from 'zod';
-import { and, asc, count, eq, gte, lte, or, sql } from 'drizzle-orm';
+import { and, asc, count, eq, gte, lte, ne, or, sql } from 'drizzle-orm';
 import { events, organizers, sources, venues, verifications } from '@hendingar/core/schema';
 import { eventQuerySchema } from '@hendingar/core/validation';
 import { categoryLabel } from '@hendingar/core/taxonomy';
@@ -22,7 +22,7 @@ import { db } from './server/db';
 
 export const listEvents = query(
 	eventQuerySchema,
-	async ({ from, to, category, municipality, limit }) => {
+	async ({ from, to, category, source, municipality, limit }) => {
 		const since = from ? new Date(from) : new Date();
 
 		return (
@@ -70,6 +70,8 @@ export const listEvents = query(
 						or(gte(events.startsAt, since), gte(events.endsAt, since)),
 						to ? lte(events.startsAt, new Date(to)) : undefined,
 						category ? eq(events.category, category) : undefined,
+						// The join is already there for the tile's source mark, so filtering is free.
+						source ? eq(sources.slug, source) : undefined,
 						municipality ? eq(venues.municipality, municipality) : undefined
 					)
 				)
@@ -79,6 +81,80 @@ export const listEvents = query(
 		);
 	}
 );
+
+/**
+ * How many upcoming events each source has, for the source filter.
+ *
+ * Same reasoning as `listCategoryCounts`: a chip that leads to an empty page is a worse control
+ * than one that tells you what it holds before you press it. Only sources with events appear, so a
+ * `link` row — which by definition has none — never shows up as a dead filter.
+ */
+export const listSourceCounts = query(async () => {
+	const now = new Date();
+	const rows = await db()
+		.select({
+			slug: sources.slug,
+			name: sources.name,
+			iconUrl: sources.iconUrl,
+			total: count(events.id)
+		})
+		.from(sources)
+		.innerJoin(events, eq(events.sourceId, sources.id))
+		.where(
+			and(eq(events.status, 'published'), or(gte(events.startsAt, now), gte(events.endsAt, now)))
+		)
+		.groupBy(sources.slug, sources.name, sources.iconUrl);
+
+	return rows.sort((a, b) => b.total - a.total || a.name.localeCompare(b.name, 'nb-NO'));
+});
+
+/**
+ * What the site currently holds, for the front page.
+ *
+ * The honest answer to "is this everything?" — which a visitor cannot otherwise get without
+ * opening /datasamling, a page most people never will. Someone looking at two dozen events cannot
+ * tell whether that is a whole country or three calendars in one municipality, and guessing wrong
+ * in either direction is bad: they either trust an empty result or dismiss a good one.
+ *
+ * Every number is read from the data. Nothing here is copy that can drift from the truth.
+ */
+export const siteStatus = query(async () => {
+	const database = db();
+	const now = new Date();
+
+	const [upcoming] = await database
+		.select({ total: count() })
+		.from(events)
+		.where(
+			and(eq(events.status, 'published'), or(gte(events.startsAt, now), gte(events.endsAt, now)))
+		);
+
+	// Only sources we actually collect. A `link` row is a signpost, not a feed, and counting it
+	// would inflate the number that is supposed to mean "places this list comes from".
+	const collected = await database
+		.select({ region: sources.region, lastRunAt: sources.lastRunAt })
+		.from(sources)
+		.where(and(eq(sources.active, true), ne(sources.kind, 'link')));
+
+	const [linked] = await database
+		.select({ total: count() })
+		.from(sources)
+		.where(eq(sources.kind, 'link'));
+
+	const lastCollectedAt = collected.reduce<Date | null>(
+		(latest, s) => (s.lastRunAt && (!latest || s.lastRunAt > latest) ? s.lastRunAt : latest),
+		null
+	);
+
+	return {
+		generatedAt: now,
+		sourceCount: collected.length,
+		linkedCount: linked?.total ?? 0,
+		upcomingCount: upcoming?.total ?? 0,
+		regions: [...new Set(collected.map((s) => s.region))].sort(),
+		lastCollectedAt
+	};
+});
 
 /**
  * How many upcoming events each category has.

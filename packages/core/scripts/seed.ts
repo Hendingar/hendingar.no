@@ -195,6 +195,87 @@ await db
 	.onConflictDoNothing({ target: [events.sourceId, events.externalId] });
 
 /*
+ * A SECOND collected source, because one is not enough to exercise the source filter.
+ *
+ * /hendingar can filter by source, and that control only renders when there is more than one
+ * source to choose between — so on a one-source database the filter is invisible and every spec
+ * covering it fails, or worse, passes locally against ingested data and fails only in CI. The same
+ * trap as the listing counts: a seed that is not representative moves the failure to the one place
+ * it is expensive to debug.
+ *
+ * The slug matches the real importer's, deliberately. When `pnpm ingest` runs it upserts this same
+ * row rather than creating a duplicate, and `pnpm db:sources` leaves it alone because its kind is
+ * no longer `link`.
+ */
+const [library] = await db
+	.insert(sources)
+	.values({
+		slug: 'bomlobibliotek',
+		name: 'Bømlo folkebibliotek',
+		url: 'https://www.bomlobibliotek.no/kva-skjer/',
+		region: 'Sunnhordland',
+		attribution: 'Bømlo folkebibliotek',
+		kind: 'html',
+		endpoint: 'https://www.bomlobibliotek.no/kva-skjer/',
+		iconUrl: 'https://www.bomlobibliotek.no/wp-content/uploads/2022/06/webloft-favicon.png',
+		scheduleCron: '0 5 * * *',
+		trusted: true,
+		lastRunAt: new Date()
+	})
+	.onConflictDoUpdate({
+		target: sources.slug,
+		set: { name: 'Bømlo folkebibliotek', kind: 'html', trusted: true }
+	})
+	.returning();
+
+const [libraryVenue] = await db
+	.insert(venues)
+	.values({
+		name: 'Bømlo folkebibliotek',
+		slug: 'boemlo-folkebibliotek',
+		municipality: 'Bømlo',
+		timezone: 'Europe/Oslo',
+		geocodeStatus: 'pending'
+	})
+	.onConflictDoUpdate({ target: venues.slug, set: { municipality: 'Bømlo' } })
+	.returning();
+
+if (!library || !libraryVenue) throw new Error('seed failed: library insert returned no row');
+
+const libraryEvent = (
+	externalId: string,
+	title: string,
+	category: CategorySlug,
+	day: number,
+	hour: number,
+	poster: boolean
+) => ({
+	sourceId: library.id,
+	externalId,
+	title,
+	category,
+	startsAt: daysFromNow(day, hour),
+	endsAt: daysFromNow(day, hour + 2),
+	venueId: libraryVenue.id,
+	status: 'published' as const,
+	posterUrl: poster ? POSTER : null,
+	// The venue has agreed we may use its images — the same fact the importer records.
+	posterRightsVerified: poster
+});
+
+const libraryEvents = [
+	libraryEvent('lib-1', 'Sjakk i biblioteket', 'anna', 1, 19, true),
+	libraryEvent('lib-2', 'Språkkafé', 'anna', 3, 15, false),
+	libraryEvent('lib-3', 'Lesestund for barnehageborn', 'litteratur', 5, 12, true),
+	libraryEvent('lib-4', 'Bokbad i biblioteket', 'litteratur', 10, 18, false)
+];
+
+await db
+	.insert(events)
+	.values(libraryEvents)
+	.onConflictDoNothing({ target: [events.sourceId, events.externalId] });
+
+/*
  * Two human submissions, so /datasamling's submission log is not empty on a machine that has only
  * ever run the seed — the same reason the source metadata is registered here.
  *
@@ -254,12 +335,32 @@ const seedRuns = [2, 1, 0].map((daysAgo) => ({
 	message: null
 }));
 
+/*
+ * The second source needs runs too. A collected source with no run history is a state
+ * /datasamling is built to make visible — "Ikkje køyrt" — so seeding one without runs quietly
+ * puts the board in its warning state and hides the strip the page exists to show.
+ */
+const librarySeedRuns = [1, 0].map((daysAgo) => ({
+	sourceId: library.id,
+	startedAt: daysFromNow(-daysAgo, 5),
+	finishedAt: daysFromNow(-daysAgo, 5, 1),
+	status: 'success' as const,
+	trigger: 'seed',
+	fetched: 12,
+	created: daysAgo === 1 ? 4 : 0,
+	updated: 0,
+	unchanged: daysAgo === 1 ? 0 : 4,
+	rejected: 0,
+	durationMs: 2100 + daysAgo * 90,
+	message: null
+}));
+
 const [existingRun] = await db
 	.select({ id: ingestRuns.id })
 	.from(ingestRuns)
 	.where(eq(ingestRuns.sourceId, source.id))
 	.limit(1);
-if (!existingRun) await db.insert(ingestRuns).values(seedRuns);
+if (!existingRun) await db.insert(ingestRuns).values([...seedRuns, ...librarySeedRuns]);
 
 const [{ count } = { count: 0 }] = await db
 	.select({ count: events.id })
@@ -268,6 +369,6 @@ const [{ count } = { count: 0 }] = await db
 	.limit(1);
 
 console.log(
-	`seeded: 1 source, 2 venues, ${4 + fillerEvents.length} events, ${submissionSeeds.length} submissions, ${existingRun ? 0 : seedRuns.length} runs (sample id ${count})`
+	`seeded: 2 sources, 3 venues, ${4 + fillerEvents.length + libraryEvents.length} events, ${submissionSeeds.length} submissions, ${existingRun ? 0 : seedRuns.length + librarySeedRuns.length} runs (sample id ${count})`
 );
 process.exit(0);

@@ -4,18 +4,19 @@
 
 <header class="hero">
 	<div class="hero__rail" aria-hidden="true">
-		<span class="label label--vertical">AGPL · EU-hosta</span>
+		<span class="label label--vertical">Open kjeldekode</span>
 	</div>
 
 	<div class="hero__type">
-		<p class="label">Lokale hendingar · Europa</p>
+		<!--
+			The six progress pips, "Fase 2 — MVP" and the AGPL/hosting rail are gone.
 
-		<ul class="pips" aria-hidden="true">
-			{#each [0, 1, 2, 3, 4, 5] as i (i)}
-				<li class="pip" data-on={i < 2}></li>
-			{/each}
-		</ul>
-		<p class="label phase">Fase 2 — MVP</p>
+			That is project status, not system status: it told a visitor where WE are in a roadmap, in
+			the most valuable space on the page, while the question they arrived with — how much of what
+			is on is actually in here — went unanswered until /datasamling. The honest version of that
+			answer now sits under the event list as real numbers, read from the data.
+		-->
+		<p class="label">Lokale hendingar</p>
 
 		<!-- aria-label because accessible-name computation inserts a space between block-level
 		     children, so the two decorative spans made the h1 announce as "HEND INGAR". -->
@@ -27,17 +28,18 @@
 		</h1>
 
 		<p class="hero__lede">
-			Alt som skjer i lokalsamfunnet ditt. <em>Éin</em> stad.
+			Kva skjer i lokalsamfunnet ditt. <em>Éin</em> stad.
 		</p>
 
 		<p class="hero__body">
-			Kvart lokalsamfunn har konsertar på pub, teater, gardsbesøk, kulturhus, kurs og møte. Å finne
-			dei krev at du leitar gjennom eit titals Facebook-sider. Det held ikkje.
+			Konsertar på pub, teater, kurs, møte og gardsbesøk ligg spreidde over eit titals kalendrar og
+			Facebook-sider. Vi hentar dei vi kan lese, seier kvar dei kjem frå, og lenkjer alltid tilbake
+			til kjelda.
 		</p>
 
 		<div class="hero__actions">
-			<a class="btn btn--solid" href="/hendingar">Sjå hendingar</a>
-			<a class="btn" href="https://github.com/Hendingar/hendingar.no">Bidra på GitHub</a>
+			<a class="btn btn--solid" href="/hendingar">Sjå alle hendingar</a>
+			<a class="btn" href="/send-inn">Send inn ei hending</a>
 		</div>
 	</div>
 
@@ -68,13 +70,6 @@
 		align-items: center;
 		justify-content: center;
 		min-block-size: 22rem;
-	}
-
-	.pips {
-		margin-block-start: 1.75rem;
-	}
-	.phase {
-		margin-block: 0.6rem 0;
 	}
 
 	.hero__word {
