@@ -4,6 +4,7 @@
 	import EventsByDay from '../../lib/components/EventsByDay.svelte';
 	import SourceIcon from '../../lib/components/SourceIcon.svelte';
 	import { listCategoryCounts, listEvents, listSourceCounts } from '../../lib/events.remote';
+	import { heartCounts } from '../../lib/hearts.remote';
 
 	/**
 	 * The filter is a URL, not a client-side toggle.
@@ -67,6 +68,20 @@
 	 * component on the server, so the filtered list is server-rendered too.
 	 */
 	const filtered = $derived(listEvents({ limit: 100, category: active, source: activeSource }));
+
+	/*
+	 * Heart counts for whatever the filter produced, chained off the same promise.
+	 *
+	 * Derived rather than fetched once, because changing the filter changes the set of events — and
+	 * awaited in the template beside the list, so both are in the server HTML together.
+	 */
+	const hearts = $derived(
+		filtered.then(async (list) =>
+			Object.fromEntries(
+				(await heartCounts(list.map((e) => e.id))).map((h) => [h.eventId, h.hearts])
+			)
+		)
+	);
 </script>
 
 <svelte:head>
@@ -152,7 +167,7 @@
 		</p>
 	{:else}
 		<!-- headingLevel 2 so each day nests under this page's h1. -->
-		<EventsByDay events={await filtered} headingLevel={2} />
+		<EventsByDay events={await filtered} headingLevel={2} hearts={await hearts} />
 	{/if}
 </div>
 

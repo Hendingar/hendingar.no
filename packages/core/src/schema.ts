@@ -314,6 +314,43 @@ export const events = pgTable(
 	]
 );
 
+/**
+ * One heart, from one browser, on one event.
+ *
+ * A row per (event, browser) rather than a counter column on `events`, because a counter cannot
+ * answer the two questions this feature actually asks: has THIS reader already hearted it, and
+ * what happens when they tap again. A bare increment double-counts a refresh and can never be
+ * undone.
+ *
+ * `clientId` is a random identifier the browser makes for itself and keeps in localStorage. It is
+ * not an account and not a person: no name, no email, no address, nothing derived from the device,
+ * and nothing that survives clearing site data. Its whole job is to make the count a count of
+ * browsers rather than of taps. See docs/decisions/0011-anonymous-hearts.md.
+ *
+ * That also makes the number soft on purpose. Someone determined can clear storage and heart
+ * again, so this is a popularity signal and must never be presented as a vote or a headcount.
+ */
+export const eventHearts = pgTable(
+	'event_hearts',
+	{
+		id: serial('id').primaryKey(),
+		eventId: integer('event_id')
+			.notNull()
+			.references(() => events.id, { onDelete: 'cascade' }),
+		/** Opaque, browser-generated, stored in localStorage. Never a login. */
+		clientId: text('client_id').notNull(),
+		createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
+	},
+	(t) => [
+		// Hearting twice from one browser is one heart. This is what makes the write idempotent.
+		uniqueIndex('event_hearts_event_client_idx').on(t.eventId, t.clientId),
+		// Counting hearts per event is the only read, and it is on every listing.
+		index('event_hearts_event_idx').on(t.eventId)
+	]
+);
+
+export type EventHeart = typeof eventHearts.$inferSelect;
+
 export type Event = typeof events.$inferSelect;
 export type NewEvent = typeof events.$inferInsert;
 export type Venue = typeof venues.$inferSelect;

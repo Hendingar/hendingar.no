@@ -10,12 +10,19 @@
 		VERIFICATION_VERDICT_LABELS
 	} from '@hendingar/core/verification';
 	import { getEvent } from '../../../lib/events.remote';
+	import { heartCounts } from '../../../lib/hearts.remote';
+	import HeartButton from '../../../lib/components/HeartButton.svelte';
 
 	const id = eventIdFromParam(page.params.slug ?? '');
 	if (id === null) error(404, 'Fann ikkje hendinga');
 
 	// Top-level await so the page is real HTML for crawlers and for readers without JavaScript.
 	const event = await getEvent(id);
+	/*
+	 * The public count, server-rendered with the rest of the page. Whether *this* reader hearted it
+	 * is decided in the browser, because that is the only place that fact exists.
+	 */
+	const heartsForThis = (await heartCounts([event.id]))[0]?.hearts ?? 0;
 
 	const canonical = $derived(eventPath(event.id, event.title));
 	const sameDay = $derived(
@@ -105,6 +112,11 @@
 				{#if event.venueMunicipality}· {event.venueMunicipality}{/if}
 			</p>
 			<h1 class="display ev__h">{event.title}</h1>
+			<!-- Larger here than on a card: this is the page where hearting is a deliberate act
+			     rather than something you tap in passing. -->
+			<p class="ev__heart">
+				<HeartButton eventId={event.id} hearts={heartsForThis} size="large" />
+			</p>
 		</div>
 
 		<div class="ev__grid">
@@ -263,6 +275,9 @@
 		font-size: var(--step-micro);
 		letter-spacing: 0.16em;
 		text-transform: uppercase;
+	}
+	.ev__heart {
+		margin-block: 0.8rem 0;
 	}
 	.ev__h {
 		/* cqw, never vw: a long title has to shrink against its own column (docs/brand.md). */

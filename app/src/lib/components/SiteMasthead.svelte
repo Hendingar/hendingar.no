@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { page } from '$app/state';
+	import { heartedCount, loadHearts } from '../hearts.svelte.ts';
 
 	/**
 	 * Site-wide navigation. The site had none: /datasamling and /hendingar were reachable only from
@@ -12,6 +13,17 @@
 		{ href: '/datasamling', label: 'Kjelder' },
 		{ href: '/send-inn', label: 'Send inn' }
 	];
+
+	/*
+	 * "Hjarta" appears only once this browser has hearted something.
+	 *
+	 * A permanent empty item would be a promise of a feature the reader has not used, on every page,
+	 * forever. It is also client-only by nature: what is hearted lives in localStorage, so the
+	 * server cannot know and the item is simply absent from the HTML a crawler sees. That is the
+	 * right answer — it is nobody's content but this reader's.
+	 */
+	$effect(() => loadHearts());
+	const hearted = $derived(heartedCount());
 </script>
 
 <header class="mast">
@@ -26,6 +38,13 @@
 						</a>
 					</li>
 				{/each}
+				{#if hearted > 0}
+					<li>
+						<a href="/hjarta" aria-current={page.url.pathname === '/hjarta' ? 'page' : undefined}>
+							Hjarta <span class="mast__count">{hearted}</span>
+						</a>
+					</li>
+				{/if}
 			</ul>
 		</nav>
 	</div>
@@ -49,6 +68,11 @@
 		letter-spacing: -0.01em;
 	}
 	.mast__dot {
+		color: var(--peach-dim);
+	}
+	.mast__count {
+		font-family: var(--font-mono);
+		font-size: var(--step-micro);
 		color: var(--peach-dim);
 	}
 	nav ul {
