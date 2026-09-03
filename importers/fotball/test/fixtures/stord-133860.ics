@@ -1,0 +1,679 @@
+BEGIN:VCALENDAR
+PRODID:-//github.com/ical-org/ical.net//NONSGML ical.net 4.0//EN
+VERSION:2.0
+X-WR-CALNAME:Stord Fotball Menn Senior A
+BEGIN:VEVENT
+DESCRIPTION:Treningskamper 2026 menn\, NFF Rogaland (runde 1)\n\nFløy-Flek
+ kerøy Menn Senior A - Stord Fotball Menn Senior A\nVår Energi Arena Randa
+ berg lørdag 21.02.26 13:45\n\nwww.fotball.no
+DTEND;TZID=Europe/Oslo:20260221T151500
+DTSTAMP:20260903T113352Z
+DTSTART;TZID=Europe/Oslo:20260221T134500
+LOCATION:Vår Energi Arena Randaberg
+SEQUENCE:0
+SUMMARY:Fløy-Flekkerøy Menn Senior A - Stord Fotball Menn Senior A
+UID:e5ea9ed2-6e20-461d-b3e0-e162d02a6cdd
+URL:https://www.fotball.no/fotballdata/kamp/?fiksId=9062115
+X-ALT-DESC;FMTTYPE=text/html:\n                    <html><head></head><bod
+ y>\n                        <h4><a href="https://www.fotball.no/fotballda
+ ta/kamp/?fiksId=9062115">Fløy-Flekkerøy Menn Senior A - Stord Fotball Men
+ n Senior A</a></h4>\n                        <p>Treningskamper 2026 menn\
+ , NFF Rogaland (runde 1)</p>\n                        <p>Spilles på <a hr
+ ef="https://www.fotball.no/fotballdata/anlegg/hjem/?fiksId=25405">Vår Ene
+ rgi Arena Randaberg</a> lørdag 21.02.26 13:45</p>\n                      
+   <br/><a href="http://www.fotball.no">fotball.no</a>\n                  
+   </body></html>
+END:VEVENT
+BEGIN:VEVENT
+DESCRIPTION:Menn treningskamper\, Hordaland (runde 1)\n\nOs Menn Senior A 
+ - Stord Fotball Menn Senior A\nKuventræ kunstgress 01 lørdag 07.03.26 14:
+ 00\n\nwww.fotball.no
+DTEND;TZID=Europe/Oslo:20260307T154400
+DTSTAMP:20260903T113352Z
+DTSTART;TZID=Europe/Oslo:20260307T140000
+LOCATION:Kuventræ kunstgress 01
+SEQUENCE:0
+SUMMARY:Os Menn Senior A - Stord Fotball Menn Senior A
+UID:00f05737-9bf2-49ee-9a24-4517a8e11092
+URL:https://www.fotball.no/fotballdata/kamp/?fiksId=9085281
+X-ALT-DESC;FMTTYPE=text/html:\n                    <html><head></head><bod
+ y>\n                        <h4><a href="https://www.fotball.no/fotballda
+ ta/kamp/?fiksId=9085281">Os Menn Senior A - Stord Fotball Menn Senior A</
+ a></h4>\n                        <p>Menn treningskamper\, Hordaland (rund
+ e 1)</p>\n                        <p>Spilles på <a href="https://www.fotb
+ all.no/fotballdata/anlegg/hjem/?fiksId=967">Kuventræ kunstgress 01</a> lø
+ rdag 07.03.26 14:00</p>\n                        <br/><a href="http://www
+ .fotball.no">fotball.no</a>\n                    </body></html>
+END:VEVENT
+BEGIN:VEVENT
+DESCRIPTION:Menn NM-kvalifisering 2026/2027 (runde 1)\n\nMathopen Menn 1 -
+  Stord Fotball Menn Senior A\nKongsmyren idrettsplass lørdag 14.03.26 13:
+ 00\n\nwww.fotball.no
+DTEND;TZID=Europe/Oslo:20260314T144400
+DTSTAMP:20260903T113352Z
+DTSTART;TZID=Europe/Oslo:20260314T130000
+LOCATION:Kongsmyren idrettsplass
+SEQUENCE:0
+SUMMARY:Mathopen Menn 1 - Stord Fotball Menn Senior A
+UID:7fbd1c6b-2027-4c58-86a5-0caf53f70e35
+URL:https://www.fotball.no/fotballdata/kamp/?fiksId=9009386
+X-ALT-DESC;FMTTYPE=text/html:\n                    <html><head></head><bod
+ y>\n                        <h4><a href="https://www.fotball.no/fotballda
+ ta/kamp/?fiksId=9009386">Mathopen Menn 1 - Stord Fotball Menn Senior A</a
+ ></h4>\n                        <p>Menn NM-kvalifisering 2026/2027 (runde
+  1)</p>\n                        <p>Spilles på <a href="https://www.fotba
+ ll.no/fotballdata/anlegg/hjem/?fiksId=5947">Kongsmyren idrettsplass</a> l
+ ørdag 14.03.26 13:00</p>\n                        <br/><a href="http://ww
+ w.fotball.no">fotball.no</a>\n                    </body></html>
+END:VEVENT
+BEGIN:VEVENT
+DESCRIPTION:Menn treningskamper\, Hordaland (runde 1)\n\nStord Fotball Men
+ n Senior A - Fyllingsdalen Menn senior A\nVikahaugane Kunstgress lørdag 2
+ 8.03.26 13:00\n\nwww.fotball.no
+DTEND;TZID=Europe/Oslo:20260328T144400
+DTSTAMP:20260903T113352Z
+DTSTART;TZID=Europe/Oslo:20260328T130000
+LOCATION:Vikahaugane Kunstgress
+SEQUENCE:0
+SUMMARY:Stord Fotball Menn Senior A - Fyllingsdalen Menn senior A
+UID:e368426b-bd78-4ed2-88c2-f468397d5184
+URL:https://www.fotball.no/fotballdata/kamp/?fiksId=9139666
+X-ALT-DESC;FMTTYPE=text/html:\n                    <html><head></head><bod
+ y>\n                        <h4><a href="https://www.fotball.no/fotballda
+ ta/kamp/?fiksId=9139666">Stord Fotball Menn Senior A - Fyllingsdalen Menn
+  senior A</a></h4>\n                        <p>Menn treningskamper\, Hord
+ aland (runde 1)</p>\n                        <p>Spilles på <a href="https
+ ://www.fotball.no/fotballdata/anlegg/hjem/?fiksId=7949">Vikahaugane Kunst
+ gress</a> lørdag 28.03.26 13:00</p>\n                        <br/><a href
+ ="http://www.fotball.no">fotball.no</a>\n                    </body></htm
+ l>
+END:VEVENT
+BEGIN:VEVENT
+DESCRIPTION:Norsk Tipping-ligaen avd. 3 (runde 1)\n\nDjerv 1919 - Stord Fo
+ tball Menn Senior A\nDjervbanen mandag 06.04.26 13:00\n\nwww.fotball.no
+DTEND;TZID=Europe/Oslo:20260406T144500
+DTSTAMP:20260903T113352Z
+DTSTART;TZID=Europe/Oslo:20260406T130000
+LOCATION:Djervbanen
+SEQUENCE:0
+SUMMARY:Djerv 1919 - Stord Fotball Menn Senior A
+UID:7924a480-4184-485a-bf5b-8e31de52095c
+URL:https://www.fotball.no/fotballdata/kamp/?fiksId=8991940
+X-ALT-DESC;FMTTYPE=text/html:\n                    <html><head></head><bod
+ y>\n                        <h4><a href="https://www.fotball.no/fotballda
+ ta/kamp/?fiksId=8991940">Djerv 1919 - Stord Fotball Menn Senior A</a></h4
+ >\n                        <p>Norsk Tipping-ligaen avd. 3 (runde 1)</p>\n
+                         <p>Spilles på <a href="https://www.fotball.no/fot
+ balldata/anlegg/hjem/?fiksId=989">Djervbanen</a> mandag 06.04.26 13:00</p
+ >\n                        <br/><a href="http://www.fotball.no">fotball.n
+ o</a>\n                    </body></html>
+END:VEVENT
+BEGIN:VEVENT
+DESCRIPTION:Norsk Tipping-ligaen avd. 3 (runde 2)\n\nStord Fotball Menn Se
+ nior A - Austevoll Menn Senior 1\nStord stadion lørdag 11.04.26 14:00\n\n
+ www.fotball.no
+DTEND;TZID=Europe/Oslo:20260411T154500
+DTSTAMP:20260903T113352Z
+DTSTART;TZID=Europe/Oslo:20260411T140000
+LOCATION:Stord stadion
+SEQUENCE:0
+SUMMARY:Stord Fotball Menn Senior A - Austevoll Menn Senior 1
+UID:21010de2-e43f-407a-a123-7278a0c91459
+URL:https://www.fotball.no/fotballdata/kamp/?fiksId=8991952
+X-ALT-DESC;FMTTYPE=text/html:\n                    <html><head></head><bod
+ y>\n                        <h4><a href="https://www.fotball.no/fotballda
+ ta/kamp/?fiksId=8991952">Stord Fotball Menn Senior A - Austevoll Menn Sen
+ ior 1</a></h4>\n                        <p>Norsk Tipping-ligaen avd. 3 (r
+ unde 2)</p>\n                        <p>Spilles på <a href="https://www.f
+ otball.no/fotballdata/anlegg/hjem/?fiksId=5994">Stord stadion</a> lørdag 
+ 11.04.26 14:00</p>\n                        <br/><a href="http://www.fotb
+ all.no">fotball.no</a>\n                    </body></html>
+END:VEVENT
+BEGIN:VEVENT
+DESCRIPTION:Norsk Tipping-ligaen avd. 3 (runde 3)\n\nGneist Menn senior A 
+ - Stord Fotball Menn Senior A\nLiland kunstgress 1 lørdag 18.04.26 14:00\
+ n\nwww.fotball.no
+DTEND;TZID=Europe/Oslo:20260418T154500
+DTSTAMP:20260903T113352Z
+DTSTART;TZID=Europe/Oslo:20260418T140000
+LOCATION:Liland kunstgress 1
+SEQUENCE:0
+SUMMARY:Gneist Menn senior A - Stord Fotball Menn Senior A
+UID:3c146e5d-9a60-46a8-8bc9-13dae522f5de
+URL:https://www.fotball.no/fotballdata/kamp/?fiksId=8991956
+X-ALT-DESC;FMTTYPE=text/html:\n                    <html><head></head><bod
+ y>\n                        <h4><a href="https://www.fotball.no/fotballda
+ ta/kamp/?fiksId=8991956">Gneist Menn senior A - Stord Fotball Menn Senior
+  A</a></h4>\n                        <p>Norsk Tipping-ligaen avd. 3 (rund
+ e 3)</p>\n                        <p>Spilles på <a href="https://www.fotb
+ all.no/fotballdata/anlegg/hjem/?fiksId=8991">Liland kunstgress 1</a> lørd
+ ag 18.04.26 14:00</p>\n                        <br/><a href="http://www.f
+ otball.no">fotball.no</a>\n                    </body></html>
+END:VEVENT
+BEGIN:VEVENT
+DESCRIPTION:Norsk Tipping-ligaen avd. 3 (runde 4)\n\nStord Fotball Menn Se
+ nior A - Brann Menn Senior B\nStord stadion søndag 26.04.26 16:00\n\nwww.
+ fotball.no
+DTEND;TZID=Europe/Oslo:20260426T174500
+DTSTAMP:20260903T113352Z
+DTSTART;TZID=Europe/Oslo:20260426T160000
+LOCATION:Stord stadion
+SEQUENCE:0
+SUMMARY:Stord Fotball Menn Senior A - Brann Menn Senior B
+UID:9629e744-0fa6-4c57-a991-ffccc8c9743a
+URL:https://www.fotball.no/fotballdata/kamp/?fiksId=8991965
+X-ALT-DESC;FMTTYPE=text/html:\n                    <html><head></head><bod
+ y>\n                        <h4><a href="https://www.fotball.no/fotballda
+ ta/kamp/?fiksId=8991965">Stord Fotball Menn Senior A - Brann Menn Senior 
+ B</a></h4>\n                        <p>Norsk Tipping-ligaen avd. 3 (runde
+  4)</p>\n                        <p>Spilles på <a href="https://www.fotba
+ ll.no/fotballdata/anlegg/hjem/?fiksId=5994">Stord stadion</a> søndag 26.0
+ 4.26 16:00</p>\n                        <br/><a href="http://www.fotball.
+ no">fotball.no</a>\n                    </body></html>
+END:VEVENT
+BEGIN:VEVENT
+DESCRIPTION:Norsk Tipping-ligaen avd. 3 (runde 5)\n\nFana Menn Senior A - 
+ Stord Fotball Menn Senior A\nNesttun Kunstgress 1 fredag 01.05.26 13:00\n
+ \nwww.fotball.no
+DTEND;TZID=Europe/Oslo:20260501T144500
+DTSTAMP:20260903T113352Z
+DTSTART;TZID=Europe/Oslo:20260501T130000
+LOCATION:Nesttun Kunstgress 1
+SEQUENCE:0
+SUMMARY:Fana Menn Senior A - Stord Fotball Menn Senior A
+UID:033c32ae-c99b-44a9-8b38-34e18887b856
+URL:https://www.fotball.no/fotballdata/kamp/?fiksId=8991973
+X-ALT-DESC;FMTTYPE=text/html:\n                    <html><head></head><bod
+ y>\n                        <h4><a href="https://www.fotball.no/fotballda
+ ta/kamp/?fiksId=8991973">Fana Menn Senior A - Stord Fotball Menn Senior A
+ </a></h4>\n                        <p>Norsk Tipping-ligaen avd. 3 (runde 
+ 5)</p>\n                        <p>Spilles på <a href="https://www.fotbal
+ l.no/fotballdata/anlegg/hjem/?fiksId=5913">Nesttun Kunstgress 1</a> freda
+ g 01.05.26 13:00</p>\n                        <br/><a href="http://www.fo
+ tball.no">fotball.no</a>\n                    </body></html>
+END:VEVENT
+BEGIN:VEVENT
+DESCRIPTION:Menn NM-kvalifisering 2026/2027 (runde 2)\n\nOsterøy Menn seni
+ or A - Stord Fotball Menn Senior A\nOsterøy stadion Kunstgras tirsdag 05.
+ 05.26 19:00\n\nwww.fotball.no
+DTEND;TZID=Europe/Oslo:20260505T204400
+DTSTAMP:20260903T113352Z
+DTSTART;TZID=Europe/Oslo:20260505T190000
+LOCATION:Osterøy stadion Kunstgras
+SEQUENCE:0
+SUMMARY:Osterøy Menn senior A - Stord Fotball Menn Senior A
+UID:da2680ab-ed97-4fed-8be1-209af5c8746f
+URL:https://www.fotball.no/fotballdata/kamp/?fiksId=9139987
+X-ALT-DESC;FMTTYPE=text/html:\n                    <html><head></head><bod
+ y>\n                        <h4><a href="https://www.fotball.no/fotballda
+ ta/kamp/?fiksId=9139987">Osterøy Menn senior A - Stord Fotball Menn Senio
+ r A</a></h4>\n                        <p>Menn NM-kvalifisering 2026/2027 
+ (runde 2)</p>\n                        <p>Spilles på <a href="https://www
+ .fotball.no/fotballdata/anlegg/hjem/?fiksId=13511">Osterøy stadion Kunstg
+ ras</a> tirsdag 05.05.26 19:00</p>\n                        <br/><a href=
+ "http://www.fotball.no">fotball.no</a>\n                    </body></html
+ >
+END:VEVENT
+BEGIN:VEVENT
+DESCRIPTION:Norsk Tipping-ligaen avd. 3 (runde 6)\n\nStord Fotball Menn Se
+ nior A - Os Menn Senior A\nStord stadion lørdag 09.05.26 14:00\n\nwww.fot
+ ball.no
+DTEND;TZID=Europe/Oslo:20260509T154500
+DTSTAMP:20260903T113352Z
+DTSTART;TZID=Europe/Oslo:20260509T140000
+LOCATION:Stord stadion
+SEQUENCE:0
+SUMMARY:Stord Fotball Menn Senior A - Os Menn Senior A
+UID:8ec1f8ae-153f-4ce6-8c6e-adbca3e7f6bd
+URL:https://www.fotball.no/fotballdata/kamp/?fiksId=8991979
+X-ALT-DESC;FMTTYPE=text/html:\n                    <html><head></head><bod
+ y>\n                        <h4><a href="https://www.fotball.no/fotballda
+ ta/kamp/?fiksId=8991979">Stord Fotball Menn Senior A - Os Menn Senior A</
+ a></h4>\n                        <p>Norsk Tipping-ligaen avd. 3 (runde 6)
+ </p>\n                        <p>Spilles på <a href="https://www.fotball.
+ no/fotballdata/anlegg/hjem/?fiksId=5994">Stord stadion</a> lørdag 09.05.2
+ 6 14:00</p>\n                        <br/><a href="http://www.fotball.no"
+ >fotball.no</a>\n                    </body></html>
+END:VEVENT
+BEGIN:VEVENT
+DESCRIPTION:Norsk Tipping-ligaen avd. 3 (runde 7)\n\nStord Fotball Menn Se
+ nior A - Førde Menn Senior A\nStord stadion torsdag 14.05.26 13:00\n\nwww
+ .fotball.no
+DTEND;TZID=Europe/Oslo:20260514T144500
+DTSTAMP:20260903T113352Z
+DTSTART;TZID=Europe/Oslo:20260514T130000
+LOCATION:Stord stadion
+SEQUENCE:0
+SUMMARY:Stord Fotball Menn Senior A - Førde Menn Senior A
+UID:4c443ff6-63b0-4db3-9d8d-4c547ae27041
+URL:https://www.fotball.no/fotballdata/kamp/?fiksId=8991989
+X-ALT-DESC;FMTTYPE=text/html:\n                    <html><head></head><bod
+ y>\n                        <h4><a href="https://www.fotball.no/fotballda
+ ta/kamp/?fiksId=8991989">Stord Fotball Menn Senior A - Førde Menn Senior 
+ A</a></h4>\n                        <p>Norsk Tipping-ligaen avd. 3 (runde
+  7)</p>\n                        <p>Spilles på <a href="https://www.fotba
+ ll.no/fotballdata/anlegg/hjem/?fiksId=5994">Stord stadion</a> torsdag 14.
+ 05.26 13:00</p>\n                        <br/><a href="http://www.fotball
+ .no">fotball.no</a>\n                    </body></html>
+END:VEVENT
+BEGIN:VEVENT
+DESCRIPTION:Norsk Tipping-ligaen avd. 3 (runde 8)\n\nVard Haugesund - Stor
+ d Fotball Menn Senior A\nImenco Arena fredag 22.05.26 18:30\n\nwww.fotbal
+ l.no
+DTEND;TZID=Europe/Oslo:20260522T201500
+DTSTAMP:20260903T113352Z
+DTSTART;TZID=Europe/Oslo:20260522T183000
+LOCATION:Imenco Arena
+SEQUENCE:0
+SUMMARY:Vard Haugesund - Stord Fotball Menn Senior A
+UID:29565969-17a7-44a1-8c08-d4774dadb242
+URL:https://www.fotball.no/fotballdata/kamp/?fiksId=8991991
+X-ALT-DESC;FMTTYPE=text/html:\n                    <html><head></head><bod
+ y>\n                        <h4><a href="https://www.fotball.no/fotballda
+ ta/kamp/?fiksId=8991991">Vard Haugesund - Stord Fotball Menn Senior A</a>
+ </h4>\n                        <p>Norsk Tipping-ligaen avd. 3 (runde 8)</
+ p>\n                        <p>Spilles på <a href="https://www.fotball.no
+ /fotballdata/anlegg/hjem/?fiksId=26590">Imenco Arena</a> fredag 22.05.26 
+ 18:30</p>\n                        <br/><a href="http://www.fotball.no">f
+ otball.no</a>\n                    </body></html>
+END:VEVENT
+BEGIN:VEVENT
+DESCRIPTION:Norsk Tipping-ligaen avd. 3 (runde 9)\n\nStord Fotball Menn Se
+ nior A - Fyllingsdalen Menn senior A\nStord stadion lørdag 30.05.26 14:00
+ \n\nwww.fotball.no
+DTEND;TZID=Europe/Oslo:20260530T154500
+DTSTAMP:20260903T113352Z
+DTSTART;TZID=Europe/Oslo:20260530T140000
+LOCATION:Stord stadion
+SEQUENCE:0
+SUMMARY:Stord Fotball Menn Senior A - Fyllingsdalen Menn senior A
+UID:bf71c836-db9e-406b-918e-8a20bfb53929
+URL:https://www.fotball.no/fotballdata/kamp/?fiksId=8992005
+X-ALT-DESC;FMTTYPE=text/html:\n                    <html><head></head><bod
+ y>\n                        <h4><a href="https://www.fotball.no/fotballda
+ ta/kamp/?fiksId=8992005">Stord Fotball Menn Senior A - Fyllingsdalen Menn
+  senior A</a></h4>\n                        <p>Norsk Tipping-ligaen avd. 
+ 3 (runde 9)</p>\n                        <p>Spilles på <a href="https://w
+ ww.fotball.no/fotballdata/anlegg/hjem/?fiksId=5994">Stord stadion</a> lør
+ dag 30.05.26 14:00</p>\n                        <br/><a href="http://www.
+ fotball.no">fotball.no</a>\n                    </body></html>
+END:VEVENT
+BEGIN:VEVENT
+DESCRIPTION:Menn NM-kvalifisering 2026/2027 (runde 3)\n\nFyllingen Menn 1 
+ - Stord Fotball Menn Senior A\nÅsane Arena  lørdag 06.06.26 17:00\n\nwww.
+ fotball.no
+DTEND;TZID=Europe/Oslo:20260606T184400
+DTSTAMP:20260903T113352Z
+DTSTART;TZID=Europe/Oslo:20260606T170000
+LOCATION:Åsane Arena
+SEQUENCE:0
+SUMMARY:Fyllingen Menn 1 - Stord Fotball Menn Senior A
+UID:8664a562-cbc5-4893-ae64-b8cf95aec480
+URL:https://www.fotball.no/fotballdata/kamp/?fiksId=9174213
+X-ALT-DESC;FMTTYPE=text/html:\n                    <html><head></head><bod
+ y>\n                        <h4><a href="https://www.fotball.no/fotballda
+ ta/kamp/?fiksId=9174213">Fyllingen Menn 1 - Stord Fotball Menn Senior A</
+ a></h4>\n                        <p>Menn NM-kvalifisering 2026/2027 (rund
+ e 3)</p>\n                        <p>Spilles på <a href="https://www.fotb
+ all.no/fotballdata/anlegg/hjem/?fiksId=26421">Åsane Arena </a> lørdag 06.
+ 06.26 17:00</p>\n                        <br/><a href="http://www.fotball
+ .no">fotball.no</a>\n                    </body></html>
+END:VEVENT
+BEGIN:VEVENT
+DESCRIPTION:Norsk Tipping-ligaen avd. 3 (runde 10)\n\nÅsane Fotball Menn S
+ enior 2 - Stord Fotball Menn Senior A\nÅsane Arena  mandag 15.06.26 19:00
+ \n\nwww.fotball.no
+DTEND;TZID=Europe/Oslo:20260615T204500
+DTSTAMP:20260903T113352Z
+DTSTART;TZID=Europe/Oslo:20260615T190000
+LOCATION:Åsane Arena
+SEQUENCE:0
+SUMMARY:Åsane Fotball Menn Senior 2 - Stord Fotball Menn Senior A
+UID:f0b5921f-5885-4f3c-b8a8-35b8e299a7d6
+URL:https://www.fotball.no/fotballdata/kamp/?fiksId=8992012
+X-ALT-DESC;FMTTYPE=text/html:\n                    <html><head></head><bod
+ y>\n                        <h4><a href="https://www.fotball.no/fotballda
+ ta/kamp/?fiksId=8992012">Åsane Fotball Menn Senior 2 - Stord Fotball Menn
+  Senior A</a></h4>\n                        <p>Norsk Tipping-ligaen avd. 
+ 3 (runde 10)</p>\n                        <p>Spilles på <a href="https://
+ www.fotball.no/fotballdata/anlegg/hjem/?fiksId=26421">Åsane Arena </a> ma
+ ndag 15.06.26 19:00</p>\n                        <br/><a href="http://www
+ .fotball.no">fotball.no</a>\n                    </body></html>
+END:VEVENT
+BEGIN:VEVENT
+DESCRIPTION:Norsk Tipping-ligaen avd. 3 (runde 11)\n\nStord Fotball Menn S
+ enior A - Varegg Menn Senior A\nStord stadion lørdag 20.06.26 14:00\n\nww
+ w.fotball.no
+DTEND;TZID=Europe/Oslo:20260620T154500
+DTSTAMP:20260903T113352Z
+DTSTART;TZID=Europe/Oslo:20260620T140000
+LOCATION:Stord stadion
+SEQUENCE:0
+SUMMARY:Stord Fotball Menn Senior A - Varegg Menn Senior A
+UID:b869413e-6577-4147-85d0-eb07e0b3e06e
+URL:https://www.fotball.no/fotballdata/kamp/?fiksId=8992018
+X-ALT-DESC;FMTTYPE=text/html:\n                    <html><head></head><bod
+ y>\n                        <h4><a href="https://www.fotball.no/fotballda
+ ta/kamp/?fiksId=8992018">Stord Fotball Menn Senior A - Varegg Menn Senior
+  A</a></h4>\n                        <p>Norsk Tipping-ligaen avd. 3 (rund
+ e 11)</p>\n                        <p>Spilles på <a href="https://www.fot
+ ball.no/fotballdata/anlegg/hjem/?fiksId=5994">Stord stadion</a> lørdag 20
+ .06.26 14:00</p>\n                        <br/><a href="http://www.fotbal
+ l.no">fotball.no</a>\n                    </body></html>
+END:VEVENT
+BEGIN:VEVENT
+DESCRIPTION:Norsk Tipping-ligaen avd. 3 (runde 12)\n\nSogndal Menn 2 - Sto
+ rd Fotball Menn Senior A\nLærdal kunstgras 11ar lørdag 27.06.26 12:00\n\n
+ www.fotball.no
+DTEND;TZID=Europe/Oslo:20260627T134500
+DTSTAMP:20260903T113352Z
+DTSTART;TZID=Europe/Oslo:20260627T120000
+LOCATION:Lærdal kunstgras 11ar
+SEQUENCE:0
+SUMMARY:Sogndal Menn 2 - Stord Fotball Menn Senior A
+UID:d15aa0ef-8f2c-4ddc-8b65-77d302a9ee4f
+URL:https://www.fotball.no/fotballdata/kamp/?fiksId=8992022
+X-ALT-DESC;FMTTYPE=text/html:\n                    <html><head></head><bod
+ y>\n                        <h4><a href="https://www.fotball.no/fotballda
+ ta/kamp/?fiksId=8992022">Sogndal Menn 2 - Stord Fotball Menn Senior A</a>
+ </h4>\n                        <p>Norsk Tipping-ligaen avd. 3 (runde 12)<
+ /p>\n                        <p>Spilles på <a href="https://www.fotball.n
+ o/fotballdata/anlegg/hjem/?fiksId=2449">Lærdal kunstgras 11ar</a> lørdag 
+ 27.06.26 12:00</p>\n                        <br/><a href="http://www.fotb
+ all.no">fotball.no</a>\n                    </body></html>
+END:VEVENT
+BEGIN:VEVENT
+DESCRIPTION:Norsk Tipping-ligaen avd. 3 (runde 13)\n\nStord Fotball Menn S
+ enior A - Askøy Menn Senior A\nStord stadion lørdag 25.07.26 14:00\n\nwww
+ .fotball.no
+DTEND;TZID=Europe/Oslo:20260725T154500
+DTSTAMP:20260903T113352Z
+DTSTART;TZID=Europe/Oslo:20260725T140000
+LOCATION:Stord stadion
+SEQUENCE:0
+SUMMARY:Stord Fotball Menn Senior A - Askøy Menn Senior A
+UID:c62f7bb7-1923-48eb-9284-235c57352ac0
+URL:https://www.fotball.no/fotballdata/kamp/?fiksId=8992033
+X-ALT-DESC;FMTTYPE=text/html:\n                    <html><head></head><bod
+ y>\n                        <h4><a href="https://www.fotball.no/fotballda
+ ta/kamp/?fiksId=8992033">Stord Fotball Menn Senior A - Askøy Menn Senior 
+ A</a></h4>\n                        <p>Norsk Tipping-ligaen avd. 3 (runde
+  13)</p>\n                        <p>Spilles på <a href="https://www.fotb
+ all.no/fotballdata/anlegg/hjem/?fiksId=5994">Stord stadion</a> lørdag 25.
+ 07.26 14:00</p>\n                        <br/><a href="http://www.fotball
+ .no">fotball.no</a>\n                    </body></html>
+END:VEVENT
+BEGIN:VEVENT
+DESCRIPTION:Norsk Tipping-ligaen avd. 3 (runde 14)\n\nBrann Menn Senior B 
+ - Stord Fotball Menn Senior A\nVarden Amfi mandag 03.08.26 19:00\n\nwww.f
+ otball.no
+DTEND;TZID=Europe/Oslo:20260803T204500
+DTSTAMP:20260903T113352Z
+DTSTART;TZID=Europe/Oslo:20260803T190000
+LOCATION:Varden Amfi
+SEQUENCE:0
+SUMMARY:Brann Menn Senior B - Stord Fotball Menn Senior A
+UID:ac40522a-0751-4d44-ab3f-9e2f5baff779
+URL:https://www.fotball.no/fotballdata/kamp/?fiksId=8992035
+X-ALT-DESC;FMTTYPE=text/html:\n                    <html><head></head><bod
+ y>\n                        <h4><a href="https://www.fotball.no/fotballda
+ ta/kamp/?fiksId=8992035">Brann Menn Senior B - Stord Fotball Menn Senior 
+ A</a></h4>\n                        <p>Norsk Tipping-ligaen avd. 3 (runde
+  14)</p>\n                        <p>Spilles på <a href="https://www.fotb
+ all.no/fotballdata/anlegg/hjem/?fiksId=5928">Varden Amfi</a> mandag 03.08
+ .26 19:00</p>\n                        <br/><a href="http://www.fotball.n
+ o">fotball.no</a>\n                    </body></html>
+END:VEVENT
+BEGIN:VEVENT
+DESCRIPTION:Norsk Tipping-ligaen avd. 3 (runde 15)\n\nOs Menn Senior A - S
+ tord Fotball Menn Senior A\nKuventræ kunstgress 01 lørdag 08.08.26 14:00\
+ n\nwww.fotball.no
+DTEND;TZID=Europe/Oslo:20260808T154500
+DTSTAMP:20260903T113352Z
+DTSTART;TZID=Europe/Oslo:20260808T140000
+LOCATION:Kuventræ kunstgress 01
+SEQUENCE:0
+SUMMARY:Os Menn Senior A - Stord Fotball Menn Senior A
+UID:695fe3e1-522d-4e24-b20d-fb74f7a0deae
+URL:https://www.fotball.no/fotballdata/kamp/?fiksId=8992042
+X-ALT-DESC;FMTTYPE=text/html:\n                    <html><head></head><bod
+ y>\n                        <h4><a href="https://www.fotball.no/fotballda
+ ta/kamp/?fiksId=8992042">Os Menn Senior A - Stord Fotball Menn Senior A</
+ a></h4>\n                        <p>Norsk Tipping-ligaen avd. 3 (runde 15
+ )</p>\n                        <p>Spilles på <a href="https://www.fotball
+ .no/fotballdata/anlegg/hjem/?fiksId=967">Kuventræ kunstgress 01</a> lørda
+ g 08.08.26 14:00</p>\n                        <br/><a href="http://www.fo
+ tball.no">fotball.no</a>\n                    </body></html>
+END:VEVENT
+BEGIN:VEVENT
+DESCRIPTION:Norsk Tipping-ligaen avd. 3 (runde 16)\n\nStord Fotball Menn S
+ enior A - Åsane Fotball Menn Senior 2\nStord stadion mandag 17.08.26 18:0
+ 0\n\nwww.fotball.no
+DTEND;TZID=Europe/Oslo:20260817T194500
+DTSTAMP:20260903T113352Z
+DTSTART;TZID=Europe/Oslo:20260817T180000
+LOCATION:Stord stadion
+SEQUENCE:0
+SUMMARY:Stord Fotball Menn Senior A - Åsane Fotball Menn Senior 2
+UID:ab5c3bec-4276-4640-8eac-4542bfbf3f1c
+URL:https://www.fotball.no/fotballdata/kamp/?fiksId=8992054
+X-ALT-DESC;FMTTYPE=text/html:\n                    <html><head></head><bod
+ y>\n                        <h4><a href="https://www.fotball.no/fotballda
+ ta/kamp/?fiksId=8992054">Stord Fotball Menn Senior A - Åsane Fotball Menn
+  Senior 2</a></h4>\n                        <p>Norsk Tipping-ligaen avd. 
+ 3 (runde 16)</p>\n                        <p>Spilles på <a href="https://
+ www.fotball.no/fotballdata/anlegg/hjem/?fiksId=5994">Stord stadion</a> ma
+ ndag 17.08.26 18:00</p>\n                        <br/><a href="http://www
+ .fotball.no">fotball.no</a>\n                    </body></html>
+END:VEVENT
+BEGIN:VEVENT
+DESCRIPTION:Norsk Tipping-ligaen avd. 3 (runde 17)\n\nFørde Menn Senior A 
+ - Stord Fotball Menn Senior A\nFørde stadion søndag 30.08.26 15:00\n\nwww
+ .fotball.no
+DTEND;TZID=Europe/Oslo:20260830T164500
+DTSTAMP:20260903T113352Z
+DTSTART;TZID=Europe/Oslo:20260830T150000
+LOCATION:Førde stadion
+SEQUENCE:0
+SUMMARY:Førde Menn Senior A - Stord Fotball Menn Senior A
+UID:36368991-ddab-41ec-bdef-de68330e4e30
+URL:https://www.fotball.no/fotballdata/kamp/?fiksId=8992058
+X-ALT-DESC;FMTTYPE=text/html:\n                    <html><head></head><bod
+ y>\n                        <h4><a href="https://www.fotball.no/fotballda
+ ta/kamp/?fiksId=8992058">Førde Menn Senior A - Stord Fotball Menn Senior 
+ A</a></h4>\n                        <p>Norsk Tipping-ligaen avd. 3 (runde
+  17)</p>\n                        <p>Spilles på <a href="https://www.fotb
+ all.no/fotballdata/anlegg/hjem/?fiksId=7867">Førde stadion</a> søndag 30.
+ 08.26 15:00</p>\n                        <br/><a href="http://www.fotball
+ .no">fotball.no</a>\n                    </body></html>
+END:VEVENT
+BEGIN:VEVENT
+DESCRIPTION:Norsk Tipping-ligaen avd. 3 (runde 18)\n\nStord Fotball Menn S
+ enior A - Fana Menn Senior A\nStord stadion lørdag 05.09.26 13:00\n\nwww.
+ fotball.no
+DTEND;TZID=Europe/Oslo:20260905T144500
+DTSTAMP:20260903T113352Z
+DTSTART;TZID=Europe/Oslo:20260905T130000
+LOCATION:Stord stadion
+SEQUENCE:0
+SUMMARY:Stord Fotball Menn Senior A - Fana Menn Senior A
+UID:29839000-c669-4aff-94d8-7de89d9dec45
+URL:https://www.fotball.no/fotballdata/kamp/?fiksId=8992070
+X-ALT-DESC;FMTTYPE=text/html:\n                    <html><head></head><bod
+ y>\n                        <h4><a href="https://www.fotball.no/fotballda
+ ta/kamp/?fiksId=8992070">Stord Fotball Menn Senior A - Fana Menn Senior A
+ </a></h4>\n                        <p>Norsk Tipping-ligaen avd. 3 (runde 
+ 18)</p>\n                        <p>Spilles på <a href="https://www.fotba
+ ll.no/fotballdata/anlegg/hjem/?fiksId=5994">Stord stadion</a> lørdag 05.0
+ 9.26 13:00</p>\n                        <br/><a href="http://www.fotball.
+ no">fotball.no</a>\n                    </body></html>
+END:VEVENT
+BEGIN:VEVENT
+DESCRIPTION:Norsk Tipping-ligaen avd. 3 (runde 19)\n\nAskøy Menn Senior A 
+ - Stord Fotball Menn Senior A\nFollese Tertnes Holding Arena lørdag 12.09
+ .26 14:00\n\nwww.fotball.no
+DTEND;TZID=Europe/Oslo:20260912T154500
+DTSTAMP:20260903T113352Z
+DTSTART;TZID=Europe/Oslo:20260912T140000
+LOCATION:Follese Tertnes Holding Arena
+SEQUENCE:0
+SUMMARY:Askøy Menn Senior A - Stord Fotball Menn Senior A
+UID:364bf972-f537-4199-bd1e-c9d0a44760f1
+URL:https://www.fotball.no/fotballdata/kamp/?fiksId=8992075
+X-ALT-DESC;FMTTYPE=text/html:\n                    <html><head></head><bod
+ y>\n                        <h4><a href="https://www.fotball.no/fotballda
+ ta/kamp/?fiksId=8992075">Askøy Menn Senior A - Stord Fotball Menn Senior 
+ A</a></h4>\n                        <p>Norsk Tipping-ligaen avd. 3 (runde
+  19)</p>\n                        <p>Spilles på <a href="https://www.fotb
+ all.no/fotballdata/anlegg/hjem/?fiksId=1019">Follese Tertnes Holding Aren
+ a</a> lørdag 12.09.26 14:00</p>\n                        <br/><a href="ht
+ tp://www.fotball.no">fotball.no</a>\n                    </body></html>
+END:VEVENT
+BEGIN:VEVENT
+DESCRIPTION:Norsk Tipping-ligaen avd. 3 (runde 20)\n\nStord Fotball Menn S
+ enior A - Djerv 1919\nStord stadion torsdag 17.09.26 18:00\n\nwww.fotball
+ .no
+DTEND;TZID=Europe/Oslo:20260917T194500
+DTSTAMP:20260903T113352Z
+DTSTART;TZID=Europe/Oslo:20260917T180000
+LOCATION:Stord stadion
+SEQUENCE:0
+SUMMARY:Stord Fotball Menn Senior A - Djerv 1919
+UID:029c3045-1b47-48fd-897f-770e9dfc748a
+URL:https://www.fotball.no/fotballdata/kamp/?fiksId=8992085
+X-ALT-DESC;FMTTYPE=text/html:\n                    <html><head></head><bod
+ y>\n                        <h4><a href="https://www.fotball.no/fotballda
+ ta/kamp/?fiksId=8992085">Stord Fotball Menn Senior A - Djerv 1919</a></h4
+ >\n                        <p>Norsk Tipping-ligaen avd. 3 (runde 20)</p>\
+ n                        <p>Spilles på <a href="https://www.fotball.no/fo
+ tballdata/anlegg/hjem/?fiksId=5994">Stord stadion</a> torsdag 17.09.26 18
+ :00</p>\n                        <br/><a href="http://www.fotball.no">fot
+ ball.no</a>\n                    </body></html>
+END:VEVENT
+BEGIN:VEVENT
+DESCRIPTION:Norsk Tipping-ligaen avd. 3 (runde 21)\n\nFyllingsdalen Menn s
+ enior A - Stord Fotball Menn Senior A\nVarden Amfi lørdag 26.09.26 14:00\
+ n\nwww.fotball.no
+DTEND;TZID=Europe/Oslo:20260926T154500
+DTSTAMP:20260903T113352Z
+DTSTART;TZID=Europe/Oslo:20260926T140000
+LOCATION:Varden Amfi
+SEQUENCE:0
+SUMMARY:Fyllingsdalen Menn senior A - Stord Fotball Menn Senior A
+UID:eebf7958-b201-47e7-b3d1-bab30213c374
+URL:https://www.fotball.no/fotballdata/kamp/?fiksId=8992091
+X-ALT-DESC;FMTTYPE=text/html:\n                    <html><head></head><bod
+ y>\n                        <h4><a href="https://www.fotball.no/fotballda
+ ta/kamp/?fiksId=8992091">Fyllingsdalen Menn senior A - Stord Fotball Menn
+  Senior A</a></h4>\n                        <p>Norsk Tipping-ligaen avd. 
+ 3 (runde 21)</p>\n                        <p>Spilles på <a href="https://
+ www.fotball.no/fotballdata/anlegg/hjem/?fiksId=5928">Varden Amfi</a> lørd
+ ag 26.09.26 14:00</p>\n                        <br/><a href="http://www.f
+ otball.no">fotball.no</a>\n                    </body></html>
+END:VEVENT
+BEGIN:VEVENT
+DESCRIPTION:Norsk Tipping-ligaen avd. 3 (runde 22)\n\nStord Fotball Menn S
+ enior A - Vard Haugesund\nStord stadion lørdag 03.10.26 13:00\n\nwww.fotb
+ all.no
+DTEND;TZID=Europe/Oslo:20261003T144500
+DTSTAMP:20260903T113352Z
+DTSTART;TZID=Europe/Oslo:20261003T130000
+LOCATION:Stord stadion
+SEQUENCE:0
+SUMMARY:Stord Fotball Menn Senior A - Vard Haugesund
+UID:22a911d0-c8b4-4d71-b417-e408d1ef2b80
+URL:https://www.fotball.no/fotballdata/kamp/?fiksId=8992100
+X-ALT-DESC;FMTTYPE=text/html:\n                    <html><head></head><bod
+ y>\n                        <h4><a href="https://www.fotball.no/fotballda
+ ta/kamp/?fiksId=8992100">Stord Fotball Menn Senior A - Vard Haugesund</a>
+ </h4>\n                        <p>Norsk Tipping-ligaen avd. 3 (runde 22)<
+ /p>\n                        <p>Spilles på <a href="https://www.fotball.n
+ o/fotballdata/anlegg/hjem/?fiksId=5994">Stord stadion</a> lørdag 03.10.26
+  13:00</p>\n                        <br/><a href="http://www.fotball.no">
+ fotball.no</a>\n                    </body></html>
+END:VEVENT
+BEGIN:VEVENT
+DESCRIPTION:Norsk Tipping-ligaen avd. 3 (runde 23)\n\nVaregg Menn Senior A
+  - Stord Fotball Menn Senior A\nStemmemyren kunstgress lørdag 10.10.26 14
+ :00\n\nwww.fotball.no
+DTEND;TZID=Europe/Oslo:20261010T154500
+DTSTAMP:20260903T113352Z
+DTSTART;TZID=Europe/Oslo:20261010T140000
+LOCATION:Stemmemyren kunstgress
+SEQUENCE:0
+SUMMARY:Varegg Menn Senior A - Stord Fotball Menn Senior A
+UID:0cddca41-b728-4fee-a524-133ddc62d49c
+URL:https://www.fotball.no/fotballdata/kamp/?fiksId=8992106
+X-ALT-DESC;FMTTYPE=text/html:\n                    <html><head></head><bod
+ y>\n                        <h4><a href="https://www.fotball.no/fotballda
+ ta/kamp/?fiksId=8992106">Varegg Menn Senior A - Stord Fotball Menn Senior
+  A</a></h4>\n                        <p>Norsk Tipping-ligaen avd. 3 (rund
+ e 23)</p>\n                        <p>Spilles på <a href="https://www.fot
+ ball.no/fotballdata/anlegg/hjem/?fiksId=694">Stemmemyren kunstgress</a> l
+ ørdag 10.10.26 14:00</p>\n                        <br/><a href="http://ww
+ w.fotball.no">fotball.no</a>\n                    </body></html>
+END:VEVENT
+BEGIN:VEVENT
+DESCRIPTION:Norsk Tipping-ligaen avd. 3 (runde 24)\n\nStord Fotball Menn S
+ enior A - Gneist Menn senior A\nStord stadion lørdag 17.10.26 14:00\n\nww
+ w.fotball.no
+DTEND;TZID=Europe/Oslo:20261017T154500
+DTSTAMP:20260903T113352Z
+DTSTART;TZID=Europe/Oslo:20261017T140000
+LOCATION:Stord stadion
+SEQUENCE:0
+SUMMARY:Stord Fotball Menn Senior A - Gneist Menn senior A
+UID:04932d28-4495-4928-8f90-776aa0662791
+URL:https://www.fotball.no/fotballdata/kamp/?fiksId=8992113
+X-ALT-DESC;FMTTYPE=text/html:\n                    <html><head></head><bod
+ y>\n                        <h4><a href="https://www.fotball.no/fotballda
+ ta/kamp/?fiksId=8992113">Stord Fotball Menn Senior A - Gneist Menn senior
+  A</a></h4>\n                        <p>Norsk Tipping-ligaen avd. 3 (rund
+ e 24)</p>\n                        <p>Spilles på <a href="https://www.fot
+ ball.no/fotballdata/anlegg/hjem/?fiksId=5994">Stord stadion</a> lørdag 17
+ .10.26 14:00</p>\n                        <br/><a href="http://www.fotbal
+ l.no">fotball.no</a>\n                    </body></html>
+END:VEVENT
+BEGIN:VEVENT
+DESCRIPTION:Norsk Tipping-ligaen avd. 3 (runde 25)\n\nAustevoll Menn Senio
+ r 1 - Stord Fotball Menn Senior A\nAustevoll kunstgras 1 lørdag 24.10.26 
+ 13:30\n\nwww.fotball.no
+DTEND;TZID=Europe/Oslo:20261024T151500
+DTSTAMP:20260903T113352Z
+DTSTART;TZID=Europe/Oslo:20261024T133000
+LOCATION:Austevoll kunstgras 1
+SEQUENCE:0
+SUMMARY:Austevoll Menn Senior 1 - Stord Fotball Menn Senior A
+UID:96240830-f84a-42e2-9926-8afa9fd31499
+URL:https://www.fotball.no/fotballdata/kamp/?fiksId=8992120
+X-ALT-DESC;FMTTYPE=text/html:\n                    <html><head></head><bod
+ y>\n                        <h4><a href="https://www.fotball.no/fotballda
+ ta/kamp/?fiksId=8992120">Austevoll Menn Senior 1 - Stord Fotball Menn Sen
+ ior A</a></h4>\n                        <p>Norsk Tipping-ligaen avd. 3 (r
+ unde 25)</p>\n                        <p>Spilles på <a href="https://www.
+ fotball.no/fotballdata/anlegg/hjem/?fiksId=974">Austevoll kunstgras 1</a>
+  lørdag 24.10.26 13:30</p>\n                        <br/><a href="http://
+ www.fotball.no">fotball.no</a>\n                    </body></html>
+END:VEVENT
+BEGIN:VEVENT
+DESCRIPTION:Norsk Tipping-ligaen avd. 3 (runde 26)\n\nStord Fotball Menn S
+ enior A - Sogndal Menn 2\nStord stadion søndag 01.11.26 12:00\n\nwww.fotb
+ all.no
+DTEND;TZID=Europe/Oslo:20261101T134500
+DTSTAMP:20260903T113352Z
+DTSTART;TZID=Europe/Oslo:20261101T120000
+LOCATION:Stord stadion
+SEQUENCE:0
+SUMMARY:Stord Fotball Menn Senior A - Sogndal Menn 2
+UID:de4b95dd-75f9-4119-8f2d-eb8a5ffb092d
+URL:https://www.fotball.no/fotballdata/kamp/?fiksId=8992128
+X-ALT-DESC;FMTTYPE=text/html:\n                    <html><head></head><bod
+ y>\n                        <h4><a href="https://www.fotball.no/fotballda
+ ta/kamp/?fiksId=8992128">Stord Fotball Menn Senior A - Sogndal Menn 2</a>
+ </h4>\n                        <p>Norsk Tipping-ligaen avd. 3 (runde 26)<
+ /p>\n                        <p>Spilles på <a href="https://www.fotball.n
+ o/fotballdata/anlegg/hjem/?fiksId=5994">Stord stadion</a> søndag 01.11.26
+  12:00</p>\n                        <br/><a href="http://www.fotball.no">
+ fotball.no</a>\n                    </body></html>
+END:VEVENT
+END:VCALENDAR
