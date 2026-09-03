@@ -45,3 +45,21 @@ export const VERIFICATION_VERDICT_LABELS: Record<VerificationVerdict, string> = 
 	uncertain: 'Usikker',
 	fail: 'Stoppa'
 };
+
+/**
+ * What a rejected submission is allowed to show in public.
+ *
+ * A rejected submission is retained rather than deleted — a wrong call stays recoverable and
+ * repeat spam has something to match against — but its text is not republished, because
+ * reprinting what we judged to be spam or abuse would defeat rejecting it.
+ *
+ * This is domain policy, not presentation, so it lives here rather than in the query that happens
+ * to need it today (CLAUDE.md rule 1). Keeping it pure also means it is testable without a
+ * database, which the e2e layer is not: the submission log is capped at five rows, so whether any
+ * particular rejected row is on screen depends on what else was submitted first.
+ */
+export const WITHHELD_TITLE = 'Tilbakehalden tittel';
+
+export function publicSubmissionTitle(status: string, title: string | null): string | null {
+	return status === 'rejected' ? null : title;
+}

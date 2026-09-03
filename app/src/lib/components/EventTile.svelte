@@ -3,6 +3,7 @@
 	import { eventPath } from '@hendingar/core/slug';
 	import { formatEventClock, machineDateTime } from '@hendingar/core/datetime';
 	import EventThumb from './EventThumb.svelte';
+	import SourceIcon from './SourceIcon.svelte';
 	import type { UpcomingEvent } from '../events.remote';
 
 	let { event }: { event: UpcomingEvent } = $props();
@@ -34,13 +35,37 @@
 			<a class="tile__link" href={eventPath(event.id, event.title)}>{event.title}</a>
 		</h3>
 
-		{#if event.venueName}
-			<p class="tile__meta"><span class="visually-hidden">Stad: </span>{event.venueName}</p>
+		{#if event.venueName || event.sourceName}
+			<p class="tile__meta">
+				{#if event.sourceName}
+					<!--
+						Whose calendar this came from. Decorative here: the source is named in full on the
+						event's own page and on /datasamling, so repeating it as text on every tile would
+						add noise to a screen reader for no information a reader cannot already reach.
+					-->
+					<span class="tile__src" title={`Kjelde: ${event.sourceName}`}>
+						<SourceIcon src={event.sourceIconUrl} name={event.sourceName} size="1rem" />
+					</span>
+				{/if}
+				{#if event.venueName}
+					<span class="visually-hidden">Stad: </span>{event.venueName}
+				{/if}
+			</p>
 		{/if}
 	</div>
 </article>
 
 <style>
+	.tile__src {
+		display: inline-flex;
+		flex: none;
+		vertical-align: -0.15em;
+		margin-inline-end: 0.4rem;
+		/* The icon is a third party's mark, so it is dimmed to sit inside our palette rather than
+		   compete with the title above it. */
+		opacity: 0.75;
+	}
+
 	.tile {
 		position: relative;
 		display: grid;

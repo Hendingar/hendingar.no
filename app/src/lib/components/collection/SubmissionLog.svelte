@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { formatEventTime } from '@hendingar/core/datetime';
+	import { WITHHELD_TITLE } from '@hendingar/core/verification';
 	import type { SubmissionLogRow } from '../../collection.remote';
 
 	/**
@@ -40,7 +41,7 @@
 					<span class="entry__title">
 						<!-- Rejected submissions are retained as evidence but their text is withheld:
 						     republishing what we judged to be spam would defeat rejecting it. -->
-						{row.title ?? 'Tilbakehalden tittel'}
+						{row.title ?? WITHHELD_TITLE}
 					</span>
 					{#if row.notes}
 						<span class="entry__notes">{row.notes}</span>

@@ -1,6 +1,7 @@
 import { query } from '$app/server';
 import { and, count, desc, eq, gte, sql } from 'drizzle-orm';
 import { events, ingestRuns, sources, venues } from '@hendingar/core/schema';
+import { publicSubmissionTitle } from '@hendingar/core/verification';
 import { db } from './server/db';
 
 /**
@@ -129,7 +130,7 @@ export const listCollection = query(async () => {
 		pendingCount: pending?.total ?? 0,
 		submissions: submissions.map((row) => ({
 			...row,
-			title: row.status === 'rejected' ? null : row.title
+			title: publicSubmissionTitle(row.status, row.title)
 		}))
 	};
 });
