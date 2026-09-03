@@ -82,6 +82,11 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm db:migrate
       - run: pnpm db:seed
+      # The sources we link to but do not collect. They are reference data rather than schema, so
+      # nothing else creates them — without this the e2e job runs against a database that has no
+      # linked sources at all, and every spec covering them fails here while passing on a laptop
+      # where someone happened to run it by hand.
+      - run: pnpm db:sources
       - run: pnpm --filter @hendingar/app test:e2e:install
       - run: pnpm test:e2e
       - uses: actions/upload-artifact@v4
