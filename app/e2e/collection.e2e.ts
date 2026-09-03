@@ -55,9 +55,11 @@ test('an imported tile shows the mark of the source it came from', async ({ page
 	// which is the README's "we are an index, not a replacement" made visible on the card.
 	expect(await marks.count()).toBeGreaterThan(0);
 	for (const mark of await marks.all()) {
-		// The source is named for a pointer user even though the icon is decorative for a reader.
-		await expect(mark).toHaveAttribute('title', /^Kjelde: .+/);
-		expect(await mark.locator('.icon').count()).toBe(1);
+		// The sources are named for a pointer user even though the icons are decorative for a
+		// reader. Singular or plural: a consolidated event carries one mark per source that
+		// reported it, so a tile can legitimately show two or three.
+		await expect(mark).toHaveAttribute('title', /^Kjelder?: .+/);
+		expect(await mark.locator('.icon').count()).toBeGreaterThan(0);
 	}
 });
 

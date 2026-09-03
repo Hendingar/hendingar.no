@@ -18,6 +18,22 @@
 
 	// More than one time to show. A single occurrence keeps the plain clock it always had.
 	const repeats = $derived(occurrences.length > 1);
+
+	/*
+	 * Three marks fit the corner; a fourth starts crowding the venue line on a narrow tile.
+	 *
+	 * Capping rather than wrapping keeps the corner a corner — a mark row that grows onto a second
+	 * line pushes into the title, which is the one thing on the tile that must stay readable. The
+	 * count says what was left out, and the tooltip still names every source.
+	 */
+	const marks = $derived(event.sourceMarks ?? []);
+	const shown = $derived(marks.slice(0, 3));
+	const overflow = $derived(marks.length - shown.length);
+	const marksTitle = $derived(
+		marks.length === 1
+			? `Kjelde: ${marks[0]!.name}`
+			: `Kjelder: ${marks.map((m) => m.name).join(', ')}`
+	);
 </script>
 
 <article class="tile frame">
@@ -80,16 +96,25 @@
 		{/if}
 	</div>
 
-	{#if event.sourceName}
+	{#if marks.length > 0}
 		<!--
-			Whose calendar this came from, in the corner rather than in front of the venue.
+			Whose calendars this came from, in the corner rather than in front of the venue.
 
-			Decorative: the source is named in full on the event's own page and on /datasamling, so
-			repeating it as text on every tile would add noise to a screen reader for information a
-			reader can already reach. `title` still names it for a pointer user.
+			All of them, not just the one whose row won consolidation — "three places say this is on"
+			is the most useful thing an index can tell you, and the winning row is arbitrary (the
+			lowest id), so showing one mark credits whichever importer happened to run first.
+
+			Decorative: the sources are named in full on the event's own page and on /datasamling, so
+			repeating them as text on every tile would add noise to a screen reader for information a
+			reader can already reach. `title` still names them all for a pointer user.
 		-->
-		<span class="tile__src" title={`Kjelde: ${event.sourceName}`}>
-			<SourceIcon src={event.sourceIconUrl} name={event.sourceName} size="1.1rem" />
+		<span class="tile__src" title={marksTitle}>
+			{#each shown as mark (mark.name)}
+				<SourceIcon src={mark.iconUrl} name={mark.name} size="1.1rem" />
+			{/each}
+			{#if overflow > 0}
+				<span class="tile__srcmore" aria-hidden="true">+{overflow}</span>
+			{/if}
 		</span>
 	{/if}
 </article>
@@ -151,6 +176,8 @@
 		inset-inline-end: 0.55rem;
 		z-index: 1;
 		display: inline-flex;
+		align-items: center;
+		gap: 0.25rem;
 		pointer-events: none;
 		/* A third party's mark: dimmed so it sits inside our palette rather than competing with
 		   the title, and brought up on hover when the reader is actually looking at this card. */
@@ -159,6 +186,12 @@
 	}
 	.tile:hover .tile__src {
 		opacity: 1;
+	}
+	.tile__srcmore {
+		font-family: var(--font-mono);
+		font-size: var(--step-micro);
+		color: var(--peach-dim);
+		line-height: 1;
 	}
 
 	.tile {

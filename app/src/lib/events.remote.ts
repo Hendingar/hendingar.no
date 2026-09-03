@@ -2,6 +2,7 @@ import { error } from '@sveltejs/kit';
 import { query } from '$app/server';
 import { z } from 'zod';
 import { and, asc, count, eq, gte, isNull, lte, ne, or, sql } from 'drizzle-orm';
+import type { AnyColumn, SQL } from 'drizzle-orm';
 import { events, organizers, sources, venues, verifications } from '@hendingar/core/schema';
 import { eventQuerySchema } from '@hendingar/core/validation';
 import { categoryLabel } from '@hendingar/core/taxonomy';
@@ -19,6 +20,37 @@ import { db } from './server/db';
  * results are cached per-argument, so two different filters become two cache entries holding the
  * same unfiltered data.
  */
+
+/** One source's mark on a tile. Its name is the tooltip; the icon is what a reader recognises. */
+export type SourceMark = { name: string; iconUrl: string | null };
+
+/**
+ * Every source that reported an event, as one JSON array per listing row.
+ *
+ * A consolidated event is reported by two or three calendars, and the row that won is arbitrary —
+ * the lowest id. Showing only its mark credits whichever importer happened to run first, and hides
+ * the most interesting thing an index can say: that three separate places agree this is on.
+ *
+ * Done as a correlated subquery rather than a join so a listing row stays one row. Joining the
+ * group would multiply every event by its source count and break both the day grouping and the
+ * limit. `events_duplicate_of_idx` is what keeps it cheap.
+ *
+ * `coalesce(..., '[]')` matters: a human submission has no source row at all, so the aggregate is
+ * NULL rather than empty, and the template would render nothing where an array is expected.
+ */
+function sourceMarksFor(eventId: SQL | AnyColumn) {
+	return sql<SourceMark[]>`
+		coalesce((
+			select json_agg(m order by m.name)
+			from (
+				select distinct ${sources.name} as name, ${sources.iconUrl} as "iconUrl"
+				from ${events} dup
+				join ${sources} on ${sources.id} = dup.source_id
+				where dup.id = ${eventId} or dup.duplicate_of_id = ${eventId}
+			) m
+		), '[]'::json)
+	`;
+}
 
 export const listEvents = query(
 	eventQuerySchema,
@@ -43,8 +75,7 @@ export const listEvents = query(
 					 * replacement — a tile that shows no origin quietly claims the event as ours. Null for human
 					 * submissions, which have no source row.
 					 */
-					sourceName: sources.name,
-					sourceIconUrl: sources.iconUrl,
+					sourceMarks: sourceMarksFor(events.id).as('source_marks'),
 					// Same day-grouping columns as listUpcoming, so one component renders both listings
 					// instead of /hendingar having a second, plainer list that drifts from the front page.
 					localDate: sql<string>`
@@ -231,8 +262,7 @@ export const listUpcoming = query(z.number().int().min(1).max(60).default(24), a
 			venueTimeZone: venues.timezone,
 			municipality: venues.municipality,
 			posterUrl: events.posterUrl,
-			sourceName: sources.name,
-			sourceIconUrl: sources.iconUrl,
+			sourceMarks: sourceMarksFor(events.id).as('source_marks'),
 			/*
 			 * The calendar day AT THE VENUE, resolved in SQL. Grouping by day is a calendar
 			 * question, not an instant one — deriving it in JS from the server's clock would put a
