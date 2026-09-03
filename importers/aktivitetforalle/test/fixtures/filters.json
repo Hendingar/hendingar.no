@@ -1,0 +1,1101 @@
+{
+	"code": 200,
+	"status": "Success",
+	"type": null,
+	"title": null,
+	"data": [
+		{
+			"filter_id": 1,
+			"filter_order": 1,
+			"filter_type": "category",
+			"filter_name": "Dans",
+			"filter_keywords": null,
+			"filter_created_at": "2025-06-01 08:00:00",
+			"filter_updated_at": null,
+			"event_type": "activity"
+		},
+		{
+			"filter_id": 15,
+			"filter_order": 1,
+			"filter_type": "category",
+			"filter_name": "Musikk",
+			"filter_keywords": null,
+			"filter_created_at": "2025-06-01 08:00:00",
+			"filter_updated_at": null,
+			"event_type": "arrangement"
+		},
+		{
+			"filter_id": 34,
+			"filter_order": 1,
+			"filter_type": "price_type",
+			"filter_name": "Gratis",
+			"filter_keywords": null,
+			"filter_created_at": "2025-06-01 08:00:00",
+			"filter_updated_at": null,
+			"event_type": null
+		},
+		{
+			"filter_id": 36,
+			"filter_order": 1,
+			"filter_type": "price_type",
+			"filter_name": "Årlig",
+			"filter_keywords": null,
+			"filter_created_at": "2025-06-01 08:00:00",
+			"filter_updated_at": null,
+			"event_type": "event"
+		},
+		{
+			"filter_id": 38,
+			"filter_order": 1,
+			"filter_type": "target_audience",
+			"filter_name": "Barn",
+			"filter_keywords": null,
+			"filter_created_at": "2025-06-01 08:00:00",
+			"filter_updated_at": null,
+			"event_type": "activity"
+		},
+		{
+			"filter_id": 43,
+			"filter_order": 1,
+			"filter_type": "category",
+			"filter_name": "Idrettsanlegg",
+			"filter_keywords": null,
+			"filter_created_at": "2025-06-01 08:00:00",
+			"filter_updated_at": null,
+			"event_type": "location"
+		},
+		{
+			"filter_id": 65,
+			"filter_order": 1,
+			"filter_type": "category",
+			"filter_name": "Dåp/velsigning",
+			"filter_keywords": null,
+			"filter_created_at": "2025-06-01 08:00:00",
+			"filter_updated_at": null,
+			"event_type": "reserved_location"
+		},
+		{
+			"filter_id": 81,
+			"filter_order": 1,
+			"filter_type": "target_audience",
+			"filter_name": "Barn",
+			"filter_keywords": null,
+			"filter_created_at": "2025-06-01 08:00:00",
+			"filter_updated_at": null,
+			"event_type": "arrangement"
+		},
+		{
+			"filter_id": 86,
+			"filter_order": 1,
+			"filter_type": "target_audience",
+			"filter_name": "Barn",
+			"filter_keywords": null,
+			"filter_created_at": "2025-06-01 08:00:00",
+			"filter_updated_at": null,
+			"event_type": "location"
+		},
+		{
+			"filter_id": 91,
+			"filter_order": 1,
+			"filter_type": "accessibility",
+			"filter_name": "Demens",
+			"filter_keywords": null,
+			"filter_created_at": "2025-06-01 08:00:00",
+			"filter_updated_at": null,
+			"event_type": "location"
+		},
+		{
+			"filter_id": 97,
+			"filter_order": 1,
+			"filter_type": "accessibility",
+			"filter_name": "Demens",
+			"filter_keywords": null,
+			"filter_created_at": "2025-06-01 08:00:00",
+			"filter_updated_at": null,
+			"event_type": "activity"
+		},
+		{
+			"filter_id": 103,
+			"filter_order": 1,
+			"filter_type": "accessibility",
+			"filter_name": "Demens",
+			"filter_keywords": null,
+			"filter_created_at": "2025-06-01 08:00:00",
+			"filter_updated_at": null,
+			"event_type": "arrangement"
+		},
+		{
+			"filter_id": 2,
+			"filter_order": 2,
+			"filter_type": "category",
+			"filter_name": "Digitalt",
+			"filter_keywords": null,
+			"filter_created_at": "2025-06-01 08:00:00",
+			"filter_updated_at": null,
+			"event_type": "activity"
+		},
+		{
+			"filter_id": 35,
+			"filter_order": 2,
+			"filter_type": "price_type",
+			"filter_name": "Forespørsel",
+			"filter_keywords": null,
+			"filter_created_at": "2025-06-01 08:00:00",
+			"filter_updated_at": null,
+			"event_type": null
+		},
+		{
+			"filter_id": 37,
+			"filter_order": 2,
+			"filter_type": "price_type",
+			"filter_name": "Halvårlig",
+			"filter_keywords": null,
+			"filter_created_at": "2025-06-01 08:00:00",
+			"filter_updated_at": null,
+			"event_type": "event"
+		},
+		{
+			"filter_id": 39,
+			"filter_order": 2,
+			"filter_type": "target_audience",
+			"filter_name": "Ungdom",
+			"filter_keywords": null,
+			"filter_created_at": "2025-06-01 08:00:00",
+			"filter_updated_at": null,
+			"event_type": "activity"
+		},
+		{
+			"filter_id": 44,
+			"filter_order": 2,
+			"filter_type": "category",
+			"filter_name": "Leikeplass",
+			"filter_keywords": null,
+			"filter_created_at": "2025-06-01 08:00:00",
+			"filter_updated_at": null,
+			"event_type": "location"
+		},
+		{
+			"filter_id": 66,
+			"filter_order": 2,
+			"filter_type": "category",
+			"filter_name": "Bryllup",
+			"filter_keywords": null,
+			"filter_created_at": "2025-06-01 08:00:00",
+			"filter_updated_at": null,
+			"event_type": "reserved_location"
+		},
+		{
+			"filter_id": 82,
+			"filter_order": 2,
+			"filter_type": "target_audience",
+			"filter_name": "Ungdom",
+			"filter_keywords": null,
+			"filter_created_at": "2025-06-01 08:00:00",
+			"filter_updated_at": null,
+			"event_type": "arrangement"
+		},
+		{
+			"filter_id": 87,
+			"filter_order": 2,
+			"filter_type": "target_audience",
+			"filter_name": "Ungdom",
+			"filter_keywords": null,
+			"filter_created_at": "2025-06-01 08:00:00",
+			"filter_updated_at": null,
+			"event_type": "location"
+		},
+		{
+			"filter_id": 92,
+			"filter_order": 2,
+			"filter_type": "accessibility",
+			"filter_name": "Hørselshemming",
+			"filter_keywords": null,
+			"filter_created_at": "2025-06-01 08:00:00",
+			"filter_updated_at": null,
+			"event_type": "location"
+		},
+		{
+			"filter_id": 98,
+			"filter_order": 2,
+			"filter_type": "accessibility",
+			"filter_name": "Hørselshemming",
+			"filter_keywords": null,
+			"filter_created_at": "2025-06-01 08:00:00",
+			"filter_updated_at": null,
+			"event_type": "activity"
+		},
+		{
+			"filter_id": 104,
+			"filter_order": 2,
+			"filter_type": "accessibility",
+			"filter_name": "Hørselshemming",
+			"filter_keywords": null,
+			"filter_created_at": "2025-06-01 08:00:00",
+			"filter_updated_at": null,
+			"event_type": "arrangement"
+		},
+		{
+			"filter_id": 111,
+			"filter_order": 2,
+			"filter_type": "category",
+			"filter_name": "Konsert",
+			"filter_keywords": null,
+			"filter_created_at": "2025-09-08 12:00:00",
+			"filter_updated_at": null,
+			"event_type": "arrangement"
+		},
+		{
+			"filter_id": 3,
+			"filter_order": 3,
+			"filter_type": "category",
+			"filter_name": "Drama",
+			"filter_keywords": null,
+			"filter_created_at": "2025-06-01 08:00:00",
+			"filter_updated_at": null,
+			"event_type": "activity"
+		},
+		{
+			"filter_id": 40,
+			"filter_order": 3,
+			"filter_type": "target_audience",
+			"filter_name": "Vaksen",
+			"filter_keywords": null,
+			"filter_created_at": "2025-06-01 08:00:00",
+			"filter_updated_at": null,
+			"event_type": "activity"
+		},
+		{
+			"filter_id": 45,
+			"filter_order": 3,
+			"filter_type": "category",
+			"filter_name": "Badeplass",
+			"filter_keywords": null,
+			"filter_created_at": "2025-06-01 08:00:00",
+			"filter_updated_at": null,
+			"event_type": "location"
+		},
+		{
+			"filter_id": 67,
+			"filter_order": 3,
+			"filter_type": "category",
+			"filter_name": "Bursdag",
+			"filter_keywords": null,
+			"filter_created_at": "2025-06-01 08:00:00",
+			"filter_updated_at": null,
+			"event_type": "reserved_location"
+		},
+		{
+			"filter_id": 83,
+			"filter_order": 3,
+			"filter_type": "target_audience",
+			"filter_name": "Vaksen",
+			"filter_keywords": null,
+			"filter_created_at": "2025-06-01 08:00:00",
+			"filter_updated_at": null,
+			"event_type": "arrangement"
+		},
+		{
+			"filter_id": 88,
+			"filter_order": 3,
+			"filter_type": "target_audience",
+			"filter_name": "Vaksen",
+			"filter_keywords": null,
+			"filter_created_at": "2025-06-01 08:00:00",
+			"filter_updated_at": null,
+			"event_type": "location"
+		},
+		{
+			"filter_id": 110,
+			"filter_order": 3,
+			"filter_type": "category",
+			"filter_name": "Teater",
+			"filter_keywords": null,
+			"filter_created_at": "2025-09-08 12:00:00",
+			"filter_updated_at": null,
+			"event_type": "arrangement"
+		},
+		{
+			"filter_id": 4,
+			"filter_order": 4,
+			"filter_type": "category",
+			"filter_name": "Ferieaktivitet",
+			"filter_keywords": null,
+			"filter_created_at": "2025-06-01 08:00:00",
+			"filter_updated_at": null,
+			"event_type": "activity"
+		},
+		{
+			"filter_id": 14,
+			"filter_order": 4,
+			"filter_type": "category",
+			"filter_name": "Underholdning",
+			"filter_keywords": null,
+			"filter_created_at": "2025-06-01 08:00:00",
+			"filter_updated_at": null,
+			"event_type": "arrangement"
+		},
+		{
+			"filter_id": 41,
+			"filter_order": 4,
+			"filter_type": "target_audience",
+			"filter_name": "Senior",
+			"filter_keywords": null,
+			"filter_created_at": "2025-06-01 08:00:00",
+			"filter_updated_at": null,
+			"event_type": "activity"
+		},
+		{
+			"filter_id": 46,
+			"filter_order": 4,
+			"filter_type": "category",
+			"filter_name": "Bane",
+			"filter_keywords": null,
+			"filter_created_at": "2025-06-01 08:00:00",
+			"filter_updated_at": null,
+			"event_type": "location"
+		},
+		{
+			"filter_id": 68,
+			"filter_order": 4,
+			"filter_type": "category",
+			"filter_name": "Konfirmasjon",
+			"filter_keywords": null,
+			"filter_created_at": "2025-06-01 08:00:00",
+			"filter_updated_at": null,
+			"event_type": "reserved_location"
+		},
+		{
+			"filter_id": 84,
+			"filter_order": 4,
+			"filter_type": "target_audience",
+			"filter_name": "Senior",
+			"filter_keywords": null,
+			"filter_created_at": "2025-06-01 08:00:00",
+			"filter_updated_at": null,
+			"event_type": "arrangement"
+		},
+		{
+			"filter_id": 89,
+			"filter_order": 4,
+			"filter_type": "target_audience",
+			"filter_name": "Senior",
+			"filter_keywords": null,
+			"filter_created_at": "2025-06-01 08:00:00",
+			"filter_updated_at": null,
+			"event_type": "location"
+		},
+		{
+			"filter_id": 94,
+			"filter_order": 4,
+			"filter_type": "accessibility",
+			"filter_name": "Rørslehemming",
+			"filter_keywords": null,
+			"filter_created_at": "2025-06-01 08:00:00",
+			"filter_updated_at": null,
+			"event_type": "location"
+		},
+		{
+			"filter_id": 100,
+			"filter_order": 4,
+			"filter_type": "accessibility",
+			"filter_name": "Rørslehemming",
+			"filter_keywords": null,
+			"filter_created_at": "2025-06-01 08:00:00",
+			"filter_updated_at": null,
+			"event_type": "activity"
+		},
+		{
+			"filter_id": 106,
+			"filter_order": 4,
+			"filter_type": "accessibility",
+			"filter_name": "Rørslehemming",
+			"filter_keywords": null,
+			"filter_created_at": "2025-06-01 08:00:00",
+			"filter_updated_at": null,
+			"event_type": "arrangement"
+		},
+		{
+			"filter_id": 5,
+			"filter_order": 5,
+			"filter_type": "category",
+			"filter_name": "Friluftsliv",
+			"filter_keywords": null,
+			"filter_created_at": "2025-06-01 08:00:00",
+			"filter_updated_at": null,
+			"event_type": "activity"
+		},
+		{
+			"filter_id": 19,
+			"filter_order": 5,
+			"filter_type": "category",
+			"filter_name": "Kino",
+			"filter_keywords": null,
+			"filter_created_at": "2025-06-01 08:00:00",
+			"filter_updated_at": null,
+			"event_type": "arrangement"
+		},
+		{
+			"filter_id": 42,
+			"filter_order": 5,
+			"filter_type": "target_audience",
+			"filter_name": "Familie",
+			"filter_keywords": null,
+			"filter_created_at": "2025-06-01 08:00:00",
+			"filter_updated_at": null,
+			"event_type": "activity"
+		},
+		{
+			"filter_id": 47,
+			"filter_order": 5,
+			"filter_type": "category",
+			"filter_name": "Kulturhus",
+			"filter_keywords": null,
+			"filter_created_at": "2025-06-01 08:00:00",
+			"filter_updated_at": null,
+			"event_type": "location"
+		},
+		{
+			"filter_id": 69,
+			"filter_order": 5,
+			"filter_type": "category",
+			"filter_name": "Fest",
+			"filter_keywords": null,
+			"filter_created_at": "2025-06-01 08:00:00",
+			"filter_updated_at": null,
+			"event_type": "reserved_location"
+		},
+		{
+			"filter_id": 85,
+			"filter_order": 5,
+			"filter_type": "target_audience",
+			"filter_name": "Familie",
+			"filter_keywords": null,
+			"filter_created_at": "2025-06-01 08:00:00",
+			"filter_updated_at": null,
+			"event_type": "arrangement"
+		},
+		{
+			"filter_id": 90,
+			"filter_order": 5,
+			"filter_type": "target_audience",
+			"filter_name": "Familie",
+			"filter_keywords": null,
+			"filter_created_at": "2025-06-01 08:00:00",
+			"filter_updated_at": null,
+			"event_type": "location"
+		},
+		{
+			"filter_id": 95,
+			"filter_order": 5,
+			"filter_type": "accessibility",
+			"filter_name": "Synshemming",
+			"filter_keywords": null,
+			"filter_created_at": "2025-06-01 08:00:00",
+			"filter_updated_at": null,
+			"event_type": "location"
+		},
+		{
+			"filter_id": 101,
+			"filter_order": 5,
+			"filter_type": "accessibility",
+			"filter_name": "Synshemming",
+			"filter_keywords": null,
+			"filter_created_at": "2025-06-01 08:00:00",
+			"filter_updated_at": null,
+			"event_type": "activity"
+		},
+		{
+			"filter_id": 107,
+			"filter_order": 5,
+			"filter_type": "accessibility",
+			"filter_name": "Synshemming",
+			"filter_keywords": null,
+			"filter_created_at": "2025-06-01 08:00:00",
+			"filter_updated_at": null,
+			"event_type": "arrangement"
+		},
+		{
+			"filter_id": 6,
+			"filter_order": 6,
+			"filter_type": "category",
+			"filter_name": "Fritid og sosialt",
+			"filter_keywords": null,
+			"filter_created_at": "2025-06-01 08:00:00",
+			"filter_updated_at": null,
+			"event_type": "activity"
+		},
+		{
+			"filter_id": 22,
+			"filter_order": 6,
+			"filter_type": "category",
+			"filter_name": "Festival",
+			"filter_keywords": null,
+			"filter_created_at": "2025-06-01 08:00:00",
+			"filter_updated_at": null,
+			"event_type": "arrangement"
+		},
+		{
+			"filter_id": 48,
+			"filter_order": 6,
+			"filter_type": "category",
+			"filter_name": "Kino",
+			"filter_keywords": null,
+			"filter_created_at": "2025-06-01 08:00:00",
+			"filter_updated_at": null,
+			"event_type": "location"
+		},
+		{
+			"filter_id": 70,
+			"filter_order": 6,
+			"filter_type": "category",
+			"filter_name": "Møte",
+			"filter_keywords": null,
+			"filter_created_at": "2025-06-01 08:00:00",
+			"filter_updated_at": null,
+			"event_type": "reserved_location"
+		},
+		{
+			"filter_id": 96,
+			"filter_order": 6,
+			"filter_type": "accessibility",
+			"filter_name": "Utviklingshemming",
+			"filter_keywords": null,
+			"filter_created_at": "2025-06-01 08:00:00",
+			"filter_updated_at": null,
+			"event_type": "location"
+		},
+		{
+			"filter_id": 102,
+			"filter_order": 6,
+			"filter_type": "accessibility",
+			"filter_name": "Utviklingshemming",
+			"filter_keywords": null,
+			"filter_created_at": "2025-06-01 08:00:00",
+			"filter_updated_at": null,
+			"event_type": "activity"
+		},
+		{
+			"filter_id": 108,
+			"filter_order": 6,
+			"filter_type": "accessibility",
+			"filter_name": "Utviklingshemming",
+			"filter_keywords": null,
+			"filter_created_at": "2025-06-01 08:00:00",
+			"filter_updated_at": null,
+			"event_type": "arrangement"
+		},
+		{
+			"filter_id": 7,
+			"filter_order": 7,
+			"filter_type": "category",
+			"filter_name": "Hobby",
+			"filter_keywords": null,
+			"filter_created_at": "2025-06-01 08:00:00",
+			"filter_updated_at": null,
+			"event_type": "activity"
+		},
+		{
+			"filter_id": 21,
+			"filter_order": 7,
+			"filter_type": "category",
+			"filter_name": "Idrett",
+			"filter_keywords": null,
+			"filter_created_at": "2025-06-01 08:00:00",
+			"filter_updated_at": null,
+			"event_type": "arrangement"
+		},
+		{
+			"filter_id": 49,
+			"filter_order": 7,
+			"filter_type": "category",
+			"filter_name": "Skule",
+			"filter_keywords": null,
+			"filter_created_at": "2025-06-01 08:00:00",
+			"filter_updated_at": null,
+			"event_type": "location"
+		},
+		{
+			"filter_id": 71,
+			"filter_order": 7,
+			"filter_type": "category",
+			"filter_name": "Julebord",
+			"filter_keywords": null,
+			"filter_created_at": "2025-06-01 08:00:00",
+			"filter_updated_at": null,
+			"event_type": "reserved_location"
+		},
+		{
+			"filter_id": 8,
+			"filter_order": 8,
+			"filter_type": "category",
+			"filter_name": "Idrett",
+			"filter_keywords": null,
+			"filter_created_at": "2025-06-01 08:00:00",
+			"filter_updated_at": null,
+			"event_type": "activity"
+		},
+		{
+			"filter_id": 20,
+			"filter_order": 8,
+			"filter_type": "category",
+			"filter_name": "Fysisk aktivitet/friluftsliv",
+			"filter_keywords": null,
+			"filter_created_at": "2025-06-01 08:00:00",
+			"filter_updated_at": null,
+			"event_type": "arrangement"
+		},
+		{
+			"filter_id": 50,
+			"filter_order": 8,
+			"filter_type": "category",
+			"filter_name": "Turløype",
+			"filter_keywords": null,
+			"filter_created_at": "2025-06-01 08:00:00",
+			"filter_updated_at": null,
+			"event_type": "location"
+		},
+		{
+			"filter_id": 72,
+			"filter_order": 8,
+			"filter_type": "category",
+			"filter_name": "Overnatting",
+			"filter_keywords": null,
+			"filter_created_at": "2025-06-01 08:00:00",
+			"filter_updated_at": null,
+			"event_type": "reserved_location"
+		},
+		{
+			"filter_id": 9,
+			"filter_order": 9,
+			"filter_type": "category",
+			"filter_name": "Kunst og handtverk",
+			"filter_keywords": null,
+			"filter_created_at": "2025-06-01 08:00:00",
+			"filter_updated_at": null,
+			"event_type": "activity"
+		},
+		{
+			"filter_id": 17,
+			"filter_order": 9,
+			"filter_type": "category",
+			"filter_name": "Kurs & konferanse",
+			"filter_keywords": null,
+			"filter_created_at": "2025-06-01 08:00:00",
+			"filter_updated_at": null,
+			"event_type": "arrangement"
+		},
+		{
+			"filter_id": 51,
+			"filter_order": 9,
+			"filter_type": "category",
+			"filter_name": "Park",
+			"filter_keywords": null,
+			"filter_created_at": "2025-06-01 08:00:00",
+			"filter_updated_at": null,
+			"event_type": "location"
+		},
+		{
+			"filter_id": 73,
+			"filter_order": 9,
+			"filter_type": "category",
+			"filter_name": "Samling",
+			"filter_keywords": null,
+			"filter_created_at": "2025-06-01 08:00:00",
+			"filter_updated_at": null,
+			"event_type": "reserved_location"
+		},
+		{
+			"filter_id": 10,
+			"filter_order": 10,
+			"filter_type": "category",
+			"filter_name": "Musikk",
+			"filter_keywords": null,
+			"filter_created_at": "2025-06-01 08:00:00",
+			"filter_updated_at": null,
+			"event_type": "activity"
+		},
+		{
+			"filter_id": 52,
+			"filter_order": 10,
+			"filter_type": "category",
+			"filter_name": "Hall",
+			"filter_keywords": null,
+			"filter_created_at": "2025-06-01 08:00:00",
+			"filter_updated_at": null,
+			"event_type": "location"
+		},
+		{
+			"filter_id": 74,
+			"filter_order": 10,
+			"filter_type": "category",
+			"filter_name": "Minnestund",
+			"filter_keywords": null,
+			"filter_created_at": "2025-06-01 08:00:00",
+			"filter_updated_at": null,
+			"event_type": "reserved_location"
+		},
+		{
+			"filter_id": 112,
+			"filter_order": 10,
+			"filter_type": "category",
+			"filter_name": "Foredrag",
+			"filter_keywords": null,
+			"filter_created_at": "2025-09-08 12:00:00",
+			"filter_updated_at": null,
+			"event_type": "arrangement"
+		},
+		{
+			"filter_id": 11,
+			"filter_order": 11,
+			"filter_type": "category",
+			"filter_name": "Samfunn og politikk",
+			"filter_keywords": null,
+			"filter_created_at": "2025-06-01 08:00:00",
+			"filter_updated_at": null,
+			"event_type": "activity"
+		},
+		{
+			"filter_id": 27,
+			"filter_order": 11,
+			"filter_type": "category",
+			"filter_name": "Samfunn & politikk",
+			"filter_keywords": null,
+			"filter_created_at": "2025-06-01 08:00:00",
+			"filter_updated_at": null,
+			"event_type": "arrangement"
+		},
+		{
+			"filter_id": 53,
+			"filter_order": 11,
+			"filter_type": "category",
+			"filter_name": "Bibliotek",
+			"filter_keywords": null,
+			"filter_created_at": "2025-06-01 08:00:00",
+			"filter_updated_at": null,
+			"event_type": "location"
+		},
+		{
+			"filter_id": 75,
+			"filter_order": 11,
+			"filter_type": "category",
+			"filter_name": "Klubb",
+			"filter_keywords": null,
+			"filter_created_at": "2025-06-01 08:00:00",
+			"filter_updated_at": null,
+			"event_type": "reserved_location"
+		},
+		{
+			"filter_id": 12,
+			"filter_order": 12,
+			"filter_type": "category",
+			"filter_name": "Spill",
+			"filter_keywords": null,
+			"filter_created_at": "2025-06-01 08:00:00",
+			"filter_updated_at": null,
+			"event_type": "activity"
+		},
+		{
+			"filter_id": 31,
+			"filter_order": 12,
+			"filter_type": "category",
+			"filter_name": "Helse",
+			"filter_keywords": null,
+			"filter_created_at": "2025-06-01 08:00:00",
+			"filter_updated_at": null,
+			"event_type": "arrangement"
+		},
+		{
+			"filter_id": 54,
+			"filter_order": 12,
+			"filter_type": "category",
+			"filter_name": "Gudshus",
+			"filter_keywords": null,
+			"filter_created_at": "2025-06-01 08:00:00",
+			"filter_updated_at": null,
+			"event_type": "location"
+		},
+		{
+			"filter_id": 76,
+			"filter_order": 12,
+			"filter_type": "category",
+			"filter_name": "Familietreff",
+			"filter_keywords": null,
+			"filter_created_at": "2025-06-01 08:00:00",
+			"filter_updated_at": null,
+			"event_type": "reserved_location"
+		},
+		{
+			"filter_id": 13,
+			"filter_order": 13,
+			"filter_type": "category",
+			"filter_name": "Tru og livssyn",
+			"filter_keywords": null,
+			"filter_created_at": "2025-06-01 08:00:00",
+			"filter_updated_at": null,
+			"event_type": "activity"
+		},
+		{
+			"filter_id": 28,
+			"filter_order": 13,
+			"filter_type": "category",
+			"filter_name": "Livssyn",
+			"filter_keywords": null,
+			"filter_created_at": "2025-06-01 08:00:00",
+			"filter_updated_at": null,
+			"event_type": "arrangement"
+		},
+		{
+			"filter_id": 55,
+			"filter_order": 13,
+			"filter_type": "category",
+			"filter_name": "Sal",
+			"filter_keywords": null,
+			"filter_created_at": "2025-06-01 08:00:00",
+			"filter_updated_at": null,
+			"event_type": "location"
+		},
+		{
+			"filter_id": 77,
+			"filter_order": 13,
+			"filter_type": "category",
+			"filter_name": "Seminar",
+			"filter_keywords": null,
+			"filter_created_at": "2025-06-01 08:00:00",
+			"filter_updated_at": null,
+			"event_type": "reserved_location"
+		},
+		{
+			"filter_id": 16,
+			"filter_order": 14,
+			"filter_type": "category",
+			"filter_name": "Mat & drikke",
+			"filter_keywords": null,
+			"filter_created_at": "2025-06-01 08:00:00",
+			"filter_updated_at": null,
+			"event_type": "arrangement"
+		},
+		{
+			"filter_id": 56,
+			"filter_order": 14,
+			"filter_type": "category",
+			"filter_name": "Forsamlingshus",
+			"filter_keywords": null,
+			"filter_created_at": "2025-06-01 08:00:00",
+			"filter_updated_at": null,
+			"event_type": "location"
+		},
+		{
+			"filter_id": 78,
+			"filter_order": 14,
+			"filter_type": "category",
+			"filter_name": "Kurs",
+			"filter_keywords": null,
+			"filter_created_at": "2025-06-01 08:00:00",
+			"filter_updated_at": null,
+			"event_type": "reserved_location"
+		},
+		{
+			"filter_id": 18,
+			"filter_order": 15,
+			"filter_type": "category",
+			"filter_name": "Utstilling",
+			"filter_keywords": null,
+			"filter_created_at": "2025-06-01 08:00:00",
+			"filter_updated_at": null,
+			"event_type": "arrangement"
+		},
+		{
+			"filter_id": 57,
+			"filter_order": 15,
+			"filter_type": "category",
+			"filter_name": "Hamn",
+			"filter_keywords": null,
+			"filter_created_at": "2025-06-01 08:00:00",
+			"filter_updated_at": null,
+			"event_type": "location"
+		},
+		{
+			"filter_id": 79,
+			"filter_order": 15,
+			"filter_type": "category",
+			"filter_name": "Konferanse",
+			"filter_keywords": null,
+			"filter_created_at": "2025-06-01 08:00:00",
+			"filter_updated_at": null,
+			"event_type": "reserved_location"
+		},
+		{
+			"filter_id": 33,
+			"filter_order": 16,
+			"filter_type": "category",
+			"filter_name": "Handtverk & hobby",
+			"filter_keywords": null,
+			"filter_created_at": "2025-06-01 08:00:00",
+			"filter_updated_at": null,
+			"event_type": "arrangement"
+		},
+		{
+			"filter_id": 58,
+			"filter_order": 16,
+			"filter_type": "category",
+			"filter_name": "Selskapslokale",
+			"filter_keywords": null,
+			"filter_created_at": "2025-06-01 08:00:00",
+			"filter_updated_at": null,
+			"event_type": "location"
+		},
+		{
+			"filter_id": 80,
+			"filter_order": 16,
+			"filter_type": "category",
+			"filter_name": "Annet",
+			"filter_keywords": null,
+			"filter_created_at": "2025-06-01 08:00:00",
+			"filter_updated_at": null,
+			"event_type": "reserved_location"
+		},
+		{
+			"filter_id": 32,
+			"filter_order": 17,
+			"filter_type": "category",
+			"filter_name": "Marknad",
+			"filter_keywords": null,
+			"filter_created_at": "2025-06-01 08:00:00",
+			"filter_updated_at": null,
+			"event_type": "arrangement"
+		},
+		{
+			"filter_id": 59,
+			"filter_order": 17,
+			"filter_type": "category",
+			"filter_name": "Gapahuk",
+			"filter_keywords": null,
+			"filter_created_at": "2025-06-01 08:00:00",
+			"filter_updated_at": null,
+			"event_type": "location"
+		},
+		{
+			"filter_id": 29,
+			"filter_order": 18,
+			"filter_type": "category",
+			"filter_name": "Feiring",
+			"filter_keywords": null,
+			"filter_created_at": "2025-06-01 08:00:00",
+			"filter_updated_at": null,
+			"event_type": "arrangement"
+		},
+		{
+			"filter_id": 60,
+			"filter_order": 18,
+			"filter_type": "category",
+			"filter_name": "Hytter",
+			"filter_keywords": null,
+			"filter_created_at": "2025-06-01 08:00:00",
+			"filter_updated_at": null,
+			"event_type": "location"
+		},
+		{
+			"filter_id": 30,
+			"filter_order": 19,
+			"filter_type": "category",
+			"filter_name": "Sosialt",
+			"filter_keywords": null,
+			"filter_created_at": "2025-06-01 08:00:00",
+			"filter_updated_at": null,
+			"event_type": "arrangement"
+		},
+		{
+			"filter_id": 61,
+			"filter_order": 19,
+			"filter_type": "category",
+			"filter_name": "Møterom",
+			"filter_keywords": null,
+			"filter_created_at": "2025-06-01 08:00:00",
+			"filter_updated_at": null,
+			"event_type": "location"
+		},
+		{
+			"filter_id": 23,
+			"filter_order": 20,
+			"filter_type": "category",
+			"filter_name": "Stemne/cup/turnering",
+			"filter_keywords": null,
+			"filter_created_at": "2025-06-01 08:00:00",
+			"filter_updated_at": null,
+			"event_type": "arrangement"
+		},
+		{
+			"filter_id": 62,
+			"filter_order": 20,
+			"filter_type": "category",
+			"filter_name": "Museum",
+			"filter_keywords": null,
+			"filter_created_at": "2025-06-01 08:00:00",
+			"filter_updated_at": null,
+			"event_type": "location"
+		},
+		{
+			"filter_id": 25,
+			"filter_order": 21,
+			"filter_type": "category",
+			"filter_name": "Konkurranse",
+			"filter_keywords": null,
+			"filter_created_at": "2025-06-01 08:00:00",
+			"filter_updated_at": null,
+			"event_type": "arrangement"
+		},
+		{
+			"filter_id": 63,
+			"filter_order": 21,
+			"filter_type": "category",
+			"filter_name": "Attraksjon",
+			"filter_keywords": null,
+			"filter_created_at": "2025-06-01 08:00:00",
+			"filter_updated_at": null,
+			"event_type": "location"
+		},
+		{
+			"filter_id": 24,
+			"filter_order": 22,
+			"filter_type": "category",
+			"filter_name": "Digitalt",
+			"filter_keywords": null,
+			"filter_created_at": "2025-06-01 08:00:00",
+			"filter_updated_at": null,
+			"event_type": "arrangement"
+		},
+		{
+			"filter_id": 109,
+			"filter_order": 22,
+			"filter_type": "category",
+			"filter_name": "Klubblokale",
+			"filter_keywords": null,
+			"filter_created_at": "2025-06-01 08:00:00",
+			"filter_updated_at": null,
+			"event_type": "location"
+		},
+		{
+			"filter_id": 26,
+			"filter_order": 23,
+			"filter_type": "category",
+			"filter_name": "For alle/Open dag",
+			"filter_keywords": null,
+			"filter_created_at": "2025-06-01 08:00:00",
+			"filter_updated_at": null,
+			"event_type": "arrangement"
+		},
+		{
+			"filter_id": 64,
+			"filter_order": 23,
+			"filter_type": "category",
+			"filter_name": "Annet",
+			"filter_keywords": null,
+			"filter_created_at": "2025-06-01 08:00:00",
+			"filter_updated_at": null,
+			"event_type": "location"
+		}
+	],
+	"pagination": null,
+	"path": "/api/v1/filters",
+	"timestamp": "2026-09-03T11:18:42Z"
+}
