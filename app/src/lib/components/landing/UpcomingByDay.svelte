@@ -1,9 +1,19 @@
 <script lang="ts">
 	import EventsByDay from '../EventsByDay.svelte';
 	import { listUpcoming } from '../../events.remote';
+	import { heartCounts } from '../../hearts.remote';
 
 	// Top-level await: this is the first thing a visitor reads, so it must be in the server HTML.
 	const events = await listUpcoming(24);
+	/*
+	 * Counts come with the list, in one query, and are server-rendered like everything else.
+	 *
+	 * How many people have hearted something is public — unlike *which* events a given reader
+	 * hearted, which never leaves their browser.
+	 */
+	const hearts = Object.fromEntries(
+		(await heartCounts(events.map((e) => e.id))).map((h) => [h.eventId, h.hearts])
+	);
 </script>
 
 <section class="up" aria-labelledby="h-up">
@@ -22,7 +32,7 @@
 				<a href="/datasamling">Sjå kva vi hentar inn →</a>
 			</p>
 		{:else}
-			<EventsByDay {events} headingLevel={3} />
+			<EventsByDay {events} headingLevel={3} {hearts} />
 
 			<p class="up__foot">
 				<a href="/hendingar">Alle hendingar →</a>

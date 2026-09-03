@@ -4,6 +4,7 @@
 	import { formatEventClock, machineDateTime } from '@hendingar/core/datetime';
 	import EventThumb from './EventThumb.svelte';
 	import SourceIcon from './SourceIcon.svelte';
+	import HeartButton from './HeartButton.svelte';
 	import type { UpcomingEvent } from '../events.remote';
 	import type { Occurrence } from '../occurrences.ts';
 
@@ -14,7 +15,11 @@
 	 * of the same event on the same day share a card and list their times. Each time is still its
 	 * own event with its own page — this is presentation, not a merge.
 	 */
-	let { event, occurrences = [] }: { event: UpcomingEvent; occurrences?: Occurrence[] } = $props();
+	let {
+		event,
+		occurrences = [],
+		hearts = 0
+	}: { event: UpcomingEvent; occurrences?: Occurrence[]; hearts?: number } = $props();
 
 	// More than one time to show. A single occurrence keeps the plain clock it always had.
 	const repeats = $derived(occurrences.length > 1);
@@ -96,6 +101,16 @@
 		{/if}
 	</div>
 
+	<!--
+		The heart sits in the top-right of the poster, opposite the source marks in the bottom-right.
+
+		Above the tile's stretched link overlay so it can be tapped, and it stops the click itself —
+		otherwise hearting an event opens it.
+	-->
+	<div class="tile__heart">
+		<HeartButton eventId={event.id} {hearts} />
+	</div>
+
 	{#if marks.length > 0}
 		<!--
 			Whose calendars this came from, in the corner rather than in front of the venue.
@@ -170,6 +185,24 @@
 	 * row. It sits above the link's stretched ::after overlay so its tooltip is reachable, but is
 	 * `pointer-events: none` so it never steals the click the whole tile is meant to take.
 	 */
+	/*
+	 * Opposite corner to the source marks, and above the link overlay.
+	 *
+	 * `pointer-events: auto` is not redundant: the mark row beside it sets `none` so it never steals
+	 * the tile's click, and this one must do the exact opposite.
+	 */
+	.tile__heart {
+		position: absolute;
+		inset-block-start: 0.35rem;
+		inset-inline-end: 0.35rem;
+		z-index: 2;
+		pointer-events: auto;
+		/* Legible over a bright poster, the same problem the source mark has. */
+		background: color-mix(in srgb, var(--navy-900) 68%, transparent);
+		border-radius: 999px;
+		backdrop-filter: blur(2px);
+	}
+
 	.tile__src {
 		position: absolute;
 		inset-block-end: 0.55rem;

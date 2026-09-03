@@ -14,7 +14,21 @@
 	 * `headingLevel` exists because the day headings are h3 under the landing page's h2 section but
 	 * h2 under /hendingar's h1. Hardcoding either one breaks the document outline on the other page.
 	 */
-	let { events, headingLevel = 3 }: { events: UpcomingEvent[]; headingLevel?: 2 | 3 } = $props();
+	let {
+		events,
+		headingLevel = 3,
+		hearts = {}
+	}: {
+		events: UpcomingEvent[];
+		headingLevel?: 2 | 3;
+		/**
+		 * Heart counts by event id, fetched in bulk by the page.
+		 *
+		 * Passed down rather than fetched per card: a listing shows two dozen tiles, and a request
+		 * each would be two dozen round trips for a number nobody scrolled to yet.
+		 */
+		hearts?: Record<number, number>;
+	} = $props();
 
 	type Day = { date: string; label: string; events: UpcomingEvent[] };
 
@@ -66,7 +80,13 @@
 				event with its own page — the grouping is presentation only.
 			-->
 			{#each stackOccurrences(day.events) as stack (stack.lead.id)}
-				<li><EventTile event={stack.lead} occurrences={stack.occurrences} /></li>
+				<li>
+					<EventTile
+						event={stack.lead}
+						occurrences={stack.occurrences}
+						hearts={hearts[stack.lead.id] ?? 0}
+					/>
+				</li>
 			{/each}
 		</ul>
 	</section>
