@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { formatDayLabel } from '@hendingar/core/datetime';
 	import EventTile from './EventTile.svelte';
+	import { stackOccurrences } from '../occurrences.ts';
 	import type { UpcomingEvent } from '../events.remote';
 
 	/**
@@ -59,8 +60,13 @@
 			</h3>
 		{/if}
 		<ul class="grid">
-			{#each day.events as event (event.id)}
-				<li><EventTile {event} /></li>
+			<!--
+				Repeats of the same event share a card. Public swimming runs four times a day; four
+				identical posters spend a screenful saying one thing. Each time is still its own
+				event with its own page — the grouping is presentation only.
+			-->
+			{#each stackOccurrences(day.events) as stack (stack.lead.id)}
+				<li><EventTile event={stack.lead} occurrences={stack.occurrences} /></li>
 			{/each}
 		</ul>
 	</section>
