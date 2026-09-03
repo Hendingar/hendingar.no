@@ -29,8 +29,6 @@
 	// the button renders in its resting state — which is also what a crawler should see.
 	$effect(() => loadHearts());
 
-	let pending = $state(false);
-
 	/*
 	 * Derived from the prop, with a local override once the reader touches it.
 	 *
@@ -51,28 +49,37 @@
 		 */
 		mouse.preventDefault();
 		mouse.stopPropagation();
-		if (pending) return;
 
+		/*
+		 * The local list changes immediately, every time, and is never rolled back.
+		 *
+		 * This used to drop a tap that arrived while a request was in flight, and to undo the local
+		 * change if that request failed. Both were wrong, and together they made hearting then
+		 * un-hearting quickly leave the event hearted — caught by CI, not locally, because it needs
+		 * a slow enough round trip.
+		 *
+		 * The two halves of this feature are not equal partners. The list is the reader's, and they
+		 * just told us what they want it to say; the count is a shared tally we keep on their
+		 * behalf. So the tap always wins locally, and only the number waits on the server.
+		 */
 		const next = !on;
 		const changed = next ? rememberHeart(eventId) : forgetHeart(eventId);
 		if (!changed) return;
 
 		override = Math.max(0, count + (next ? 1 : -1));
-		pending = true;
 
 		try {
 			const result = await toggleHeart({ eventId, clientId: ensureClientId(), hearted: next });
-			override = result.hearts;
-		} catch {
 			/*
-			 * Put it back. The reader's own list is the thing they will notice being wrong, so a
-			 * failed write must not leave a heart that only exists in this browser.
+			 * Only if this is still the tap being answered.
+			 *
+			 * Two taps in quick succession produce two requests, and they can land out of order. The
+			 * one that matches what the reader currently wants is the one whose number to believe.
 			 */
-			if (next) forgetHeart(eventId);
-			else rememberHeart(eventId);
-			override = null;
-		} finally {
-			pending = false;
+			if (isHearted(eventId) === next) override = result.hearts;
+		} catch {
+			// The list is already correct. The count may be stale until the next load, which is a
+			// far smaller wrong than silently undoing what the reader asked for.
 		}
 	}
 </script>
