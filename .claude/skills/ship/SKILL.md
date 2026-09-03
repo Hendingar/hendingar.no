@@ -86,21 +86,39 @@ work".
 
 ## 4. Merge on green — hand it to GitHub, not to yourself
 
-Arm server-side auto-merge the moment the PR exists:
+**`main` has no branch protection and no required checks.** That single fact decides how this
+step works, and it is not what it looks like:
 
 ```bash
-gh pr merge <N> --squash --delete-branch --auto
+gh pr merge <N> --squash --delete-branch --auto   # ⚠️ merges IMMEDIATELY, red or green
 ```
 
-`--auto` is the whole point. GitHub merges the PR itself when the checks pass, whether or not this
-session is still alive, still watching, or still in the same conversation. `allow_auto_merge` and
-`delete_branch_on_merge` are enabled on the repo, so the branch is deleted either way.
+`--auto` waits for *required* checks. With none configured there is nothing to wait for, so it
+merges on the spot — and `main` deploys. The flag reads like a safety feature and is currently the
+opposite of one.
 
-If the checks are already green, the same command merges immediately.
+So wait for the checks yourself, then merge:
+
+```bash
+until gh pr checks <N> >/dev/null 2>&1; do sleep 20; done   # exits 0 only when all pass
+gh pr merge <N> --squash --delete-branch
+```
+
+`gh pr checks` exits non-zero while anything is pending *and* if anything failed, so the loop ends
+only on green. If it never ends, read the output — something is red and needs fixing, not merging.
+
+`allow_auto_merge` and `delete_branch_on_merge` are enabled on the repo, so the branch is deleted
+either way. `--delete-branch` stays in the command as belt and braces: skipping it is how the repo
+accumulated nine dangling branches that `git branch --merged` could never see, since a squash
+shares no history with the branch it came from.
+
+> If required status checks are ever turned on for `main`, `--auto` becomes the right answer and
+> this loop can go. Until then it is the thing standing between a red build and production.
 
 **Do not use a background Monitor to merge a PR.** It was tried and it silently did not fire —
 three PRs sat green and unmerged while the session reported them as "auto-merging". A watcher that
 merges is a promise that depends on the watcher still running, which is not something to promise.
+Wait in the foreground, where failing to wait is visible.
 
 ### Never say "merged" without looking
 
