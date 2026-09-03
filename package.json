@@ -25,10 +25,11 @@
 		"db:logs": "./scripts/db.sh logs",
 		"db:psql": "./scripts/db.sh psql",
 		"db:url": "./scripts/db.sh url",
-		"ingest": "pnpm run ingest:detskjer && pnpm run ingest:mec && pnpm run ingest:checkin",
+		"ingest": "pnpm run ingest:detskjer && pnpm run ingest:mec && pnpm run ingest:checkin && pnpm run ingest:kyrkja",
 		"ingest:detskjer": "pnpm --filter @hendingar/importer-detskjer ingest",
 		"ingest:mec": "pnpm --filter @hendingar/importer-mec ingest",
 		"ingest:checkin": "pnpm --filter @hendingar/importer-checkin ingest",
+		"ingest:kyrkja": "pnpm --filter @hendingar/importer-kyrkja ingest",
 		"verifier:dev": "cd services/verifier && ./.venv/bin/verifier dev",
 		"verifier:eval": "cd services/verifier && ./.venv/bin/python evals/run.py",
 		"db:bootstrap": "pnpm run db:up && pnpm run db:migrate && pnpm run db:seed && pnpm run db:sources && pnpm run ingest"

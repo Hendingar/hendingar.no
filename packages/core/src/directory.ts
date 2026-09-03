@@ -24,9 +24,11 @@ export type LinkedSource = {
 };
 
 /*
- * Kulleseidkanalen has graduated out of this list: importers/checkin now collects it through the
- * Checkin.no GraphQL API. The importer upserts the same slug, so the row changes kind in place —
- * which is why `pnpm db:sources` skips any slug an importer has taken over.
+ * Two entries have graduated out of this list: Kulleseidkanalen to importers/checkin, and Bømlo
+ * kyrkjelege fellesråd to importers/kyrkja once it turned out its calendar was readable after all
+ * — JSON-escaped inside a script tag rather than absent. Each importer upserts the same slug, so
+ * the row changes kind in place, which is why `pnpm db:sources` skips any slug an importer has
+ * taken over.
  */
 export const LINKED_SOURCES: readonly LinkedSource[] = [
 	{
@@ -37,15 +39,6 @@ export const LINKED_SOURCES: readonly LinkedSource[] = [
 		attribution: 'Riksteatret',
 		iconUrl: 'https://www.riksteatret.no/apple-touch-icon-precomposed.png',
 		note: 'Framsyningane til Riksteatret i Bømlo kulturhus. Sida er lesbar og vi planlegg å hente herifrå.'
-	},
-	{
-		slug: 'bomlo-kyrkja',
-		name: 'Bømlo kyrkjelege fellesråd',
-		url: 'https://bomlo.kyrkja.no/Kalender',
-		region: 'Sunnhordland',
-		attribution: 'Bømlo kyrkjelege fellesråd',
-		iconUrl: 'https://bomlo.kyrkja.no/favicon.ico',
-		note: 'Kalenderen blir bygd i nettlesaren, så sjølve sida inneheld ingen datoar å lese. Vi har ikkje funne noko endepunkt å hente frå.'
 	},
 	{
 		slug: 'bomlo-aktivitetforalle',
