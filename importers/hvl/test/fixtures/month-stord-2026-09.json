@@ -1,0 +1,7251 @@
+{
+	"startDateTime": "2026-08-31T00:00:00",
+	"endDateTime": "2027-09-03T00:00:00+00:00",
+	"year": 2026,
+	"month": 9,
+	"day": 0,
+	"language": "nn-NO",
+	"hasPreviousMonth": false,
+	"firstWeek": 36,
+	"title": "September 2026",
+	"days": [
+		[
+			{
+				"dateTime": "2026-08-31T02:00:00",
+				"isInactive": true,
+				"isNextMonth": false,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 31,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 36
+			},
+			{
+				"dateTime": "2026-09-01T02:00:00",
+				"isInactive": true,
+				"isNextMonth": false,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 1,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 36
+			},
+			{
+				"dateTime": "2026-09-02T02:00:00",
+				"isInactive": true,
+				"isNextMonth": false,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 2,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 36
+			},
+			{
+				"dateTime": "2026-09-03T02:00:00",
+				"isInactive": false,
+				"isNextMonth": false,
+				"isSelected": false,
+				"hasItems": true,
+				"day": 3,
+				"isHolyday": false,
+				"isToday": true,
+				"week": 36
+			},
+			{
+				"dateTime": "2026-09-04T02:00:00",
+				"isInactive": false,
+				"isNextMonth": false,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 4,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 36
+			},
+			{
+				"dateTime": "2026-09-05T02:00:00",
+				"isInactive": false,
+				"isNextMonth": false,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 5,
+				"isHolyday": true,
+				"isToday": false,
+				"week": 36
+			},
+			{
+				"dateTime": "2026-09-06T02:00:00",
+				"isInactive": false,
+				"isNextMonth": false,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 6,
+				"isHolyday": true,
+				"isToday": false,
+				"week": 36
+			}
+		],
+		[
+			{
+				"dateTime": "2026-09-07T02:00:00",
+				"isInactive": false,
+				"isNextMonth": false,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 7,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 37
+			},
+			{
+				"dateTime": "2026-09-08T02:00:00",
+				"isInactive": false,
+				"isNextMonth": false,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 8,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 37
+			},
+			{
+				"dateTime": "2026-09-09T02:00:00",
+				"isInactive": false,
+				"isNextMonth": false,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 9,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 37
+			},
+			{
+				"dateTime": "2026-09-10T02:00:00",
+				"isInactive": false,
+				"isNextMonth": false,
+				"isSelected": false,
+				"hasItems": true,
+				"day": 10,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 37
+			},
+			{
+				"dateTime": "2026-09-11T02:00:00",
+				"isInactive": false,
+				"isNextMonth": false,
+				"isSelected": false,
+				"hasItems": true,
+				"day": 11,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 37
+			},
+			{
+				"dateTime": "2026-09-12T02:00:00",
+				"isInactive": false,
+				"isNextMonth": false,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 12,
+				"isHolyday": true,
+				"isToday": false,
+				"week": 37
+			},
+			{
+				"dateTime": "2026-09-13T02:00:00",
+				"isInactive": false,
+				"isNextMonth": false,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 13,
+				"isHolyday": true,
+				"isToday": false,
+				"week": 37
+			}
+		],
+		[
+			{
+				"dateTime": "2026-09-14T02:00:00",
+				"isInactive": false,
+				"isNextMonth": false,
+				"isSelected": false,
+				"hasItems": true,
+				"day": 14,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 38
+			},
+			{
+				"dateTime": "2026-09-15T02:00:00",
+				"isInactive": false,
+				"isNextMonth": false,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 15,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 38
+			},
+			{
+				"dateTime": "2026-09-16T02:00:00",
+				"isInactive": false,
+				"isNextMonth": false,
+				"isSelected": false,
+				"hasItems": true,
+				"day": 16,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 38
+			},
+			{
+				"dateTime": "2026-09-17T02:00:00",
+				"isInactive": false,
+				"isNextMonth": false,
+				"isSelected": false,
+				"hasItems": true,
+				"day": 17,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 38
+			},
+			{
+				"dateTime": "2026-09-18T02:00:00",
+				"isInactive": false,
+				"isNextMonth": false,
+				"isSelected": false,
+				"hasItems": true,
+				"day": 18,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 38
+			},
+			{
+				"dateTime": "2026-09-19T02:00:00",
+				"isInactive": false,
+				"isNextMonth": false,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 19,
+				"isHolyday": true,
+				"isToday": false,
+				"week": 38
+			},
+			{
+				"dateTime": "2026-09-20T02:00:00",
+				"isInactive": false,
+				"isNextMonth": false,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 20,
+				"isHolyday": true,
+				"isToday": false,
+				"week": 38
+			}
+		],
+		[
+			{
+				"dateTime": "2026-09-21T02:00:00",
+				"isInactive": false,
+				"isNextMonth": false,
+				"isSelected": false,
+				"hasItems": true,
+				"day": 21,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 39
+			},
+			{
+				"dateTime": "2026-09-22T02:00:00",
+				"isInactive": false,
+				"isNextMonth": false,
+				"isSelected": false,
+				"hasItems": true,
+				"day": 22,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 39
+			},
+			{
+				"dateTime": "2026-09-23T02:00:00",
+				"isInactive": false,
+				"isNextMonth": false,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 23,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 39
+			},
+			{
+				"dateTime": "2026-09-24T02:00:00",
+				"isInactive": false,
+				"isNextMonth": false,
+				"isSelected": false,
+				"hasItems": true,
+				"day": 24,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 39
+			},
+			{
+				"dateTime": "2026-09-25T02:00:00",
+				"isInactive": false,
+				"isNextMonth": false,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 25,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 39
+			},
+			{
+				"dateTime": "2026-09-26T02:00:00",
+				"isInactive": false,
+				"isNextMonth": false,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 26,
+				"isHolyday": true,
+				"isToday": false,
+				"week": 39
+			},
+			{
+				"dateTime": "2026-09-27T02:00:00",
+				"isInactive": false,
+				"isNextMonth": false,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 27,
+				"isHolyday": true,
+				"isToday": false,
+				"week": 39
+			}
+		],
+		[
+			{
+				"dateTime": "2026-09-28T02:00:00",
+				"isInactive": false,
+				"isNextMonth": false,
+				"isSelected": false,
+				"hasItems": true,
+				"day": 28,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 40
+			},
+			{
+				"dateTime": "2026-09-29T02:00:00",
+				"isInactive": false,
+				"isNextMonth": false,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 29,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 40
+			},
+			{
+				"dateTime": "2026-09-30T02:00:00",
+				"isInactive": false,
+				"isNextMonth": false,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 30,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 40
+			},
+			{
+				"dateTime": "2026-10-01T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": true,
+				"day": 1,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 40
+			},
+			{
+				"dateTime": "2026-10-02T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 2,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 40
+			},
+			{
+				"dateTime": "2026-10-03T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 3,
+				"isHolyday": true,
+				"isToday": false,
+				"week": 40
+			},
+			{
+				"dateTime": "2026-10-04T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 4,
+				"isHolyday": true,
+				"isToday": false,
+				"week": 40
+			}
+		],
+		[
+			{
+				"dateTime": "2026-10-05T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 5,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 41
+			},
+			{
+				"dateTime": "2026-10-06T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 6,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 41
+			},
+			{
+				"dateTime": "2026-10-07T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 7,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 41
+			},
+			{
+				"dateTime": "2026-10-08T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 8,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 41
+			},
+			{
+				"dateTime": "2026-10-09T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 9,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 41
+			},
+			{
+				"dateTime": "2026-10-10T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 10,
+				"isHolyday": true,
+				"isToday": false,
+				"week": 41
+			},
+			{
+				"dateTime": "2026-10-11T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 11,
+				"isHolyday": true,
+				"isToday": false,
+				"week": 41
+			}
+		],
+		[
+			{
+				"dateTime": "2026-10-12T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 12,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 42
+			},
+			{
+				"dateTime": "2026-10-13T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": true,
+				"day": 13,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 42
+			},
+			{
+				"dateTime": "2026-10-14T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 14,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 42
+			},
+			{
+				"dateTime": "2026-10-15T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 15,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 42
+			},
+			{
+				"dateTime": "2026-10-16T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 16,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 42
+			},
+			{
+				"dateTime": "2026-10-17T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 17,
+				"isHolyday": true,
+				"isToday": false,
+				"week": 42
+			},
+			{
+				"dateTime": "2026-10-18T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 18,
+				"isHolyday": true,
+				"isToday": false,
+				"week": 42
+			}
+		],
+		[
+			{
+				"dateTime": "2026-10-19T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 19,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 43
+			},
+			{
+				"dateTime": "2026-10-20T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 20,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 43
+			},
+			{
+				"dateTime": "2026-10-21T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 21,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 43
+			},
+			{
+				"dateTime": "2026-10-22T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 22,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 43
+			},
+			{
+				"dateTime": "2026-10-23T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 23,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 43
+			},
+			{
+				"dateTime": "2026-10-24T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 24,
+				"isHolyday": true,
+				"isToday": false,
+				"week": 43
+			},
+			{
+				"dateTime": "2026-10-25T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 25,
+				"isHolyday": true,
+				"isToday": false,
+				"week": 43
+			}
+		],
+		[
+			{
+				"dateTime": "2026-10-26T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 26,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 44
+			},
+			{
+				"dateTime": "2026-10-27T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": true,
+				"day": 27,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 44
+			},
+			{
+				"dateTime": "2026-10-28T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": true,
+				"day": 28,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 44
+			},
+			{
+				"dateTime": "2026-10-29T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 29,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 44
+			},
+			{
+				"dateTime": "2026-10-30T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 30,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 44
+			},
+			{
+				"dateTime": "2026-10-31T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 31,
+				"isHolyday": true,
+				"isToday": false,
+				"week": 44
+			},
+			{
+				"dateTime": "2026-11-01T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 1,
+				"isHolyday": true,
+				"isToday": false,
+				"week": 44
+			}
+		],
+		[
+			{
+				"dateTime": "2026-11-02T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 2,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 45
+			},
+			{
+				"dateTime": "2026-11-03T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 3,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 45
+			},
+			{
+				"dateTime": "2026-11-04T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": true,
+				"day": 4,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 45
+			},
+			{
+				"dateTime": "2026-11-05T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 5,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 45
+			},
+			{
+				"dateTime": "2026-11-06T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": true,
+				"day": 6,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 45
+			},
+			{
+				"dateTime": "2026-11-07T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 7,
+				"isHolyday": true,
+				"isToday": false,
+				"week": 45
+			},
+			{
+				"dateTime": "2026-11-08T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 8,
+				"isHolyday": true,
+				"isToday": false,
+				"week": 45
+			}
+		],
+		[
+			{
+				"dateTime": "2026-11-09T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 9,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 46
+			},
+			{
+				"dateTime": "2026-11-10T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 10,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 46
+			},
+			{
+				"dateTime": "2026-11-11T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 11,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 46
+			},
+			{
+				"dateTime": "2026-11-12T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 12,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 46
+			},
+			{
+				"dateTime": "2026-11-13T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 13,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 46
+			},
+			{
+				"dateTime": "2026-11-14T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 14,
+				"isHolyday": true,
+				"isToday": false,
+				"week": 46
+			},
+			{
+				"dateTime": "2026-11-15T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 15,
+				"isHolyday": true,
+				"isToday": false,
+				"week": 46
+			}
+		],
+		[
+			{
+				"dateTime": "2026-11-16T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 16,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 47
+			},
+			{
+				"dateTime": "2026-11-17T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 17,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 47
+			},
+			{
+				"dateTime": "2026-11-18T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 18,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 47
+			},
+			{
+				"dateTime": "2026-11-19T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 19,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 47
+			},
+			{
+				"dateTime": "2026-11-20T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 20,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 47
+			},
+			{
+				"dateTime": "2026-11-21T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 21,
+				"isHolyday": true,
+				"isToday": false,
+				"week": 47
+			},
+			{
+				"dateTime": "2026-11-22T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 22,
+				"isHolyday": true,
+				"isToday": false,
+				"week": 47
+			}
+		],
+		[
+			{
+				"dateTime": "2026-11-23T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 23,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 48
+			},
+			{
+				"dateTime": "2026-11-24T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 24,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 48
+			},
+			{
+				"dateTime": "2026-11-25T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 25,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 48
+			},
+			{
+				"dateTime": "2026-11-26T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 26,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 48
+			},
+			{
+				"dateTime": "2026-11-27T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 27,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 48
+			},
+			{
+				"dateTime": "2026-11-28T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 28,
+				"isHolyday": true,
+				"isToday": false,
+				"week": 48
+			},
+			{
+				"dateTime": "2026-11-29T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 29,
+				"isHolyday": true,
+				"isToday": false,
+				"week": 48
+			}
+		],
+		[
+			{
+				"dateTime": "2026-11-30T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 30,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 49
+			},
+			{
+				"dateTime": "2026-12-01T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": true,
+				"day": 1,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 49
+			},
+			{
+				"dateTime": "2026-12-02T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 2,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 49
+			},
+			{
+				"dateTime": "2026-12-03T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 3,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 49
+			},
+			{
+				"dateTime": "2026-12-04T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 4,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 49
+			},
+			{
+				"dateTime": "2026-12-05T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 5,
+				"isHolyday": true,
+				"isToday": false,
+				"week": 49
+			},
+			{
+				"dateTime": "2026-12-06T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 6,
+				"isHolyday": true,
+				"isToday": false,
+				"week": 49
+			}
+		],
+		[
+			{
+				"dateTime": "2026-12-07T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 7,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 50
+			},
+			{
+				"dateTime": "2026-12-08T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 8,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 50
+			},
+			{
+				"dateTime": "2026-12-09T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 9,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 50
+			},
+			{
+				"dateTime": "2026-12-10T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 10,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 50
+			},
+			{
+				"dateTime": "2026-12-11T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 11,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 50
+			},
+			{
+				"dateTime": "2026-12-12T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 12,
+				"isHolyday": true,
+				"isToday": false,
+				"week": 50
+			},
+			{
+				"dateTime": "2026-12-13T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 13,
+				"isHolyday": true,
+				"isToday": false,
+				"week": 50
+			}
+		],
+		[
+			{
+				"dateTime": "2026-12-14T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 14,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 51
+			},
+			{
+				"dateTime": "2026-12-15T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 15,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 51
+			},
+			{
+				"dateTime": "2026-12-16T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 16,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 51
+			},
+			{
+				"dateTime": "2026-12-17T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 17,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 51
+			},
+			{
+				"dateTime": "2026-12-18T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 18,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 51
+			},
+			{
+				"dateTime": "2026-12-19T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 19,
+				"isHolyday": true,
+				"isToday": false,
+				"week": 51
+			},
+			{
+				"dateTime": "2026-12-20T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 20,
+				"isHolyday": true,
+				"isToday": false,
+				"week": 51
+			}
+		],
+		[
+			{
+				"dateTime": "2026-12-21T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 21,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 52
+			},
+			{
+				"dateTime": "2026-12-22T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 22,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 52
+			},
+			{
+				"dateTime": "2026-12-23T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 23,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 52
+			},
+			{
+				"dateTime": "2026-12-24T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 24,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 52
+			},
+			{
+				"dateTime": "2026-12-25T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 25,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 52
+			},
+			{
+				"dateTime": "2026-12-26T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 26,
+				"isHolyday": true,
+				"isToday": false,
+				"week": 52
+			},
+			{
+				"dateTime": "2026-12-27T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 27,
+				"isHolyday": true,
+				"isToday": false,
+				"week": 52
+			}
+		],
+		[
+			{
+				"dateTime": "2026-12-28T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 28,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 53
+			},
+			{
+				"dateTime": "2026-12-29T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 29,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 53
+			},
+			{
+				"dateTime": "2026-12-30T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 30,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 53
+			},
+			{
+				"dateTime": "2026-12-31T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 31,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 53
+			},
+			{
+				"dateTime": "2027-01-01T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 1,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 53
+			},
+			{
+				"dateTime": "2027-01-02T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 2,
+				"isHolyday": true,
+				"isToday": false,
+				"week": 53
+			},
+			{
+				"dateTime": "2027-01-03T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 3,
+				"isHolyday": true,
+				"isToday": false,
+				"week": 53
+			}
+		],
+		[
+			{
+				"dateTime": "2027-01-04T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 4,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 1
+			},
+			{
+				"dateTime": "2027-01-05T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 5,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 1
+			},
+			{
+				"dateTime": "2027-01-06T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 6,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 1
+			},
+			{
+				"dateTime": "2027-01-07T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 7,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 1
+			},
+			{
+				"dateTime": "2027-01-08T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 8,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 1
+			},
+			{
+				"dateTime": "2027-01-09T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 9,
+				"isHolyday": true,
+				"isToday": false,
+				"week": 1
+			},
+			{
+				"dateTime": "2027-01-10T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 10,
+				"isHolyday": true,
+				"isToday": false,
+				"week": 1
+			}
+		],
+		[
+			{
+				"dateTime": "2027-01-11T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 11,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 2
+			},
+			{
+				"dateTime": "2027-01-12T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 12,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 2
+			},
+			{
+				"dateTime": "2027-01-13T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 13,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 2
+			},
+			{
+				"dateTime": "2027-01-14T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 14,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 2
+			},
+			{
+				"dateTime": "2027-01-15T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 15,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 2
+			},
+			{
+				"dateTime": "2027-01-16T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 16,
+				"isHolyday": true,
+				"isToday": false,
+				"week": 2
+			},
+			{
+				"dateTime": "2027-01-17T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 17,
+				"isHolyday": true,
+				"isToday": false,
+				"week": 2
+			}
+		],
+		[
+			{
+				"dateTime": "2027-01-18T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 18,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 3
+			},
+			{
+				"dateTime": "2027-01-19T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 19,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 3
+			},
+			{
+				"dateTime": "2027-01-20T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 20,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 3
+			},
+			{
+				"dateTime": "2027-01-21T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 21,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 3
+			},
+			{
+				"dateTime": "2027-01-22T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 22,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 3
+			},
+			{
+				"dateTime": "2027-01-23T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 23,
+				"isHolyday": true,
+				"isToday": false,
+				"week": 3
+			},
+			{
+				"dateTime": "2027-01-24T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 24,
+				"isHolyday": true,
+				"isToday": false,
+				"week": 3
+			}
+		],
+		[
+			{
+				"dateTime": "2027-01-25T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 25,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 4
+			},
+			{
+				"dateTime": "2027-01-26T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 26,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 4
+			},
+			{
+				"dateTime": "2027-01-27T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 27,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 4
+			},
+			{
+				"dateTime": "2027-01-28T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 28,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 4
+			},
+			{
+				"dateTime": "2027-01-29T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 29,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 4
+			},
+			{
+				"dateTime": "2027-01-30T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 30,
+				"isHolyday": true,
+				"isToday": false,
+				"week": 4
+			},
+			{
+				"dateTime": "2027-01-31T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 31,
+				"isHolyday": true,
+				"isToday": false,
+				"week": 4
+			}
+		],
+		[
+			{
+				"dateTime": "2027-02-01T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 1,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 5
+			},
+			{
+				"dateTime": "2027-02-02T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 2,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 5
+			},
+			{
+				"dateTime": "2027-02-03T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 3,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 5
+			},
+			{
+				"dateTime": "2027-02-04T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 4,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 5
+			},
+			{
+				"dateTime": "2027-02-05T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 5,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 5
+			},
+			{
+				"dateTime": "2027-02-06T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 6,
+				"isHolyday": true,
+				"isToday": false,
+				"week": 5
+			},
+			{
+				"dateTime": "2027-02-07T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 7,
+				"isHolyday": true,
+				"isToday": false,
+				"week": 5
+			}
+		],
+		[
+			{
+				"dateTime": "2027-02-08T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 8,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 6
+			},
+			{
+				"dateTime": "2027-02-09T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 9,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 6
+			},
+			{
+				"dateTime": "2027-02-10T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 10,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 6
+			},
+			{
+				"dateTime": "2027-02-11T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 11,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 6
+			},
+			{
+				"dateTime": "2027-02-12T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 12,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 6
+			},
+			{
+				"dateTime": "2027-02-13T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 13,
+				"isHolyday": true,
+				"isToday": false,
+				"week": 6
+			},
+			{
+				"dateTime": "2027-02-14T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 14,
+				"isHolyday": true,
+				"isToday": false,
+				"week": 6
+			}
+		],
+		[
+			{
+				"dateTime": "2027-02-15T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 15,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 7
+			},
+			{
+				"dateTime": "2027-02-16T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 16,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 7
+			},
+			{
+				"dateTime": "2027-02-17T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 17,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 7
+			},
+			{
+				"dateTime": "2027-02-18T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 18,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 7
+			},
+			{
+				"dateTime": "2027-02-19T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 19,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 7
+			},
+			{
+				"dateTime": "2027-02-20T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 20,
+				"isHolyday": true,
+				"isToday": false,
+				"week": 7
+			},
+			{
+				"dateTime": "2027-02-21T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 21,
+				"isHolyday": true,
+				"isToday": false,
+				"week": 7
+			}
+		],
+		[
+			{
+				"dateTime": "2027-02-22T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 22,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 8
+			},
+			{
+				"dateTime": "2027-02-23T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 23,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 8
+			},
+			{
+				"dateTime": "2027-02-24T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 24,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 8
+			},
+			{
+				"dateTime": "2027-02-25T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 25,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 8
+			},
+			{
+				"dateTime": "2027-02-26T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 26,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 8
+			},
+			{
+				"dateTime": "2027-02-27T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 27,
+				"isHolyday": true,
+				"isToday": false,
+				"week": 8
+			},
+			{
+				"dateTime": "2027-02-28T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 28,
+				"isHolyday": true,
+				"isToday": false,
+				"week": 8
+			}
+		],
+		[
+			{
+				"dateTime": "2027-03-01T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 1,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 9
+			},
+			{
+				"dateTime": "2027-03-02T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 2,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 9
+			},
+			{
+				"dateTime": "2027-03-03T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 3,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 9
+			},
+			{
+				"dateTime": "2027-03-04T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 4,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 9
+			},
+			{
+				"dateTime": "2027-03-05T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 5,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 9
+			},
+			{
+				"dateTime": "2027-03-06T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 6,
+				"isHolyday": true,
+				"isToday": false,
+				"week": 9
+			},
+			{
+				"dateTime": "2027-03-07T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 7,
+				"isHolyday": true,
+				"isToday": false,
+				"week": 9
+			}
+		],
+		[
+			{
+				"dateTime": "2027-03-08T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 8,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 10
+			},
+			{
+				"dateTime": "2027-03-09T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 9,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 10
+			},
+			{
+				"dateTime": "2027-03-10T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 10,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 10
+			},
+			{
+				"dateTime": "2027-03-11T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 11,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 10
+			},
+			{
+				"dateTime": "2027-03-12T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 12,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 10
+			},
+			{
+				"dateTime": "2027-03-13T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 13,
+				"isHolyday": true,
+				"isToday": false,
+				"week": 10
+			},
+			{
+				"dateTime": "2027-03-14T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 14,
+				"isHolyday": true,
+				"isToday": false,
+				"week": 10
+			}
+		],
+		[
+			{
+				"dateTime": "2027-03-15T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 15,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 11
+			},
+			{
+				"dateTime": "2027-03-16T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 16,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 11
+			},
+			{
+				"dateTime": "2027-03-17T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 17,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 11
+			},
+			{
+				"dateTime": "2027-03-18T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 18,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 11
+			},
+			{
+				"dateTime": "2027-03-19T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 19,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 11
+			},
+			{
+				"dateTime": "2027-03-20T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 20,
+				"isHolyday": true,
+				"isToday": false,
+				"week": 11
+			},
+			{
+				"dateTime": "2027-03-21T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 21,
+				"isHolyday": true,
+				"isToday": false,
+				"week": 11
+			}
+		],
+		[
+			{
+				"dateTime": "2027-03-22T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 22,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 12
+			},
+			{
+				"dateTime": "2027-03-23T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 23,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 12
+			},
+			{
+				"dateTime": "2027-03-24T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 24,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 12
+			},
+			{
+				"dateTime": "2027-03-25T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 25,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 12
+			},
+			{
+				"dateTime": "2027-03-26T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 26,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 12
+			},
+			{
+				"dateTime": "2027-03-27T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 27,
+				"isHolyday": true,
+				"isToday": false,
+				"week": 12
+			},
+			{
+				"dateTime": "2027-03-28T01:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 28,
+				"isHolyday": true,
+				"isToday": false,
+				"week": 12
+			}
+		],
+		[
+			{
+				"dateTime": "2027-03-29T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 29,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 13
+			},
+			{
+				"dateTime": "2027-03-30T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 30,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 13
+			},
+			{
+				"dateTime": "2027-03-31T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 31,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 13
+			},
+			{
+				"dateTime": "2027-04-01T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 1,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 13
+			},
+			{
+				"dateTime": "2027-04-02T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 2,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 13
+			},
+			{
+				"dateTime": "2027-04-03T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 3,
+				"isHolyday": true,
+				"isToday": false,
+				"week": 13
+			},
+			{
+				"dateTime": "2027-04-04T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 4,
+				"isHolyday": true,
+				"isToday": false,
+				"week": 13
+			}
+		],
+		[
+			{
+				"dateTime": "2027-04-05T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 5,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 14
+			},
+			{
+				"dateTime": "2027-04-06T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 6,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 14
+			},
+			{
+				"dateTime": "2027-04-07T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 7,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 14
+			},
+			{
+				"dateTime": "2027-04-08T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 8,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 14
+			},
+			{
+				"dateTime": "2027-04-09T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 9,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 14
+			},
+			{
+				"dateTime": "2027-04-10T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 10,
+				"isHolyday": true,
+				"isToday": false,
+				"week": 14
+			},
+			{
+				"dateTime": "2027-04-11T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 11,
+				"isHolyday": true,
+				"isToday": false,
+				"week": 14
+			}
+		],
+		[
+			{
+				"dateTime": "2027-04-12T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 12,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 15
+			},
+			{
+				"dateTime": "2027-04-13T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 13,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 15
+			},
+			{
+				"dateTime": "2027-04-14T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 14,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 15
+			},
+			{
+				"dateTime": "2027-04-15T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 15,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 15
+			},
+			{
+				"dateTime": "2027-04-16T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 16,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 15
+			},
+			{
+				"dateTime": "2027-04-17T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 17,
+				"isHolyday": true,
+				"isToday": false,
+				"week": 15
+			},
+			{
+				"dateTime": "2027-04-18T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 18,
+				"isHolyday": true,
+				"isToday": false,
+				"week": 15
+			}
+		],
+		[
+			{
+				"dateTime": "2027-04-19T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 19,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 16
+			},
+			{
+				"dateTime": "2027-04-20T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 20,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 16
+			},
+			{
+				"dateTime": "2027-04-21T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 21,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 16
+			},
+			{
+				"dateTime": "2027-04-22T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 22,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 16
+			},
+			{
+				"dateTime": "2027-04-23T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 23,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 16
+			},
+			{
+				"dateTime": "2027-04-24T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 24,
+				"isHolyday": true,
+				"isToday": false,
+				"week": 16
+			},
+			{
+				"dateTime": "2027-04-25T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 25,
+				"isHolyday": true,
+				"isToday": false,
+				"week": 16
+			}
+		],
+		[
+			{
+				"dateTime": "2027-04-26T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 26,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 17
+			},
+			{
+				"dateTime": "2027-04-27T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 27,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 17
+			},
+			{
+				"dateTime": "2027-04-28T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 28,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 17
+			},
+			{
+				"dateTime": "2027-04-29T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 29,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 17
+			},
+			{
+				"dateTime": "2027-04-30T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 30,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 17
+			},
+			{
+				"dateTime": "2027-05-01T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 1,
+				"isHolyday": true,
+				"isToday": false,
+				"week": 17
+			},
+			{
+				"dateTime": "2027-05-02T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 2,
+				"isHolyday": true,
+				"isToday": false,
+				"week": 17
+			}
+		],
+		[
+			{
+				"dateTime": "2027-05-03T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 3,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 18
+			},
+			{
+				"dateTime": "2027-05-04T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 4,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 18
+			},
+			{
+				"dateTime": "2027-05-05T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 5,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 18
+			},
+			{
+				"dateTime": "2027-05-06T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 6,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 18
+			},
+			{
+				"dateTime": "2027-05-07T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 7,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 18
+			},
+			{
+				"dateTime": "2027-05-08T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 8,
+				"isHolyday": true,
+				"isToday": false,
+				"week": 18
+			},
+			{
+				"dateTime": "2027-05-09T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 9,
+				"isHolyday": true,
+				"isToday": false,
+				"week": 18
+			}
+		],
+		[
+			{
+				"dateTime": "2027-05-10T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 10,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 19
+			},
+			{
+				"dateTime": "2027-05-11T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 11,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 19
+			},
+			{
+				"dateTime": "2027-05-12T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 12,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 19
+			},
+			{
+				"dateTime": "2027-05-13T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 13,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 19
+			},
+			{
+				"dateTime": "2027-05-14T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 14,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 19
+			},
+			{
+				"dateTime": "2027-05-15T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 15,
+				"isHolyday": true,
+				"isToday": false,
+				"week": 19
+			},
+			{
+				"dateTime": "2027-05-16T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 16,
+				"isHolyday": true,
+				"isToday": false,
+				"week": 19
+			}
+		],
+		[
+			{
+				"dateTime": "2027-05-17T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 17,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 20
+			},
+			{
+				"dateTime": "2027-05-18T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 18,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 20
+			},
+			{
+				"dateTime": "2027-05-19T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 19,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 20
+			},
+			{
+				"dateTime": "2027-05-20T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 20,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 20
+			},
+			{
+				"dateTime": "2027-05-21T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 21,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 20
+			},
+			{
+				"dateTime": "2027-05-22T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 22,
+				"isHolyday": true,
+				"isToday": false,
+				"week": 20
+			},
+			{
+				"dateTime": "2027-05-23T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 23,
+				"isHolyday": true,
+				"isToday": false,
+				"week": 20
+			}
+		],
+		[
+			{
+				"dateTime": "2027-05-24T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 24,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 21
+			},
+			{
+				"dateTime": "2027-05-25T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 25,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 21
+			},
+			{
+				"dateTime": "2027-05-26T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 26,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 21
+			},
+			{
+				"dateTime": "2027-05-27T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 27,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 21
+			},
+			{
+				"dateTime": "2027-05-28T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 28,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 21
+			},
+			{
+				"dateTime": "2027-05-29T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 29,
+				"isHolyday": true,
+				"isToday": false,
+				"week": 21
+			},
+			{
+				"dateTime": "2027-05-30T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 30,
+				"isHolyday": true,
+				"isToday": false,
+				"week": 21
+			}
+		],
+		[
+			{
+				"dateTime": "2027-05-31T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 31,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 22
+			},
+			{
+				"dateTime": "2027-06-01T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 1,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 22
+			},
+			{
+				"dateTime": "2027-06-02T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 2,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 22
+			},
+			{
+				"dateTime": "2027-06-03T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 3,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 22
+			},
+			{
+				"dateTime": "2027-06-04T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 4,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 22
+			},
+			{
+				"dateTime": "2027-06-05T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 5,
+				"isHolyday": true,
+				"isToday": false,
+				"week": 22
+			},
+			{
+				"dateTime": "2027-06-06T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 6,
+				"isHolyday": true,
+				"isToday": false,
+				"week": 22
+			}
+		],
+		[
+			{
+				"dateTime": "2027-06-07T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 7,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 23
+			},
+			{
+				"dateTime": "2027-06-08T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 8,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 23
+			},
+			{
+				"dateTime": "2027-06-09T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 9,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 23
+			},
+			{
+				"dateTime": "2027-06-10T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 10,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 23
+			},
+			{
+				"dateTime": "2027-06-11T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 11,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 23
+			},
+			{
+				"dateTime": "2027-06-12T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 12,
+				"isHolyday": true,
+				"isToday": false,
+				"week": 23
+			},
+			{
+				"dateTime": "2027-06-13T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 13,
+				"isHolyday": true,
+				"isToday": false,
+				"week": 23
+			}
+		],
+		[
+			{
+				"dateTime": "2027-06-14T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 14,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 24
+			},
+			{
+				"dateTime": "2027-06-15T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 15,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 24
+			},
+			{
+				"dateTime": "2027-06-16T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 16,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 24
+			},
+			{
+				"dateTime": "2027-06-17T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 17,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 24
+			},
+			{
+				"dateTime": "2027-06-18T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 18,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 24
+			},
+			{
+				"dateTime": "2027-06-19T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 19,
+				"isHolyday": true,
+				"isToday": false,
+				"week": 24
+			},
+			{
+				"dateTime": "2027-06-20T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 20,
+				"isHolyday": true,
+				"isToday": false,
+				"week": 24
+			}
+		],
+		[
+			{
+				"dateTime": "2027-06-21T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 21,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 25
+			},
+			{
+				"dateTime": "2027-06-22T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 22,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 25
+			},
+			{
+				"dateTime": "2027-06-23T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 23,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 25
+			},
+			{
+				"dateTime": "2027-06-24T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 24,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 25
+			},
+			{
+				"dateTime": "2027-06-25T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 25,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 25
+			},
+			{
+				"dateTime": "2027-06-26T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 26,
+				"isHolyday": true,
+				"isToday": false,
+				"week": 25
+			},
+			{
+				"dateTime": "2027-06-27T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 27,
+				"isHolyday": true,
+				"isToday": false,
+				"week": 25
+			}
+		],
+		[
+			{
+				"dateTime": "2027-06-28T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 28,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 26
+			},
+			{
+				"dateTime": "2027-06-29T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 29,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 26
+			},
+			{
+				"dateTime": "2027-06-30T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 30,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 26
+			},
+			{
+				"dateTime": "2027-07-01T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 1,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 26
+			},
+			{
+				"dateTime": "2027-07-02T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 2,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 26
+			},
+			{
+				"dateTime": "2027-07-03T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 3,
+				"isHolyday": true,
+				"isToday": false,
+				"week": 26
+			},
+			{
+				"dateTime": "2027-07-04T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 4,
+				"isHolyday": true,
+				"isToday": false,
+				"week": 26
+			}
+		],
+		[
+			{
+				"dateTime": "2027-07-05T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 5,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 27
+			},
+			{
+				"dateTime": "2027-07-06T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 6,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 27
+			},
+			{
+				"dateTime": "2027-07-07T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 7,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 27
+			},
+			{
+				"dateTime": "2027-07-08T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 8,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 27
+			},
+			{
+				"dateTime": "2027-07-09T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 9,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 27
+			},
+			{
+				"dateTime": "2027-07-10T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 10,
+				"isHolyday": true,
+				"isToday": false,
+				"week": 27
+			},
+			{
+				"dateTime": "2027-07-11T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 11,
+				"isHolyday": true,
+				"isToday": false,
+				"week": 27
+			}
+		],
+		[
+			{
+				"dateTime": "2027-07-12T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 12,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 28
+			},
+			{
+				"dateTime": "2027-07-13T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 13,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 28
+			},
+			{
+				"dateTime": "2027-07-14T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 14,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 28
+			},
+			{
+				"dateTime": "2027-07-15T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 15,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 28
+			},
+			{
+				"dateTime": "2027-07-16T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 16,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 28
+			},
+			{
+				"dateTime": "2027-07-17T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 17,
+				"isHolyday": true,
+				"isToday": false,
+				"week": 28
+			},
+			{
+				"dateTime": "2027-07-18T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 18,
+				"isHolyday": true,
+				"isToday": false,
+				"week": 28
+			}
+		],
+		[
+			{
+				"dateTime": "2027-07-19T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 19,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 29
+			},
+			{
+				"dateTime": "2027-07-20T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 20,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 29
+			},
+			{
+				"dateTime": "2027-07-21T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 21,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 29
+			},
+			{
+				"dateTime": "2027-07-22T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 22,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 29
+			},
+			{
+				"dateTime": "2027-07-23T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 23,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 29
+			},
+			{
+				"dateTime": "2027-07-24T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 24,
+				"isHolyday": true,
+				"isToday": false,
+				"week": 29
+			},
+			{
+				"dateTime": "2027-07-25T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 25,
+				"isHolyday": true,
+				"isToday": false,
+				"week": 29
+			}
+		],
+		[
+			{
+				"dateTime": "2027-07-26T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 26,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 30
+			},
+			{
+				"dateTime": "2027-07-27T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 27,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 30
+			},
+			{
+				"dateTime": "2027-07-28T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 28,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 30
+			},
+			{
+				"dateTime": "2027-07-29T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 29,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 30
+			},
+			{
+				"dateTime": "2027-07-30T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 30,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 30
+			},
+			{
+				"dateTime": "2027-07-31T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 31,
+				"isHolyday": true,
+				"isToday": false,
+				"week": 30
+			},
+			{
+				"dateTime": "2027-08-01T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 1,
+				"isHolyday": true,
+				"isToday": false,
+				"week": 30
+			}
+		],
+		[
+			{
+				"dateTime": "2027-08-02T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 2,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 31
+			},
+			{
+				"dateTime": "2027-08-03T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 3,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 31
+			},
+			{
+				"dateTime": "2027-08-04T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 4,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 31
+			},
+			{
+				"dateTime": "2027-08-05T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 5,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 31
+			},
+			{
+				"dateTime": "2027-08-06T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 6,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 31
+			},
+			{
+				"dateTime": "2027-08-07T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 7,
+				"isHolyday": true,
+				"isToday": false,
+				"week": 31
+			},
+			{
+				"dateTime": "2027-08-08T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 8,
+				"isHolyday": true,
+				"isToday": false,
+				"week": 31
+			}
+		],
+		[
+			{
+				"dateTime": "2027-08-09T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 9,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 32
+			},
+			{
+				"dateTime": "2027-08-10T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 10,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 32
+			},
+			{
+				"dateTime": "2027-08-11T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 11,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 32
+			},
+			{
+				"dateTime": "2027-08-12T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 12,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 32
+			},
+			{
+				"dateTime": "2027-08-13T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 13,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 32
+			},
+			{
+				"dateTime": "2027-08-14T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 14,
+				"isHolyday": true,
+				"isToday": false,
+				"week": 32
+			},
+			{
+				"dateTime": "2027-08-15T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 15,
+				"isHolyday": true,
+				"isToday": false,
+				"week": 32
+			}
+		],
+		[
+			{
+				"dateTime": "2027-08-16T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 16,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 33
+			},
+			{
+				"dateTime": "2027-08-17T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 17,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 33
+			},
+			{
+				"dateTime": "2027-08-18T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 18,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 33
+			},
+			{
+				"dateTime": "2027-08-19T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 19,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 33
+			},
+			{
+				"dateTime": "2027-08-20T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 20,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 33
+			},
+			{
+				"dateTime": "2027-08-21T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 21,
+				"isHolyday": true,
+				"isToday": false,
+				"week": 33
+			},
+			{
+				"dateTime": "2027-08-22T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 22,
+				"isHolyday": true,
+				"isToday": false,
+				"week": 33
+			}
+		],
+		[
+			{
+				"dateTime": "2027-08-23T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 23,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 34
+			},
+			{
+				"dateTime": "2027-08-24T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 24,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 34
+			},
+			{
+				"dateTime": "2027-08-25T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 25,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 34
+			},
+			{
+				"dateTime": "2027-08-26T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 26,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 34
+			},
+			{
+				"dateTime": "2027-08-27T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 27,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 34
+			},
+			{
+				"dateTime": "2027-08-28T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 28,
+				"isHolyday": true,
+				"isToday": false,
+				"week": 34
+			},
+			{
+				"dateTime": "2027-08-29T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 29,
+				"isHolyday": true,
+				"isToday": false,
+				"week": 34
+			}
+		],
+		[
+			{
+				"dateTime": "2027-08-30T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 30,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 35
+			},
+			{
+				"dateTime": "2027-08-31T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 31,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 35
+			},
+			{
+				"dateTime": "2027-09-01T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 1,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 35
+			},
+			{
+				"dateTime": "2027-09-02T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 2,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 35
+			},
+			{
+				"dateTime": "2027-09-03T02:00:00",
+				"isInactive": false,
+				"isNextMonth": true,
+				"isSelected": false,
+				"hasItems": false,
+				"day": 3,
+				"isHolyday": false,
+				"isToday": false,
+				"week": 35
+			}
+		]
+	],
+	"items": [
+		{
+			"startDateTime": "2026-09-03T11:15:00+00:00",
+			"endDateTime": "2026-09-03T12:00:00+00:00",
+			"title": "Innføring i KI",
+			"adress": "Webinar",
+			"description": "",
+			"language": "nn-NO",
+			"filters": [
+				{
+					"id": "Bergen",
+					"parentId": "",
+					"name": "Bergen",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				},
+				{
+					"id": "Førde",
+					"parentId": "",
+					"name": "Førde",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				},
+				{
+					"id": "Haugesund",
+					"parentId": "",
+					"name": "Haugesund",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				},
+				{
+					"id": "Sogndal",
+					"parentId": "",
+					"name": "Sogndal",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				},
+				{
+					"id": "Stord",
+					"parentId": "",
+					"name": "Stord",
+					"selected": true,
+					"hits": 0,
+					"filterItems": []
+				},
+				{
+					"id": "Kurs",
+					"parentId": "",
+					"name": "Kurs",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				}
+			],
+			"visible": true,
+			"url": "/kalender/innforing-i-ki/",
+			"buttonUrl": "https://hvl.zoom.us/j/62804194240?pwd=l0KKTDDXaLaNUimoNypoZ0eEzz34Uj.1",
+			"buttonText": "Lenke til Zoom",
+			"day": 3,
+			"month": "SEP",
+			"when": "13:15",
+			"startFullDateTime": "2026-09-03T13:15+00:00",
+			"endDate": "",
+			"endTime": "14:00",
+			"multiDayEvent": false
+		},
+		{
+			"startDateTime": "2026-09-04T07:15:00+00:00",
+			"endDateTime": "2026-09-04T13:30:00+00:00",
+			"title": "Eirinn Hesvik Ljones disputerer",
+			"adress": "Campus Bergen, HVL",
+			"description": "",
+			"language": "nn-NO",
+			"filters": [
+				{
+					"id": "Bergen",
+					"parentId": "",
+					"name": "Bergen",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				},
+				{
+					"id": "Disputas",
+					"parentId": "",
+					"name": "Disputas/prøveforelesing",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				}
+			],
+			"visible": false,
+			"url": "/kalender/eirinn-hesvik-ljone-disputerer/",
+			"buttonUrl": "/link/70159fd87b044663a3098c545d8079c7.aspx",
+			"buttonText": "Les mer om disputasen her",
+			"day": 4,
+			"month": "SEP",
+			"when": "09:15",
+			"startFullDateTime": "2026-09-04T09:15+00:00",
+			"endDate": "",
+			"endTime": "15:30",
+			"multiDayEvent": false
+		},
+		{
+			"startDateTime": "2026-09-07T12:00:00+00:00",
+			"endDateTime": "2026-09-07T13:00:00+00:00",
+			"title": "AI and Tell med Sarah Newman",
+			"adress": "Læringslab, HVL campus Bergen",
+			"description": "",
+			"language": "nn-NO",
+			"filters": [
+				{
+					"id": "Bergen",
+					"parentId": "",
+					"name": "Bergen",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				}
+			],
+			"visible": false,
+			"url": "/kalender/sarah-newman-foredrag-bergen/",
+			"buttonUrl": "",
+			"buttonText": "",
+			"day": 7,
+			"month": "SEP",
+			"when": "14:00",
+			"startFullDateTime": "2026-09-07T14:00+00:00",
+			"endDate": "",
+			"endTime": "15:00",
+			"multiDayEvent": false
+		},
+		{
+			"startDateTime": "2026-09-08T08:00:00+00:00",
+			"endDateTime": "2026-09-08T13:30:00+00:00",
+			"title": "Tett på! Musikk som ressurs for livskvalitet, mangfald og folkehelse",
+			"adress": "Campus Stord, Aulaen",
+			"description": "",
+			"language": "nn-NO",
+			"filters": [],
+			"visible": false,
+			"url": "/kalender/tett-pa-musikk-som-ressurs-for-livskvalitet-mangfald-og-folkehelse/",
+			"buttonUrl": "https://www.survey-xact.no/servlet/com.pls.morpheus.web.pages.CoreRespondentCollectLinkAnonymous",
+			"buttonText": "Meld deg på innan 3.september",
+			"day": 8,
+			"month": "SEP",
+			"when": "10:00",
+			"startFullDateTime": "2026-09-08T10:00+00:00",
+			"endDate": "",
+			"endTime": "15:30",
+			"multiDayEvent": false
+		},
+		{
+			"startDateTime": "2026-09-08T08:00:00+00:00",
+			"endDateTime": "2026-09-09T13:00:00+00:00",
+			"title": "Nettverkssamling for Fagnettverk for bærekraftig campusutvikling i Bergen",
+			"adress": "Dag 1: UiB, Nygårdsgaten 5. Dag 2: HVL, Inndalsveien 28, Kronstadtorget",
+			"description": "",
+			"language": "nn-NO",
+			"filters": [
+				{
+					"id": "Bergen",
+					"parentId": "",
+					"name": "Bergen",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				},
+				{
+					"id": "Konferanse",
+					"parentId": "",
+					"name": "Konferanse/seminar",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				}
+			],
+			"visible": false,
+			"url": "/kalender/nettverkssamling-for-fagnettverk-for-barekraftig-campusutvikling-i-bergen/",
+			"buttonUrl": "",
+			"buttonText": "",
+			"day": 8,
+			"month": "SEP",
+			"when": "10:00",
+			"startFullDateTime": "2026-09-08T10:00+00:00",
+			"endDate": "09.09",
+			"endTime": "15:00",
+			"multiDayEvent": true
+		},
+		{
+			"startDateTime": "2026-09-08T11:00:00+00:00",
+			"endDateTime": "2026-09-08T16:15:00+00:00",
+			"title": "Fag og fest - feiring av verdens fysioterapidag",
+			"adress": "Høgskulen på Vestlandet, Campus Kronstad, M003",
+			"description": "",
+			"language": "nn-NO",
+			"filters": [
+				{
+					"id": "Bergen",
+					"parentId": "",
+					"name": "Bergen",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				}
+			],
+			"visible": false,
+			"url": "/kalender/verdens-fysioterapidag/",
+			"buttonUrl": "https://forms.cloud.microsoft/pages/responsepage.aspx?id=lXkdCjS3KU2LkLqaB1vdbesPR5gie7xHmBwXgu5YrPRURFA2REVMSVhaRFk3Q0I3TThIRk1DQjQxRy4u&route=shorturl",
+			"buttonText": "Meld deg på her",
+			"day": 8,
+			"month": "SEP",
+			"when": "13:00",
+			"startFullDateTime": "2026-09-08T13:00+00:00",
+			"endDate": "",
+			"endTime": "18:15",
+			"multiDayEvent": false
+		},
+		{
+			"startDateTime": "2026-09-10T07:00:00+00:00",
+			"endDateTime": "2026-09-10T14:00:00+00:00",
+			"title": "Synnøve Kvile disputerer",
+			"adress": "Und 103, campus Stord, HVL",
+			"description": "",
+			"language": "nn-NO",
+			"filters": [
+				{
+					"id": "Stord",
+					"parentId": "",
+					"name": "Stord",
+					"selected": true,
+					"hits": 0,
+					"filterItems": []
+				},
+				{
+					"id": "Disputas",
+					"parentId": "",
+					"name": "Disputas/prøveforelesing",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				}
+			],
+			"visible": true,
+			"url": "/kalender/synnove-kvile-disputerer/",
+			"buttonUrl": "/link/af545dbe78684105a49405df70a2333e.aspx",
+			"buttonText": "Les mer om disputasen her",
+			"day": 10,
+			"month": "SEP",
+			"when": "09:00",
+			"startFullDateTime": "2026-09-10T09:00+00:00",
+			"endDate": "",
+			"endTime": "16:00",
+			"multiDayEvent": false
+		},
+		{
+			"startDateTime": "2026-09-10T09:45:00+00:00",
+			"endDateTime": "2026-09-10T10:15:00+00:00",
+			"title": "Bokslepp: Å vere ein modig maur - utforsking, leik og samskaping",
+			"adress": "Sogndal, Biblioteket",
+			"description": "",
+			"language": "nn-NO",
+			"filters": [
+				{
+					"id": "Sogndal",
+					"parentId": "",
+					"name": "Sogndal",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				},
+				{
+					"id": "Forskingsdagane",
+					"parentId": "",
+					"name": "Forskingsdagane",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				}
+			],
+			"visible": false,
+			"url": "/kalender/bokslepp-a-vere-ein-modig-maur---utforsking-leik-og-samskaping/",
+			"buttonUrl": "",
+			"buttonText": "",
+			"day": 10,
+			"month": "SEP",
+			"when": "11:45",
+			"startFullDateTime": "2026-09-10T11:45+00:00",
+			"endDate": "",
+			"endTime": "12:15",
+			"multiDayEvent": false
+		},
+		{
+			"startDateTime": "2026-09-11T08:00:00+00:00",
+			"endDateTime": "2026-09-11T09:30:00+00:00",
+			"title": "Gjesteforelesning med Maureen P. Boyd",
+			"adress": "UND 146, Rommetveit, campus Stord",
+			"description": "",
+			"language": "nn-NO",
+			"filters": [
+				{
+					"id": "Stord",
+					"parentId": "",
+					"name": "Stord",
+					"selected": true,
+					"hits": 0,
+					"filterItems": []
+				}
+			],
+			"visible": true,
+			"url": "/kalender/gjesteforelesning/",
+			"buttonUrl": "https://www.survey-xact.no/servlet/com.pls.morpheus.web.pages.CoreRespondentCollectLinkAnonymous",
+			"buttonText": "Meld deg på her",
+			"day": 11,
+			"month": "SEP",
+			"when": "10:00",
+			"startFullDateTime": "2026-09-11T10:00+00:00",
+			"endDate": "",
+			"endTime": "11:30",
+			"multiDayEvent": false
+		},
+		{
+			"startDateTime": "2026-09-12T08:30:00+00:00",
+			"endDateTime": "2026-09-12T13:00:00+00:00",
+			"title": "Bergen Student Fjord Cruise",
+			"adress": "Bergen - Modalen",
+			"description": "",
+			"language": "nn-NO",
+			"filters": [
+				{
+					"id": "Bergen",
+					"parentId": "",
+					"name": "Bergen",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				}
+			],
+			"visible": false,
+			"url": "/kalender/bergen-student-fjord-cruise/",
+			"buttonUrl": "https://www.studybergen.com/current-students/events/bergen-student-fjord-cruise-2026",
+			"buttonText": "Program og påmelding",
+			"day": 12,
+			"month": "SEP",
+			"when": "10:30",
+			"startFullDateTime": "2026-09-12T10:30+00:00",
+			"endDate": "",
+			"endTime": "15:00",
+			"multiDayEvent": false
+		},
+		{
+			"startDateTime": "2026-09-14T08:00:00+00:00",
+			"endDateTime": "2026-09-16T11:00:00+00:00",
+			"title": "KLæM 2026",
+			"adress": "Sogndal",
+			"description": "",
+			"language": "nn-NO",
+			"filters": [
+				{
+					"id": "Bergen",
+					"parentId": "",
+					"name": "Bergen",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				},
+				{
+					"id": "Førde",
+					"parentId": "",
+					"name": "Førde",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				},
+				{
+					"id": "Haugesund",
+					"parentId": "",
+					"name": "Haugesund",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				},
+				{
+					"id": "Sogndal",
+					"parentId": "",
+					"name": "Sogndal",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				},
+				{
+					"id": "Stord",
+					"parentId": "",
+					"name": "Stord",
+					"selected": true,
+					"hits": 0,
+					"filterItems": []
+				},
+				{
+					"id": "Konferanse",
+					"parentId": "",
+					"name": "Konferanse/seminar",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				}
+			],
+			"visible": true,
+			"url": "/kalender/klam-2026/",
+			"buttonUrl": "",
+			"buttonText": "",
+			"day": 14,
+			"month": "SEP",
+			"when": "10:00",
+			"startFullDateTime": "2026-09-14T10:00+00:00",
+			"endDate": "16.09",
+			"endTime": "13:00",
+			"multiDayEvent": true
+		},
+		{
+			"startDateTime": "2026-09-14T22:00:00+00:00",
+			"endDateTime": "2026-09-15T21:59:00+00:00",
+			"title": "Søknadsfrist utveksling våren 2027",
+			"adress": null,
+			"description": "",
+			"language": "nn-NO",
+			"filters": [],
+			"visible": false,
+			"url": "/kalender/soknadsfrist-utveksling-varen-2027/",
+			"buttonUrl": "",
+			"buttonText": "",
+			"day": 15,
+			"month": "SEP",
+			"when": "00:00",
+			"startFullDateTime": "2026-09-15T00:00+00:00",
+			"endDate": "",
+			"endTime": "23:59",
+			"multiDayEvent": false
+		},
+		{
+			"startDateTime": "2026-09-15T16:00:00+00:00",
+			"endDateTime": "2026-09-15T20:00:00+00:00",
+			"title": "Forsker Grand Prix",
+			"adress": "Campus Bergen, Mimes brønn",
+			"description": "",
+			"language": "nn-NO",
+			"filters": [
+				{
+					"id": "Bergen",
+					"parentId": "",
+					"name": "Bergen",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				},
+				{
+					"id": "Forskingsdagane",
+					"parentId": "",
+					"name": "Forskingsdagane",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				}
+			],
+			"visible": false,
+			"url": "https://www.forskningsdagenebergen.com/bergen/forsker-grand-prix-2026/",
+			"buttonUrl": "",
+			"buttonText": "",
+			"day": 15,
+			"month": "SEP",
+			"when": "18:00",
+			"startFullDateTime": "2026-09-15T18:00+00:00",
+			"endDate": "",
+			"endTime": "22:00",
+			"multiDayEvent": false
+		},
+		{
+			"startDateTime": "2026-09-16T06:15:00+00:00",
+			"endDateTime": "2026-09-16T07:30:00+00:00",
+			"title": "Åpning av Forskningsdagene 2026",
+			"adress": "HVL, campus Haugesund",
+			"description": "",
+			"language": "nn-NO",
+			"filters": [
+				{
+					"id": "Haugesund",
+					"parentId": "",
+					"name": "Haugesund",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				},
+				{
+					"id": "Forskingsdagane",
+					"parentId": "",
+					"name": "Forskingsdagane",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				}
+			],
+			"visible": false,
+			"url": "/kalender/apning-forskningsdagene/",
+			"buttonUrl": "https://v.hvl.no/pameldingssystem/index.php?id=0000004682",
+			"buttonText": "Påmelding",
+			"day": 16,
+			"month": "SEP",
+			"when": "08:15",
+			"startFullDateTime": "2026-09-16T08:15+00:00",
+			"endDate": "",
+			"endTime": "09:30",
+			"multiDayEvent": false
+		},
+		{
+			"startDateTime": "2026-09-16T08:00:00+00:00",
+			"endDateTime": "2026-09-16T12:30:00+00:00",
+			"title": "Forskningsdagene 2026: Fagdag - Helsepersonell sin rolle i å bygge tillit",
+			"adress": "Høgskulen på Vestlandet, campus Haugesund",
+			"description": "",
+			"language": "nn-NO",
+			"filters": [
+				{
+					"id": "Haugesund",
+					"parentId": "",
+					"name": "Haugesund",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				},
+				{
+					"id": "Forskingsdagane",
+					"parentId": "",
+					"name": "Forskingsdagane",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				}
+			],
+			"visible": false,
+			"url": "/kalender/fagdag-helsepersonell-sin-rolle-i-a-bygge-tillit/",
+			"buttonUrl": "https://v.hvl.no/pameldingssystem/index.php?id=4680",
+			"buttonText": "Påmelding",
+			"day": 16,
+			"month": "SEP",
+			"when": "10:00",
+			"startFullDateTime": "2026-09-16T10:00+00:00",
+			"endDate": "",
+			"endTime": "14:30",
+			"multiDayEvent": false
+		},
+		{
+			"startDateTime": "2026-09-16T09:00:00+00:00",
+			"endDateTime": "2026-09-17T12:00:00+00:00",
+			"title": "Møte i Læringsmiljøutvalet (LMU HVL)",
+			"adress": "Campus Førde og Campus Sogndal",
+			"description": "",
+			"language": "nn-NO",
+			"filters": [
+				{
+					"id": "Bergen",
+					"parentId": "",
+					"name": "Bergen",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				},
+				{
+					"id": "Førde",
+					"parentId": "",
+					"name": "Førde",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				},
+				{
+					"id": "Haugesund",
+					"parentId": "",
+					"name": "Haugesund",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				},
+				{
+					"id": "Sogndal",
+					"parentId": "",
+					"name": "Sogndal",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				},
+				{
+					"id": "Stord",
+					"parentId": "",
+					"name": "Stord",
+					"selected": true,
+					"hits": 0,
+					"filterItems": []
+				}
+			],
+			"visible": true,
+			"url": "/kalender/mote-i-laringsmiljoutvalet-lmu-hvl/",
+			"buttonUrl": "",
+			"buttonText": "",
+			"day": 16,
+			"month": "SEP",
+			"when": "11:00",
+			"startFullDateTime": "2026-09-16T11:00+00:00",
+			"endDate": "17.09",
+			"endTime": "14:00",
+			"multiDayEvent": true
+		},
+		{
+			"startDateTime": "2026-09-16T09:00:00+00:00",
+			"endDateTime": "2026-09-16T16:00:00+00:00",
+			"title": "Ocean Young 2026 (karrieretorg)",
+			"adress": "Mimes Brønn, Campus Bergen ",
+			"description": "",
+			"language": "nn-NO",
+			"filters": [
+				{
+					"id": "Bergen",
+					"parentId": "",
+					"name": "Bergen",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				}
+			],
+			"visible": false,
+			"url": "/kalender/ocean-young-2026-karrieretorg/",
+			"buttonUrl": "https://www.gceocean.no/events/posts/2026/september/ocean-young/",
+			"buttonText": "Meld deg på her! ",
+			"day": 16,
+			"month": "SEP",
+			"when": "11:00",
+			"startFullDateTime": "2026-09-16T11:00+00:00",
+			"endDate": "",
+			"endTime": "18:00",
+			"multiDayEvent": false
+		},
+		{
+			"startDateTime": "2026-09-16T10:30:00+00:00",
+			"endDateTime": "2026-09-16T11:30:00+00:00",
+			"title": "Kva kjelder kan vi ha tillit til?",
+			"adress": "Kantina på campus Førde",
+			"description": "",
+			"language": "nn-NO",
+			"filters": [
+				{
+					"id": "Førde",
+					"parentId": "",
+					"name": "Førde",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				},
+				{
+					"id": "Forskingsdagane",
+					"parentId": "",
+					"name": "Forskingsdagane",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				}
+			],
+			"visible": false,
+			"url": "/kalender/kva-kjelder-kan-vi-ha-tillit-til/",
+			"buttonUrl": "",
+			"buttonText": "",
+			"day": 16,
+			"month": "SEP",
+			"when": "12:30",
+			"startFullDateTime": "2026-09-16T12:30+00:00",
+			"endDate": "",
+			"endTime": "13:30",
+			"multiDayEvent": false
+		},
+		{
+			"startDateTime": "2026-09-17T07:00:00+00:00",
+			"endDateTime": "2026-09-18T12:00:00+00:00",
+			"title": "Forskningsdagene Ung",
+			"adress": "Bergen",
+			"description": "",
+			"language": "nn-NO",
+			"filters": [
+				{
+					"id": "Bergen",
+					"parentId": "",
+					"name": "Bergen",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				},
+				{
+					"id": "Forskingsdagane",
+					"parentId": "",
+					"name": "Forskingsdagane",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				}
+			],
+			"visible": false,
+			"url": "https://www.forskningsdagenebergen.com/bergen/program-ung-2026/",
+			"buttonUrl": "",
+			"buttonText": "",
+			"day": 17,
+			"month": "SEP",
+			"when": "09:00",
+			"startFullDateTime": "2026-09-17T09:00+00:00",
+			"endDate": "18.09",
+			"endTime": "14:00",
+			"multiDayEvent": true
+		},
+		{
+			"startDateTime": "2026-09-17T07:00:00+00:00",
+			"endDateTime": "2026-09-17T09:00:00+00:00",
+			"title": "Kom og hels på robotane våre!",
+			"adress": "Robotlaben, campus Førde",
+			"description": "",
+			"language": "nn-NO",
+			"filters": [
+				{
+					"id": "Førde",
+					"parentId": "",
+					"name": "Førde",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				},
+				{
+					"id": "Forskingsdagane",
+					"parentId": "",
+					"name": "Forskingsdagane",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				}
+			],
+			"visible": false,
+			"url": "/kalender/kom-og-hels-pa-robotane-vare/",
+			"buttonUrl": "",
+			"buttonText": "",
+			"day": 17,
+			"month": "SEP",
+			"when": "09:00",
+			"startFullDateTime": "2026-09-17T09:00+00:00",
+			"endDate": "",
+			"endTime": "11:00",
+			"multiDayEvent": false
+		},
+		{
+			"startDateTime": "2026-09-17T09:30:00+00:00",
+			"endDateTime": "2026-09-17T10:15:00+00:00",
+			"title": "Forskningsdagene 2026: Populærvitenskapelig forskerlunsj med Astrid Meling Kleppe, Sissel Halland, Annette Winje, Randi Elisabeth Nordli og Liv Ingrid Fjellanger",
+			"adress": "Biblioteket, Høgskulen på Vestlandet, campus Stord",
+			"description": "",
+			"language": "nn-NO",
+			"filters": [
+				{
+					"id": "Stord",
+					"parentId": "",
+					"name": "Stord",
+					"selected": true,
+					"hits": 0,
+					"filterItems": []
+				},
+				{
+					"id": "Forskingsdagane",
+					"parentId": "",
+					"name": "Forskingsdagane",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				}
+			],
+			"visible": true,
+			"url": "/kalender/forskningsdagene-stord/",
+			"buttonUrl": "",
+			"buttonText": "",
+			"day": 17,
+			"month": "SEP",
+			"when": "11:30",
+			"startFullDateTime": "2026-09-17T11:30+00:00",
+			"endDate": "",
+			"endTime": "12:15",
+			"multiDayEvent": false
+		},
+		{
+			"startDateTime": "2026-09-17T09:30:00+00:00",
+			"endDateTime": "2026-09-17T10:30:00+00:00",
+			"title": "Speedforsking",
+			"adress": "Biblioteket",
+			"description": "Speedforsking på Forskingsdagane 2026 i Sogndal.",
+			"language": "nn-NO",
+			"filters": [
+				{
+					"id": "Sogndal",
+					"parentId": "",
+					"name": "Sogndal",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				},
+				{
+					"id": "Forskingsdagane",
+					"parentId": "",
+					"name": "Forskingsdagane",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				}
+			],
+			"visible": false,
+			"url": "/kalender/speedforsking-26/",
+			"buttonUrl": "",
+			"buttonText": "",
+			"day": 17,
+			"month": "SEP",
+			"when": "11:30",
+			"startFullDateTime": "2026-09-17T11:30+00:00",
+			"endDate": "",
+			"endTime": "12:30",
+			"multiDayEvent": false
+		},
+		{
+			"startDateTime": "2026-09-17T10:15:00+00:00",
+			"endDateTime": "2026-09-17T12:00:00+00:00",
+			"title": "Når student dør av selvmord: Håndtering på campus",
+			"adress": "Nettseminar på Zoom",
+			"description": "",
+			"language": "nn-NO",
+			"filters": [
+				{
+					"id": "Bergen",
+					"parentId": "",
+					"name": "Bergen",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				},
+				{
+					"id": "Førde",
+					"parentId": "",
+					"name": "Førde",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				},
+				{
+					"id": "Haugesund",
+					"parentId": "",
+					"name": "Haugesund",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				},
+				{
+					"id": "Sogndal",
+					"parentId": "",
+					"name": "Sogndal",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				},
+				{
+					"id": "Stord",
+					"parentId": "",
+					"name": "Stord",
+					"selected": true,
+					"hits": 0,
+					"filterItems": []
+				}
+			],
+			"visible": true,
+			"url": "/kalender/nar-student-dor-av-selvmord-handtering-pa-campus/",
+			"buttonUrl": "https://www.ntnu.no/laer-vel/nettseminar-nar-en-student-dor-av-selvmord-handtering-pa-campus",
+			"buttonText": "Påmeldingsskjema for nettseminaret \"Når en student dør av selvmord: håndtering på campus\"",
+			"day": 17,
+			"month": "SEP",
+			"when": "12:15",
+			"startFullDateTime": "2026-09-17T12:15+00:00",
+			"endDate": "",
+			"endTime": "14:00",
+			"multiDayEvent": false
+		},
+		{
+			"startDateTime": "2026-09-17T17:00:00+00:00",
+			"endDateTime": "2026-09-17T19:00:00+00:00",
+			"title": "Temakveld: Barn, ungdom og skjermbruk",
+			"adress": "Høgskulen på Vestlandet, campus Haugesund",
+			"description": "",
+			"language": "nn-NO",
+			"filters": [
+				{
+					"id": "Haugesund",
+					"parentId": "",
+					"name": "Haugesund",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				},
+				{
+					"id": "Forskingsdagane",
+					"parentId": "",
+					"name": "Forskingsdagane",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				}
+			],
+			"visible": false,
+			"url": "/kalender/temakveld-barn-og-skjermbruk/",
+			"buttonUrl": "https://v.hvl.no/pameldingssystem/index.php?id=0000004668",
+			"buttonText": "Påmelding",
+			"day": 17,
+			"month": "SEP",
+			"when": "19:00",
+			"startFullDateTime": "2026-09-17T19:00+00:00",
+			"endDate": "",
+			"endTime": "21:00",
+			"multiDayEvent": false
+		},
+		{
+			"startDateTime": "2026-09-17T17:00:00+00:00",
+			"endDateTime": "2026-09-17T20:00:00+00:00",
+			"title": "Forskarsnakk LIVE",
+			"adress": "Larris scene på Sunnfjord Hotell",
+			"description": "",
+			"language": "nn-NO",
+			"filters": [
+				{
+					"id": "Førde",
+					"parentId": "",
+					"name": "Førde",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				},
+				{
+					"id": "Forskingsdagane",
+					"parentId": "",
+					"name": "Forskingsdagane",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				}
+			],
+			"visible": false,
+			"url": "/kalender/forskarsnakk-live/",
+			"buttonUrl": "",
+			"buttonText": "",
+			"day": 17,
+			"month": "SEP",
+			"when": "19:00",
+			"startFullDateTime": "2026-09-17T19:00+00:00",
+			"endDate": "",
+			"endTime": "22:00",
+			"multiDayEvent": false
+		},
+		{
+			"startDateTime": "2026-09-18T06:15:00+00:00",
+			"endDateTime": "2026-09-18T08:00:00+00:00",
+			"title": "Frokostmøte: Vestlandet trenger mer forskning - Hvordan kan vi samarbeide mer for å lykkes med det?",
+			"adress": "Høgskulen på Vestlandet, campus Haugesund",
+			"description": "",
+			"language": "nn-NO",
+			"filters": [
+				{
+					"id": "Haugesund",
+					"parentId": "",
+					"name": "Haugesund",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				},
+				{
+					"id": "Forskingsdagane",
+					"parentId": "",
+					"name": "Forskingsdagane",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				}
+			],
+			"visible": false,
+			"url": "/kalender/frokostmote-vestlandet-trenger-mer-forskning---hvordan-kan-vi-samarbeide-mer-for-a-lykkes-med-det/",
+			"buttonUrl": "https://v.hvl.no/pameldingssystem/index.php?id=0000004681",
+			"buttonText": "Påmelding",
+			"day": 18,
+			"month": "SEP",
+			"when": "08:15",
+			"startFullDateTime": "2026-09-18T08:15+00:00",
+			"endDate": "",
+			"endTime": "10:00",
+			"multiDayEvent": false
+		},
+		{
+			"startDateTime": "2026-09-18T08:00:00+00:00",
+			"endDateTime": "2026-09-19T14:00:00+00:00",
+			"title": "Forskningstorget",
+			"adress": "Festplassen i Bergen ",
+			"description": "",
+			"language": "nn-NO",
+			"filters": [
+				{
+					"id": "Bergen",
+					"parentId": "",
+					"name": "Bergen",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				},
+				{
+					"id": "Forskingsdagane",
+					"parentId": "",
+					"name": "Forskingsdagane",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				}
+			],
+			"visible": false,
+			"url": "https://www.forskningsdagenebergen.com/bergen/forskningstorget-2026/",
+			"buttonUrl": "",
+			"buttonText": "",
+			"day": 18,
+			"month": "SEP",
+			"when": "10:00",
+			"startFullDateTime": "2026-09-18T10:00+00:00",
+			"endDate": "19.09",
+			"endTime": "16:00",
+			"multiDayEvent": true
+		},
+		{
+			"startDateTime": "2026-09-18T10:15:00+00:00",
+			"endDateTime": "2026-09-18T11:30:00+00:00",
+			"title": "Faglunsj: Barnevernet og informasjonskrigen i sosiale medier",
+			"adress": "Høgskulen på Vestland, campus Haugesund",
+			"description": "",
+			"language": "nn-NO",
+			"filters": [
+				{
+					"id": "Haugesund",
+					"parentId": "",
+					"name": "Haugesund",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				},
+				{
+					"id": "Forskingsdagane",
+					"parentId": "",
+					"name": "Forskingsdagane",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				}
+			],
+			"visible": false,
+			"url": "/kalender/faglunsj-barnevernet-og-informasjonskrigen-i-sosiale-medier/",
+			"buttonUrl": "https://v.hvl.no/pameldingssystem/index.php?id=0000004670",
+			"buttonText": "Påmelding",
+			"day": 18,
+			"month": "SEP",
+			"when": "12:15",
+			"startFullDateTime": "2026-09-18T12:15+00:00",
+			"endDate": "",
+			"endTime": "13:30",
+			"multiDayEvent": false
+		},
+		{
+			"startDateTime": "2026-09-18T13:00:00+00:00",
+			"endDateTime": "2026-09-20T11:00:00+00:00",
+			"title": "Studenttingsmøte 4",
+			"adress": "Campus Stord",
+			"description": "",
+			"language": "nn-NO",
+			"filters": [
+				{
+					"id": "Bergen",
+					"parentId": "",
+					"name": "Bergen",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				},
+				{
+					"id": "Førde",
+					"parentId": "",
+					"name": "Førde",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				},
+				{
+					"id": "Haugesund",
+					"parentId": "",
+					"name": "Haugesund",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				},
+				{
+					"id": "Sogndal",
+					"parentId": "",
+					"name": "Sogndal",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				},
+				{
+					"id": "Stord",
+					"parentId": "",
+					"name": "Stord",
+					"selected": true,
+					"hits": 0,
+					"filterItems": []
+				}
+			],
+			"visible": true,
+			"url": "/kalender/studenttingsmote-4/",
+			"buttonUrl": "https://www.youtube.com/@studenttingetpavestlandet4255/featured",
+			"buttonText": "Streamen vil sendes live fra 09:00 19. september. ",
+			"day": 18,
+			"month": "SEP",
+			"when": "15:00",
+			"startFullDateTime": "2026-09-18T15:00+00:00",
+			"endDate": "20.09",
+			"endTime": "13:00",
+			"multiDayEvent": true
+		},
+		{
+			"startDateTime": "2026-09-18T17:00:00+00:00",
+			"endDateTime": "2026-09-18T19:30:00+00:00",
+			"title": "Hjernehelse: En forskernatt om takt, trening og tanke",
+			"adress": "Kulturhuset i Vaskerelven",
+			"description": "",
+			"language": "nn-NO",
+			"filters": [
+				{
+					"id": "Bergen",
+					"parentId": "",
+					"name": "Bergen",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				},
+				{
+					"id": "Forskingsdagane",
+					"parentId": "",
+					"name": "Forskingsdagane",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				}
+			],
+			"visible": false,
+			"url": "https://alrekhelseklynge.no/arrangementer/forskernatt2026/",
+			"buttonUrl": "",
+			"buttonText": "",
+			"day": 18,
+			"month": "SEP",
+			"when": "19:00",
+			"startFullDateTime": "2026-09-18T19:00+00:00",
+			"endDate": "",
+			"endTime": "21:30",
+			"multiDayEvent": false
+		},
+		{
+			"startDateTime": "2026-09-21T06:30:00+00:00",
+			"endDateTime": "2026-09-21T08:00:00+00:00",
+			"title": "Forskningsdagene 2026: Frokostmøte med Hilmar Mjelde og Leiv Marsteintredet: Mellomvalget i USA - årets viktigste valg? ",
+			"adress": "Høgskulen på Vestlandet, campus Stord",
+			"description": "",
+			"language": "nn-NO",
+			"filters": [
+				{
+					"id": "Stord",
+					"parentId": "",
+					"name": "Stord",
+					"selected": true,
+					"hits": 0,
+					"filterItems": []
+				},
+				{
+					"id": "Forskingsdagane",
+					"parentId": "",
+					"name": "Forskingsdagane",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				}
+			],
+			"visible": true,
+			"url": "/kalender/forskningsdagene-stord-frokostmote/",
+			"buttonUrl": "",
+			"buttonText": "",
+			"day": 21,
+			"month": "SEP",
+			"when": "08:30",
+			"startFullDateTime": "2026-09-21T08:30+00:00",
+			"endDate": "",
+			"endTime": "10:00",
+			"multiDayEvent": false
+		},
+		{
+			"startDateTime": "2026-09-21T07:00:00+00:00",
+			"endDateTime": "2026-09-22T13:00:00+00:00",
+			"title": "Klimaomstilling 2026",
+			"adress": "Quality Hotel Sogndal",
+			"description": "Kalenderhendelse for den årlege forskingskonferansen Klimaomstilling i Sogndal.",
+			"language": "nn-NO",
+			"filters": [
+				{
+					"id": "Sogndal",
+					"parentId": "",
+					"name": "Sogndal",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				},
+				{
+					"id": "Konferanse",
+					"parentId": "",
+					"name": "Konferanse/seminar",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				}
+			],
+			"visible": false,
+			"url": "/kalender/klimaomstilling-2026/",
+			"buttonUrl": "https://klimaomstilling.no/",
+			"buttonText": "Konferansenettside",
+			"day": 21,
+			"month": "SEP",
+			"when": "09:00",
+			"startFullDateTime": "2026-09-21T09:00+00:00",
+			"endDate": "22.09",
+			"endTime": "15:00",
+			"multiDayEvent": true
+		},
+		{
+			"startDateTime": "2026-09-21T11:00:00+00:00",
+			"endDateTime": "2026-09-21T12:00:00+00:00",
+			"title": "Forskingsdagane: Er tilliten trua?",
+			"adress": "Campus Bergen, biblioteket, Hop stasjon",
+			"description": "",
+			"language": "nn-NO",
+			"filters": [
+				{
+					"id": "Bergen",
+					"parentId": "",
+					"name": "Bergen",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				},
+				{
+					"id": "Forskingsdagane",
+					"parentId": "",
+					"name": "Forskingsdagane",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				}
+			],
+			"visible": false,
+			"url": "/kalender/er-tilliten-trua/",
+			"buttonUrl": "",
+			"buttonText": "",
+			"day": 21,
+			"month": "SEP",
+			"when": "13:00",
+			"startFullDateTime": "2026-09-21T13:00+00:00",
+			"endDate": "",
+			"endTime": "14:00",
+			"multiDayEvent": false
+		},
+		{
+			"startDateTime": "2026-09-21T14:00:00+00:00",
+			"endDateTime": "2026-09-21T16:00:00+00:00",
+			"title": "Workshop i vitskapleg teikning",
+			"adress": "Frøya-rommet, Campus Sogndal",
+			"description": "Workshop i vitskapleg teikning, eit arrangement i Forskningsdagane 2026 i Sogndal.",
+			"language": "nn-NO",
+			"filters": [
+				{
+					"id": "Sogndal",
+					"parentId": "",
+					"name": "Sogndal",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				},
+				{
+					"id": "Forskingsdagane",
+					"parentId": "",
+					"name": "Forskingsdagane",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				}
+			],
+			"visible": false,
+			"url": "/kalender/workshop-i-vitskapleg-teikning/",
+			"buttonUrl": "",
+			"buttonText": "",
+			"day": 21,
+			"month": "SEP",
+			"when": "16:00",
+			"startFullDateTime": "2026-09-21T16:00+00:00",
+			"endDate": "",
+			"endTime": "18:00",
+			"multiDayEvent": false
+		},
+		{
+			"startDateTime": "2026-09-22T07:15:00+00:00",
+			"endDateTime": "2026-09-22T12:00:00+00:00",
+			"title": "Forskningsdagene 2026: Tverrfaglig seminar om barn, ungdom og psykisk helse",
+			"adress": "Høgskulen på Vestlandet, campus Stord",
+			"description": "",
+			"language": "nn-NO",
+			"filters": [
+				{
+					"id": "Stord",
+					"parentId": "",
+					"name": "Stord",
+					"selected": true,
+					"hits": 0,
+					"filterItems": []
+				},
+				{
+					"id": "Forskingsdagane",
+					"parentId": "",
+					"name": "Forskingsdagane",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				}
+			],
+			"visible": true,
+			"url": "/kalender/forskningsdagene-stord-tverrfaglig-seminar/",
+			"buttonUrl": "https://v.hvl.no/pameldingssystem/index.php?id=0000004692",
+			"buttonText": "Påmelding",
+			"day": 22,
+			"month": "SEP",
+			"when": "09:15",
+			"startFullDateTime": "2026-09-22T09:15+00:00",
+			"endDate": "",
+			"endTime": "14:00",
+			"multiDayEvent": false
+		},
+		{
+			"startDateTime": "2026-09-22T17:00:00+00:00",
+			"endDateTime": "2026-09-22T19:00:00+00:00",
+			"title": "Temakveld: Barn, ungdom og psykisk helse",
+			"adress": "Høgskulen på Vestlandet, campus Haugesund",
+			"description": "",
+			"language": "nn-NO",
+			"filters": [
+				{
+					"id": "Haugesund",
+					"parentId": "",
+					"name": "Haugesund",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				},
+				{
+					"id": "Forskingsdagane",
+					"parentId": "",
+					"name": "Forskingsdagane",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				}
+			],
+			"visible": false,
+			"url": "/kalender/temakveld-barn-og-ungdom/",
+			"buttonUrl": "https://v.hvl.no/pameldingssystem/index.php?id=0000004669",
+			"buttonText": "Påmelding",
+			"day": 22,
+			"month": "SEP",
+			"when": "19:00",
+			"startFullDateTime": "2026-09-22T19:00+00:00",
+			"endDate": "",
+			"endTime": "21:00",
+			"multiDayEvent": false
+		},
+		{
+			"startDateTime": "2026-09-22T22:00:00+00:00",
+			"endDateTime": "2026-09-24T22:00:00+00:00",
+			"title": "Skolebesøk",
+			"adress": "Bergen og omegn",
+			"description": "",
+			"language": "nn-NO",
+			"filters": [
+				{
+					"id": "Bergen",
+					"parentId": "",
+					"name": "Bergen",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				},
+				{
+					"id": "Forskingsdagane",
+					"parentId": "",
+					"name": "Forskingsdagane",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				}
+			],
+			"visible": false,
+			"url": "https://www.forskningsdagenebergen.com/bergen/skolebesok-2026/",
+			"buttonUrl": "",
+			"buttonText": "",
+			"day": 23,
+			"month": "SEP",
+			"when": "00:00",
+			"startFullDateTime": "2026-09-23T00:00+00:00",
+			"endDate": "25.09",
+			"endTime": "00:00",
+			"multiDayEvent": true
+		},
+		{
+			"startDateTime": "2026-09-23T06:00:00+00:00",
+			"endDateTime": "2026-09-23T13:00:00+00:00",
+			"title": "Pårørandekonferansen 2026",
+			"adress": "Campus Sogndal - F300, Fossbygget",
+			"description": "",
+			"language": "nn-NO",
+			"filters": [
+				{
+					"id": "Sogndal",
+					"parentId": "",
+					"name": "Sogndal",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				},
+				{
+					"id": "Konferanse",
+					"parentId": "",
+					"name": "Konferanse/seminar",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				}
+			],
+			"visible": false,
+			"url": "/kalender/parorendekonferansen-20262/",
+			"buttonUrl": "https://forms.office.com/e/fdTNTqDJmg",
+			"buttonText": "Påmelding",
+			"day": 23,
+			"month": "SEP",
+			"when": "08:00",
+			"startFullDateTime": "2026-09-23T08:00+00:00",
+			"endDate": "",
+			"endTime": "15:00",
+			"multiDayEvent": false
+		},
+		{
+			"startDateTime": "2026-09-23T08:00:00+00:00",
+			"endDateTime": "2026-09-23T14:45:00+00:00",
+			"title": "Forsknings- og innovasjonskonferansen: Framtidens skipsfart, smart, sikker og karbonfri",
+			"adress": "Quality Hotel Maritim, Åsbygata 3, Haugesund",
+			"description": "",
+			"language": "nn-NO",
+			"filters": [
+				{
+					"id": "Haugesund",
+					"parentId": "",
+					"name": "Haugesund",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				},
+				{
+					"id": "Forskingsdagane",
+					"parentId": "",
+					"name": "Forskingsdagane",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				}
+			],
+			"visible": false,
+			"url": "/kalender/forsknings--og-innovasjonskonferansen-framtidens-skipsfart-smart-sikker-og-karbonfri/",
+			"buttonUrl": "https://www.maritimuke.no/program/forsknings--og-innovasjonskonferansen/",
+			"buttonText": "Påmelding og program",
+			"day": 23,
+			"month": "SEP",
+			"when": "10:00",
+			"startFullDateTime": "2026-09-23T10:00+00:00",
+			"endDate": "",
+			"endTime": "16:45",
+			"multiDayEvent": false
+		},
+		{
+			"startDateTime": "2026-09-23T09:45:00+00:00",
+			"endDateTime": "2026-09-23T10:15:00+00:00",
+			"title": "Paneldebatt: «Forsking og tillit i KI sin tidsalder»",
+			"adress": "Biblioteket",
+			"description": "KI paneldebatt Forskningsdagene",
+			"language": "nn-NO",
+			"filters": [
+				{
+					"id": "Sogndal",
+					"parentId": "",
+					"name": "Sogndal",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				},
+				{
+					"id": "Forskingsdagane",
+					"parentId": "",
+					"name": "Forskingsdagane",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				}
+			],
+			"visible": false,
+			"url": "/kalender/paneldebatt-ki/",
+			"buttonUrl": "",
+			"buttonText": "",
+			"day": 23,
+			"month": "SEP",
+			"when": "11:45",
+			"startFullDateTime": "2026-09-23T11:45+00:00",
+			"endDate": "",
+			"endTime": "12:15",
+			"multiDayEvent": false
+		},
+		{
+			"startDateTime": "2026-09-23T10:00:00+00:00",
+			"endDateTime": "2026-09-23T11:00:00+00:00",
+			"title": "Kvifor er det så vanskeleg å vere ung?",
+			"adress": "Røyst på Nynorskhuset, Førde",
+			"description": "",
+			"language": "nn-NO",
+			"filters": [
+				{
+					"id": "Førde",
+					"parentId": "",
+					"name": "Førde",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				},
+				{
+					"id": "Forskingsdagane",
+					"parentId": "",
+					"name": "Forskingsdagane",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				}
+			],
+			"visible": false,
+			"url": "/kalender/kvifor-er-det-sa-vanskeleg-a-vere-ung/",
+			"buttonUrl": "",
+			"buttonText": "",
+			"day": 23,
+			"month": "SEP",
+			"when": "12:00",
+			"startFullDateTime": "2026-09-23T12:00+00:00",
+			"endDate": "",
+			"endTime": "13:00",
+			"multiDayEvent": false
+		},
+		{
+			"startDateTime": "2026-09-23T10:00:00+00:00",
+			"endDateTime": "2026-09-23T11:00:00+00:00",
+			"title": "Foredrag: Korleis hindre at KI øydelegg for læring?",
+			"adress": "Senioruniversitetet, Førdehuset",
+			"description": "",
+			"language": "nn-NO",
+			"filters": [
+				{
+					"id": "Førde",
+					"parentId": "",
+					"name": "Førde",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				},
+				{
+					"id": "Forskingsdagane",
+					"parentId": "",
+					"name": "Forskingsdagane",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				}
+			],
+			"visible": false,
+			"url": "/kalender/foredrag-korleis-hindre-at-ki-oydelegg-for-laring/",
+			"buttonUrl": "",
+			"buttonText": "",
+			"day": 23,
+			"month": "SEP",
+			"when": "12:00",
+			"startFullDateTime": "2026-09-23T12:00+00:00",
+			"endDate": "",
+			"endTime": "13:00",
+			"multiDayEvent": false
+		},
+		{
+			"startDateTime": "2026-09-24T07:00:00+00:00",
+			"endDateTime": "2026-09-24T10:00:00+00:00",
+			"title": "THRIWE seminar ",
+			"adress": "M307, K2, HVL Bergen, Kronstad",
+			"description": "",
+			"language": "nn-NO",
+			"filters": [],
+			"visible": false,
+			"url": "/kalender/thriwe-seminar/",
+			"buttonUrl": "",
+			"buttonText": "",
+			"day": 24,
+			"month": "SEP",
+			"when": "09:00",
+			"startFullDateTime": "2026-09-24T09:00+00:00",
+			"endDate": "",
+			"endTime": "12:00",
+			"multiDayEvent": false
+		},
+		{
+			"startDateTime": "2026-09-24T09:30:00+00:00",
+			"endDateTime": "2026-09-24T10:30:00+00:00",
+			"title": "Forskningsdagene: Populærvitenskapelig forskerlunsj med Kåre Johan Mjør, Thor Erik Sortland, Tomas Larsen Høisæter og Toril Harneshaug",
+			"adress": "Biblioteket, Høgskulen på Vestlandet, campus Stord",
+			"description": "",
+			"language": "nn-NO",
+			"filters": [
+				{
+					"id": "Stord",
+					"parentId": "",
+					"name": "Stord",
+					"selected": true,
+					"hits": 0,
+					"filterItems": []
+				},
+				{
+					"id": "Forskingsdagane",
+					"parentId": "",
+					"name": "Forskingsdagane",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				}
+			],
+			"visible": true,
+			"url": "/kalender/forskningsdagene-popularvitenskapelig-forskerlunsj/",
+			"buttonUrl": "",
+			"buttonText": "",
+			"day": 24,
+			"month": "SEP",
+			"when": "11:30",
+			"startFullDateTime": "2026-09-24T11:30+00:00",
+			"endDate": "",
+			"endTime": "12:30",
+			"multiDayEvent": false
+		},
+		{
+			"startDateTime": "2026-09-24T09:30:00+00:00",
+			"endDateTime": "2026-09-24T10:15:00+00:00",
+			"title": "Forskningsdagene 2026 : Faglunsj: Husbrannfare - Hva må du tenke på? v/ Ruben Dobler Strand",
+			"adress": "HVL Campus Haugesund, biblioteket",
+			"description": "",
+			"language": "nn-NO",
+			"filters": [
+				{
+					"id": "Haugesund",
+					"parentId": "",
+					"name": "Haugesund",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				},
+				{
+					"id": "Forskingsdagane",
+					"parentId": "",
+					"name": "Forskingsdagane",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				}
+			],
+			"visible": false,
+			"url": "/kalender/husbrannfare---hva-ma-du-tenke-pa/",
+			"buttonUrl": "",
+			"buttonText": "",
+			"day": 24,
+			"month": "SEP",
+			"when": "11:30",
+			"startFullDateTime": "2026-09-24T11:30+00:00",
+			"endDate": "",
+			"endTime": "12:15",
+			"multiDayEvent": false
+		},
+		{
+			"startDateTime": "2026-09-24T11:00:00+00:00",
+			"endDateTime": "2026-09-24T13:00:00+00:00",
+			"title": "Doktorpromosjon 2026",
+			"adress": "Campus Bergen, Mimes Brønn",
+			"description": "",
+			"language": "nn-NO",
+			"filters": [
+				{
+					"id": "Bergen",
+					"parentId": "",
+					"name": "Bergen",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				},
+				{
+					"id": "Førde",
+					"parentId": "",
+					"name": "Førde",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				},
+				{
+					"id": "Haugesund",
+					"parentId": "",
+					"name": "Haugesund",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				},
+				{
+					"id": "Sogndal",
+					"parentId": "",
+					"name": "Sogndal",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				},
+				{
+					"id": "Stord",
+					"parentId": "",
+					"name": "Stord",
+					"selected": true,
+					"hits": 0,
+					"filterItems": []
+				},
+				{
+					"id": "Kulturarrangement",
+					"parentId": "",
+					"name": "Kulturarrangement",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				}
+			],
+			"visible": true,
+			"url": "/kalender/doktorpromosjon-2026/",
+			"buttonUrl": "/link/ffa3f6caa1ce4230a573e9d7cfd7fea5.aspx",
+			"buttonText": "Doktorpromosjon",
+			"day": 24,
+			"month": "SEP",
+			"when": "13:00",
+			"startFullDateTime": "2026-09-24T13:00+00:00",
+			"endDate": "",
+			"endTime": "15:00",
+			"multiDayEvent": false
+		},
+		{
+			"startDateTime": "2026-09-25T16:00:00+00:00",
+			"endDateTime": "2026-09-25T19:00:00+00:00",
+			"title": "Researchers' Night: En natt på VilVite",
+			"adress": "VilVite",
+			"description": "",
+			"language": "nn-NO",
+			"filters": [
+				{
+					"id": "Bergen",
+					"parentId": "",
+					"name": "Bergen",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				},
+				{
+					"id": "Forskingsdagane",
+					"parentId": "",
+					"name": "Forskingsdagane",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				}
+			],
+			"visible": false,
+			"url": "https://www.forskningsdagenebergen.com/bergen/researchers-night-2026/",
+			"buttonUrl": "",
+			"buttonText": "",
+			"day": 25,
+			"month": "SEP",
+			"when": "18:00",
+			"startFullDateTime": "2026-09-25T18:00+00:00",
+			"endDate": "",
+			"endTime": "21:00",
+			"multiDayEvent": false
+		},
+		{
+			"startDateTime": "2026-09-25T17:00:00+00:00",
+			"endDateTime": "2026-09-25T18:15:00+00:00",
+			"title": "Researchers' Night: Verdens beste arbeidsliv - for hvem?",
+			"adress": "Kulturhuset i Vaskerelven",
+			"description": "",
+			"language": "nn-NO",
+			"filters": [
+				{
+					"id": "Bergen",
+					"parentId": "",
+					"name": "Bergen",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				},
+				{
+					"id": "Forskingsdagane",
+					"parentId": "",
+					"name": "Forskingsdagane",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				}
+			],
+			"visible": false,
+			"url": "https://www.forskningsdagenebergen.com/bergen/researchers-night-2026/",
+			"buttonUrl": "",
+			"buttonText": "",
+			"day": 25,
+			"month": "SEP",
+			"when": "19:00",
+			"startFullDateTime": "2026-09-25T19:00+00:00",
+			"endDate": "",
+			"endTime": "20:15",
+			"multiDayEvent": false
+		},
+		{
+			"startDateTime": "2026-09-26T10:00:00+00:00",
+			"endDateTime": "2026-09-26T18:00:00+00:00",
+			"title": "Forskningsdagene: Latinskolefestivalen 2026",
+			"adress": "Latinskolen, Lille Øvregaten 28",
+			"description": "",
+			"language": "nn-NO",
+			"filters": [
+				{
+					"id": "Bergen",
+					"parentId": "",
+					"name": "Bergen",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				},
+				{
+					"id": "Forskingsdagane",
+					"parentId": "",
+					"name": "Forskingsdagane",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				}
+			],
+			"visible": false,
+			"url": "https://bymuseet.no/event/latinskolefestivalen-2026/",
+			"buttonUrl": "",
+			"buttonText": "",
+			"day": 26,
+			"month": "SEP",
+			"when": "12:00",
+			"startFullDateTime": "2026-09-26T12:00+00:00",
+			"endDate": "",
+			"endTime": "20:00",
+			"multiDayEvent": false
+		},
+		{
+			"startDateTime": "2026-09-26T10:00:00+00:00",
+			"endDateTime": "2026-09-26T12:00:00+00:00",
+			"title": "Forskingstorg",
+			"adress": "Plassen foran kommunehuset",
+			"description": "Forskingstorg ved Forskingsdagane i Sogndal 2026",
+			"language": "nn-NO",
+			"filters": [
+				{
+					"id": "Sogndal",
+					"parentId": "",
+					"name": "Sogndal",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				},
+				{
+					"id": "Forskingsdagane",
+					"parentId": "",
+					"name": "Forskingsdagane",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				}
+			],
+			"visible": false,
+			"url": "/kalender/forskingstorg-sogndal/",
+			"buttonUrl": "",
+			"buttonText": "",
+			"day": 26,
+			"month": "SEP",
+			"when": "12:00",
+			"startFullDateTime": "2026-09-26T12:00+00:00",
+			"endDate": "",
+			"endTime": "14:00",
+			"multiDayEvent": false
+		},
+		{
+			"startDateTime": "2026-09-28T08:00:00+00:00",
+			"endDateTime": "2026-09-28T09:00:00+00:00",
+			"title": "Erfaringsbasert og ukonvensjonell kunnskap i helsebeslutninger: Webinar med Cochrane Norge",
+			"adress": "Zoom",
+			"description": "",
+			"language": "nn-NO",
+			"filters": [
+				{
+					"id": "Bergen",
+					"parentId": "",
+					"name": "Bergen",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				},
+				{
+					"id": "Førde",
+					"parentId": "",
+					"name": "Førde",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				},
+				{
+					"id": "Haugesund",
+					"parentId": "",
+					"name": "Haugesund",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				},
+				{
+					"id": "Sogndal",
+					"parentId": "",
+					"name": "Sogndal",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				},
+				{
+					"id": "Stord",
+					"parentId": "",
+					"name": "Stord",
+					"selected": true,
+					"hits": 0,
+					"filterItems": []
+				},
+				{
+					"id": "Kurs",
+					"parentId": "",
+					"name": "Kurs",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				}
+			],
+			"visible": true,
+			"url": "/kalender/erfaringsbasert-og-ukonvensjonell-kunnskap-i-helsebeslutninger-webinar-med-cochrane-norge/",
+			"buttonUrl": "https://www.cochrane.no/nb/kurs-og-seminarer",
+			"buttonText": "Mer informasjon og påmelding her",
+			"day": 28,
+			"month": "SEP",
+			"when": "10:00",
+			"startFullDateTime": "2026-09-28T10:00+00:00",
+			"endDate": "",
+			"endTime": "11:00",
+			"multiDayEvent": false
+		},
+		{
+			"startDateTime": "2026-09-28T11:15:00+00:00",
+			"endDateTime": "2026-09-28T14:00:00+00:00",
+			"title": "Diversity day",
+			"adress": "Kronstadtorget, campus Kronstad",
+			"description": "",
+			"language": "nn-NO",
+			"filters": [
+				{
+					"id": "Bergen",
+					"parentId": "",
+					"name": "Bergen",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				},
+				{
+					"id": "Konferanse",
+					"parentId": "",
+					"name": "Konferanse/seminar",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				}
+			],
+			"visible": false,
+			"url": "/kalender/diversity-day/",
+			"buttonUrl": "",
+			"buttonText": "",
+			"day": 28,
+			"month": "SEP",
+			"when": "13:15",
+			"startFullDateTime": "2026-09-28T13:15+00:00",
+			"endDate": "",
+			"endTime": "16:00",
+			"multiDayEvent": false
+		},
+		{
+			"startDateTime": "2026-09-29T08:00:00+00:00",
+			"endDateTime": "2026-09-29T13:30:00+00:00",
+			"title": "10-års jubileum for Master i barnehagekunnskap ",
+			"adress": "HVL campus Bergen, Kronstad K2 rom: M130/131",
+			"description": "",
+			"language": "nn-NO",
+			"filters": [
+				{
+					"id": "Bergen",
+					"parentId": "",
+					"name": "Bergen",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				}
+			],
+			"visible": false,
+			"url": "/kalender/master-i-barnehagekunnskap-10-ar/",
+			"buttonUrl": "https://www.survey-xact.no/LinkCollector?key=3HC9CEJDUP15",
+			"buttonText": "Lenke til påmelding",
+			"day": 29,
+			"month": "SEP",
+			"when": "10:00",
+			"startFullDateTime": "2026-09-29T10:00+00:00",
+			"endDate": "",
+			"endTime": "15:30",
+			"multiDayEvent": false
+		},
+		{
+			"startDateTime": "2026-09-30T07:00:00+00:00",
+			"endDateTime": "2026-10-01T13:00:00+00:00",
+			"title": "International online conference “Metalinguistic awareness in additional language learning: current issues and future directions”",
+			"adress": "Online",
+			"description": "",
+			"language": "nn-NO",
+			"filters": [
+				{
+					"id": "Konferanse",
+					"parentId": "",
+					"name": "Konferanse/seminar",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				}
+			],
+			"visible": false,
+			"url": "/kalender/metalearn-conference-2026/",
+			"buttonUrl": "/link/019f5083772249dea30f5d711ba60306.aspx",
+			"buttonText": "Conference website",
+			"day": 30,
+			"month": "SEP",
+			"when": "09:00",
+			"startFullDateTime": "2026-09-30T09:00+00:00",
+			"endDate": "01.10",
+			"endTime": "15:00",
+			"multiDayEvent": true
+		}
+	],
+	"nextMonth": [
+		{
+			"startDateTime": "2026-10-01T10:00:00+00:00",
+			"endDateTime": "2026-10-01T13:00:00+00:00",
+			"title": "Midtveisevaluering for Ragnhild Rieber-Mohn",
+			"adress": "HVL campus Bergen, C-230",
+			"description": "",
+			"language": "nn-NO",
+			"filters": [
+				{
+					"id": "Bergen",
+					"parentId": "",
+					"name": "Bergen",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				},
+				{
+					"id": "Sogndal",
+					"parentId": "",
+					"name": "Sogndal",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				},
+				{
+					"id": "Stord",
+					"parentId": "",
+					"name": "Stord",
+					"selected": true,
+					"hits": 0,
+					"filterItems": []
+				}
+			],
+			"visible": true,
+			"url": "/kalender/midtveisevaluering-for-ragnhild-rieber-mohn/",
+			"buttonUrl": "",
+			"buttonText": "",
+			"day": 1,
+			"month": "OKT",
+			"when": "12:00",
+			"startFullDateTime": "2026-10-01T12:00+00:00",
+			"endDate": "",
+			"endTime": "15:00",
+			"multiDayEvent": false
+		},
+		{
+			"startDateTime": "2026-10-13T10:00:00+00:00",
+			"endDateTime": "2026-10-13T13:00:00+00:00",
+			"title": "Lansering av digitalt læringsverk om sorg",
+			"adress": "Kronstadtorget i første etasje i K1, campus Bergen, Høgskulen på Vestlandet. ",
+			"description": "",
+			"language": "nn-NO",
+			"filters": [
+				{
+					"id": "Bergen",
+					"parentId": "",
+					"name": "Bergen",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				},
+				{
+					"id": "Konferanse",
+					"parentId": "",
+					"name": "Konferanse/seminar",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				}
+			],
+			"visible": false,
+			"url": "/kalender/lansering-av-digitalt-laringsverk-om-sorg/",
+			"buttonUrl": "",
+			"buttonText": "",
+			"day": 13,
+			"month": "OKT",
+			"when": "12:00",
+			"startFullDateTime": "2026-10-13T12:00+00:00",
+			"endDate": "",
+			"endTime": "15:00",
+			"multiDayEvent": false
+		},
+		{
+			"startDateTime": "2026-10-13T11:00:00+00:00",
+			"endDateTime": "2026-10-16T13:00:00+00:00",
+			"title": "6th Evidence-Based Research Conference",
+			"adress": "Digital",
+			"description": "",
+			"language": "nn-NO",
+			"filters": [
+				{
+					"id": "Bergen",
+					"parentId": "",
+					"name": "Bergen",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				},
+				{
+					"id": "Førde",
+					"parentId": "",
+					"name": "Førde",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				},
+				{
+					"id": "Haugesund",
+					"parentId": "",
+					"name": "Haugesund",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				},
+				{
+					"id": "Sogndal",
+					"parentId": "",
+					"name": "Sogndal",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				},
+				{
+					"id": "Stord",
+					"parentId": "",
+					"name": "Stord",
+					"selected": true,
+					"hits": 0,
+					"filterItems": []
+				},
+				{
+					"id": "Konferanse",
+					"parentId": "",
+					"name": "Konferanse/seminar",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				}
+			],
+			"visible": true,
+			"url": "/kalender/6th-ebr-conference/",
+			"buttonUrl": "",
+			"buttonText": "",
+			"day": 13,
+			"month": "OKT",
+			"when": "13:00",
+			"startFullDateTime": "2026-10-13T13:00+00:00",
+			"endDate": "16.10",
+			"endTime": "15:00",
+			"multiDayEvent": true
+		},
+		{
+			"startDateTime": "2026-10-14T08:00:00+00:00",
+			"endDateTime": "2026-10-14T13:00:00+00:00",
+			"title": "Bergen seniorkonferanse 2026",
+			"adress": "Bergen, Mimes brønn",
+			"description": "",
+			"language": "nn-NO",
+			"filters": [
+				{
+					"id": "Bergen",
+					"parentId": "",
+					"name": "Bergen",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				}
+			],
+			"visible": false,
+			"url": "/kalender/bergen-seniorkonferanse-2026/",
+			"buttonUrl": "https://www.bergen.kommune.no/hvaskjer/samfunn/bli-med-pa-eldreradet-sin-seniorkonferanse-14-oktober-2026",
+			"buttonText": "Mer informasjon og påmelding på Bergen kommune sin nettside",
+			"day": 14,
+			"month": "OKT",
+			"when": "10:00",
+			"startFullDateTime": "2026-10-14T10:00+00:00",
+			"endDate": "",
+			"endTime": "15:00",
+			"multiDayEvent": false
+		},
+		{
+			"startDateTime": "2026-10-20T22:00:00+00:00",
+			"endDateTime": "2026-10-21T23:00:00+00:00",
+			"title": "Forventninger til omsorg; den 9. nasjonale konferansen for omsorgsforskning ",
+			"adress": null,
+			"description": "",
+			"language": "nn-NO",
+			"filters": [
+				{
+					"id": "Konferanse",
+					"parentId": "",
+					"name": "Konferanse/seminar",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				}
+			],
+			"visible": false,
+			"url": "/kalender/omsorgsforskningskonferanse/",
+			"buttonUrl": "https://www.ntnu.no/omsorgsforskning/konferanse",
+			"buttonText": "Omsorgsforskningskonferansen ",
+			"day": 21,
+			"month": "OKT",
+			"when": "00:00",
+			"startFullDateTime": "2026-10-21T00:00+00:00",
+			"endDate": "22.10",
+			"endTime": "01:00",
+			"multiDayEvent": true
+		},
+		{
+			"startDateTime": "2026-10-21T07:00:00+00:00",
+			"endDateTime": "2026-10-22T13:30:00+00:00",
+			"title": "Norsk barnehageforskningskonferanse 2026",
+			"adress": "Campus Bergen",
+			"description": "Velkommen til den åttende barnehageforskningskonferansen, med tema Skapende praksiser.",
+			"language": "nn-NO",
+			"filters": [
+				{
+					"id": "Bergen",
+					"parentId": "",
+					"name": "Bergen",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				},
+				{
+					"id": "Konferanse",
+					"parentId": "",
+					"name": "Konferanse/seminar",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				}
+			],
+			"visible": false,
+			"url": "/kalender/norsk-barnehageforskningskonferanse-2026/",
+			"buttonUrl": "/link/08c53fdf2a0e4e5cb1c44791500547a8.aspx",
+			"buttonText": "Påmelding og hjemmeside",
+			"day": 21,
+			"month": "OKT",
+			"when": "09:00",
+			"startFullDateTime": "2026-10-21T09:00+00:00",
+			"endDate": "22.10",
+			"endTime": "15:30",
+			"multiDayEvent": true
+		},
+		{
+			"startDateTime": "2026-10-21T07:00:00+00:00",
+			"endDateTime": "2026-10-21T14:00:00+00:00",
+			"title": "Karrierefestival på Campus Sogndal",
+			"adress": "HVL, campus Sogndal",
+			"description": "",
+			"language": "nn-NO",
+			"filters": [
+				{
+					"id": "Sogndal",
+					"parentId": "",
+					"name": "Sogndal",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				}
+			],
+			"visible": false,
+			"url": "/kalender/karrierefestival-pa-campus-sogndal/",
+			"buttonUrl": "https://www.sogn.no/karrierefestival",
+			"buttonText": "Les meir om karrierefestivalen ",
+			"day": 21,
+			"month": "OKT",
+			"when": "09:00",
+			"startFullDateTime": "2026-10-21T09:00+00:00",
+			"endDate": "",
+			"endTime": "16:00",
+			"multiDayEvent": false
+		},
+		{
+			"startDateTime": "2026-10-21T07:00:00+00:00",
+			"endDateTime": "2026-10-22T14:00:00+00:00",
+			"title": "Omsorgsforskningskonferansen 2026: Forventninger til omsorg",
+			"adress": "Campus Bergen, K2",
+			"description": "",
+			"language": "nn-NO",
+			"filters": [
+				{
+					"id": "Bergen",
+					"parentId": "",
+					"name": "Bergen",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				},
+				{
+					"id": "Konferanse",
+					"parentId": "",
+					"name": "Konferanse/seminar",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				}
+			],
+			"visible": false,
+			"url": "/kalender/omsorgsforskningskonferansen-2026-forventninger-til-omsorg/",
+			"buttonUrl": "https://www.ntnu.no/omsorgsforskning/konferanse",
+			"buttonText": "Konferanseside",
+			"day": 21,
+			"month": "OKT",
+			"when": "09:00",
+			"startFullDateTime": "2026-10-21T09:00+00:00",
+			"endDate": "22.10",
+			"endTime": "16:00",
+			"multiDayEvent": true
+		},
+		{
+			"startDateTime": "2026-10-21T19:00:00+00:00",
+			"endDateTime": "2026-10-21T19:30:00+00:00",
+			"title": "Campusturne med Look Out Louie i Sogndal",
+			"adress": null,
+			"description": "",
+			"language": "nn-NO",
+			"filters": [
+				{
+					"id": "Sogndal",
+					"parentId": "",
+					"name": "Sogndal",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				},
+				{
+					"id": "Kulturarrangement",
+					"parentId": "",
+					"name": "Kulturarrangement",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				}
+			],
+			"visible": false,
+			"url": "/kalender/campusturne-look-out-louie-sogndal/",
+			"buttonUrl": "",
+			"buttonText": "",
+			"day": 21,
+			"month": "OKT",
+			"when": "21:00",
+			"startFullDateTime": "2026-10-21T21:00+00:00",
+			"endDate": "",
+			"endTime": "21:30",
+			"multiDayEvent": false
+		},
+		{
+			"startDateTime": "2026-10-22T07:00:00+00:00",
+			"endDateTime": "2026-10-22T13:30:00+00:00",
+			"title": "Omsorgsforskningskonferansen 2026: Forventninger til omsorg (dag 2)",
+			"adress": null,
+			"description": "",
+			"language": "nn-NO",
+			"filters": [
+				{
+					"id": "Bergen",
+					"parentId": "",
+					"name": "Bergen",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				},
+				{
+					"id": "Konferanse",
+					"parentId": "",
+					"name": "Konferanse/seminar",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				}
+			],
+			"visible": false,
+			"url": "/kalender/omsorgsforskningskonferansen-2026-forventninger-til-omsorg-dag-2/",
+			"buttonUrl": "https://www.ntnu.no/omsorgsforskning/konferanse",
+			"buttonText": "Konferanseside",
+			"day": 22,
+			"month": "OKT",
+			"when": "09:00",
+			"startFullDateTime": "2026-10-22T09:00+00:00",
+			"endDate": "",
+			"endTime": "15:30",
+			"multiDayEvent": false
+		},
+		{
+			"startDateTime": "2026-10-22T19:00:00+00:00",
+			"endDateTime": "2026-10-22T19:30:00+00:00",
+			"title": "Campusturne med Look Out Louie i Førde",
+			"adress": null,
+			"description": "",
+			"language": "nn-NO",
+			"filters": [
+				{
+					"id": "Førde",
+					"parentId": "",
+					"name": "Førde",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				},
+				{
+					"id": "Kulturarrangement",
+					"parentId": "",
+					"name": "Kulturarrangement",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				}
+			],
+			"visible": false,
+			"url": "/kalender/campusturne-look-out-louie-forde/",
+			"buttonUrl": "",
+			"buttonText": "",
+			"day": 22,
+			"month": "OKT",
+			"when": "21:00",
+			"startFullDateTime": "2026-10-22T21:00+00:00",
+			"endDate": "",
+			"endTime": "21:30",
+			"multiDayEvent": false
+		},
+		{
+			"startDateTime": "2026-10-27T09:00:00+00:00",
+			"endDateTime": "2026-10-27T14:00:00+00:00",
+			"title": "Åpen dag på Stord",
+			"adress": "Campus Stord",
+			"description": "",
+			"language": "nn-NO",
+			"filters": [
+				{
+					"id": "Stord",
+					"parentId": "",
+					"name": "Stord",
+					"selected": true,
+					"hits": 0,
+					"filterItems": []
+				}
+			],
+			"visible": true,
+			"url": "/kalender/apen-dag-pa-stord/",
+			"buttonUrl": "",
+			"buttonText": "",
+			"day": 27,
+			"month": "OKT",
+			"when": "10:00",
+			"startFullDateTime": "2026-10-27T10:00+00:00",
+			"endDate": "",
+			"endTime": "15:00",
+			"multiDayEvent": false
+		},
+		{
+			"startDateTime": "2026-10-28T10:30:00+00:00",
+			"endDateTime": "2026-10-28T11:15:00+00:00",
+			"title": "Faglunsj: Kunst og skole",
+			"adress": "Stord, biblioteket ",
+			"description": "",
+			"language": "nn-NO",
+			"filters": [
+				{
+					"id": "Stord",
+					"parentId": "",
+					"name": "Stord",
+					"selected": true,
+					"hits": 0,
+					"filterItems": []
+				},
+				{
+					"id": "Debatt",
+					"parentId": "",
+					"name": "Møte/debatt",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				}
+			],
+			"visible": true,
+			"url": "/kalender/kunst-og-skole/",
+			"buttonUrl": "",
+			"buttonText": "",
+			"day": 28,
+			"month": "OKT",
+			"when": "11:30",
+			"startFullDateTime": "2026-10-28T11:30+00:00",
+			"endDate": "",
+			"endTime": "12:15",
+			"multiDayEvent": false
+		},
+		{
+			"startDateTime": "2026-10-29T08:00:00+00:00",
+			"endDateTime": "2026-10-29T14:00:00+00:00",
+			"title": "Åpen dag i Haugesund",
+			"adress": "Campus Haugesund",
+			"description": "",
+			"language": "nn-NO",
+			"filters": [
+				{
+					"id": "Haugesund",
+					"parentId": "",
+					"name": "Haugesund",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				}
+			],
+			"visible": false,
+			"url": "/kalender/apen-dag-i-haugesund/",
+			"buttonUrl": "",
+			"buttonText": "",
+			"day": 29,
+			"month": "OKT",
+			"when": "09:00",
+			"startFullDateTime": "2026-10-29T09:00+00:00",
+			"endDate": "",
+			"endTime": "15:00",
+			"multiDayEvent": false
+		},
+		{
+			"startDateTime": "2026-10-29T08:00:00+00:00",
+			"endDateTime": "2026-10-29T14:30:00+00:00",
+			"title": "Avslutningskonferanse: Expert Reports",
+			"adress": "Inndalsveien 28, 5063 Bergen - F117",
+			"description": "",
+			"language": "nn-NO",
+			"filters": [
+				{
+					"id": "Bergen",
+					"parentId": "",
+					"name": "Bergen",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				},
+				{
+					"id": "Konferanse",
+					"parentId": "",
+					"name": "Konferanse/seminar",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				}
+			],
+			"visible": false,
+			"url": "/kalender/avslutningskonferanse-expert-reports/",
+			"buttonUrl": "/link/f8416a8b501a49419510562313ded90b.aspx",
+			"buttonText": "Se konferansenettsiden for mer informasjon",
+			"day": 29,
+			"month": "OKT",
+			"when": "09:00",
+			"startFullDateTime": "2026-10-29T09:00+00:00",
+			"endDate": "",
+			"endTime": "15:30",
+			"multiDayEvent": false
+		},
+		{
+			"startDateTime": "2026-11-04T07:30:00+00:00",
+			"endDateTime": "2026-11-04T17:00:00+00:00",
+			"title": "Nasjonal konferanse om kvinnehelseforskning 4. november 2026",
+			"adress": "Universitetets Aula, Universitetet i Bergen",
+			"description": "",
+			"language": "nn-NO",
+			"filters": [
+				{
+					"id": "Bergen",
+					"parentId": "",
+					"name": "Bergen",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				},
+				{
+					"id": "Førde",
+					"parentId": "",
+					"name": "Førde",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				},
+				{
+					"id": "Haugesund",
+					"parentId": "",
+					"name": "Haugesund",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				},
+				{
+					"id": "Sogndal",
+					"parentId": "",
+					"name": "Sogndal",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				},
+				{
+					"id": "Stord",
+					"parentId": "",
+					"name": "Stord",
+					"selected": true,
+					"hits": 0,
+					"filterItems": []
+				},
+				{
+					"id": "Konferanse",
+					"parentId": "",
+					"name": "Konferanse/seminar",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				}
+			],
+			"visible": true,
+			"url": "/kalender/nasjonal-konferanse-om-kvinnehelseforskning-4.-november-2026",
+			"buttonUrl": "https://www4.uib.no/forskning/forskningssentre/driv-senter-for-kvinnehelseforskning/arrangementer/nasjonal-konferanse-om-kvinnehelseforskning-4-november-2026",
+			"buttonText": "Nettsiden til DRIV",
+			"day": 4,
+			"month": "NOV",
+			"when": "08:30",
+			"startFullDateTime": "2026-11-04T08:30+00:00",
+			"endDate": "",
+			"endTime": "18:00",
+			"multiDayEvent": false
+		},
+		{
+			"startDateTime": "2026-11-04T17:00:00+00:00",
+			"endDateTime": "2026-11-04T20:00:00+00:00",
+			"title": "Ingeniørkveld i Bergen",
+			"adress": null,
+			"description": "",
+			"language": "nn-NO",
+			"filters": [
+				{
+					"id": "Bergen",
+					"parentId": "",
+					"name": "Bergen",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				}
+			],
+			"visible": false,
+			"url": "/kalender/ingeniorkveld-bergen/",
+			"buttonUrl": "",
+			"buttonText": "",
+			"day": 4,
+			"month": "NOV",
+			"when": "18:00",
+			"startFullDateTime": "2026-11-04T18:00+00:00",
+			"endDate": "",
+			"endTime": "21:00",
+			"multiDayEvent": false
+		},
+		{
+			"startDateTime": "2026-11-06T08:00:00+00:00",
+			"endDateTime": "2026-11-06T14:00:00+00:00",
+			"title": "Velkommen til seminaret LEIK FØRST!",
+			"adress": "Høgskulen på Vestlandet, Campus Stord",
+			"description": "",
+			"language": "nn-NO",
+			"filters": [
+				{
+					"id": "Stord",
+					"parentId": "",
+					"name": "Stord",
+					"selected": true,
+					"hits": 0,
+					"filterItems": []
+				},
+				{
+					"id": "Konferanse",
+					"parentId": "",
+					"name": "Konferanse/seminar",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				}
+			],
+			"visible": true,
+			"url": "/kalender/leik-forst/",
+			"buttonUrl": "",
+			"buttonText": "",
+			"day": 6,
+			"month": "NOV",
+			"when": "09:00",
+			"startFullDateTime": "2026-11-06T09:00+00:00",
+			"endDate": "",
+			"endTime": "15:00",
+			"multiDayEvent": false
+		},
+		{
+			"startDateTime": "2026-11-26T07:00:00+00:00",
+			"endDateTime": "2026-11-27T13:00:00+00:00",
+			"title": "Energiperspektiver på barne- og ungdomslitteratur",
+			"adress": "Inndalsveien 28, 5063 Bergen ",
+			"description": "",
+			"language": "nn-NO",
+			"filters": [
+				{
+					"id": "Bergen",
+					"parentId": "",
+					"name": "Bergen",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				},
+				{
+					"id": "Konferanse",
+					"parentId": "",
+					"name": "Konferanse/seminar",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				}
+			],
+			"visible": false,
+			"url": "/kalender/energiperspektiver-pa-barne--og-ungdomslitteratur/",
+			"buttonUrl": "/link/883f05ac874a4345ad7b9acec5fe2404.aspx",
+			"buttonText": "Se konferansenettsiden for mer informasjon",
+			"day": 26,
+			"month": "NOV",
+			"when": "08:00",
+			"startFullDateTime": "2026-11-26T08:00+00:00",
+			"endDate": "27.11",
+			"endTime": "14:00",
+			"multiDayEvent": true
+		},
+		{
+			"startDateTime": "2026-12-01T09:00:00+00:00",
+			"endDateTime": "2026-12-01T13:00:00+00:00",
+			"title": "Open dag i Førde",
+			"adress": null,
+			"description": "",
+			"language": "nn-NO",
+			"filters": [
+				{
+					"id": "Førde",
+					"parentId": "",
+					"name": "Førde",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				}
+			],
+			"visible": false,
+			"url": "/kalender/open-dag-forde/",
+			"buttonUrl": "",
+			"buttonText": "",
+			"day": 1,
+			"month": "DES",
+			"when": "10:00",
+			"startFullDateTime": "2026-12-01T10:00+00:00",
+			"endDate": "",
+			"endTime": "14:00",
+			"multiDayEvent": false
+		},
+		{
+			"startDateTime": "2026-12-01T13:00:00+00:00",
+			"endDateTime": "2026-12-01T14:00:00+00:00",
+			"title": "Felles prisutdeling",
+			"adress": "Digitalt",
+			"description": "",
+			"language": "nn-NO",
+			"filters": [
+				{
+					"id": "Kulturarrangement",
+					"parentId": "",
+					"name": "Kulturarrangement",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				}
+			],
+			"visible": false,
+			"url": "/kalender/felles-prisutdeling-2026/",
+			"buttonUrl": "",
+			"buttonText": "",
+			"day": 1,
+			"month": "DES",
+			"when": "14:00",
+			"startFullDateTime": "2026-12-01T14:00+00:00",
+			"endDate": "",
+			"endTime": "15:00",
+			"multiDayEvent": false
+		},
+		{
+			"startDateTime": "2026-12-01T23:00:00+00:00",
+			"endDateTime": "2026-12-02T15:00:00+00:00",
+			"title": "FHS forskningskonferanse",
+			"adress": "Campus Kronstad",
+			"description": "",
+			"language": "nn-NO",
+			"filters": [
+				{
+					"id": "Bergen",
+					"parentId": "",
+					"name": "Bergen",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				},
+				{
+					"id": "Førde",
+					"parentId": "",
+					"name": "Førde",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				},
+				{
+					"id": "Haugesund",
+					"parentId": "",
+					"name": "Haugesund",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				},
+				{
+					"id": "Sogndal",
+					"parentId": "",
+					"name": "Sogndal",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				},
+				{
+					"id": "Stord",
+					"parentId": "",
+					"name": "Stord",
+					"selected": true,
+					"hits": 0,
+					"filterItems": []
+				},
+				{
+					"id": "Konferanse",
+					"parentId": "",
+					"name": "Konferanse/seminar",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				}
+			],
+			"visible": true,
+			"url": "/kalender/fhs-forskningskonferanse/",
+			"buttonUrl": "",
+			"buttonText": "",
+			"day": 2,
+			"month": "DES",
+			"when": "00:00",
+			"startFullDateTime": "2026-12-02T00:00+00:00",
+			"endDate": "",
+			"endTime": "16:00",
+			"multiDayEvent": false
+		}
+	],
+	"filters": [
+		{
+			"id": "Locations_8467",
+			"name": "Locations",
+			"displayName": "Campus",
+			"filterItems": [
+				{
+					"id": "Bergen",
+					"parentId": "",
+					"name": "Bergen",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				},
+				{
+					"id": "Førde",
+					"parentId": "",
+					"name": "Førde",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				},
+				{
+					"id": "Haugesund",
+					"parentId": "",
+					"name": "Haugesund",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				},
+				{
+					"id": "Sogndal",
+					"parentId": "",
+					"name": "Sogndal",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				},
+				{
+					"id": "Stord",
+					"parentId": "",
+					"name": "Stord",
+					"selected": true,
+					"hits": 0,
+					"filterItems": []
+				}
+			],
+			"isOpen": true
+		},
+		{
+			"id": "CalendarEventType_8179",
+			"name": "CalendarEventType",
+			"displayName": "Arrangementstype",
+			"filterItems": [
+				{
+					"id": "Disputas",
+					"parentId": "",
+					"name": "Disputas/prøveforelesing",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				},
+				{
+					"id": "Konferanse",
+					"parentId": "",
+					"name": "Konferanse/seminar",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				},
+				{
+					"id": "Debatt",
+					"parentId": "",
+					"name": "Møte/debatt",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				},
+				{
+					"id": "Presentasjon",
+					"parentId": "",
+					"name": "Presentasjon/utstilling",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				},
+				{
+					"id": "Kulturarrangement",
+					"parentId": "",
+					"name": "Kulturarrangement",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				},
+				{
+					"id": "Forskingsdagane",
+					"parentId": "",
+					"name": "Forskingsdagane",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				},
+				{
+					"id": "Styremøte",
+					"parentId": "",
+					"name": "Styremøte",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				},
+				{
+					"id": "Kurs",
+					"parentId": "",
+					"name": "Kurs",
+					"selected": false,
+					"hits": 0,
+					"filterItems": []
+				}
+			],
+			"isOpen": true
+		}
+	],
+	"nextMonthText": "Oktober",
+	"isSimpleCalendar": false
+}
