@@ -1,0 +1,4 @@
+{
+  "$comment": "Migrations that remove or narrow something, acknowledged deliberately. See docs/decisions/0010-expand-contract-migrations.md. Adding a filename here is a claim that NO deployed revision still uses what it removes — which is only true once the code stopped using it in an EARLIER release. Kept out of the .sql files themselves because CLAUDE.md rule 2 forbids hand-editing generated migrations, and because an acknowledgement belongs in the diff a reviewer reads.",
+  "acknowledged": {}
+}

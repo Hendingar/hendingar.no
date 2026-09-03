@@ -99,11 +99,20 @@ Scoped in a component, the next agent cannot see it and writes a second one.
 
 1. **`packages/core` is the only place** schema, taxonomy and validation live. If you find yourself
    redefining a category list or an event shape in `app/` or `importers/`, import it instead.
-2. **Never hand-edit generated migrations.** Change `packages/core/src/schema.ts`, then
-   `pnpm db:generate` **and `pnpm db:migrate`**. A hand-edited migration desynchronises schema from
-   database silently — and generating without applying breaks writes to that table immediately,
-   because Drizzle names the new column in its INSERT. That failure surfaces somewhere unrelated
-   (a form that no longer returns a result), so it costs more to diagnose than to avoid.
+2. **Never hand-edit generated migrations, and keep every migration additive.** Change
+   `packages/core/src/schema.ts`, then `pnpm db:generate` **and `pnpm db:migrate`**. A hand-edited
+   migration desynchronises schema from database silently — and generating without applying breaks
+   writes to that table immediately, because Drizzle names the new column in its INSERT. That
+   failure surfaces somewhere unrelated (a form that no longer returns a result), so it costs more
+   to diagnose than to avoid.
+
+   Migrations run **before** the new revision is healthy, so the old code meets the new schema.
+   Dropping, renaming or tightening anything takes the site down for the rollout window, and a
+   migration that succeeds before a failing deploy leaves the database permanently ahead of the
+   code with nothing to roll back to. Remove things in a _later_ release, once nothing deployed
+   reads them. `pnpm verify` fails on a subtractive migration — see
+   [ADR 0010](docs/decisions/0010-expand-contract-migrations.md).
+
 3. **`services/verifier` is the only place a model runs.** No model SDK in `app/` or
    `importers/`, and no API keys anywhere — the service authenticates to Azure with a managed
    identity. Importers are `fetch → parse → validate → upsert`, deterministic and replayable;
