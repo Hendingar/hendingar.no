@@ -28,6 +28,21 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      # Same guard as the deploy, and this one matters more.
+      #
+      # `schedule` always runs the default branch, but `workflow_dispatch` accepts any ref — so
+      # without this, a branch's half-written mapper could be run against the PRODUCTION database
+      # from a dropdown, writing real rows. The deploy at least passes through CI first; an ingest
+      # writes immediately, and a bad upsert is not undone by redeploying.
+      - name: Refuse to ingest from anything but main
+        run: |
+          if [ "${{ github.ref }}" != "refs/heads/main" ]; then
+            echo "::error::Ingest runs from main only — this ref is ${{ github.ref }}."
+            echo "To try importer changes, run them locally against your own database:"
+            echo "  pnpm db:bootstrap && pnpm ingest --dry-run"
+            exit 1
+          fi
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
