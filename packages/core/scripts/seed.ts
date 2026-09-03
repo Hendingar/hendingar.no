@@ -276,6 +276,32 @@ await db
 	.onConflictDoNothing({ target: [events.sourceId, events.externalId] });
 
 /*
+ * The same event four times on one day, from ONE source.
+ *
+ * This is what public swimming looks like: four sessions you attend one of. Consolidation
+ * deliberately leaves them alone — they are four real events — so the listing stacks them into one
+ * card instead. Without this in the seed, every spec covering that card passes vacuously.
+ */
+const swimDay = 8;
+await db
+	.insert(events)
+	.values(
+		[10, 12, 17, 19].map((hour) => ({
+			sourceId: library.id,
+			externalId: `seed-swim-${hour}`,
+			title: 'Offentleg symjing',
+			category: 'sport' as const,
+			startsAt: daysFromNow(swimDay, hour),
+			endsAt: daysFromNow(swimDay, hour + 1),
+			venueId: libraryVenue.id,
+			status: 'published' as const,
+			posterUrl: POSTER,
+			posterRightsVerified: true
+		}))
+	)
+	.onConflictDoNothing({ target: [events.sourceId, events.externalId] });
+
+/*
  * The same event, reported by both sources — because consolidation is invisible until something
  * needs consolidating.
  *
@@ -409,6 +435,6 @@ const [{ count } = { count: 0 }] = await db
 	.limit(1);
 
 console.log(
-	`seeded: 2 sources, 3 venues, ${4 + fillerEvents.length + libraryEvents.length + 2} events, ${submissionSeeds.length} submissions, ${existingRun ? 0 : seedRuns.length + librarySeedRuns.length} runs (sample id ${count})`
+	`seeded: 2 sources, 3 venues, ${4 + fillerEvents.length + libraryEvents.length + 6} events, ${submissionSeeds.length} submissions, ${existingRun ? 0 : seedRuns.length + librarySeedRuns.length} runs (sample id ${count})`
 );
 process.exit(0);

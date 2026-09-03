@@ -5,8 +5,19 @@
 	import EventThumb from './EventThumb.svelte';
 	import SourceIcon from './SourceIcon.svelte';
 	import type { UpcomingEvent } from '../events.remote';
+	import type { Occurrence } from '../occurrences.ts';
 
-	let { event }: { event: UpcomingEvent } = $props();
+	/**
+	 * `occurrences` is every time this event runs today, the lead included.
+	 *
+	 * Four identical swimming posters down the page spend a screenful saying one thing, so repeats
+	 * of the same event on the same day share a card and list their times. Each time is still its
+	 * own event with its own page — this is presentation, not a merge.
+	 */
+	let { event, occurrences = [] }: { event: UpcomingEvent; occurrences?: Occurrence[] } = $props();
+
+	// More than one time to show. A single occurrence keeps the plain clock it always had.
+	const repeats = $derived(occurrences.length > 1);
 </script>
 
 <article class="tile frame">
@@ -23,6 +34,9 @@
 			<span class="label"
 				><span class="visually-hidden">Kategori: </span>{categoryLabel(event.category)}</span
 			>
+			{#if repeats}
+				<span class="tile__count">{occurrences.length}&nbsp;tider</span>
+			{/if}
 		</p>
 
 		<!--
@@ -37,6 +51,32 @@
 
 		{#if event.venueName}
 			<p class="tile__meta"><span class="visually-hidden">Stad: </span>{event.venueName}</p>
+		{/if}
+
+		{#if repeats}
+			<!--
+				The other times, as links.
+
+				A real list, so it is announced as one and each time is reachable — the whole point is
+				that these are separate events, not decoration on one. The lead's own time appears
+				here too rather than being special-cased out: a reader scanning for 18:00 should find
+				it in the same place whether it happens to be first or fourth.
+			-->
+			<ul class="times" aria-label={`Fleire tider for ${event.title}`}>
+				{#each occurrences as occurrence (occurrence.id)}
+					<li>
+						<a
+							class="times__t"
+							href={eventPath(occurrence.id, event.title)}
+							aria-current={occurrence.id === event.id ? 'true' : undefined}
+						>
+							<time datetime={machineDateTime(occurrence.startsAt)}>
+								{formatEventClock(occurrence.startsAt, occurrence.venueTimeZone)}
+							</time>
+						</a>
+					</li>
+				{/each}
+			</ul>
 		{/if}
 	</div>
 
@@ -55,6 +95,49 @@
 </article>
 
 <style>
+	.tile__count {
+		font-family: var(--font-mono);
+		font-size: var(--step-micro);
+		letter-spacing: 0.1em;
+		text-transform: uppercase;
+		color: var(--peach-dim);
+		margin-inline-start: auto;
+	}
+
+	.times {
+		list-style: none;
+		margin: 0.5rem 0 0;
+		padding: 0;
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.3rem;
+		/*
+		 * Above the link's stretched ::after overlay, or the whole card would swallow these clicks
+		 * and every time would open the first one.
+		 */
+		position: relative;
+		z-index: 1;
+	}
+	.times__t {
+		display: inline-block;
+		font-family: var(--font-mono);
+		font-size: var(--step-micro);
+		letter-spacing: 0.08em;
+		text-decoration: none;
+		color: var(--peach);
+		border: var(--rule) solid var(--peach-line);
+		padding: 0.2em 0.5em;
+	}
+	.times__t:hover {
+		border-color: var(--peach);
+	}
+	/* The time this card leads with, marked so the reader can tell which one they were looking at. */
+	.times__t[aria-current='true'] {
+		background: var(--peach);
+		color: var(--navy-900);
+		border-color: var(--peach);
+	}
+
 	/*
 	 * The source mark sits in the bottom-right corner of the tile.
 	 *

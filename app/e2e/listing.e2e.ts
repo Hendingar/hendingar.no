@@ -222,3 +222,38 @@ test('the event page credits every source that reported it', async ({ page, requ
 	// Each links out, because crediting a source without pointing at it is not credit.
 	expect(await sources.locator('li a').count()).toBe(2);
 });
+
+test('repeats of the same event on one day share a card', async ({ page }) => {
+	await page.goto('/hendingar');
+
+	/*
+	 * Public swimming runs four times in the seed. Four identical posters down the page spend a
+	 * screenful saying one thing, so they share a card and list their times.
+	 *
+	 * Consolidation must NOT have merged them — they are four real sessions — so this is a
+	 * presentation grouping, and each time stays reachable.
+	 */
+	const cards = page.locator('article.tile').filter({ hasText: 'Offentleg symjing' });
+	expect(await cards.count(), 'the repeats must share one card').toBe(1);
+
+	const times = cards.first().locator('.times__t');
+	expect(await times.count(), 'every session must still be listed').toBe(4);
+
+	// Each chip is its own event page, not four links to the same row.
+	const hrefs = await times.evaluateAll((els) => els.map((e) => e.getAttribute('href')));
+	expect(new Set(hrefs).size, 'each time links to its own event').toBe(4);
+
+	// And the card says how many, so the count is not something you have to infer by counting.
+	await expect(cards.first().locator('.tile__count')).toContainText('4');
+});
+
+test('a repeated time is still reachable as its own event', async ({ page }) => {
+	await page.goto('/hendingar');
+	const card = page.locator('article.tile').filter({ hasText: 'Offentleg symjing' }).first();
+	const second = card.locator('.times__t').nth(1);
+	const href = await second.getAttribute('href');
+	await second.click();
+	await page.waitForURL(new RegExp(href!.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
+	// The stretched card overlay must not swallow the chip's click and open the first session.
+	await expect(page.getByRole('heading', { level: 1 })).toContainText('Offentleg symjing');
+});
