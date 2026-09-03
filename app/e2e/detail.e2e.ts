@@ -57,13 +57,28 @@ test('times are 24-hour regardless of the browser locale', async ({ page }) => {
 	expect(when).not.toMatch(/\bAM\b|\bPM\b/i);
 });
 
-test('no horizontal overflow on the event page at 320px', async ({ page }) => {
+test('no horizontal overflow on the event page at 320px', async ({ page, request }) => {
 	await page.setViewportSize({ width: 320, height: 800 });
-	await page.goto('/hendingar');
-	const href = await page.locator('article.tile a').first().getAttribute('href');
-	await page.goto(href!);
+
+	/*
+	 * Tested on the WORST event, not the first one.
+	 *
+	 * This spec passed for months while the page overflowed by 415px on real data: every seeded
+	 * event was short and posterless, so nothing ever pushed the layout. The seed now carries a
+	 * long title, a poster and an unbreakable URL, and this picks whichever event has the longest
+	 * title so the fixture and the assertion cannot drift apart again.
+	 */
+	const listing = await (await request.get('/hendingar')).text();
+	const candidates = [...listing.matchAll(/href="(\/hending\/[^"]+)"[^>]*>([^<]+)</g)].map((m) => ({
+		href: m[1]!,
+		length: m[2]!.trim().length
+	}));
+	expect(candidates.length).toBeGreaterThan(0);
+	const worst = candidates.sort((a, b) => b.length - a.length)[0]!;
+
+	await page.goto(worst.href);
 	const overflow = await page.evaluate(
 		() => document.documentElement.scrollWidth - document.documentElement.clientWidth
 	);
-	expect(overflow).toBe(0);
+	expect(overflow, `${worst.href} (${worst.length} chars) must not scroll sideways`).toBe(0);
 });

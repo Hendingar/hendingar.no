@@ -10,6 +10,8 @@
 	} from '@hendingar/core/recurrence';
 	import type { ExtractedEvent } from '@hendingar/core/validation';
 	import { submitEvent } from '../../submit.remote';
+	import { SvelteSet } from 'svelte/reactivity';
+	import { photoFilledFields } from '../../provenance.ts';
 	import PhotoCapture from './PhotoCapture.svelte';
 	import VerdictPanel from './VerdictPanel.svelte';
 
@@ -21,6 +23,39 @@
 	let method = $state<'form' | 'photo'>('form');
 	/** Fields the model admitted it could not read, so we can point at them instead of hiding it. */
 	let unreadable = $state<string[]>([]);
+
+	/**
+	 * The poster the fields were read from, kept for the whole submission.
+	 *
+	 * Extraction switches to the form panel, which hides the panel the image was pasted into — so
+	 * it used to vanish at the moment it became useful. Held here it stays beside the fields it
+	 * produced, and is still on screen with the verdict afterwards.
+	 */
+	let poster = $state<string | null>(null);
+
+	/**
+	 * Which fields the image filled in.
+	 *
+	 * The form already said what it could NOT read; it never said what it DID. Without that, a
+	 * reader cannot tell a value the model lifted off a poster from one they typed themselves,
+	 * which is the difference between checking and re-entering.
+	 *
+	 * A field leaves the set the moment it is edited: once a person has corrected it, it is theirs
+	 * and claiming otherwise would be worse than saying nothing.
+	 */
+	const fromPhoto = new SvelteSet<string>();
+
+	/**
+	 * A SvelteSet rather than `$state(new Set())`.
+	 *
+	 * This is real reactive state — ten badges read it and every keystroke can change it — so the
+	 * reactive collection is the right tool, and it also lets the set be mutated in place instead
+	 * of rebuilt on every edit. (The one place a plain built-in was correct was `filterHref`'s
+	 * throwaway URLSearchParams, which nothing renders from.)
+	 */
+	function ownField(name: string) {
+		fromPhoto.delete(name);
+	}
 
 	/**
 	 * Which way the person is submitting.
@@ -44,7 +79,15 @@
 		field.set(formatTimeDigits(value));
 	}
 
-	function prefill(draft: ExtractedEvent) {
+	function prefill(draft: ExtractedEvent, imageDataUrl: string | null = null) {
+		poster = imageDataUrl;
+		/*
+		 * A non-null field is one the model read. `unreadable` is the model's own admission and is
+		 * kept separate: "could not read" and "did not appear on the poster" look the same in the
+		 * data but are different things to tell someone.
+		 */
+		fromPhoto.clear();
+		for (const field of photoFilledFields(draft)) fromPhoto.add(field);
 		method = 'photo';
 		// A read poster is only a suggestion. Show the person the filled-in form immediately so
 		// they can correct it — that review step is the whole reason this is safe.
@@ -119,6 +162,7 @@
 		status={submitEvent.result.status}
 		summary={submitEvent.result.summary}
 		checks={submitEvent.result.checks}
+		{poster}
 	/>
 {/if}
 
@@ -161,6 +205,21 @@
 	</div>
 </div>
 
+<!--
+	One badge, used by every field that the image filled.
+
+	`aria-hidden` on the mark plus a visually-hidden sentence: a screen reader gets "lese frå
+	biletet" once as words, rather than a decorative glyph read out as punctuation on ten fields.
+-->
+{#snippet readFrom(name: string)}
+	{#if fromPhoto.has(name)}
+		<span class="field__from">
+			<span aria-hidden="true">◧</span>
+			<span class="visually-hidden">Lese frå biletet: </span>lese frå biletet
+		</span>
+	{/if}
+{/snippet}
+
 {#snippet formPanel()}
 	<form {...submitEvent} class="form frame">
 		<div bind:this={intro} class="form__intro" tabindex="-1">
@@ -179,6 +238,27 @@
 			{/if}
 		</div>
 
+		{#if poster}
+			<!--
+				The poster, beside the fields it produced.
+
+				It used to live in the photo panel, which extraction switches away from — so the
+				image someone had just pasted disappeared at the moment they needed to check the
+				fields against it. Checking a suggestion without being able to see what it was read
+				from is not checking.
+
+				`<figure>` with a caption rather than a bare img: the relationship between the
+				picture and the marked fields is the information, and a caption is where you say so.
+			-->
+			<figure class="form__poster">
+				<img src={poster} alt="Biletet du sende inn" />
+				<figcaption>
+					Felta merkte <span aria-hidden="true">◧</span> <em>lese frå biletet</em> er lesne herifrå. Rett
+					det som er feil — det du endrar blir ditt.
+				</figcaption>
+			</figure>
+		{/if}
+
 		<!--
 		How the event reached us. Not user-editable, but it must go through the fields API: remote
 		forms namespace every input name (`method/<hash>/submitEvent`), so a plain `name="method"`
@@ -193,14 +273,28 @@
 			<div class="grid">
 				<p class="field field--wide">
 					<label for="title">Tittel</label>
-					<input id="title" {...f.title.as('text')} required maxlength="200" autocomplete="off" />
+					{@render readFrom('title')}
+					<input
+						id="title"
+						{...f.title.as('text')}
+						required
+						maxlength="200"
+						autocomplete="off"
+						oninput={() => ownField('title')}
+					/>
 					{#each f.title.issues() ?? [] as issue (issue.message)}
 						<span class="field__error">{issue.message}</span>
 					{/each}
 				</p>
 				<p class="field field--wide">
 					<label for="description">Beskriving <span class="field__opt">valfritt</span></label>
-					<textarea id="description" {...f.description.as('text')} rows="4" maxlength="5000"
+					{@render readFrom('description')}
+					<textarea
+						id="description"
+						{...f.description.as('text')}
+						rows="4"
+						maxlength="5000"
+						oninput={() => ownField('description')}
 					></textarea>
 					{#each f.description.issues() ?? [] as issue (issue.message)}
 						<span class="field__error">{issue.message}</span>
@@ -208,7 +302,13 @@
 				</p>
 				<p class="field">
 					<label for="category">Kategori</label>
-					<select id="category" {...f.category.as('select')} required>
+					{@render readFrom('category')}
+					<select
+						id="category"
+						{...f.category.as('select')}
+						required
+						oninput={() => ownField('category')}
+					>
 						<option value="">Vel kategori</option>
 						{#each CATEGORIES as category (category.slug)}
 							<option value={category.slug}>{category.label}</option>
@@ -227,13 +327,15 @@
 			<div class="grid">
 				<p class="field">
 					<label for="date">{repeating ? 'Første dato' : 'Dato'}</label>
-					<input id="date" {...f.date.as('date')} required />
+					{@render readFrom('date')}
+					<input id="date" {...f.date.as('date')} required oninput={() => ownField('date')} />
 					{#each f.date.issues() ?? [] as issue (issue.message)}
 						<span class="field__error">{issue.message}</span>
 					{/each}
 				</p>
 				<p class="field">
 					<label for="startTime">Startar</label>
+					{@render readFrom('startTime')}
 					<input
 						id="startTime"
 						{...f.startTime.as('text')}
@@ -244,7 +346,10 @@
 						autocomplete="off"
 						pattern="([01][0-9]|2[0-3]):[0-5][0-9]"
 						title="Klokkeslett på 24-timarsform, til dømes 19:30"
-						oninput={(e) => onTimeInput(f.startTime, e.currentTarget.value)}
+						oninput={(e) => {
+							ownField('startTime');
+							onTimeInput(f.startTime, e.currentTarget.value);
+						}}
 					/>
 					{#each f.startTime.issues() ?? [] as issue (issue.message)}
 						<span class="field__error">{issue.message}</span>
@@ -252,6 +357,7 @@
 				</p>
 				<p class="field">
 					<label for="endTime">Sluttar <span class="field__opt">valfritt</span></label>
+					{@render readFrom('endTime')}
 					<input
 						id="endTime"
 						{...f.endTime.as('text')}
@@ -261,7 +367,10 @@
 						autocomplete="off"
 						pattern="([01][0-9]|2[0-3]):[0-5][0-9]"
 						title="Klokkeslett på 24-timarsform, til dømes 19:30"
-						oninput={(e) => onTimeInput(f.endTime, e.currentTarget.value)}
+						oninput={(e) => {
+							ownField('endTime');
+							onTimeInput(f.endTime, e.currentTarget.value);
+						}}
 					/>
 					{#each f.endTime.issues() ?? [] as issue (issue.message)}
 						<span class="field__error">{issue.message}</span>
@@ -343,14 +452,27 @@
 			<div class="grid">
 				<p class="field">
 					<label for="venueName">Stad</label>
-					<input id="venueName" {...f.venueName.as('text')} required maxlength="200" />
+					{@render readFrom('venueName')}
+					<input
+						id="venueName"
+						{...f.venueName.as('text')}
+						required
+						maxlength="200"
+						oninput={() => ownField('venueName')}
+					/>
 					{#each f.venueName.issues() ?? [] as issue (issue.message)}
 						<span class="field__error">{issue.message}</span>
 					{/each}
 				</p>
 				<p class="field">
 					<label for="municipality">Kommune <span class="field__opt">valfritt</span></label>
-					<input id="municipality" {...f.municipality.as('text')} maxlength="100" />
+					{@render readFrom('municipality')}
+					<input
+						id="municipality"
+						{...f.municipality.as('text')}
+						maxlength="100"
+						oninput={() => ownField('municipality')}
+					/>
 					{#each f.municipality.issues() ?? [] as issue (issue.message)}
 						<span class="field__error">{issue.message}</span>
 					{/each}
@@ -364,14 +486,21 @@
 			<div class="grid">
 				<p class="field">
 					<label for="organizerName">Arrangør <span class="field__opt">valfritt</span></label>
-					<input id="organizerName" {...f.organizerName.as('text')} maxlength="200" />
+					{@render readFrom('organizerName')}
+					<input
+						id="organizerName"
+						{...f.organizerName.as('text')}
+						maxlength="200"
+						oninput={() => ownField('organizerName')}
+					/>
 					{#each f.organizerName.issues() ?? [] as issue (issue.message)}
 						<span class="field__error">{issue.message}</span>
 					{/each}
 				</p>
 				<p class="field">
 					<label for="ctaUrl">Billettar <span class="field__opt">valfritt</span></label>
-					<input id="ctaUrl" {...f.ctaUrl.as('url')} />
+					{@render readFrom('ctaUrl')}
+					<input id="ctaUrl" {...f.ctaUrl.as('url')} oninput={() => ownField('ctaUrl')} />
 					{#each f.ctaUrl.issues() ?? [] as issue (issue.message)}
 						<span class="field__error">{issue.message}</span>
 					{/each}
@@ -404,6 +533,49 @@
 {/snippet}
 
 <style>
+	/*
+	 * The poster sits between the intro and the fields, full width of the form.
+	 *
+	 * Capped in height because a portrait phone photo is otherwise taller than the screen and
+	 * pushes every field it is meant to be checked against out of view.
+	 */
+	.form__poster {
+		margin: 0 0 1.25rem;
+		border: var(--rule) solid var(--peach-line);
+		background: var(--navy-900);
+	}
+	.form__poster img {
+		display: block;
+		inline-size: 100%;
+		block-size: auto;
+		max-block-size: 18rem;
+		object-fit: contain;
+	}
+	.form__poster figcaption {
+		padding: 0.6rem 0.75rem;
+		border-block-start: var(--rule) solid var(--peach-line);
+		font-size: var(--step-micro);
+		color: var(--peach-dim);
+	}
+
+	/*
+	 * The provenance mark.
+	 *
+	 * Dim and small on purpose: it is context for a value, not a warning about it. A person is
+	 * checking a suggestion, and a loud badge on ten fields would read as ten problems.
+	 */
+	.field__from {
+		display: inline-flex;
+		align-items: baseline;
+		gap: 0.3em;
+		margin-inline-start: 0.5em;
+		font-family: var(--font-mono);
+		font-size: var(--step-micro);
+		letter-spacing: 0.06em;
+		text-transform: uppercase;
+		color: var(--peach-dim);
+	}
+
 	.modes {
 		display: grid;
 	}

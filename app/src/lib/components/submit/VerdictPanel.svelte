@@ -19,8 +19,21 @@
 	let {
 		status,
 		summary,
-		checks
-	}: { status: 'published' | 'pending' | 'rejected'; summary: string; checks: Check[] } = $props();
+		checks,
+		poster = null
+	}: {
+		status: 'published' | 'pending' | 'rejected';
+		summary: string;
+		checks: Check[];
+		/**
+		 * The poster the fields were read from, when the submission came from one.
+		 *
+		 * Shown with the verdict because this is the moment the reasoning is read: the checks talk
+		 * about a title and a time, and the picture is where those came from. It is the same image
+		 * held in the browser throughout — nothing new is uploaded, and nothing is stored.
+		 */
+		poster?: string | null;
+	} = $props();
 
 	/**
 	 * Move focus here once the verdict exists. The panel is rendered above the form, so a
@@ -37,6 +50,12 @@
 		rejected: 'Ikkje publisert'
 	};
 
+	const posterCaption: Record<'published' | 'pending' | 'rejected', string> = {
+		published: 'Dette er biletet hendinga blei lesen frå.',
+		pending: 'Dette er biletet vi las. Eit menneske ser på det same.',
+		rejected: 'Dette er biletet vi las.'
+	};
+
 	const explanation: Record<typeof status, string> = {
 		published: 'Hendinga ligg ute no. Takk — ho er søkbar med ein gong.',
 		pending: 'Vi fann noko vi ikkje kunne avgjere maskinelt, så eit menneske ser på henne først.',
@@ -51,6 +70,20 @@
 		<p class="verdict__lede">{explanation[status]}</p>
 		<p class="verdict__summary">{summary}</p>
 	</div>
+
+	{#if poster}
+		<!--
+			The image the reasoning is about.
+			
+			The checks below talk about a title, a time and a place; this is where those came from.
+			Held in the browser throughout — the same data URL the form showed, nothing re-uploaded
+			and nothing stored server-side.
+		-->
+		<figure class="verdict__poster">
+			<img src={poster} alt="Biletet du sende inn" />
+			<figcaption>{posterCaption[status]}</figcaption>
+		</figure>
+	{/if}
 
 	<!-- Every check is listed, including the ones that passed. A verdict panel that only shows
 	     problems teaches people the system is a gate; showing all five shows what it actually did. -->
@@ -75,6 +108,25 @@
 </section>
 
 <style>
+	.verdict__poster {
+		margin: 0;
+		border-block-end: var(--rule) solid var(--peach-line);
+		background: var(--navy-900);
+	}
+	.verdict__poster img {
+		display: block;
+		inline-size: 100%;
+		block-size: auto;
+		/* Capped, or a portrait photo pushes the five checks — the actual content — off screen. */
+		max-block-size: 16rem;
+		object-fit: contain;
+	}
+	.verdict__poster figcaption {
+		padding: 0.5rem 0.75rem;
+		font-size: var(--step-micro);
+		color: var(--peach-dim);
+	}
+
 	.verdict {
 		display: grid;
 		scroll-margin-block-start: 1rem;
