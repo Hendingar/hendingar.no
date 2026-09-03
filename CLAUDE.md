@@ -40,6 +40,18 @@ almost nothing has a poster, so the listing fills with generated tiles. Both loo
 regression in code that is in fact fine — this has already been reported as one. `pnpm db:reset`
 now prints what to run next, and `pnpm db:bootstrap` gets the whole picture in one command.
 
+## Shipping
+
+Every change lands as **one branch → one PR → merged on green → branch deleted**, and merging
+without asking is authorised. The `ship` skill (`.claude/skills/ship/SKILL.md`) is that workflow
+written down, including the two things that have actually gone wrong: branching off an unmerged
+branch, which conflicts against everything the parent touched once it squash-merges, and running
+the e2e specs against a database CI does not use.
+
+Deploy and ingest are not yours to trigger. Deploy runs on merge to `main`; ingest runs on a daily
+cron against the live database. **A deploy ships code, not data** — a newly merged importer imports
+nothing until the next scheduled run.
+
 ## Layout
 
 ```
