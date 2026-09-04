@@ -28,8 +28,38 @@
 
 	const STAGE_TEXT: Record<'shrinking' | 'reading', string> = {
 		shrinking: 'Krympar biletet i nettlesaren din…',
-		reading: 'Les biletet. Dette tek vanlegvis 5–15 sekund.'
+		reading: 'Les biletet'
 	};
+
+	/**
+	 * What the wait is actually doing, told in order.
+	 *
+	 * The model gives us one answer at the end and nothing in between — there is no token stream to
+	 * follow for a strict-schema extraction — so this narrates the stages we genuinely know the
+	 * request passes through rather than inventing sub-progress. It changes because a line of text
+	 * that never moves for fifteen seconds is how a page reads as hung.
+	 */
+	const READING_STEPS: readonly { at: number; text: string }[] = [
+		{ at: 0, text: 'Sender biletet til tolkinga…' },
+		{ at: 3, text: 'Les tittel og dato…' },
+		{ at: 7, text: 'Finn stad og arrangør…' },
+		{ at: 12, text: 'Ryddar og set saman forslaget…' },
+		{ at: 20, text: 'Tek lengre tid enn vanleg. Vi held på.' }
+	];
+
+	const readingStep = $derived(
+		[...READING_STEPS].reverse().find((step) => elapsed >= step.at)?.text ?? READING_STEPS[0]!.text
+	);
+
+	/**
+	 * A bar that approaches the end without reaching it.
+	 *
+	 * Extraction usually lands between five and fifteen seconds, and we cannot know where in that
+	 * range a given request will fall — so the fill follows `1 - 0.5^(t/8)`, which is fast early,
+	 * slows as it goes, and never claims to be finished. A bar that sticks at 90% is a lie a reader
+	 * learns to distrust; one that keeps creeping is honest about "still working".
+	 */
+	const progress = $derived(Math.round((1 - Math.pow(0.5, elapsed / 8)) * 100));
 
 	const busy = $derived(phase === 'shrinking' || phase === 'reading');
 
@@ -203,11 +233,17 @@
 
 			{#if busy}
 				<div class="prog">
-					<!-- Indeterminate: we know which stage we are in, never how long the model will
-					     take, and a fake percentage that stalls at 90% is worse than no percentage. -->
-					<div class="prog__bar" role="progressbar" aria-label="Les biletet"></div>
+					<div
+						class="prog__bar"
+						role="progressbar"
+						aria-label="Les biletet"
+						aria-valuemin="0"
+						aria-valuemax="100"
+						aria-valuenow={phase === 'reading' ? progress : undefined}
+						style:--fill="{phase === 'reading' ? progress : 8}%"
+					></div>
 					<p class="prog__text" aria-live="polite">
-						{STAGE_TEXT[phase as 'shrinking' | 'reading']}
+						{phase === 'reading' ? readingStep : STAGE_TEXT.shrinking}
 						<span class="prog__t">{elapsed}s</span>
 					</p>
 				</div>
@@ -229,7 +265,22 @@
 	</div>
 
 	{#if preview}
-		<img class="capture__preview" src={preview} alt="Plakaten du lasta opp" />
+		<!--
+			Beside the copy, not beneath it.
+			
+			The picture used to sit under a screenful of text, which meant that during the ten seconds
+			someone is waiting — the one moment the image is the only thing worth looking at — it was
+			off screen. Sticky, so it stays put while the panel scrolls.
+		-->
+		<figure class="capture__side">
+			<img class="capture__preview" src={preview} alt="Plakaten du lasta opp" />
+			{#if busy}
+				<figcaption class="capture__reading">
+					<span class="capture__scan" aria-hidden="true"></span>
+					Les dette biletet
+				</figcaption>
+			{/if}
+		</figure>
 	{/if}
 </div>
 
@@ -237,10 +288,77 @@
 	.capture {
 		display: grid;
 		gap: 0;
+		/*
+		 * A container for the heading's `cqw` sizing, which asks about THIS element's width.
+		 *
+		 * The two-column rule below cannot use it — an element never matches a container query
+		 * against itself — so that one is answered by the `.panel` wrapper in SubmitForm.
+		 */
 		container-type: inline-size;
 		/* The fast path should look like the fast path. A faint fill is enough to rank it above
 		   the form without a second colour entering the palette. */
 		background: var(--peach-ghost);
+	}
+
+	/*
+	 * Two columns once there is room, with the picture on the right.
+	 *
+	 * A container query rather than a viewport one: this panel sits in a column whose width depends
+	 * on the page around it, and `cqw` is already how its heading is sized.
+	 */
+	@container (min-width: 44rem) {
+		.capture:has(.capture__side) {
+			grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+			align-items: start;
+		}
+	}
+
+	.capture__side {
+		margin: 0;
+		padding: clamp(1rem, 3vw, 1.75rem);
+		padding-inline-start: 0;
+		display: grid;
+		gap: 0.5rem;
+		/* Stays in view while the copy beside it scrolls — the picture is the thing worth looking
+		   at during the wait. */
+		position: sticky;
+		inset-block-start: 1rem;
+	}
+
+	@container (max-width: 44rem) {
+		.capture__side {
+			padding-inline-start: clamp(1rem, 3vw, 1.75rem);
+			position: static;
+		}
+	}
+
+	.capture__reading {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		font-family: var(--font-mono);
+		font-size: var(--step-micro);
+		color: var(--peach-dim);
+	}
+
+	/* A small travelling tick, so the caption reads as "in progress" and not as a label. */
+	.capture__scan {
+		inline-size: 2rem;
+		block-size: 2px;
+		background: linear-gradient(90deg, transparent, var(--peach), transparent);
+		animation: scan 1.6s var(--ease-out) infinite;
+	}
+
+	@keyframes scan {
+		0%,
+		100% {
+			transform: translateX(-0.4rem);
+			opacity: 0.4;
+		}
+		50% {
+			transform: translateX(0.4rem);
+			opacity: 1;
+		}
 	}
 	.capture__body {
 		padding: clamp(1rem, 3vw, 1.75rem);
@@ -274,29 +392,21 @@
 		overflow: hidden;
 		position: relative;
 	}
+	/*
+	 * Determinate, and deliberately asymptotic.
+	 *
+	 * The width follows an elapsed-time curve that slows as it goes and never reaches the end, so
+	 * the bar keeps moving for as long as the request does. This replaced a looping indeterminate
+	 * sweep, which after ten seconds is indistinguishable from a page that has stopped trying.
+	 */
 	.prog__bar::after {
 		content: '';
 		position: absolute;
 		inset-block: 0;
-		inline-size: 40%;
+		inset-inline-start: 0;
+		inline-size: var(--fill, 8%);
 		background: var(--peach);
-		animation: slide 1.4s ease-in-out infinite;
-	}
-	@keyframes slide {
-		from {
-			transform: translateX(-100%);
-		}
-		to {
-			transform: translateX(250%);
-		}
-	}
-	/* Respect a stated preference: the bar still shows progress exists, without the motion. */
-	@media (prefers-reduced-motion: reduce) {
-		.prog__bar::after {
-			animation: none;
-			inline-size: 100%;
-			opacity: 0.5;
-		}
+		transition: inline-size 900ms linear;
 	}
 	.prog__text {
 		margin: 0;

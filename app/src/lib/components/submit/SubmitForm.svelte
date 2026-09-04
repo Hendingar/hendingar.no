@@ -539,10 +539,39 @@
 	 * Capped in height because a portrait phone photo is otherwise taller than the screen and
 	 * pushes every field it is meant to be checked against out of view.
 	 */
+	/*
+	 * Beside the fields once there is room, above them when there is not.
+	 *
+	 * It sat full-width above the form, which pushed every field a screenful down and meant that
+	 * checking the last field against the picture required scrolling the picture off screen —
+	 * exactly the comparison the panel exists to make possible.
+	 *
+	 * The grid trick: the poster is placed in a second column spanning every row, and everything
+	 * else is pinned to the first. `grid-row: 1 / -1` is what lets it stay tall enough to be sticky
+	 * against the whole form rather than against one field.
+	 */
 	.form__poster {
 		margin: 0 0 1.25rem;
 		border: var(--rule) solid var(--peach-line);
 		background: var(--navy-900);
+	}
+
+	@container (min-width: 46rem) {
+		.form:has(.form__poster) {
+			grid-template-columns: minmax(0, 1fr) minmax(0, 17rem);
+			column-gap: clamp(1rem, 3vw, 1.75rem);
+		}
+		.form:has(.form__poster) > :not(.form__poster) {
+			grid-column: 1;
+		}
+		.form__poster {
+			grid-column: 2;
+			grid-row: 1 / -1;
+			margin: 0;
+			position: sticky;
+			inset-block-start: 1rem;
+			align-self: start;
+		}
 	}
 	.form__poster img {
 		display: block;
@@ -620,6 +649,17 @@
 		outline: 2px solid var(--peach-hi);
 		outline-offset: 2px;
 	}
+	/*
+	 * The query container for both panels.
+	 *
+	 * On the wrapper, not on `.form` or `.capture` themselves: an element cannot match a container
+	 * query against its own size, so a `container-type` declared on the thing being queried does
+	 * nothing at all — silently, which is the trap.
+	 */
+	.panel {
+		container-type: inline-size;
+	}
+
 	#mode-skjema:checked ~ .panel--photo,
 	#mode-bilete:checked ~ .panel--form {
 		display: none;
