@@ -326,6 +326,18 @@ export const events = pgTable(
 		 */
 		submitterClientId: text('submitter_client_id'),
 		/**
+		 * The sender's case for an event the checks declined, in their own words.
+		 *
+		 * Stored rather than passed through and forgotten: the panel's verdicts are shown alongside
+		 * it, and an appeal that succeeded is the record of *why* an event the rules said no to is
+		 * on the site. Also the thing to read first if the checks turn out to be wrong in a pattern.
+		 */
+		appealText: text('appeal_text'),
+		/** When the panel sat. Non-null means an appeal has been used — there is only one. */
+		appealedAt: timestamp('appealed_at', { withTimezone: true }),
+		/** Every juror's vote and reasoning, as JSON, so the decision stays auditable. */
+		appealVerdicts: text('appeal_verdicts'),
+		/**
 		 * When the review agent last looked at this event.
 		 *
 		 * This is what distinguishes the two very different meanings `pending` used to carry:

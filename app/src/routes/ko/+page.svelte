@@ -7,6 +7,7 @@
 	import { SUBMISSION_TTL_HOURS } from '@hendingar/core/submissions';
 	import { categoryLabel } from '@hendingar/core/taxonomy';
 	import { existingClientId } from '../../lib/client-id.ts';
+	import AppealPanel from '../../lib/components/AppealPanel.svelte';
 	import { mySubmissions, type QueuedSubmission } from '../../lib/submit.remote';
 
 	/**
@@ -148,6 +149,23 @@
 						<p class="card__actions">
 							<a class="btn" href="/send-inn?rett={row.id}">Rett og send inn på nytt</a>
 						</p>
+
+						<!--
+							Two different remedies, and they are not the same thing.
+
+							Revising is for something that is wrong — a date, a category, a missing
+							field. The appeal is for when nothing is wrong and the checks are: you
+							cannot fix "this looks like it might not be real" by editing a field, you
+							can only argue. So it sits below, and only while there is still an appeal
+							left to use.
+						-->
+						{#if !row.appealedAt}
+							<AppealPanel eventId={row.id} rejectionReason={row.notes} />
+						{:else}
+							<p class="card__appealed">
+								Du har lagt fram saka di for panelet. Kvar innsending får éin sjanse.
+							</p>
+						{/if}
 					</li>
 				{/each}
 			</ul>
@@ -284,5 +302,11 @@
 	}
 	.card__actions {
 		margin-block-start: 0.4rem;
+	}
+	.card__appealed {
+		margin: 0;
+		font-family: var(--font-mono);
+		font-size: var(--step-micro);
+		color: var(--peach-dim);
 	}
 </style>
