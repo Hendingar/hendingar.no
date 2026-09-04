@@ -115,13 +115,14 @@ export async function verifyEvent(input: VerifyInput): Promise<VerifyResponse> {
 					verdict: 'uncertain',
 					confidence: 0,
 					reasoning:
-						'Den automatiske kontrollen var ikkje tilgjengeleg då du sende inn, så hendinga går rett til manuell gjennomgang. Ho er lagra — ingenting er tapt.',
+						'Den automatiske kontrollen var ikkje tilgjengeleg då du sende inn, så vi kunne ikkje avgjere om hendinga skulle ut. Ho er lagra og ligg i køen din — prøv å sende henne inn på nytt om litt.',
 					deterministic: true,
 					model: null
 				}
 			],
 			recommendation: 'review',
-			summary: 'Innsendinga ventar på manuell godkjenning.'
+			summary:
+				'Kontrollen var ikkje tilgjengeleg, så hendinga blei ikkje lagt ut. Ho ligg i køen din.'
 		};
 	};
 

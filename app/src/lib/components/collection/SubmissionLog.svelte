@@ -13,9 +13,16 @@
 	 */
 	let { submissions }: { submissions: SubmissionLogRow[] } = $props();
 
+	/*
+	 * No label promises a person any more.
+	 *
+	 * "Til gjennomgang" described a queue somebody would work through, and there is nobody in it —
+	 * submissions are decided when they arrive. `pending` survives for imported events from sources
+	 * we have not marked trusted, where it honestly means "not checked yet".
+	 */
 	const STATUS_LABEL: Record<string, string> = {
 		published: 'Publisert',
-		pending: 'Til gjennomgang',
+		pending: 'Ventar på kontroll',
 		rejected: 'Ikkje publisert'
 	};
 

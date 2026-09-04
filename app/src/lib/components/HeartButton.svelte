@@ -1,11 +1,6 @@
 <script lang="ts">
-	import {
-		ensureClientId,
-		forgetHeart,
-		isHearted,
-		loadHearts,
-		rememberHeart
-	} from '../hearts.svelte.ts';
+	import { forgetHeart, isHearted, loadHearts, rememberHeart } from '../hearts.svelte.ts';
+	import { ensureClientId } from '../client-id.ts';
 	import { toggleHeart } from '../hearts.remote';
 
 	/**

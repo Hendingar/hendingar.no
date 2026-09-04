@@ -195,7 +195,7 @@ async def _judge(factory: LlmClientFactory, check: str, prompt: str) -> CheckRes
             check=check,  # type: ignore[arg-type]
             verdict="uncertain",
             confidence=0,
-            reasoning="Automatisk vurdering kunne ikkje fullførast. Sendt til manuell sjekk.",
+            reasoning="Automatisk vurdering kunne ikkje fullførast, så vi kunne ikkje avgjere denne.",
             model=factory.model,
         )
     data = json.loads(choice.message.content)
@@ -273,7 +273,7 @@ async def verify(factory: LlmClientFactory | None, request: VerifyRequest) -> Ve
                 check="plausibility",
                 verdict="uncertain",
                 confidence=0,
-                reasoning="Automatisk vurdering er ikkje slått på. Sendt til manuell sjekk.",
+                reasoning="Automatisk vurdering er ikkje slått på, så vi kunne ikkje avgjere denne.",
                 deterministic=True,
             )
         )

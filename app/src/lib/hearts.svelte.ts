@@ -1,4 +1,5 @@
 import { SvelteSet } from 'svelte/reactivity';
+import { readStorage, writeStorage } from './client-id.ts';
 
 /**
  * What this browser has hearted, and the opaque id it uses to say so.
@@ -10,7 +11,6 @@ import { SvelteSet } from 'svelte/reactivity';
  */
 
 const IDS_KEY = 'hendingar:hearts';
-const CLIENT_KEY = 'hendingar:client';
 
 /**
  * Reactive, because the masthead shows a "Hjarta" item only once something is in here and has to
@@ -19,32 +19,7 @@ const CLIENT_KEY = 'hendingar:client';
  */
 const ids = new SvelteSet<number>();
 
-let clientId: string | null = null;
 let loaded = false;
-
-/**
- * Every read and write is wrapped.
- *
- * Storage throws rather than returning null in a Safari private window and wherever site data is
- * blocked. An events listing must not go blank because someone browses privately, so the failure
- * mode is "no hearts this session", never an error.
- */
-function readStorage(key: string): string | null {
-	try {
-		return localStorage.getItem(key);
-	} catch {
-		return null;
-	}
-}
-
-function writeStorage(key: string, value: string): void {
-	try {
-		localStorage.setItem(key, value);
-	} catch {
-		// Ignored on purpose: hearting is a convenience, and a browser that refuses to remember is
-		// not a browser we should show an error to.
-	}
-}
 
 /** Reads localStorage once, on the client. Safe to call from an effect on every page. */
 export function loadHearts(): void {
@@ -52,37 +27,17 @@ export function loadHearts(): void {
 	loaded = true;
 
 	const raw = readStorage(IDS_KEY);
-	if (raw) {
-		try {
-			const parsed: unknown = JSON.parse(raw);
-			if (Array.isArray(parsed)) {
-				for (const value of parsed) {
-					if (typeof value === 'number' && Number.isInteger(value) && value > 0) ids.add(value);
-				}
+	if (!raw) return;
+	try {
+		const parsed: unknown = JSON.parse(raw);
+		if (Array.isArray(parsed)) {
+			for (const value of parsed) {
+				if (typeof value === 'number' && Number.isInteger(value) && value > 0) ids.add(value);
 			}
-		} catch {
-			// A corrupt value is not worth keeping, and definitely not worth crashing over.
 		}
+	} catch {
+		// A corrupt value is not worth keeping, and definitely not worth crashing over.
 	}
-	clientId = readStorage(CLIENT_KEY);
-}
-
-/**
- * This browser's id, minted on first use.
- *
- * Deliberately not created on page load: a reader who never hearts anything should never have an
- * identifier written for them at all.
- */
-export function ensureClientId(): string {
-	loadHearts();
-	if (clientId) return clientId;
-	const fresh =
-		typeof crypto !== 'undefined' && 'randomUUID' in crypto
-			? crypto.randomUUID()
-			: `c${Date.now().toString(36)}${Math.random().toString(36).slice(2, 10)}`;
-	clientId = fresh;
-	writeStorage(CLIENT_KEY, fresh);
-	return fresh;
 }
 
 export function isHearted(id: number): boolean {

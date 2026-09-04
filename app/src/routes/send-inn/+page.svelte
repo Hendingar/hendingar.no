@@ -1,10 +1,18 @@
 <script lang="ts">
+	import { page } from '$app/state';
 	import SubmitForm from '../../lib/components/submit/SubmitForm.svelte';
 	import { submissionCapabilities } from '../../lib/submit.remote';
 
 	// Top-level await, not `.loading` — the form and the explanation must exist in the server-
 	// rendered HTML, or someone with JavaScript off can neither read nor submit. See CLAUDE.md.
 	const capabilities = await submissionCapabilities();
+
+	/** Null unless `?rett=` names a positive integer — anything else is ignored, not an error. */
+	const revising = $derived.by(() => {
+		const raw = page.url.searchParams.get('rett');
+		const id = Number(raw);
+		return raw && Number.isSafeInteger(id) && id > 0 ? id : null;
+	});
 </script>
 
 <svelte:head>
@@ -31,7 +39,13 @@
 <div class="rule shell"></div>
 
 <section class="submit shell">
-	<SubmitForm photoEnabled={capabilities.photo} />
+	<!--
+		`?rett=<id>` opens the form as a revision of a submission that did not pass.
+
+		The id is only a hint about which row to replace; the server checks that the row belongs to
+		this browser and is not already published before touching anything.
+	-->
+	<SubmitForm photoEnabled={capabilities.photo} revisionOf={revising} />
 </section>
 
 <section class="how shell" aria-labelledby="how-h">

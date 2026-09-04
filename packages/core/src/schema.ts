@@ -312,6 +312,20 @@ export const events = pgTable(
 		 */
 		submissionOutcome: submissionOutcomeEnum('submission_outcome'),
 		/**
+		 * Which browser sent this in, so the person who sent it can come back and fix it.
+		 *
+		 * The same opaque, browser-generated id the hearts use — not an account, nothing about the
+		 * person, gone when they clear site data. It exists so `/ko` can show somebody their own
+		 * submissions and let them revise one until it passes, without anyone logging in.
+		 *
+		 * It is also the only thing standing between a submission and a stranger editing it, which
+		 * is worth being clear-eyed about: it is a 122-bit random value acting as a bearer token.
+		 * Infeasible to guess, useless once storage is cleared, and proportionate to what is at
+		 * stake — an unpublished event listing. It is not a credential and must never gate anything
+		 * that matters more than this.
+		 */
+		submitterClientId: text('submitter_client_id'),
+		/**
 		 * When the review agent last looked at this event.
 		 *
 		 * This is what distinguishes the two very different meanings `pending` used to carry:
