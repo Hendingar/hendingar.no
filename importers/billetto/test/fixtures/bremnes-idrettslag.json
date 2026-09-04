@@ -1,0 +1,119 @@
+{
+	"hits": [
+		{
+			"id": 1986138,
+			"kind": "regular",
+			"category": "music",
+			"subcategory": "live",
+			"type": "concert",
+			"currency": "NOK",
+			"state": "published",
+			"venue_type": null,
+			"organization_id": 37,
+			"billetto_score": null,
+			"name": "Romjulsdans 2026",
+			"name_truncated": "Romjulsdans 2026",
+			"description": "Gjer deg klar til ein skinnande kveld med musikk og moro under Romjulsdans 2026! Arrangert av Bremnes Idrettslag, er dette den perfekte måten å lyse opp romjulen på. Den 26. desember klokken 20:00 vert Bømlohallen gjort om til ein stad for uforgløymelege liveopptredenar og hyggeleg samvær. Om du er en musikkentusiast eller berre ynskjer ein kjekk kveld med venner, er Romjulsdans det ultimate arrangementet du ikkje vil gå glipp av. Kvelden byr på god musikk, herleg stemning, og moglegheiten til å danse bort julematen. Me gler oss til å sjå deg der! Sikre deg billetter no og gje deg sjølv ein kveld å huske. Me sjåast der, klare for å riste løs og nyte god musikk. Merk: Dette er eit 18+ arrangement, så hugs å ta med gyldig legitimasjon . Fönt Häär Fönt Häär er eit coverband frå Bømlo som starta opp i 2021. Bandet består av fem karar med sans for rock, livemusikk og god stemning. På repertoaret står kjente låtar med trøkk, groove og høg allsangfaktor – med mål om å skapa liv både foran scenen og på dansegulvet. Besetning: Vokal – Kristian Larsen Gitar/vokal – Vegard Røsland Gitar – Øyvind Børnes Trommer – Nils Henrik Rogne Bass – Andreas Wilhelmsen Marius&Farius Gjer deg klar for Sunnhordlands mest ettertrakta allsangband på årets Romjulsdans! Marius&Farius har dei siste åra spelt seg inn i hjarter over heile Vestlandet. Den karismatiske far-son duoen serverer kjente og kjære låtar med kvalitet, humor og glimt i auge. Med eit repertoar så stort som dagen er lang er dei garantistar for allsang og dansestemning. Denne kvelden har dei med seg fullt band og står klare til å lette taket på Bømlohallen. Besetning: Marius Sjo - Gitar og Vokal Remi \"Farius\" Sjo - Trommer Frode Hammersland - Bass Severin Vik - Gitar Fredrik Horn - Tangentar",
+			"price": 430.0,
+			"price_range": "430 NOK",
+			"image": "https://billetto.imgix.net/tz120zgbeqp4u3fj2vflkj9jcpm3?w=640&h=360&fit=crop&auto=compress%2Cformat&rect=0%2C0%2C1920%2C1080&s=824b60d9c334c733f70399e212fd8f7b",
+			"uses_generic_billetto_image": false,
+			"keywords": [],
+			"organizer_id": 7369531,
+			"organizer_image": "https://billetto.imgix.net/zipoj8pfzpqjntk3j44gvm36z72g?s=dbc1d9ff75817dc4231a9b1cd41868bb",
+			"url": "https://billetto.no/e/romjulsdans-2026-billetter-1986138",
+			"brand": "Bremnes Idrettslag",
+			"stock": 499,
+			"on_sale": true,
+			"total_clicks": 6,
+			"starts_at": "26. Desember 2026, 20:00",
+			"ends_at": "27. Desember 2026, 02:30",
+			"hide_end_date": false,
+			"country": "Norge",
+			"macroregion": "Norge",
+			"region": "Vestlandet",
+			"subregion": "Vestland",
+			"neighborhood": null,
+			"city": "Bremnes",
+			"postal_code": 5430,
+			"location": "Bømlohallen, Bremnes",
+			"location_slug": null,
+			"venue_name": "Bømlohallen",
+			"published_time": 1787917501,
+			"created_at": 1787917501,
+			"start_time": 1798311600,
+			"end_time": 1798335000,
+			"unique": false,
+			"quick_buy": false,
+			"major_purchase": false,
+			"experience_more_enabled": false,
+			"experience_more_code": null,
+			"experience_more_limit": null,
+			"promoted": false,
+			"billetto_advertising_percentage": 33.0,
+			"bucket": "No Advertising",
+			"average_advertised_ticket_price": 430.0,
+			"time_zone": "Europe/Paris",
+			"year": 2026,
+			"week_number": 52,
+			"weekend_event": true,
+			"org_channel_discovery": false,
+			"org_channel_email": false,
+			"ba_tickets_sold": 0,
+			"ba_tickets_remaining": 499,
+			"ba_tickets_limit_reached": false,
+			"short_header": "Romjulsdans 2026",
+			"short_description": "Gjer deg klar til ein skinnande kveld med musikk og moro under Romjuls",
+			"video_url": null,
+			"square_banner": null,
+			"portrait_banner": null,
+			"alternative_banner": null,
+			"age_rating": null,
+			"billetto_weighting": 100.0,
+			"local_dates": [
+				20261226,
+				20261227
+			],
+			"event_availability": "high",
+			"schema": "{\"@context\":\"http://schema.org\",\"@type\":\"Event\",\"eventAttendanceMode\":\"https://schema.org/OfflineEventAttendanceMode\",\"endDate\":\"2026-12-27T02:30:00+01:00\",\"eventStatus\":\"https://schema.org/EventScheduled\",\"organizer\":{\"@type\":\"Organization\",\"name\":\"Bremnes Idrettslag\",\"url\":\"https://billetto.no/users/bremnes-idrettslag\"},\"location\":{\"@type\":\"Place\",\"address\":{\"@type\":\"PostalAddress\",\"addressCountry\":\"Norge\",\"addressLocality\":\"Bremnes\",\"addressRegion\":\"Vestlandet\",\"postalCode\":\"5430\",\"streetAddress\":\"Idrettsvegen 87\"},\"name\":\"Bømlohallen\",\"geo\":{\"@type\":\"GeoCoordinates\",\"latitude\":59.7916,\"longitude\":5.1873}},\"identifier\":\"1986138\",\"offers\":[{\"@type\":\"Offer\",\"availability\":\"http://schema.org/InStock\",\"price\":\"430.0\",\"name\":\"Inngangsbillett Romjulsdans 2026\",\"priceCurrency\":\"NOK\",\"validFrom\":\"2026-08-27T10:51:27+02:00\",\"url\":\"https://billetto.no/e/romjulsdans-2026-billetter-1986138\"}],\"description\":\"Gjer deg klar til ein skinnande kveld med musikk og moro under Romjulsdans 2026! Arrangert av Bremnes Idrettslag, er dette den perfekte måten å lyse opp romjulen på. Den 26. desember klokken 20:00 vert Bømlohallen gjort om til ein...\",\"startDate\":\"2026-12-26T20:00:00+01:00\",\"image\":[\"https://billetto.imgix.net/tz120zgbeqp4u3fj2vflkj9jcpm3?w=640\\u0026h=360\\u0026fit=crop\\u0026auto=compress%2Cformat\\u0026rect=0%2C0%2C1920%2C1080\\u0026ar=1%3A1\\u0026crop=faces\\u0026s=7954300aa199d95a0be0eb728e490a98\",\"https://billetto.imgix.net/tz120zgbeqp4u3fj2vflkj9jcpm3?w=640\\u0026h=360\\u0026fit=crop\\u0026auto=compress%2Cformat\\u0026rect=0%2C0%2C1920%2C1080\\u0026ar=4%3A3\\u0026crop=faces\\u0026s=e2e5b9a6f890e3e09a5e2e341d3b6f68\",\"https://billetto.imgix.net/tz120zgbeqp4u3fj2vflkj9jcpm3?w=640\\u0026h=360\\u0026fit=crop\\u0026auto=compress%2Cformat\\u0026rect=0%2C0%2C1920%2C1080\\u0026ar=16%3A9\\u0026crop=faces\\u0026s=3d713cb1f519121ef906c2850b17f6d4\"],\"name\":\"Romjulsdans 2026\",\"url\":\"https://billetto.no/e/romjulsdans-2026-billetter-1986138\"}",
+			"total_organizer_revenue": "0.0",
+			"premium": false,
+			"host_ids": [
+				7369531
+			],
+			"_tags": [],
+			"culture_pass_enabled": false,
+			"_geoloc": {
+				"lng": 5.1873,
+				"lat": 59.7916
+			},
+			"objectID": "1986138"
+		}
+	],
+	"nbHits": 1,
+	"page": 0,
+	"nbPages": 1,
+	"hitsPerPage": 50,
+	"exhaustiveNbHits": true,
+	"exhaustive": {
+		"nbHits": true
+	},
+	"query": "",
+	"params": "hitsPerPage=50&page=0&filters=organization_id%3A37+AND+%28organizer_id%3A7369531+OR+host_ids%3A7369531%29+AND+%28NOT+kind%3Asubscription%29",
+	"queryID": "23e1b79646e00e9cdc8feb389a6ebe2c",
+	"_automaticInsights": true,
+	"processingTimeMS": 2,
+	"processingTimingsMS": {
+		"_request": {
+			"roundTrip": 32
+		},
+		"getIdx": {
+			"load": {
+				"total": 1
+			},
+			"total": 1
+		},
+		"total": 2
+	},
+	"serverTimeMS": 3
+}
