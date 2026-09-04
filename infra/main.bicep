@@ -148,6 +148,72 @@ resource containerEnv 'Microsoft.App/managedEnvironments@2024-03-01' = {
   }
 }
 
+/*
+ * Posters people send in, for events that were approved.
+ *
+ * Part of the platform rather than the app, for the same reason as the model: it holds data that
+ * must outlive any image deploy. An `app.bicep` that created it would risk re-creating it, and a
+ * storage account that is re-created is a storage account whose contents are gone.
+ *
+ * `allowBlobPublicAccess` is on, and the container is public-read, deliberately: these images are
+ * shown on public event pages and hotlinked from the listing. Serving them through the app would
+ * put a Node process in front of every thumbnail for no privacy gained. Writing still requires the
+ * managed identity — public means readable, never writable.
+ */
+resource posters 'Microsoft.Storage/storageAccounts@2023-05-01' = {
+  name: 'st${appName}${env}${suffix}'
+  location: location
+  tags: tags
+  sku: {
+    // LRS: these are copies of images people already published on a noticeboard, and the source of
+    // truth is the submission itself. Paying for geo-redundancy on them is not warranted.
+    name: 'Standard_LRS'
+  }
+  kind: 'StorageV2'
+  properties: {
+    allowBlobPublicAccess: true
+    // The identity writes with a token; nobody needs the account keys, so nobody may use them.
+    allowSharedKeyAccess: false
+    minimumTlsVersion: 'TLS1_2'
+    supportsHttpsTrafficOnly: true
+    publicNetworkAccess: 'Enabled'
+  }
+}
+
+resource postersBlob 'Microsoft.Storage/storageAccounts/blobServices@2023-05-01' = {
+  parent: posters
+  name: 'default'
+}
+
+resource postersContainer 'Microsoft.Storage/storageAccounts/blobServices/containers@2023-05-01' = {
+  parent: postersBlob
+  name: 'posters'
+  properties: {
+    // Individual blobs are readable by anyone with the URL; the container cannot be listed. A
+    // thumbnail URL is not a secret, but the set of everything submitted should not be enumerable.
+    publicAccess: 'Blob'
+  }
+}
+
+/*
+ * The app writes posters as itself.
+ *
+ * Storage Blob Data Contributor rather than Owner: it needs to add and overwrite blobs in this one
+ * container and never to change who may read them.
+ */
+resource postersWriter 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  scope: postersContainer
+  name: guid(postersContainer.id, runtimeIdentity.id, 'blob-data-contributor')
+  properties: {
+    roleDefinitionId: subscriptionResourceId(
+      'Microsoft.Authorization/roleDefinitions',
+      'ba92f5b4-2d11-453d-a403-e96b0029c9fe'
+    )
+    principalId: runtimeIdentity.properties.principalId
+    principalType: 'ServicePrincipal'
+  }
+}
+
 // The only place a language model lives. Part of the platform, not the app: it is long-lived and
 // must not be re-applied by an image deploy. See docs/decisions/0006-agentic-verification.md.
 module ai 'ai.bicep' = {
@@ -168,6 +234,8 @@ output managedEnvironmentId string = containerEnv.id
 output runtimeIdentityId string = runtimeIdentity.id
 output runtimeIdentityPrincipalId string = runtimeIdentity.properties.principalId
 output runtimeIdentityClientId string = runtimeIdentity.properties.clientId
+output postersAccountName string = posters.name
+output postersContainerUrl string = '${posters.properties.primaryEndpoints.blob}posters'
 output openAiEndpoint string = ai.outputs.endpoint
 output openAiAccountName string = ai.outputs.accountName
 output openAiDeployment string = ai.outputs.deploymentName

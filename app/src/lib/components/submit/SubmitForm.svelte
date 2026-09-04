@@ -11,6 +11,7 @@
 	import type { ExtractedEvent } from '@hendingar/core/validation';
 	import { findDuplicate, submitEvent } from '../../submit.remote';
 	import { ensureClientId, existingClientId } from '../../client-id.ts';
+	import { cropToThumbnail } from '../../poster.ts';
 	import { SvelteSet } from 'svelte/reactivity';
 	import { photoFilledFields } from '../../provenance.ts';
 	import PhotoCapture from './PhotoCapture.svelte';
@@ -37,6 +38,46 @@
 	 * through; it simply cannot be revised later.
 	 */
 	let submitterId = $state(existingClientId() ?? '');
+	let posterCrop = $state<{ x: number; y: number; width: number; height: number } | null>(null);
+
+	/**
+	 * The image is sent a second time, and only for an event that was approved.
+	 *
+	 * This is the whole reason it is not attached to the submission: an event that turns out to be
+	 * declined, shady or a duplicate never has its picture leave the browser at all, so there is
+	 * nothing on our side to delete afterwards. Nothing was ever received.
+	 *
+	 * Cropped here rather than on the server, using the box the model produced while it was
+	 * reading the poster — no image library in the app, and no image processing on a 0.25 vCPU
+	 * container. Failure is silent: the event is already published, and a missing thumbnail is not
+	 * worth an error message about something the person did not ask for.
+	 */
+	let posterState = $state<'idle' | 'saving' | 'saved' | 'skipped'>('idle');
+
+	$effect(() => {
+		const result = submitEvent.result;
+		if (!result || posterState !== 'idle') return;
+		if (result.outcome !== 'approved' || !result.eventId || !poster) return;
+
+		posterState = 'saving';
+		void (async () => {
+			try {
+				const blob = await cropToThumbnail(poster!, posterCrop);
+				if (!blob) {
+					posterState = 'skipped';
+					return;
+				}
+				const response = await fetch(`/ko/${result.eventId}/bilete`, {
+					method: 'POST',
+					headers: { 'content-type': 'image/jpeg', 'x-client-id': ensureClientId() },
+					body: blob
+				});
+				posterState = response.ok ? 'saved' : 'skipped';
+			} catch {
+				posterState = 'skipped';
+			}
+		})();
+	});
 
 	function claimIdentity() {
 		if (!submitterId) submitterId = ensureClientId();
@@ -141,6 +182,8 @@
 
 	function prefill(draft: ExtractedEvent, imageDataUrl: string | null = null) {
 		poster = imageDataUrl;
+		// Kept for the upload that happens *after* a verdict of `approved`, and only then.
+		posterCrop = draft.thumbnail ?? null;
 		/*
 		 * A non-null field is one the model read. `unreadable` is the model's own admission and is
 		 * kept separate: "could not read" and "did not appear on the poster" look the same in the
@@ -385,7 +428,8 @@
 				<img src={poster} alt="Biletet du sende inn" />
 				<figcaption>
 					Felta merkte <span aria-hidden="true">◧</span> <em>lese frå biletet</em> er lesne herifrå. Rett
-					det som er feil — det du endrar blir ditt.
+					det som er feil — det du endrar blir ditt. Blir hendinga publisert, blir eit utsnitt av biletet
+					miniatyrbilete på kortet.
 				</figcaption>
 			</figure>
 		{/if}

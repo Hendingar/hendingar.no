@@ -98,11 +98,18 @@
 		declined: `Noko kom ikkje gjennom kontrollane, så vi la henne ikkje ut. Sjå kva som feila under, rett det og send inn på nytt — du finn henne i køen din. Rører du henne ikkje på ${SUBMISSION_TTL_HOURS} timar, blir ho sletta.`
 	};
 
+	/*
+	 * The captions differ because what happens to the image differs.
+	 *
+	 * Only an approved event keeps one, and only as a cropped thumbnail. For every other outcome
+	 * the picture never left the browser a second time — so the caption says that, rather than
+	 * leaving somebody to wonder what we did with their photograph.
+	 */
 	const posterCaption: Record<Outcome, string> = {
-		approved: 'Dette er biletet hendinga blei lesen frå.',
-		duplicate: 'Dette er biletet vi las.',
-		shady: 'Dette er biletet vi las.',
-		declined: 'Dette er biletet vi las.'
+		approved: 'Dette er biletet hendinga blei lesen frå. Eit utsnitt av det blir miniatyrbilete.',
+		duplicate: 'Dette er biletet vi las. Det blei ikkje lagra.',
+		shady: 'Dette er biletet vi las. Det blei ikkje lagra.',
+		declined: 'Dette er biletet vi las. Det blei ikkje lagra.'
 	};
 </script>
 

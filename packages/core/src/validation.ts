@@ -146,7 +146,23 @@ export const extractedEventSchema = z.object({
 	/** Fields the model could not read, so the form can highlight them for the human. */
 	unreadable: z.array(z.string()),
 	/** One sentence for the person, in Nynorsk, about what was read and what was not. */
-	note: z.string()
+	note: z.string(),
+	/**
+	 * Where the interesting part of the poster is, as fractions of the image.
+	 *
+	 * Used to crop a card thumbnail in the browser. Nullable and never trusted blindly: the client
+	 * checks the box is sane before applying it, because a bad crop is worse than none. See
+	 * `app/src/lib/poster.ts`.
+	 */
+	thumbnail: z
+		.object({
+			x: z.number(),
+			y: z.number(),
+			width: z.number(),
+			height: z.number()
+		})
+		.nullable()
+		.optional()
 });
 
 export type ExtractedEvent = z.infer<typeof extractedEventSchema>;

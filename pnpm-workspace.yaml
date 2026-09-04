@@ -8,3 +8,19 @@ packages:
 # esbuild's postinstall links the platform binary that vitest and vite need.
 allowBuilds:
   esbuild: true
+
+# Two transitive dependencies of @azure/storage-blob, pinned to the last release the supply-chain
+# policy accepts.
+#
+# CI refused the lockfile when they were published seventeen hours earlier — inside the minimum
+# release age. The rule exists so we do not take a dependency on a package published yesterday, and
+# that is exactly what it caught, so these are pinned back rather than the check relaxed.
+#
+# They belong here and NOT in package.json: this pnpm no longer reads `pnpm.overrides` from there,
+# and silently ignoring them is how the lockfile and the config came to disagree.
+#
+# Worth removing once the newer versions have aged out. An override is a thing that quietly stops
+# tracking upstream.
+overrides:
+  '@azure/core-client': 1.11.0
+  '@typespec/ts-http-runtime': 0.3.8

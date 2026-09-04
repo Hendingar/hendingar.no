@@ -59,6 +59,24 @@ class ExtractedRecurrence(BaseModel):
     until: str | None = Field(default=None, description="YYYY-MM-DD, last date, if stated")
 
 
+class ThumbnailCrop(BaseModel):
+    """Where the interesting part of the poster is, as fractions of the image.
+
+    A poster is usually portrait with a band of small print at the bottom; an event card wants a
+    landscape thumbnail. Cropping to the centre cuts the face off a concert poster and keeps the
+    ticket terms, which is the wrong half.
+
+    Fractions rather than pixels because the browser downscales before sending, so the model never
+    sees the size the crop will be applied at. Best effort by definition — a missing or nonsensical
+    box just means no crop, never a broken image.
+    """
+
+    x: float = Field(ge=0, le=1)
+    y: float = Field(ge=0, le=1)
+    width: float = Field(gt=0, le=1)
+    height: float = Field(gt=0, le=1)
+
+
 class ExtractedEvent(BaseModel):
     """Everything is nullable except confidence and the notes.
 
@@ -83,6 +101,10 @@ class ExtractedEvent(BaseModel):
     confidence: int = Field(ge=0, le=100)
     unreadable: list[str] = Field(default_factory=list)
     note: str = Field(description="One sentence in Nynorsk about what was read and what was not")
+    thumbnail: ThumbnailCrop | None = Field(
+        default=None,
+        description="The part of the image worth keeping as a card thumbnail. Best effort.",
+    )
 
 
 class CandidateEvent(BaseModel):

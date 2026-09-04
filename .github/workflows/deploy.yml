@@ -66,7 +66,8 @@ jobs:
               postgresAdminPassword="${{ secrets.POSTGRES_ADMIN_PASSWORD }}" \
             --query properties.outputs -o json > outputs.json
           for k in acrName acrLoginServer postgresFqdn postgresAdminUserOut managedEnvironmentId \
-                   runtimeIdentityId runtimeIdentityClientId openAiEndpoint openAiDeployment; do
+                   runtimeIdentityId runtimeIdentityClientId openAiEndpoint openAiDeployment \
+                   postersContainerUrl; do
             echo "$k=$(jq -r ".$k.value" outputs.json)" >> "$GITHUB_OUTPUT"
           done
 
@@ -200,6 +201,7 @@ jobs:
               postgresAdminUser="${{ steps.infra.outputs.postgresAdminUserOut }}" \
               postgresAdminPassword="${{ secrets.POSTGRES_ADMIN_PASSWORD }}" \
               verifierUrl="${{ steps.verifier.outputs.url }}" \
+              posterContainerUrl="${{ steps.infra.outputs.postersContainerUrl }}" \
               customDomains="$(cat domains.json)" \
             --query properties.outputs -o json > app-outputs.json
           echo "url=$(jq -r .appUrl.value app-outputs.json)" >> "$GITHUB_OUTPUT"

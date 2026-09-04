@@ -25,5 +25,22 @@ export const variables = defineEnvVars({
 	VERIFIER_URL: {
 		schema: (value) => value || undefined,
 		description: 'Base URL of the verifier service. Optional; features degrade without it.'
+	},
+	/**
+	 * Where approved posters are kept, e.g.
+	 * `https://sthendingardevabc.blob.core.windows.net/posters`.
+	 *
+	 * Optional for the same reason as the verifier: a contributor must be able to run the whole app
+	 * with no Azure account. Without it the submission flow works exactly as before and simply
+	 * keeps no image — the UI says so rather than offering a button that cannot work.
+	 *
+	 * Written to with the container app's managed identity, so there is no key here and no key
+	 * anywhere. Read by anyone with the URL, which is the point: these are thumbnails on public
+	 * event pages.
+	 */
+	POSTER_CONTAINER_URL: {
+		schema: (value) => value || undefined,
+		description:
+			'Blob container URL for approved posters. Optional; no posters are kept without it.'
 	}
 });
