@@ -83,6 +83,28 @@ resource app 'Microsoft.App/containerApps@2024-03-01' = {
         {
           name: appName
           image: containerImage
+          /*
+           * Readiness only, and deliberately not liveness.
+           *
+           * `/health` runs `select 1` against the database, which is exactly what readiness should
+           * mean: do not send a reader to a replica that cannot answer them. As a LIVENESS probe
+           * the same endpoint would be actively harmful — a database blip would restart the
+           * container, which cannot fix a database, and every restart buys another cold start on
+           * top of the outage.
+           */
+          probes: [
+            {
+              type: 'Readiness'
+              httpGet: {
+                path: '/health'
+                port: 8080
+              }
+              // The app connects to Postgres on first query, so give it a moment before asking.
+              initialDelaySeconds: 5
+              periodSeconds: 15
+              failureThreshold: 3
+            }
+          ]
           resources: {
             cpu: json('0.25')
             memory: '0.5Gi'
@@ -106,9 +128,20 @@ resource app 'Microsoft.App/containerApps@2024-03-01' = {
         }
       ]
       scale: {
-        // Scales to zero. The app costs nothing when idle; the database does not (ADR 0007).
-        minReplicas: 0
-        maxReplicas: 2
+        /*
+         * One replica always warm. See docs/decisions/0011-no-cold-start.md.
+         *
+         * This used to be 0, which cost nothing when idle and made the first visitor after a quiet
+         * spell wait for a container to start, Node to boot and Postgres to connect. On a site
+         * whose entire job is answering "what is on tonight", that visitor is the one that matters
+         * — they arrive from a link, once, and a blank tab is indistinguishable from a broken site.
+         *
+         * ADR 0007 already settled the principle while deciding something else: a site that is down
+         * outside office hours is not a deployment. Scaling the app to zero is the same bet in
+         * miniature, and the saving is small next to the database, which is a standing cost anyway.
+         */
+        minReplicas: 1
+        maxReplicas: 3
       }
     }
   }
