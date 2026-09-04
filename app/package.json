@@ -46,6 +46,7 @@
 	"dependencies": {
 		"@azure/identity": "^4.13.2",
 		"@azure/storage-blob": "^12.33.0",
+		"@d8a-tech/wt": "^1.4.3",
 		"@fontsource-variable/archivo": "^5.3.0",
 		"@fontsource/space-mono": "^5.3.0",
 		"@hendingar/core": "workspace:*",

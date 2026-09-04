@@ -7,6 +7,11 @@ build/
 dist/
 test-results/
 playwright-report/
+
+# vitest browser mode drops these beside a failing component spec: a screenshot of the failure and
+# whatever the run attached to it. Debugging aids for the run that produced them, not artefacts.
+__screenshots__/
+.vitest-attachments/
 *.tsbuildinfo
 
 # symlink to the root .env, created by scripts/db.sh

@@ -1,6 +1,8 @@
 <script lang="ts">
-	// Self-hosted fonts, not Google Fonts. A privacy-first project should not leak visitor IPs to a
-	// third party for the sake of a typeface — and Google Fonts hotlinking has a GDPR history.
+	// Self-hosted fonts, not Google Fonts. Google Fonts hotlinking has a GDPR history, and a
+	// typeface is not worth an IP disclosure to Google on every page load. We do report page views
+	// to one analytics collector (see below) — which is the point: one third party, chosen and
+	// written down, is a different thing from picking up another for each asset.
 	import '@fontsource-variable/archivo/wdth.css';
 	import '@fontsource-variable/archivo/wdth-italic.css';
 	import '@fontsource/space-mono/400.css';
@@ -11,11 +13,23 @@
 	import SiteFooter from '../lib/components/SiteFooter.svelte';
 	import SiteMasthead from '../lib/components/SiteMasthead.svelte';
 	import { onNavigate } from '$app/navigation';
+	import { startAnalytics } from '../lib/analytics.ts';
 	import type { LayoutProps } from './$types';
 
 	// Typed, not bare $props() — an untyped destructure makes `children` implicitly any, which
 	// CLAUDE.md rule 4 forbids. Kit generates this type for us.
 	let { children }: LayoutProps = $props();
+
+	/*
+	 * Page analytics, on the live site only.
+	 *
+	 * In an effect rather than at module scope: this file runs during SSR too, and `window` does
+	 * not exist there. The gate is the hostname, so localhost, previews and the end-to-end suite
+	 * report nothing — see analytics.ts.
+	 */
+	$effect(() => {
+		void startAnalytics(window.location.hostname);
+	});
 
 	/**
 	 * Cross-fade between pages, where the browser can.
