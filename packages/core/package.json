@@ -15,7 +15,8 @@
 		"./slug": "./src/slug.ts",
 		"./ical": "./src/ical.ts",
 		"./consolidate": "./src/consolidate.ts",
-		"./similarity": "./src/similarity.ts"
+		"./similarity": "./src/similarity.ts",
+		"./submissions": "./src/submissions.ts"
 	},
 	"scripts": {
 		"typecheck": "tsc --noEmit",
@@ -25,6 +26,7 @@
 		"db:migrate": "drizzle-kit migrate",
 		"db:sources": "node --env-file-if-exists=../../.env --experimental-strip-types scripts/sources.ts",
 		"consolidate": "node --env-file-if-exists=../../.env --experimental-strip-types scripts/consolidate.ts",
+		"expire": "node --env-file-if-exists=../../.env --experimental-strip-types scripts/expire-submissions.ts",
 		"db:seed": "node --env-file-if-exists=../../.env --experimental-strip-types scripts/seed.ts"
 	},
 	"dependencies": {

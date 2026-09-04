@@ -1,10 +1,11 @@
 import { command, form, query } from '$app/server';
 import { z } from 'zod';
-import { and, asc, desc, eq, gte, inArray, isNull, lte, ne } from 'drizzle-orm';
+import { and, asc, desc, eq, gte, inArray, isNull, lte, ne, or } from 'drizzle-orm';
 import { eventSeries, events, organizers, venues, verifications } from '@hendingar/core/schema';
 import { eventFormSchema } from '@hendingar/core/validation';
 import { zonedWallClockToInstant } from '@hendingar/core/datetime';
 import { DUPLICATE_WINDOW_MS, comparePair } from '@hendingar/core/consolidate';
+import { submissionCutoff } from '@hendingar/core/submissions';
 import { eventPath } from '@hendingar/core/slug';
 import {
 	HORIZON_WEEKS,
@@ -168,7 +169,15 @@ export const mySubmissions = query(
 				and(
 					eq(events.submitterClientId, clientId),
 					// Occurrences of a series share a submission; show the anchor, not thirty rows.
-					isNull(events.seriesId)
+					isNull(events.seriesId),
+					/*
+					 * Past its two days, and already gone as far as anyone can tell.
+					 *
+					 * Filtered on read as well as swept in the nightly job, so the page never lists
+					 * something that no longer exists in any meaningful sense. Published events are
+					 * exempt: they are the site's content, not somebody's draft.
+					 */
+					or(eq(events.status, 'published'), gte(events.updatedAt, submissionCutoff()))
 				)
 			)
 			.orderBy(desc(events.updatedAt))

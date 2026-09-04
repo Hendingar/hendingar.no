@@ -19,7 +19,7 @@ Two reasons, and the second is the load-bearing one.
 This is also the only place in the repo where a language model runs. `CLAUDE.md` rule 3 bans
 models from importer code paths and that still stands: importers must be replayable. Here the
 input is a photograph someone chose to take, output is schema-constrained, confidence is recorded,
-and anything uncertain goes to a human queue.
+and anything uncertain is reported to the person who sent it in so they can correct it.
 
 ## Endpoints
 
@@ -44,8 +44,10 @@ check expensive and unpredictable:
 
 Every check returns its reasoning in Nynorsk, because it is shown to people rather than logged.
 
-**It fails towards a human, never towards publication.** No model configured, a content filter, a
-timeout — all produce `uncertain`, which routes to review.
+**It fails away from publication, never towards it.** No model configured, a content filter, a
+timeout — all produce `uncertain`, which means the event does not go out. What happens next is the
+sender's: they are told which check could not be completed and can send it again. Nothing waits on
+a person here, because there is nobody waiting (ADR 0012).
 
 ## Configuration
 

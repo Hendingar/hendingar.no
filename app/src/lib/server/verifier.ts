@@ -8,8 +8,9 @@ import type { VerificationCheck, VerificationVerdict } from '@hendingar/core/ver
  *
  * The service runs on Azure Container Apps with internal-only ingress and authenticates to Azure
  * AI Foundry with its own managed identity — this app never holds a model credential. Every call
- * here degrades: if the service is unset, slow, or broken, the submission path still works and the
- * event goes to the human queue.
+ * here degrades: if the service is unset, slow, or broken, the submission path still works — the
+ * event is declined rather than published, and its sender is told which check could not run so
+ * they can send it again from /kø (ADR 0012). It fails away from publication, never towards it.
  */
 
 export type CheckResult = {

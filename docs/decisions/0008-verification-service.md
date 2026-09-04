@@ -1,6 +1,6 @@
 # 0008 — Verification runs in a separate service, on Azure with managed identity
 
-**Status:** accepted (2026-08-28)
+**Status:** accepted; the human-review queue is superseded by [ADR 0012](0012-no-review-queue.md) (2026-08-28)
 
 ## Context
 
