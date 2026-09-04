@@ -45,5 +45,11 @@
 	"devDependencies": {
 		"prettier": "^3.4.2",
 		"prettier-plugin-svelte": "^3.3.3"
+	},
+	"pnpm": {
+		"overrides": {
+			"@azure/core-client": "1.11.0",
+			"@typespec/ts-http-runtime": "0.3.8"
+		}
 	}
 }
