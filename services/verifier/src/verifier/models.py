@@ -94,6 +94,13 @@ class ExtractedEvent(BaseModel):
         default=None,
         description="Set INSTEAD of date when the image states a repetition rather than one date",
     )
+    dates: list[str] = Field(
+        default_factory=list,
+        description=(
+            "Every date the image names, YYYY-MM-DD, when it lists them one by one rather than "
+            "stating a rule. Set INSTEAD of date."
+        ),
+    )
     venue_name: str | None = None
     municipality: str | None = None
     organizer_name: str | None = None

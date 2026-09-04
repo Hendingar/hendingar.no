@@ -75,6 +75,7 @@ export async function extractPoster(
 		startTime: raw.start_time,
 		endTime: raw.end_time,
 		recurrence: raw.recurrence,
+		dates: raw.dates ?? [],
 		venueName: raw.venue_name,
 		municipality: raw.municipality,
 		organizerName: raw.organizer_name,
