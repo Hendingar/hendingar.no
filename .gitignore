@@ -17,6 +17,9 @@ __screenshots__/
 # symlink to the root .env, created by scripts/db.sh
 app/.env
 
+# git worktrees for parallel agents; `git worktree` places them inside the repo
+.claude/worktrees/
+
 # python venv for services/verifier
 .venv/
 __pycache__/

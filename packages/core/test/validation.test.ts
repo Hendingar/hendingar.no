@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { eventSubmissionSchema, importedEventSchema } from '../src/validation.ts';
+import { eventFormSchema, eventSubmissionSchema, importedEventSchema } from '../src/validation.ts';
 
 const valid = {
 	title: 'Konsert på Den Blå Time',
@@ -61,6 +61,40 @@ describe('eventSubmissionSchema', () => {
 		]) {
 			expect(eventSubmissionSchema.safeParse({ ...valid, sourceUrl: url }).success).toBe(true);
 		}
+	});
+});
+
+describe('eventFormSchema', () => {
+	const form = {
+		title: 'Konsert på Den Blå Time',
+		category: 'musikk',
+		date: '2026-09-12',
+		startTime: '20:00',
+		venueName: 'Den Blå Time'
+	};
+
+	/**
+	 * Regression, and the failure was a crash rather than a rejection.
+	 *
+	 * Zod 4 does not stop at the first failed check: a `.refine()` after `.url()` still runs when
+	 * `.url()` failed. The scheme refinement called `new URL('')` and threw a TypeError straight
+	 * out of `safeParse` — so every submission that left the source field empty, which is most of
+	 * them, took down the whole form rather than validating.
+	 */
+	it('accepts an empty optional URL rather than throwing on it', () => {
+		expect(() => eventFormSchema.safeParse({ ...form, sourceUrl: '', ctaUrl: '' })).not.toThrow();
+		expect(eventFormSchema.safeParse({ ...form, sourceUrl: '', ctaUrl: '' }).success).toBe(true);
+	});
+
+	it('rejects rather than throws on a URL it cannot parse at all', () => {
+		const r = eventFormSchema.safeParse({ ...form, sourceUrl: 'ikkje ei lenkje' });
+		expect(r.success).toBe(false);
+	});
+
+	it('applies the scheme restriction here too', () => {
+		expect(eventFormSchema.safeParse({ ...form, sourceUrl: 'javascript:alert(1)' }).success).toBe(
+			false
+		);
 	});
 });
 

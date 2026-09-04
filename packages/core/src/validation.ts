@@ -25,9 +25,25 @@ export const categorySchema = z.enum(CATEGORY_SLUGS);
 const httpUrl = z
 	.url()
 	.max(2000)
-	.refine((value) => /^https?:$/i.test(new URL(value).protocol), {
-		message: 'må vere ei http- eller https-adresse'
-	});
+	.refine(
+		(value) => {
+			/*
+			 * `new URL()` in a try, because zod 4 does not stop at the first failed check.
+			 *
+			 * `.url()` failing does NOT skip this refinement — every check in the chain still runs.
+			 * So an empty string, or anything else unparseable, reaches here and `new URL()` throws
+			 * a TypeError out of `safeParse`, which is not a validation failure but a crash. The
+			 * empty string is not hypothetical: the form schema unions this with `z.literal('')`,
+			 * so every submission without a source URL took that path.
+			 */
+			try {
+				return /^https?:$/i.test(new URL(value).protocol);
+			} catch {
+				return false;
+			}
+		},
+		{ message: 'må vere ei http- eller https-adresse' }
+	);
 
 /** An ISO 8601 timestamp that keeps its offset. Importers must not flatten this to UTC. */
 const isoWithOffset = z
