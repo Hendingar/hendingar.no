@@ -666,7 +666,9 @@
 				{submitEvent.pending > 0 ? 'Kontrollerer…' : 'Send inn hendinga'}
 			</button>
 			<p class="form__fine fineprint">
-				Ein agent sjekkar innsendinga. Er noko uklart, ser eit menneske på henne.
+				Fem kontrollar går med ein gong — ingen kø, ingen som ventar. Går alt gjennom, ligg hendinga
+				ute med det same. Gjer ho ikkje det, finn du henne i <a href="/ko">køen din</a> med grunnen, og
+				kan rette og sende inn på nytt. Rører du henne ikkje på 48 timar, blir ho sletta.
 			</p>
 		</div>
 	</form>

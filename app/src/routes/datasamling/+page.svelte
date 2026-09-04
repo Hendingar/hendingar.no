@@ -81,7 +81,7 @@
 		</div>
 		<div class="stat">
 			<p class="stat__n display">{data.pendingCount}</p>
-			<p class="stat__l">ventar på eit menneske</p>
+			<p class="stat__l">ikkje avgjort enno</p>
 		</div>
 		<div class="stat stat--wide">
 			<p class="stat__n display stat__n--sm">
@@ -100,7 +100,8 @@
 	<h2 id="h-submissions" class="display block__h">Sendt inn av folk</h2>
 	<p class="block__lede">
 		Kva som er kome inn gjennom <a href="/send-inn">skjemaet</a> eller frå eit bilete, og kva dei fem
-		kontrollane avgjorde. Er noko usikkert, ventar hendinga på ein person — ho blir ikkje kasta.
+		kontrollane avgjorde. Alt blir avgjort med ein gong — kom hendinga ikkje ut, kan den som sende henne
+		rette og prøve igjen, og ho blir sletta om ingen gjer det innan 48 timar.
 	</p>
 	<SubmissionLog submissions={data.submissions} />
 </section>
@@ -142,8 +143,8 @@
 		<p class="fineprint">
 			<strong>Ingen språkmodell hentar data.</strong> Ein importør som gir ulikt svar på same input er
 			ikkje mogleg å feilsøkje, og oppdikta hendingar er verre enn ingen hendingar. Agentar verifiserer
-			innsende hendingar seinare i løypa — på data som allereie er strukturert, og med eit menneske på
-			alt som er usikkert.
+			innsende hendingar seinare i løypa — på data som allereie er strukturert, og med eit svar til den
+			som sende inn på alt som ikkje går gjennom.
 		</p>
 		<p class="fineprint">
 			Vi respekterer <code>robots.txt</code>, oppgir kven vi er i User-Agent, og hentar éin gong i

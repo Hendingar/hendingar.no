@@ -50,9 +50,15 @@ the same answer every time. Two ask a **language model**, because they need judg
 | Categorisation | model            | Does the category match the content?                          |
 | Corroboration  | rule             | Can it be confirmed against a cited source?                   |
 
-A unanimous confident pass publishes immediately. Anything uncertain goes to a human queue — the
-agent triages, people decide. Nothing is deleted on a model's say-so: a rejected submission is
+A unanimous confident pass publishes immediately. Everything else is decided the same moment, with
+one of four outcomes — `approved`, `duplicate`, `shady` or `declined` — because there is no queue
+and nobody in it. The person who sent it in is the one who can fix it: they see which check stopped
+it and why, and can correct it in `/kø` and send it again. A submission nobody comes back to is
+deleted after 48 hours, and revising it starts that clock over.
+
+Nothing is deleted on a model's say-so _while it can still be corrected_: a rejected submission is
 stored as rejected, so a wrong call is recoverable and repeat spam has something to match against.
+See [ADR 0012](docs/decisions/0012-no-review-queue.md).
 
 Every check's verdict, confidence and reasoning is stored and shown to the submitter, in Nynorsk.
 The reasoning is the product, not a debug log.

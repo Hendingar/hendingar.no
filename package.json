@@ -20,6 +20,7 @@
 		"db:reset": "./scripts/db.sh reset && pnpm run db:migrate && printf '\\n  Database is EMPTY. A seed-only database is not the product:\\n  no posters, one source, and /datasamling will under-report itself.\\n  Run: pnpm db:bootstrap   (or db:seed && db:sources && ingest)\\n\\n'",
 		"db:seed": "pnpm --filter @hendingar/core db:seed",
 		"consolidate": "pnpm --filter @hendingar/core consolidate",
+		"expire": "pnpm --filter @hendingar/core expire",
 		"db:sources": "pnpm --filter @hendingar/core db:sources",
 		"db:up": "./scripts/db.sh up",
 		"db:down": "./scripts/db.sh down",

@@ -14,8 +14,14 @@ test('the form is server-rendered, with every required field', async ({ request 
 	for (const field of ['title', 'category', 'date', 'startTime', 'venueName', 'method']) {
 		expect(html).toMatch(new RegExp(`name="${field}/`));
 	}
-	// What happens next is stated on the page, not only after submitting.
-	expect(html).toContain('Ein agent sjekkar');
+	/*
+	 * What happens next is stated on the page, not only after submitting — and that now includes
+	 * the two-day window, because deleting somebody's submission is not something to mention only
+	 * once it has happened.
+	 */
+	expect(html).toMatch(/Fem kontrollar går/);
+	expect(html).toMatch(/48 timar/);
+	expect(html).toMatch(/href="\/ko"/);
 });
 
 test('both submission modes are in the server-rendered HTML', async ({ request }) => {

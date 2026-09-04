@@ -7,6 +7,7 @@
 		type VerificationVerdict
 	} from '@hendingar/core/verification';
 	import { formatEventTime } from '@hendingar/core/datetime';
+	import { SUBMISSION_TTL_HOURS } from '@hendingar/core/submissions';
 
 	type Check = {
 		check: VerificationCheck;
@@ -74,19 +75,27 @@
 		declined: 'Ikkje publisert'
 	};
 
+	/*
+	 * Every "no" says what happens next, because there is no queue and nobody coming.
+	 *
+	 * The route forward is the sender's own: correct it in /kø and send it again. If they do not,
+	 * it is deleted — and saying so is the honest half of not keeping other people's abandoned
+	 * drafts forever. The number comes from core so this copy cannot drift from the sweep that
+	 * actually does the deleting.
+	 */
 	const explanation: Record<Outcome, string> = {
 		approved: 'Hendinga ligg ute no. Takk — ho er søkbar med ein gong.',
 		duplicate:
 			'Denne hendinga står her frå før, så vi la henne ikkje ut på nytt. Innsendinga er teken vare på og kreditert kjelda under.',
 		/*
-		 * No apology, and no invitation to try again.
+		 * No apology, and no explanation of the rule.
 		 *
-		 * This is the one outcome where the sender is not a person we have failed. Explaining the
-		 * rule would be a guide to getting round it.
+		 * This is the one outcome where the sender is not somebody we have failed, and explaining
+		 * what triggered it would be a guide to getting round it. It still says what happens next,
+		 * because a person wrongly caught here deserves to know the door is not locked.
 		 */
-		shady: 'Dette ser ikkje ut som ei ekte lokal hending, så vi la henne ikkje ut.',
-		declined:
-			'Noko kom ikkje gjennom kontrollane, så vi la henne ikkje ut. Sjå kva som feila under — er det ein feil hos oss, sei frå, vi tek vare på saka.'
+		shady: `Dette ser ikkje ut som ei ekte lokal hending, så vi la henne ikkje ut. Ho ligg i køen din i ${SUBMISSION_TTL_HOURS} timar om du vil rette henne.`,
+		declined: `Noko kom ikkje gjennom kontrollane, så vi la henne ikkje ut. Sjå kva som feila under, rett det og send inn på nytt — du finn henne i køen din. Rører du henne ikkje på ${SUBMISSION_TTL_HOURS} timar, blir ho sletta.`
 	};
 
 	const posterCaption: Record<Outcome, string> = {
@@ -103,6 +112,9 @@
 		<h2 class="display display--md" id="verdict-h">{headline[outcome]}</h2>
 		<p class="verdict__lede">{explanation[outcome]}</p>
 		<p class="verdict__summary">{summary}</p>
+		{#if outcome !== 'approved'}
+			<p class="verdict__next"><a href="/ko">Sjå køen din →</a></p>
+		{/if}
 	</div>
 
 	{#if outcome === 'duplicate' && duplicateOf}
@@ -175,6 +187,11 @@
 	 * A left rule rather than a box: it is a citation, not a second verdict, and boxing it would
 	 * compete with the panel it sits inside.
 	 */
+	.verdict__next {
+		margin: 0.75rem 0 0;
+		font-family: var(--font-mono);
+		font-size: var(--step-micro);
+	}
 	.dupe {
 		margin: 0 clamp(1rem, 3vw, 1.75rem) 1.25rem;
 		padding-inline-start: 1rem;

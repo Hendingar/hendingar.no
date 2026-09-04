@@ -50,10 +50,12 @@
 
 <section class="how shell" aria-labelledby="how-h">
 	<p class="label">Kva skjer så</p>
-	<h2 class="display display--md" id="how-h">Ein agent sjekkar, så går ho ut</h2>
+	<h2 class="display display--md" id="how-h">Sjekka med ein gong, ikkje sett i kø</h2>
 	<p class="how__lede">
-		Ser innsendinga greitt ut, blir hendinga publisert med ein gong. Er noko uklart, ser eit
-		menneske på henne først. Du får sjå kva som vart avgjort, og kvifor.
+		Fem kontrollar går i det du trykkjer send. Går alt gjennom, ligg hendinga ute same sekund. Gjer
+		ho ikkje det, får du vite kva som stoppa henne og kvifor — og ho ventar på deg i
+		<a href="/ko">køen din</a> til du har retta det. Ingen sit og ser på henne: rører du henne ikkje på
+		48 timar, blir ho sletta.
 	</p>
 </section>
 

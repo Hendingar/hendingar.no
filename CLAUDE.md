@@ -128,8 +128,8 @@ Scoped in a component, the next agent cannot see it and writes a second one.
 3. **`services/verifier` is the only place a model runs.** No model SDK in `app/` or
    `importers/`, and no API keys anywhere — the service authenticates to Azure with a managed
    identity. Importers are `fetch → parse → validate → upsert`, deterministic and replayable;
-   verification happens later, on already-structured data, with a human reviewing anything
-   uncertain. See `docs/decisions/0004-deterministic-importers.md` and
+   verification happens later, on already-structured data, and anything uncertain is reported back
+   to whoever sent it in so they can correct it (ADR 0012). See `docs/decisions/0004-deterministic-importers.md` and
    `docs/decisions/0008-verification-service.md`.
 4. **No `any`, no `as` escape hatches.** If a type is fighting you, the type is telling you
    something. `as unknown as T` in a PR is a red flag, not a fix.
@@ -141,7 +141,9 @@ Scoped in a component, the next agent cannot see it and writes a second one.
 7. **Server-only code stays server-only.** Database access lives behind `*.remote.ts` or
    `$lib/server/**`. If a secret or a `pg` import can reach the client bundle, that's a bug.
 8. **Verification failing must never mean submission failing.** `verifyEvent` does not throw; an
-   unavailable verifier produces `recommendation: 'review'` and the event is stored for a human.
+   unavailable verifier produces `recommendation: 'review'`, and the event is stored, declined, and
+   shown to its sender in `/kø` so they can try again. It is never silently published, and never
+   lost — but it is deleted after 48 hours if nobody comes back to it (ADR 0012).
    The same applies to the photo shortcut: it is hidden when `VERIFIER_URL` is unset, never shown
    as a button that cannot work.
 

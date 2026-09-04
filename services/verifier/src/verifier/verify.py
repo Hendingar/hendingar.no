@@ -40,7 +40,7 @@ som vil dele noko. Avvis berre det som klart er spam, reklame, ein test, eller n
 arrangement i det heile.
 
 Svar med:
-- verdict: "pass" (klart greitt), "uncertain" (eit menneske bør sjå på det), "fail" (klart ikkje ei hending)
+- verdict: "pass" (klart greitt), "uncertain" (i tvil), "fail" (klart ikkje ei hending)
 - confidence: 0-100
 - reasoning: éi til to setningar på nynorsk. Dette blir vist til folk, ikkje berre logga."""
 
@@ -149,7 +149,7 @@ def check_duplicate(request: VerifyRequest) -> CheckResult:
             check="duplicate",
             verdict="uncertain",
             confidence=70,
-            reasoning=f"Liknar på «{best.title}» i same tidsrom. Bør sjekkast av eit menneske.",
+            reasoning=f"Liknar på «{best.title}» i same tidsrom. Sjekk om det er den same.",
             deterministic=True,
         )
     return CheckResult(

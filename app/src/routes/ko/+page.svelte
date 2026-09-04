@@ -4,6 +4,7 @@
 		VERIFICATION_VERDICT_LABELS
 	} from '@hendingar/core/verification';
 	import { formatEventTime } from '@hendingar/core/datetime';
+	import { SUBMISSION_TTL_HOURS } from '@hendingar/core/submissions';
 	import { categoryLabel } from '@hendingar/core/taxonomy';
 	import { existingClientId } from '../../lib/client-id.ts';
 	import { mySubmissions, type QueuedSubmission } from '../../lib/submit.remote';
@@ -87,13 +88,18 @@
 	{:else if rows.length === 0}
 		<p class="queue__note">
 			Du har ikkje sendt inn noko frå denne nettlesaren enno. Alt du sender inn dukkar opp her, med
-			svar på kvifor det gjekk ut eller ikkje.
+			svar på kvifor det gjekk ut eller ikkje — og med høve til å rette det som ikkje gjorde det.
 		</p>
 		<p><a class="btn btn--solid" href="/send-inn">Send inn ei hending</a></p>
 	{:else}
 		<p class="queue__note">
 			Lagra i denne nettlesaren. Vi veit ikkje kven du er — lista følgjer deg ikkje til ei anna
 			maskin, og forsvinn om du tømmer nettlesardata.
+		</p>
+		<p class="queue__note">
+			Ingen sit og går gjennom desse. Ei hending som ikkje kom ut ventar på at du rettar henne —
+			gjer du ikkje det innan {SUBMISSION_TTL_HOURS} timar, blir ho sletta. Rettar du henne, byrjar klokka
+			på nytt.
 		</p>
 
 		{#if waiting.length > 0}

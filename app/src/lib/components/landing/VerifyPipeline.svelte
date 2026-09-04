@@ -10,8 +10,8 @@
 		     described them was the same information twice, and the second telling is the one a
 		     reader skips. -->
 		<p class="verify__lede">
-			Alle kan sende inn, utan konto. Fem kontrollar før hendinga blir synleg. Er noko usikkert,
-			avgjer eit menneske.
+			Alle kan sende inn, utan konto. Fem kontrollar før hendinga blir synleg. Stoppar noko henne,
+			seier vi kva — og du kan rette og prøve igjen.
 		</p>
 		<ol class="steps">
 			{#each PIPELINE as step, i (step.name)}
