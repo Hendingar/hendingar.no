@@ -89,7 +89,9 @@ test('a complete submission returns a verdict with reasoning for every check', a
 	await expect(verdict.locator('#verdict-h')).toHaveText('Ikkje publisert');
 	await expect(verdict.locator('.verdict__head')).toHaveAttribute('data-outcome', 'declined');
 	await expect(verdict.locator('.check')).toHaveCount(1);
-	await expect(verdict.locator('.check__reasoning')).toContainText(/manuell/i);
+	// It names the queue, not a person: there is no manual review any more, and the sender's route
+	// forward is /kø rather than waiting.
+	await expect(verdict.locator('.check__reasoning')).toContainText(/køen din/i);
 });
 
 test('the page is reachable from the site navigation', async ({ page }) => {

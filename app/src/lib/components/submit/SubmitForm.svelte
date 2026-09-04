@@ -10,12 +10,37 @@
 	} from '@hendingar/core/recurrence';
 	import type { ExtractedEvent } from '@hendingar/core/validation';
 	import { findDuplicate, submitEvent } from '../../submit.remote';
+	import { ensureClientId, existingClientId } from '../../client-id.ts';
 	import { SvelteSet } from 'svelte/reactivity';
 	import { photoFilledFields } from '../../provenance.ts';
 	import PhotoCapture from './PhotoCapture.svelte';
 	import VerdictPanel from './VerdictPanel.svelte';
 
-	let { photoEnabled }: { photoEnabled: boolean } = $props();
+	let {
+		photoEnabled,
+		revisionOf = null
+	}: {
+		photoEnabled: boolean;
+		/** Set when this form is revising a submission that did not pass its checks. */
+		revisionOf?: number | null;
+	} = $props();
+
+	/*
+	 * Who is sending this, so they can find it again in /kø and revise it until it passes.
+	 *
+	 * Starts as whatever this browser already has, and is only *minted* once somebody actually
+	 * types into the form. Merely opening /send-inn should not write an identifier for a person who
+	 * then changes their mind — the first keystroke is the point at which they have asked to be
+	 * remembered, and it is comfortably before they can submit.
+	 *
+	 * Empty during SSR, since there is no localStorage there. A submission without an id still goes
+	 * through; it simply cannot be revised later.
+	 */
+	let submitterId = $state(existingClientId() ?? '');
+
+	function claimIdentity() {
+		if (!submitterId) submitterId = ensureClientId();
+	}
 
 	const f = submitEvent.fields;
 
@@ -296,7 +321,8 @@
 {/snippet}
 
 {#snippet formPanel()}
-	<form {...submitEvent} class="form frame">
+	<!-- `oninput` mints the browser id on the first keystroke — see `claimIdentity`. -->
+	<form {...submitEvent} class="form frame" oninput={claimIdentity}>
 		<div bind:this={intro} class="form__intro" tabindex="-1">
 			<p class="label">{method === 'photo' ? 'Forslag frå biletet' : 'Skjema'}</p>
 			<h2 class="display display--md">
@@ -371,6 +397,15 @@
 		accessor crashes Svelte's dev SSR renderer on this version.
 	-->
 		<input {...f.method.as('text')} type="hidden" value={method} />
+		<!--
+			Who sent this, so they can find it again in /kø and revise it until it passes.
+
+			Minted only when somebody actually submits — a reader who never sends anything in never
+			has an identifier written for them. Same opaque browser id the hearts use; it is not an
+			account and carries nothing about the person.
+		-->
+		<input {...f.clientId.as('text')} type="hidden" value={submitterId} />
+		<input {...f.revisionOf.as('text')} type="hidden" value={revisionOf ?? ''} />
 
 		<fieldset class="group">
 			<legend class="group__legend">Hendinga</legend>

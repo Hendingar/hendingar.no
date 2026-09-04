@@ -1,6 +1,8 @@
 <script lang="ts">
 	import { page } from '$app/state';
 	import { heartedCount, loadHearts } from '../hearts.svelte.ts';
+	import { existingClientId } from '../client-id.ts';
+	import { mySubmissions } from '../submit.remote';
 
 	/**
 	 * Site-wide navigation. The site had none: /datasamling and /hendingar were reachable only from
@@ -24,6 +26,26 @@
 	 */
 	$effect(() => loadHearts());
 	const hearted = $derived(heartedCount());
+
+	/*
+	 * "Kø" appears only when this browser has a submission still waiting on something.
+	 *
+	 * Same reasoning as Hjarta: an item that is always there, always empty, is a standing promise
+	 * of a feature nobody has used. Once everything you sent in is live, the queue is empty and the
+	 * item goes away — which is the correct end state, not a missing link.
+	 */
+	let waiting = $state(0);
+	$effect(() => {
+		const id = existingClientId();
+		if (!id) return;
+		void mySubmissions({ clientId: id })
+			.then((rows) => {
+				waiting = rows.filter((r) => r.outcome !== 'approved').length;
+			})
+			.catch(() => {
+				// A masthead must render. If the count cannot be fetched the item simply stays away.
+			});
+	});
 </script>
 
 <header class="mast">
@@ -38,6 +60,13 @@
 						</a>
 					</li>
 				{/each}
+				{#if waiting > 0}
+					<li>
+						<a href="/ko" aria-current={page.url.pathname === '/ko' ? 'page' : undefined}>
+							Kø <span class="mast__count">{waiting}</span>
+						</a>
+					</li>
+				{/if}
 				{#if hearted > 0}
 					<li>
 						<a href="/hjarta" aria-current={page.url.pathname === '/hjarta' ? 'page' : undefined}>

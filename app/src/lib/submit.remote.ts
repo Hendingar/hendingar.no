@@ -1,6 +1,6 @@
 import { command, form, query } from '$app/server';
 import { z } from 'zod';
-import { and, eq, gte, isNull, lte } from 'drizzle-orm';
+import { and, asc, desc, eq, gte, inArray, isNull, lte, ne } from 'drizzle-orm';
 import { eventSeries, events, organizers, venues, verifications } from '@hendingar/core/schema';
 import { eventFormSchema } from '@hendingar/core/validation';
 import { zonedWallClockToInstant } from '@hendingar/core/datetime';
@@ -118,6 +118,106 @@ export const findDuplicate = query(duplicateProbeSchema, async (probe) => {
 
 	return best;
 });
+
+/**
+ * This browser's own submissions, and why each one did or did not go out.
+ *
+ * The queue is per-browser and needs no account: `clientId` is the same opaque, browser-generated
+ * value the hearts use. It answers "show me mine" and nothing else — see the column comment in
+ * schema.ts for why that is a proportionate amount of security for an unpublished event listing.
+ *
+ * Approved submissions are included on purpose. A queue that only ever shows failures teaches
+ * people the system is a wall; showing the ones that went out is what makes the list a record of
+ * what they contributed.
+ */
+export const mySubmissions = query(
+	z.object({
+		clientId: z
+			.string()
+			.trim()
+			.min(8)
+			.max(64)
+			.regex(/^[A-Za-z0-9-]+$/, 'client id must be opaque')
+	}),
+	async ({ clientId }) => {
+		const database = db();
+		const rows = await database
+			.select({
+				id: events.id,
+				title: events.title,
+				description: events.description,
+				category: events.category,
+				startsAt: events.startsAt,
+				endsAt: events.endsAt,
+				status: events.status,
+				outcome: events.submissionOutcome,
+				method: events.submissionMethod,
+				sourceUrl: events.sourceUrl,
+				ctaUrl: events.ctaUrl,
+				notes: events.verificationNotes,
+				createdAt: events.createdAt,
+				updatedAt: events.updatedAt,
+				duplicateOfId: events.duplicateOfId,
+				venueName: venues.name,
+				venueMunicipality: venues.municipality,
+				venueTimeZone: venues.timezone
+			})
+			.from(events)
+			.leftJoin(venues, eq(events.venueId, venues.id))
+			.where(
+				and(
+					eq(events.submitterClientId, clientId),
+					// Occurrences of a series share a submission; show the anchor, not thirty rows.
+					isNull(events.seriesId)
+				)
+			)
+			.orderBy(desc(events.updatedAt))
+			.limit(50);
+
+		if (rows.length === 0) return [];
+
+		/*
+		 * The reasoning, in one query rather than one per row.
+		 *
+		 * The whole point of the page is answering "why", so the checks are not optional detail —
+		 * fetching them lazily would mean the page renders the question and not the answer.
+		 */
+		const ids = rows.map((r) => r.id);
+		const allChecks = await database
+			.select({
+				eventId: verifications.eventId,
+				check: verifications.check,
+				verdict: verifications.verdict,
+				confidence: verifications.confidence,
+				reasoning: verifications.reasoning,
+				deterministic: verifications.deterministic,
+				model: verifications.model
+			})
+			.from(verifications)
+			.where(inArray(verifications.eventId, ids))
+			.orderBy(asc(verifications.id));
+
+		const duplicateIds = rows.map((r) => r.duplicateOfId).filter((id): id is number => id !== null);
+		const duplicates = duplicateIds.length
+			? await database
+					.select({ id: events.id, title: events.title })
+					.from(events)
+					.where(inArray(events.id, duplicateIds))
+			: [];
+
+		return rows.map((row) => {
+			const dupe = duplicates.find((d) => d.id === row.duplicateOfId);
+			return {
+				...row,
+				path: eventPath(row.id, row.title),
+				checks: allChecks.filter((c) => c.eventId === row.id),
+				duplicateOf: dupe ? { title: dupe.title, path: eventPath(dupe.id, dupe.title) } : null
+			};
+		});
+	}
+);
+
+export type QueuedSubmission = Awaited<ReturnType<typeof mySubmissions>>[number];
 
 /** Is the photo shortcut available? The UI hides it rather than offering a broken button. */
 export const submissionCapabilities = query(async () => ({ photo: verifierEnabled() }));
@@ -372,6 +472,8 @@ export const submitEvent = form(eventFormSchema, async (submission) => {
 				 * value of having four outcomes instead of "no".
 				 */
 				outcome: 'declined' as const,
+				revisedFrom: null,
+				eventId: null,
 				duplicateOf: null,
 				recommendation: 'review' as const,
 				summary: 'Gjentakinga traff ingen datoar. Sjekk vekedag og første dato, og prøv igjen.',
@@ -398,6 +500,46 @@ export const submitEvent = form(eventFormSchema, async (submission) => {
 		occurrences = expanded.map((o) => ({ startsAt: o.startsAt, endsAt: o.endsAt }));
 	}
 
+	/*
+	 * A revision replaces the row it revises; it does not add another.
+	 *
+	 * Without this, each attempt at getting a submission past the checks leaves a near-identical
+	 * draft behind — and the second attempt is flagged as a duplicate of the first, which is
+	 * exactly the loop `/ko` exists to break. Ownership is checked before anything is touched: a
+	 * revision only applies to a row this browser sent in, and only while it is unpublished.
+	 */
+	let revising: number | null = null;
+	if (submission.revisionOf && submission.clientId) {
+		const [owned] = await database
+			.select({ id: events.id, seriesId: events.seriesId })
+			.from(events)
+			.where(
+				and(
+					eq(events.id, Number(submission.revisionOf)),
+					eq(events.submitterClientId, submission.clientId),
+					/*
+					 * Never a published event.
+					 *
+					 * Once something is out, editing it through this path would be a way to change
+					 * a live listing with nothing but a browser-local id — which is a bearer token,
+					 * not a credential. Revision is for getting a rejected submission over the line.
+					 */
+					ne(events.status, 'published')
+				)
+			)
+			.limit(1);
+		if (owned) {
+			revising = owned.id;
+			// Its old occurrences go with it, or a weekly submission revised to a single date
+			// leaves the other twenty-nine sitting there.
+			if (owned.seriesId !== null) {
+				await database.delete(events).where(eq(events.seriesId, owned.seriesId));
+			} else {
+				await database.delete(events).where(eq(events.id, owned.id));
+			}
+		}
+	}
+
 	const inserted = await database
 		.insert(events)
 		.values(
@@ -415,6 +557,7 @@ export const submitEvent = form(eventFormSchema, async (submission) => {
 				status,
 				submissionMethod: submission.method,
 				submissionOutcome: outcome,
+				submitterClientId: submission.clientId ?? null,
 				/*
 				 * Point at what it duplicates, using the column consolidation already uses.
 				 *
@@ -485,6 +628,9 @@ export const submitEvent = form(eventFormSchema, async (submission) => {
 	return {
 		status,
 		outcome,
+		/** The submission this replaced, when it was a revision. Null for a first attempt. */
+		revisedFrom: revising,
+		eventId: created?.id ?? null,
 		duplicateOf,
 		recommendation: verdict.recommendation,
 		summary: recurrence

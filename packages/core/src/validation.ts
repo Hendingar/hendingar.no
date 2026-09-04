@@ -218,6 +218,31 @@ export const eventFormSchema = z
 			.or(z.literal('').transform(() => undefined)),
 		/** Provenance, so /datasamling can report how events actually arrive. */
 		method: z.enum(['form', 'photo']).default('form'),
+		/**
+		 * The browser sending this, so it can find the submission again in `/ko` and revise it.
+		 *
+		 * Optional: a submission without one still goes through, it simply cannot be revised later.
+		 * Never trusted for anything but "show me my own" — see the column comment in schema.ts.
+		 */
+		clientId: z
+			.string()
+			.trim()
+			.max(64)
+			.regex(/^[A-Za-z0-9-]*$/, 'client id må vere ugjennomsiktig')
+			.optional()
+			.or(z.literal('').transform(() => undefined)),
+		/**
+		 * Set when this is a revision of a submission that did not pass.
+		 *
+		 * The row is updated rather than replaced: a new row each time would fill the database with
+		 * near-identical drafts, and the second attempt would be flagged as a duplicate of the
+		 * first — which is the exact loop `/ko` exists to break.
+		 */
+		revisionOf: z
+			.string()
+			.regex(/^\d+$/, 'må vere ein id')
+			.optional()
+			.or(z.literal('').transform(() => undefined)),
 		/** IANA zone the wall-clock time is in. Defaults to the pilot region. */
 		timeZone: z.string().default('Europe/Oslo')
 	})
