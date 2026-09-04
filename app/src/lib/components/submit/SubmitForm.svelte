@@ -254,7 +254,18 @@
 		 * compute the first matching date from today, so there is something to submit. The
 		 * expansion is pure, so it runs here in the browser.
 		 */
+		/*
+		 * The soonest listed date, not the first one printed.
+		 *
+		 * A poster read in November still lists August at the top. Sorting and taking the earliest
+		 * that has not passed puts something usable in the box; the rest go in `extraDates`.
+		 */
 		let firstDate = draft.date ?? undefined;
+		if (!firstDate && (draft.dates?.length ?? 0) > 0) {
+			const today = new Date().toLocaleDateString('sv-SE');
+			const sorted = [...draft.dates].sort();
+			firstDate = sorted.find((d) => d >= today) ?? sorted[0];
+		}
 		if (draft.recurrence) {
 			const today = new Date().toLocaleDateString('sv-SE'); // sv-SE renders as YYYY-MM-DD
 			const [next] = expandRecurrence({
@@ -282,6 +293,13 @@
 			ctaUrl: draft.ticketUrl ?? undefined,
 			repeats: draft.recurrence?.freq ?? 'nei',
 			repeatWeekdays: draft.recurrence?.weekdays.map(String) ?? [],
+			/*
+			 * Everything after the first, since `date` holds that one.
+			 *
+			 * A poster listing four Thursdays is four events. Reading only the first is what put
+			 * an already-passed date in the box and lost the other three.
+			 */
+			extraDates: (draft.dates ?? []).filter((d) => d !== firstDate),
 			// Narrowed to the option values the select offers, so an out-of-range nth from the model
 			// is dropped rather than written into a field that cannot hold it.
 			repeatNth: NTH_VALUES.find((v) => v === String(draft.recurrence?.nth ?? '')),
@@ -328,6 +346,30 @@
 	});
 
 	const NTH_VALUES = ['1', '2', '3', '4', '5', '-1'] as const;
+
+	/**
+	 * The extra dates currently in the form, so the list and the posted values cannot disagree.
+	 *
+	 * Narrowed to real strings: a form array field can hold holes, and rendering `undefined` as a
+	 * date would put "Invalid Date" in a chip.
+	 */
+	const extraDates = $derived(
+		(f.extraDates.value() ?? []).filter((d): d is string => typeof d === 'string' && d.length > 0)
+	);
+
+	function dropDate(day: string) {
+		f.extraDates.set(extraDates.filter((d) => d !== day));
+	}
+
+	/** "torsdag 29. oktober" — the date as somebody would read it off the poster. */
+	function formatListedDate(day: string): string {
+		const [year, month, date] = day.split('-').map(Number);
+		return new Intl.DateTimeFormat('nn-NO', {
+			weekday: 'long',
+			day: 'numeric',
+			month: 'long'
+		}).format(new Date(Date.UTC(year!, month! - 1, date!, 12)));
+	}
 
 	const repeating = $derived(Boolean(f.repeats.value()) && f.repeats.value() !== 'nei');
 
@@ -560,13 +602,47 @@
 			<p class="group__hint">Dato og klokkeslett i lokal tid, slik dei er oppgitte.</p>
 			<div class="grid">
 				<p class="field">
-					<label for="date">{repeating ? 'Første dato' : 'Dato'}</label>
+					<label for="date">{repeating || extraDates.length > 0 ? 'Første dato' : 'Dato'}</label>
 					{@render readFrom('date')}
 					<input id="date" {...f.date.as('date')} required oninput={() => ownField('date')} />
 					{#each f.date.issues() ?? [] as issue (issue.message)}
 						<span class="field__error">{issue.message}</span>
 					{/each}
 				</p>
+
+				{#if extraDates.length > 0}
+					<!--
+						The other dates the poster listed, shown rather than smuggled through.
+
+						A poster reading "torsdagar: 27.aug. 24.sept. 29.okt. og 26.nov" is four
+						evenings, not a repetition — so this is a list, not a rule. Each is removable,
+						because the model reads a date wrong often enough that submitting four
+						unreviewed ones would be worse than submitting one.
+					-->
+					<fieldset class="dates field--wide">
+						<legend>Fleire datoar frå biletet</legend>
+						<p class="dates__hint">
+							Biletet listar fleire datoar. Kvar av dei blir ei eiga hending, med same klokkeslett
+							og stad. Fjern dei som ikkje stemmer.
+						</p>
+						<ul class="dates__list">
+							{#each extraDates as day (day)}
+								<li class="dates__item">
+									<span>{formatListedDate(day)}</span>
+									<button
+										type="button"
+										class="dates__drop"
+										onclick={() => dropDate(day)}
+										aria-label="Fjern {formatListedDate(day)}"
+									>
+										×
+									</button>
+									<input {...f.extraDates.as('checkbox', day)} checked hidden />
+								</li>
+							{/each}
+						</ul>
+					</fieldset>
+				{/if}
 				<p class="field">
 					<label for="startTime">Startar</label>
 					{@render readFrom('startTime')}
@@ -827,6 +903,57 @@
 		cursor: pointer;
 	}
 	.dupe-warn__dismiss:hover {
+		color: var(--peach-hi);
+	}
+
+	.dates {
+		border: 0;
+		padding: 0;
+		margin: 0;
+		display: grid;
+		gap: 0.4rem;
+	}
+	.dates legend {
+		font-family: var(--font-mono);
+		font-size: var(--step-micro);
+		font-weight: 700;
+		letter-spacing: 0.18em;
+		text-transform: uppercase;
+		color: var(--peach-dim);
+	}
+	.dates__hint {
+		margin: 0;
+		font-size: 0.875rem;
+		color: var(--peach-dim);
+		max-inline-size: 54ch;
+	}
+	.dates__list {
+		list-style: none;
+		margin: 0.2rem 0 0;
+		padding: 0;
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.5rem;
+	}
+	.dates__item {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.4rem;
+		padding: 0.3em 0.5em 0.3em 0.7em;
+		border: var(--rule) solid var(--peach-line);
+		font-family: var(--font-mono);
+		font-size: var(--step-micro);
+	}
+	.dates__drop {
+		background: none;
+		border: 0;
+		padding: 0 0.2em;
+		font-size: 1.1em;
+		line-height: 1;
+		color: var(--peach-dim);
+		cursor: pointer;
+	}
+	.dates__drop:hover {
 		color: var(--peach-hi);
 	}
 

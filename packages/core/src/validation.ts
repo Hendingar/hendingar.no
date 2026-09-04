@@ -145,6 +145,14 @@ export const extractedEventSchema = z.object({
 	confidence: z.number().int().min(0).max(100),
 	/** Fields the model could not read, so the form can highlight them for the human. */
 	unreadable: z.array(z.string()),
+	/**
+	 * Every date the image listed, when it named them one by one instead of stating a rule.
+	 *
+	 * A poster reading "torsdagar: 27.aug. 24.sept. 29.okt. og 26.nov" is four evenings, not a
+	 * repetition — nothing about that pattern follows a rule `recurrence` can express, and picking
+	 * the first produced one event that had usually already happened.
+	 */
+	dates: z.array(z.string().regex(/^\d{4}-\d{2}-\d{2}$/)).default([]),
 	/** One sentence for the person, in Nynorsk, about what was read and what was not. */
 	note: z.string(),
 	/**
@@ -232,6 +240,18 @@ export const eventFormSchema = z
 			.regex(/^\d{4}-\d{2}-\d{2}$/, 'dato må vere ÅÅÅÅ-MM-DD')
 			.optional()
 			.or(z.literal('').transform(() => undefined)),
+		/**
+		 * Extra dates the same event also runs on, beyond `date`.
+		 *
+		 * For a poster that lists its evenings one by one rather than stating a rule. Each becomes
+		 * its own event, sharing everything but the day — which is what four separate Thursdays
+		 * across a term actually are.
+		 */
+		extraDates: z
+			.array(z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'dato må vere ÅÅÅÅ-MM-DD'))
+			.max(24, 'for mange datoar')
+			.optional()
+			.default([]),
 		/** Provenance, so /datasamling can report how events actually arrive. */
 		method: z.enum(['form', 'photo']).default('form'),
 		/**

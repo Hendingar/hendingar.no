@@ -601,6 +601,28 @@ export const submitEvent = form(eventFormSchema, async (submission) => {
 	let seriesId: number | undefined;
 	let occurrences = [{ startsAt, endsAt }];
 
+	/*
+	 * A poster that lists its evenings one by one, rather than stating a rule.
+	 *
+	 * "torsdagar: 27.aug. 24.sept. 29.okt. og 26.nov" is four events. It is not a recurrence —
+	 * nothing about four Thursdays scattered across a term follows a pattern `expandRecurrence`
+	 * could produce — and taking only the first gave one event on a date that had usually already
+	 * passed, which is what was actually happening.
+	 *
+	 * Each date keeps the same wall-clock time and is resolved in the venue's zone independently,
+	 * so a series that crosses the October change stays at 18:00 on both sides of it rather than
+	 * drifting to 17:00.
+	 */
+	if (!recurrence && submission.extraDates.length > 0) {
+		const days = [...new Set([submission.date, ...submission.extraDates])].sort();
+		occurrences = days.map((day) => ({
+			startsAt: zonedWallClockToInstant(day, submission.startTime, submission.timeZone),
+			endsAt: submission.endTime
+				? zonedWallClockToInstant(day, submission.endTime, submission.timeZone)
+				: null
+		}));
+	}
+
 	if (recurrence) {
 		const horizonEnd = localDatePlusWeeks(submission.date, HORIZON_WEEKS);
 		const expanded = expandRecurrence({

@@ -31,6 +31,12 @@ Reglar:
 - Står det ei gjentaking i staden for ein dato ("torsdager", "kvar tysdag", "første måndag i
   månaden"), fyll ut `recurrence` og la `date` stå tom. Ikkje finn opp ein einskild dato for eit
   arrangement som gjentar seg — det er feil svar, sjølv om datoen er plausibel.
+- Listar biletet fleire datoar ein for ein ("27.aug. 24.sept. 29.okt. og 26.nov", "9., 16. og 23.
+  mars"), fyll ut `dates` med alle saman og la `date` stå tom. Dette er IKKJE ei gjentaking: fire
+  torsdagar spreidde over hausten følgjer inga regel, og å velje den første er feil — som oftast er
+  ho alt passert.
+- Ein dato utan årstal skal reknast ut frå datoen du får oppgitt som i dag. Er datoen då passert,
+  høyrer han til neste år.
 - Er det både ein dato og ei gjentaking, fyll ut begge.
 - Vekedagar i `recurrence.weekdays`: 1 = måndag, 7 = sundag.
 - Er staden namngitt slik at han inneheld ein norsk kommune ("Vertshuset Bømlo"), fyll ut
