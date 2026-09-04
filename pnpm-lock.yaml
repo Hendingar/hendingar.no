@@ -4,10 +4,6 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
-overrides:
-  '@azure/core-client': 1.11.0
-  '@typespec/ts-http-runtime': 0.3.8
-
 importers:
 
   .:
@@ -436,7 +432,7 @@ packages:
     resolution: {integrity: sha512-BoSmXPx2er1Ai+wKlDvj29jIQespCNBwEmKyZVHO2kEFsWbGjAjwMCGzug3DJM5/QYIV3vej0S1zcU5bq9fa8w==}
     engines: {node: '>=22.0.0'}
     peerDependencies:
-      '@azure/core-client': 1.11.0
+      '@azure/core-client': ^1.10.0
       '@azure/core-rest-pipeline': ^1.22.0
 
   '@azure/core-lro@2.7.2':
