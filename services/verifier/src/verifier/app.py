@@ -4,10 +4,18 @@ import logging
 
 from fastapi import FastAPI, HTTPException
 
+from .appeal import JURORS, QUORUM, judge_appeal, juror_by_id
 from .config import Config, load_config
 from .extract import extract_poster
 from .llm import LlmClientFactory
-from .models import ExtractedEvent, ExtractRequest, VerifyRequest, VerifyResponse
+from .models import (
+    AppealRequest,
+    ExtractedEvent,
+    ExtractRequest,
+    JurorVerdict,
+    VerifyRequest,
+    VerifyResponse,
+)
 from .verify import verify as run_verify
 
 log = logging.getLogger(__name__)
@@ -48,5 +56,32 @@ def create_app(config: Config | None = None, factory: LlmClientFactory | None = 
         except Exception as exc:
             log.exception("verification failed")
             raise HTTPException(status_code=502, detail=f"verification failed: {exc}") from exc
+
+    @app.get("/appeal/panel")
+    async def panel() -> dict:
+        """Who is on the panel, and how many have to agree.
+
+        The caller needs the seats to know how many requests to make and what to label them with
+        while it waits — and the quorum has to come from here rather than being duplicated in the
+        app, or the two could disagree about what a majority is.
+        """
+        return {
+            "jurors": [{"id": j.id, "name": j.name} for j in JURORS],
+            "quorum": QUORUM,
+        }
+
+    @app.post("/appeal", response_model=JurorVerdict)
+    async def appeal(request: AppealRequest) -> JurorVerdict:
+        """One juror's vote on one appeal.
+
+        One seat per request on purpose: the caller asks all three at once and shows each verdict
+        the moment it lands, rather than leaving somebody watching a blank screen for three model
+        round-trips. `judge_appeal` never raises — a juror that cannot answer votes no, with a
+        reason — so a panel is never left hanging on one bad call.
+        """
+        juror = juror_by_id(request.juror)
+        if juror is None:
+            raise HTTPException(status_code=400, detail=f"unknown juror: {request.juror}")
+        return await judge_appeal(factory, juror, request)
 
     return app

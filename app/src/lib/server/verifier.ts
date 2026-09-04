@@ -155,3 +155,69 @@ export async function verifyEvent(input: VerifyInput): Promise<VerifyResponse> {
 		return unavailable(error instanceof Error ? error.message : String(error));
 	}
 }
+
+/**
+ * One juror's vote on one appeal.
+ *
+ * The panel is three seats and the app asks all three at once, so this is a single call rather than
+ * a batch: each verdict is streamed to the reader the moment it arrives, instead of everyone
+ * watching a blank screen for the length of the slowest one.
+ */
+export type JurorVerdict = {
+	juror: string;
+	name: string;
+	publish: boolean;
+	confidence: number;
+	reasoning: string;
+	model: string | null;
+};
+
+export type AppealInput = {
+	title: string;
+	description: string | null;
+	category: CategorySlug;
+	startsAt: string;
+	venueName: string | null;
+	municipality: string | null;
+	organizerName: string | null;
+	sourceUrl: string | null;
+	rejectionReason: string | null;
+	appeal: string;
+	juror: string;
+};
+
+/** Who sits on the panel, and how many must agree. Read from the service, never duplicated here. */
+export async function appealPanel(): Promise<{
+	jurors: { id: string; name: string }[];
+	quorum: number;
+}> {
+	if (!VERIFIER_URL) throw new Error('verifier is not configured');
+	const res = await fetch(`${VERIFIER_URL.replace(/\/$/, '')}/appeal/panel`, {
+		signal: AbortSignal.timeout(10_000)
+	});
+	if (!res.ok) throw new Error(`verifier /appeal/panel responded ${res.status}`);
+	return res.json();
+}
+
+/** A juror deliberates on prose, so it gets more room than a schema check. */
+const APPEAL_TIMEOUT_MS = 60_000;
+
+export async function judgeAppeal(input: AppealInput): Promise<JurorVerdict> {
+	return post<JurorVerdict>(
+		'/appeal',
+		{
+			title: input.title,
+			description: input.description,
+			category: input.category,
+			starts_at: input.startsAt,
+			venue_name: input.venueName,
+			municipality: input.municipality,
+			organizer_name: input.organizerName,
+			source_url: input.sourceUrl,
+			rejection_reason: input.rejectionReason,
+			appeal: input.appeal,
+			juror: input.juror
+		},
+		APPEAL_TIMEOUT_MS
+	);
+}

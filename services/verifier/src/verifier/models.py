@@ -123,3 +123,31 @@ class VerifyResponse(BaseModel):
     # 'published' only when every check passes with enough confidence; otherwise a human decides.
     recommendation: Literal["publish", "review", "reject"]
     summary: str
+
+
+class AppealRequest(BaseModel):
+    """An event the checks declined, plus the sender's case for it."""
+
+    title: str
+    description: str | None = None
+    category: CategorySlug
+    starts_at: str
+    venue_name: str | None = None
+    municipality: str | None = None
+    organizer_name: str | None = None
+    source_url: str | None = None
+    #: What the automatic check said, so a juror is arguing with a stated reason rather than a mood.
+    rejection_reason: str | None = None
+    #: The sender's own words. Bounded here as well as in the app: this reaches a model.
+    appeal: str = Field(min_length=10, max_length=2000)
+    #: Which seat on the panel to ask. One call per juror, so the caller can stream them.
+    juror: str
+
+
+class JurorVerdict(BaseModel):
+    juror: str
+    name: str
+    publish: bool
+    confidence: int = Field(ge=0, le=100)
+    reasoning: str
+    model: str | None = None
