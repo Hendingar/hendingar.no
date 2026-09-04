@@ -12,7 +12,8 @@
 		"./schedule": "./src/schedule.ts",
 		"./verification": "./src/verification.ts",
 		"./recurrence": "./src/recurrence.ts",
-		"./slug": "./src/slug.ts"
+		"./slug": "./src/slug.ts",
+		"./ical": "./src/ical.ts"
 	},
 	"scripts": {
 		"typecheck": "tsc --noEmit",

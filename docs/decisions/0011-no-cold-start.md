@@ -8,7 +8,14 @@
 after a few minutes of no traffic, and the next visitor paid for a container image pull, a Node
 boot, a SvelteKit start and a fresh Postgres connection before a single byte came back.
 
-Warm, the site answers in about 150ms. Cold is a different order of magnitude, and it is not paid
+Measured against the live site, by waiting for it to scale to zero and then asking once:
+
+```
+COLD: total=21.096s  ttfb=21.048s  http=200
+WARM: total=0.154s   ttfb=0.108s   http=200
+```
+
+**Twenty-one seconds.** It is not paid
 by "a user" in the abstract — it is paid by _the first_ one. On a site whose entire job is answering
 "what is on tonight", that person almost always arrives from a shared link, once, on a phone, and a
 tab that sits blank is indistinguishable from a site that is broken. They do not retry.
