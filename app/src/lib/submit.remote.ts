@@ -370,6 +370,123 @@ export const submissionDraft = query(
 
 export type SubmissionDraft = NonNullable<Awaited<ReturnType<typeof submissionDraft>>>;
 
+/**
+ * One submission's verdict, in the shape the panel renders.
+ *
+ * The verdict used to exist only as the return value of the form call, which meant it lived in
+ * component state and nowhere else: a reload lost it, the back button lost it, and there was no URL
+ * for "the answer I was just given". `/send-inn/kvittering/<id>` is that URL, and this is what it
+ * reads.
+ *
+ * Scoped to this browser exactly as the draft query is. The id is a bearer token, not a credential,
+ * so it names which row to look at and the client id decides whether we may.
+ */
+export const submissionVerdict = query(
+	z.object({
+		id: z.number().int().positive(),
+		clientId: z
+			.string()
+			.trim()
+			.min(8)
+			.max(64)
+			.regex(/^[A-Za-z0-9-]+$/, 'client id must be opaque')
+	}),
+	async ({ id, clientId }) => {
+		const database = db();
+		const [row] = await database
+			.select({
+				id: events.id,
+				title: events.title,
+				status: events.status,
+				outcome: events.submissionOutcome,
+				summary: events.verificationNotes,
+				sourceUrl: events.sourceUrl,
+				/*
+				 * Only ever set for an approved submission — see routes/ko/[id]/bilete.
+				 *
+				 * So a verdict page reached by reload shows the picture when we kept it and shows
+				 * nothing when we did not, which is the promise the copy makes either way.
+				 */
+				posterUrl: events.posterUrl,
+				duplicateOfId: events.duplicateOfId
+			})
+			.from(events)
+			.where(
+				and(
+					eq(events.id, id),
+					eq(events.submitterClientId, clientId),
+					// Expired is gone, here as everywhere else the sender can see their own work.
+					or(eq(events.status, 'published'), gte(events.updatedAt, submissionCutoff()))
+				)
+			)
+			.limit(1);
+
+		if (!row) return null;
+
+		const checks = await database
+			.select({
+				check: verifications.check,
+				verdict: verifications.verdict,
+				confidence: verifications.confidence,
+				reasoning: verifications.reasoning,
+				deterministic: verifications.deterministic,
+				model: verifications.model
+			})
+			.from(verifications)
+			.where(eq(verifications.eventId, row.id))
+			.orderBy(asc(verifications.id));
+
+		let duplicateOf = null;
+		if (row.duplicateOfId !== null) {
+			const [existing] = await database
+				.select({
+					id: events.id,
+					title: events.title,
+					startsAt: events.startsAt,
+					venueName: venues.name,
+					venueTimeZone: venues.timezone
+				})
+				.from(events)
+				.leftJoin(venues, eq(events.venueId, venues.id))
+				.where(eq(events.id, row.duplicateOfId))
+				.limit(1);
+			if (existing) {
+				duplicateOf = {
+					title: existing.title,
+					path: eventPath(existing.id, existing.title),
+					startsAt: existing.startsAt,
+					venueName: existing.venueName,
+					venueTimeZone: existing.venueTimeZone
+				};
+			}
+		}
+
+		return {
+			id: row.id,
+			title: row.title,
+			path: eventPath(row.id, row.title),
+			/*
+			 * `flagged` predates ADR 0012 and is mapped, not passed through.
+			 *
+			 * It meant "the human queue has this one". There is no human queue any more — nothing
+			 * writes the value and no row carries it — but it is still in the Postgres enum,
+			 * because removing an enum value is a subtractive migration and this repo does not do
+			 * those (ADR 0010). To a sender it would have meant the same as pending: not out yet.
+			 */
+			status: row.status === 'flagged' ? ('pending' as const) : row.status,
+			/* A row written before outcomes existed has none; the panel needs one of the four. */
+			outcome: row.outcome ?? 'declined',
+			summary: row.summary ?? '',
+			sourceUrl: row.sourceUrl,
+			posterUrl: row.posterUrl,
+			duplicateOf,
+			checks
+		};
+	}
+);
+
+export type SubmissionVerdict = NonNullable<Awaited<ReturnType<typeof submissionVerdict>>>;
+
 /** Is the photo shortcut available? The UI hides it rather than offering a broken button. */
 export const submissionCapabilities = query(async () => ({ photo: verifierEnabled() }));
 

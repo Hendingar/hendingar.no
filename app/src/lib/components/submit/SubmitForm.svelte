@@ -16,6 +16,8 @@
 	import { photoFilledFields } from '../../provenance.ts';
 	import PhotoCapture from './PhotoCapture.svelte';
 	import VerdictPanel from './VerdictPanel.svelte';
+	import { page } from '$app/state';
+	import { pushState } from '$app/navigation';
 
 	let {
 		photoEnabled,
@@ -173,14 +175,48 @@
 		fromPhoto.delete(name);
 	}
 
+	/** One spelling of the route this form lives at, used by both of the effects below. */
+	const SUBMIT_PATH = '/send-inn';
+
 	/**
 	 * Which way the person is submitting.
 	 *
 	 * Backed by a real radio group rather than JavaScript tabs, so the panels switch with CSS
 	 * `:checked` and both are present in the server-rendered HTML. With JavaScript off the tabs
 	 * still work; with fake tabs the form would simply be unreachable.
+	 *
+	 * `/send-inn?med=bilete` opens on the photo panel, so the entry point can be linked to
+	 * directly. Read once, on the way in.
+	 *
+	 * Deliberately NOT written back as the tab changes. Doing that with `replaceState` re-runs the
+	 * page, and the re-run fights `bind:group`: the radio is checked by the click and unchecked
+	 * again by the render, so the tabs stop working altogether. The address bar following the tab
+	 * is worth very little; the tabs working without JavaScript is worth a lot, and that mechanism
+	 * was here first.
 	 */
-	let mode = $state<'form' | 'photo'>('form');
+	let mode = $state<'form' | 'photo'>(
+		page.url.searchParams.get('med') === 'bilete' ? 'photo' : 'form'
+	);
+
+	/**
+	 * Give the verdict a URL, without throwing away what is on screen.
+	 *
+	 * `pushState` rather than `goto`: the panel shows the poster the fields were read from, and
+	 * that image only exists in this browser's memory — for anything but an approved submission it
+	 * is never uploaded at all, deliberately. A real navigation would lose it at the exact moment
+	 * the checks are being read.
+	 *
+	 * What this buys is that the address bar now names the answer. Reloading, or opening the URL
+	 * later, lands on the real route, which reads the verdict back from the database; the back
+	 * button returns to the form. Before this, a reload silently discarded the whole result.
+	 */
+	let addressed = $state(false);
+	$effect(() => {
+		const result = submitEvent.result;
+		if (!result?.eventId || addressed) return;
+		addressed = true;
+		pushState(`${SUBMIT_PATH}/kvittering/${result.eventId}`, page.state);
+	});
 	let intro: HTMLElement | undefined = $state();
 
 	/**

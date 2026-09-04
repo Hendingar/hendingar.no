@@ -180,3 +180,72 @@ test('a rule that matches no dates is refused rather than stored empty', async (
 	// Caught by the schema, before anything is written.
 	await expect(page.locator('.field__error')).toContainText(/sluttdato/i);
 });
+
+/**
+ * The verdict has a URL, and the URL survives a reload.
+ *
+ * Before this the answer lived only in the form component's state: reloading discarded it, the
+ * back button discarded it, and there was nothing to keep open in a tab while fixing the thing it
+ * complained about. `pushState` gives it an address without navigating — which matters because the
+ * poster the fields were read from exists only in this browser and is never uploaded unless the
+ * submission is approved, so a real navigation would throw the picture away mid-read.
+ */
+test('a verdict gets an address, and reloading it still shows the verdict', async ({ page }) => {
+	await page.goto('/send-inn');
+	await page.locator('#title').fill('E2E kvittering på ei adresse');
+	await page.locator('#category').selectOption('anna');
+	await page.locator('#date').fill('2027-05-19');
+	await page.locator('#startTime').fill('11:00');
+	await page.locator('#venueName').fill('Vinsen');
+	await page.getByRole('button', { name: /Send inn hendinga/ }).click();
+
+	await expect(page.locator('.verdict')).toBeVisible();
+	await expect(page).toHaveURL(/\/send-inn\/kvittering\/\d+$/);
+
+	// The whole point: this is a real route, not only a decorated address bar.
+	await page.reload();
+	await expect(page.locator('.verdict')).toBeVisible();
+	await expect(page.locator('.verdict__head')).toHaveAttribute('data-outcome', 'declined');
+
+	// And back returns to the form rather than leaving the site.
+	await page.goBack();
+	await expect(page).toHaveURL(/\/send-inn$/);
+	await expect(page.locator('#title')).toBeVisible();
+});
+
+test('a verdict belonging to another browser is not readable', async ({ page, context }) => {
+	await page.goto('/send-inn');
+	await page.locator('#title').fill('E2E ikkje din kvittering');
+	await page.locator('#category').selectOption('anna');
+	await page.locator('#date').fill('2027-05-20');
+	await page.locator('#startTime').fill('12:00');
+	await page.locator('#venueName').fill('Vinsen');
+	await page.getByRole('button', { name: /Send inn hendinga/ }).click();
+	await expect(page).toHaveURL(/\/send-inn\/kvittering\/\d+$/);
+	const url = page.url();
+
+	/*
+	 * The id is a bearer token, not a credential. Clearing the browser id is exactly what somebody
+	 * guessing an id from another machine looks like from the server's side.
+	 */
+	await context.clearCookies();
+	await page.evaluate(() => localStorage.clear());
+	await page.goto(url);
+	await expect(page.locator('.verdict')).toHaveCount(0);
+	await expect(page.getByText('Fann ikkje denne kvitteringa')).toBeVisible();
+});
+
+/**
+ * The photo entry point can be linked to directly.
+ *
+ * One direction only: the URL opens the tab, the tab does not rewrite the URL. Syncing it back
+ * with `replaceState` re-runs the page, and the re-run unchecks the radio the click just checked —
+ * which breaks the tabs entirely, including for readers with JavaScript off, who are the reason
+ * the tabs are radios rather than buttons in the first place.
+ */
+test('the photo panel can be opened straight from a URL', async ({ page }) => {
+	await page.goto('/send-inn?med=bilete');
+	// The radio backing the tab, not a class: it is what actually drives the CSS panel switch.
+	await expect(page.locator('#mode-bilete')).toBeChecked();
+	await expect(page.locator('.capture input[type="file"]')).toBeVisible();
+});
