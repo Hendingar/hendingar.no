@@ -60,8 +60,10 @@ to solid so it can never render invisible.
 **Space Mono** for micro-labels, metadata and body copy — the letterspaced uppercase label at
 `0.28em` is the connective tissue of the whole system.
 
-Both are **self-hosted via Fontsource**, not Google Fonts. A project whose pitch is privacy should
-not leak visitor IPs to a third party for a typeface.
+Both are **self-hosted via Fontsource**, not Google Fonts. A typeface is not worth disclosing every
+visitor's IP to Google, and Google Fonts hotlinking has a GDPR history. The site does report page
+views to one analytics collector — that is a deliberate, single, written-down exception, not licence
+to hotline an asset host per font.
 
 ### Sizing against the container, not the viewport
 

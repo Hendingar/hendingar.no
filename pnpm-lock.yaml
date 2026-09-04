@@ -27,6 +27,9 @@ importers:
       '@azure/storage-blob':
         specifier: ^12.33.0
         version: 12.33.0(supports-color@7.2.0)
+      '@d8a-tech/wt':
+        specifier: ^1.4.3
+        version: 1.4.3
       '@fontsource-variable/archivo':
         specifier: ^5.3.0
         version: 5.3.0
@@ -529,6 +532,9 @@ packages:
 
   '@blazediff/core@1.9.1':
     resolution: {integrity: sha512-ehg3jIkYKulZh+8om/O25vkvSsXXwC+skXmyA87FFx6A/45eqOkZsBltMw/TVteb0mloiGT8oGRTcjRAz66zaA==}
+
+  '@d8a-tech/wt@1.4.3':
+    resolution: {integrity: sha512-i/hERZDmjQ5lehTh0YyiwaFX10RiHFa/ODRIWrfQbKZSDXyhJc2MRJO85dvZ11L+hTgTTyCxiT3AWgPpvDoMbg==}
 
   '@drizzle-team/brocli@0.10.2':
     resolution: {integrity: sha512-z33Il7l5dKjUgGULTqBsQBQwckHh5AbIuxhdsIxDDiZAzBOrZO6q9ogcWC65kU382AfynTfgNumVcNIjuIua6w==}
@@ -2930,6 +2936,8 @@ snapshots:
       - supports-color
 
   '@blazediff/core@1.9.1': {}
+
+  '@d8a-tech/wt@1.4.3': {}
 
   '@drizzle-team/brocli@0.10.2': {}
 

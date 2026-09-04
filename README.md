@@ -32,7 +32,11 @@ Scope discipline is a feature. hendingar.no is deliberately **not**:
   wherever tickets actually live.
 - **A social network** — no follows, no feeds, no engagement metrics, no notifications designed
   to pull you back in.
-- **An ad platform** — no ads, no tracking, no data sales. Ever.
+- **An ad platform** — no ads and no data sales, ever. There _is_ one analytics tracker: page
+  views go to a [d8a](https://d8a.tech) collector so we can tell whether anybody is reading this.
+  No Google-owned script runs in the page, nothing follows you to another site, and there is no
+  advertising profile — but a third party does receive a page view and an IP, and saying "no
+  tracking" while that is true would be a lie.
 - **A walled garden** — accounts stay optional, and everything is exportable. Leaving is easy
   by design.
 
