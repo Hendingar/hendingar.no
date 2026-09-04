@@ -5,6 +5,7 @@ import { and, asc, count, eq, gte, isNull, lte, ne, or, sql } from 'drizzle-orm'
 import type { AnyColumn, SQL } from 'drizzle-orm';
 import { events, organizers, sources, venues, verifications } from '@hendingar/core/schema';
 import { eventQuerySchema } from '@hendingar/core/validation';
+import { SUBMITTED_SLUG } from '@hendingar/core/directory';
 import { categoryLabel } from '@hendingar/core/taxonomy';
 import { db } from './server/db';
 
@@ -117,14 +118,24 @@ export const listEvents = query(
 						 * lower id — "Stord kulturhus" would stop listing its own concerts. So a
 						 * canonical matches if IT or any row pointing at it comes from that source.
 						 */
-						source
-							? sql`exists (
+						/*
+						 * `innsendt` is not a row in `sources`, so it cannot be found by the join.
+						 *
+						 * It selects the events that have no source at all and did not arrive by
+						 * import — which is exactly "somebody sent this in". Checked before the
+						 * general branch because that one would search `sources.slug` for a slug
+						 * that is deliberately not there and quietly return nothing.
+						 */
+						source === SUBMITTED_SLUG
+							? and(isNull(events.sourceId), ne(events.submissionMethod, 'import'))
+							: source
+								? sql`exists (
 									select 1 from ${events} as m
 									join ${sources} as ms on ms.id = m.source_id
 									where (m.id = ${events.id} or m.duplicate_of_id = ${events.id})
 										and ms.slug = ${source}
 								)`
-							: undefined,
+								: undefined,
 						municipality ? eq(venues.municipality, municipality) : undefined
 					)
 				)
@@ -163,7 +174,36 @@ export const listSourceCounts = query(async () => {
 		)
 		.groupBy(sources.slug, sources.name, sources.iconUrl);
 
-	return rows.sort((a, b) => b.total - a.total || a.name.localeCompare(b.name, 'nb-NO'));
+	/*
+	 * Events people sent in, as a source of their own.
+	 *
+	 * They have no `sources` row — a submission comes from a person, not a calendar — so the join
+	 * above cannot see them and there was no way to ask "what did people send in?". Counted
+	 * separately and given a reserved slug, which `listEvents` recognises.
+	 */
+	const [submitted] = await db()
+		.select({ total: count(events.id) })
+		.from(events)
+		.where(
+			and(
+				eq(events.status, 'published'),
+				isNull(events.duplicateOfId),
+				isNull(events.sourceId),
+				ne(events.submissionMethod, 'import'),
+				or(gte(events.startsAt, now), gte(events.endsAt, now))
+			)
+		);
+
+	const sorted = rows.sort((a, b) => b.total - a.total || a.name.localeCompare(b.name, 'nb-NO'));
+
+	// Last, whatever its count: it is a different kind of thing from a calendar we collect, and
+	// sorting it in among them would say otherwise.
+	return submitted && submitted.total > 0
+		? [
+				...sorted,
+				{ slug: SUBMITTED_SLUG, name: 'Innsendt av folk', iconUrl: null, total: submitted.total }
+			]
+		: sorted;
 });
 
 /**

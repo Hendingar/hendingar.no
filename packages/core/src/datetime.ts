@@ -143,6 +143,37 @@ function zoneOffsetMs(instant: Date, timeZone: string): number {
  * The offset is applied, then re-checked: a naive single pass lands on the wrong side of a DST
  * transition for times near the boundary.
  */
+/**
+ * An instant back to the wall clock somebody would read off a poster, in a given zone.
+ *
+ * The inverse of `zonedWallClockToInstant`, and needed for the same reason: a form holds a date and
+ * a time, the database holds an instant, and turning one into the other in the *server's* zone puts
+ * a 20:00 concert into the box as 19:00 for anyone deploying outside Norway.
+ *
+ * `en-CA` because it formats as `YYYY-MM-DD` — the one locale that gives the shape an `<input
+ * type="date">` requires without reassembling parts by hand.
+ */
+export function instantToZonedWallClock(
+	instant: Date,
+	timeZone: string = DEFAULT_TIME_ZONE
+): { date: string; time: string } {
+	const date = new Intl.DateTimeFormat('en-CA', {
+		timeZone,
+		year: 'numeric',
+		month: '2-digit',
+		day: '2-digit'
+	}).format(instant);
+
+	const time = new Intl.DateTimeFormat('en-GB', {
+		timeZone,
+		hour: '2-digit',
+		minute: '2-digit',
+		hour12: false
+	}).format(instant);
+
+	return { date, time };
+}
+
 export function zonedWallClockToInstant(
 	localDate: string,
 	localTime: string,

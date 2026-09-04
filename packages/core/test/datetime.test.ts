@@ -4,6 +4,7 @@ import {
 	DEFAULT_TIME_ZONE,
 	formatEventTime,
 	formatTimeDigits,
+	instantToZonedWallClock,
 	machineDateTime,
 	zonedWallClockToInstant
 } from '../src/datetime.ts';
@@ -142,5 +143,35 @@ describe('formatTimeDigits', () => {
 	it('returns empty for empty input, so the field can be cleared', () => {
 		expect(formatTimeDigits('')).toBe('');
 		expect(formatTimeDigits('abc')).toBe('');
+	});
+});
+
+describe('instantToZonedWallClock', () => {
+	it('round-trips a wall clock through an instant and back', () => {
+		// The property that matters: what somebody typed is what they see when they come back.
+		for (const [date, time] of [
+			['2026-09-12', '20:00'],
+			['2026-12-26', '20:00'],
+			['2027-03-28', '03:30']
+		] as const) {
+			const instant = zonedWallClockToInstant(date, time, 'Europe/Oslo');
+			expect(instantToZonedWallClock(instant, 'Europe/Oslo')).toEqual({ date, time });
+		}
+	});
+
+	it('renders in the venue’s zone, not the server’s', () => {
+		/*
+		 * 19:00Z is 20:00 in Oslo and 21:00 in Helsinki. Formatting in the server's zone is how a
+		 * concert ends up an hour out for everyone deploying outside Norway.
+		 */
+		const instant = new Date('2026-09-12T19:00:00Z');
+		expect(instantToZonedWallClock(instant, 'Europe/Oslo').time).toBe('21:00');
+		expect(instantToZonedWallClock(instant, 'UTC').time).toBe('19:00');
+	});
+
+	it('gives the date shape an input[type=date] requires', () => {
+		expect(instantToZonedWallClock(new Date('2026-01-05T12:00:00Z'), 'Europe/Oslo').date).toBe(
+			'2026-01-05'
+		);
 	});
 });

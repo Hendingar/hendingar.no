@@ -30,6 +30,18 @@ export type LinkedSource = {
  * the row changes kind in place, which is why `pnpm db:sources` skips any slug an importer has
  * taken over.
  */
+/**
+ * The reserved slug for "sent in by a person".
+ *
+ * Not a row in `sources`, because a submission does not come from a calendar — it comes from
+ * somebody who saw a poster. It behaves like a source everywhere a reader meets one (a chip, a
+ * filter, a URL) and nowhere else.
+ *
+ * Reserved rather than derived, so a real source can never collide with it: `sources.slug` is
+ * unique and no importer would pick this, but saying so here is cheaper than finding out.
+ */
+export const SUBMITTED_SLUG = 'innsendt';
+
 export const LINKED_SOURCES: readonly LinkedSource[] = [
 	{
 		slug: 'riksteatret-bomlo',

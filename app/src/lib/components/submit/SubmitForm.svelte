@@ -9,7 +9,7 @@
 		type Weekday
 	} from '@hendingar/core/recurrence';
 	import type { ExtractedEvent } from '@hendingar/core/validation';
-	import { findDuplicate, submitEvent } from '../../submit.remote';
+	import { findDuplicate, submissionDraft, submitEvent } from '../../submit.remote';
 	import { ensureClientId, existingClientId } from '../../client-id.ts';
 	import { cropToThumbnail } from '../../poster.ts';
 	import { SvelteSet } from 'svelte/reactivity';
@@ -38,6 +38,56 @@
 	 * through; it simply cannot be revised later.
 	 */
 	let submitterId = $state(existingClientId() ?? '');
+
+	/**
+	 * Open a revision already filled in.
+	 *
+	 * `?rett=<id>` used to carry only the id — the server knew which row to replace, and the fields
+	 * knew nothing, so correcting one wrong date meant retyping the other ten. That is the kind of
+	 * friction that makes people abandon the loop rather than use it.
+	 *
+	 * Client-side, because the values are scoped to this browser's id and the server cannot know
+	 * that before the page loads. `NOT_LOADED` rather than a boolean pair: "not asked yet",
+	 * "asked and there was nothing" and "loaded" are three states, and collapsing the first two
+	 * shows an empty form as though that were the answer.
+	 */
+	let revisionLoaded = $state(false);
+	$effect(() => {
+		if (!revisionOf || revisionLoaded) return;
+		const id = existingClientId();
+		if (!id) {
+			revisionLoaded = true;
+			return;
+		}
+		void submissionDraft({ id: revisionOf, clientId: id })
+			.then((draft) => {
+				if (!draft) return;
+				f.set({
+					title: draft.title,
+					description: draft.description || undefined,
+					category: draft.category,
+					date: draft.date,
+					startTime: draft.startTime,
+					endTime: draft.endTime || undefined,
+					venueName: draft.venueName,
+					municipality: draft.municipality || undefined,
+					organizerName: draft.organizerName || undefined,
+					sourceUrl: draft.sourceUrl || undefined,
+					ctaUrl: draft.ctaUrl || undefined,
+					repeats: draft.repeats,
+					repeatWeekdays: draft.repeatWeekdays,
+					repeatNth: NTH_VALUES.find((v) => v === draft.repeatNth),
+					repeatUntil: draft.repeatUntil || undefined
+				});
+				method = draft.method === 'photo' ? 'photo' : 'form';
+				mode = 'form';
+			})
+			.catch(() => {
+				// An empty form is a worse answer than a slow one, but it is not an error worth
+				// showing: the person can still type, and the server checks ownership again anyway.
+			})
+			.finally(() => (revisionLoaded = true));
+	});
 	let posterCrop = $state<{ x: number; y: number; width: number; height: number } | null>(null);
 
 	/**

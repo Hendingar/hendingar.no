@@ -3,12 +3,13 @@ import { z } from 'zod';
 import { and, asc, desc, eq, gte, inArray, isNull, lte, ne, or } from 'drizzle-orm';
 import { eventSeries, events, organizers, venues, verifications } from '@hendingar/core/schema';
 import { eventFormSchema } from '@hendingar/core/validation';
-import { zonedWallClockToInstant } from '@hendingar/core/datetime';
+import { instantToZonedWallClock, zonedWallClockToInstant } from '@hendingar/core/datetime';
 import { DUPLICATE_WINDOW_MS, comparePair } from '@hendingar/core/consolidate';
 import { submissionCutoff } from '@hendingar/core/submissions';
 import { eventPath } from '@hendingar/core/slug';
 import {
 	HORIZON_WEEKS,
+	RECURRENCE_FREQUENCIES,
 	describeRecurrence,
 	expandRecurrence,
 	type Recurrence,
@@ -230,6 +231,144 @@ export const mySubmissions = query(
 );
 
 export type QueuedSubmission = Awaited<ReturnType<typeof mySubmissions>>[number];
+
+/**
+ * One submission, in the shape the form holds it, so a revision opens filled in.
+ *
+ * `/send-inn?rett=<id>` used to open an empty form: the id travelled, so the server knew which row
+ * to replace, but nobody had told the *fields* anything — which meant revising a submission because
+ * one date was wrong required retyping all ten of the others. That made the whole refinement loop
+ * something people would abandon rather than use.
+ *
+ * Scoped to this browser and to rows that are not published, exactly as the revision itself is: the
+ * form must never become a way to read back somebody else's draft.
+ */
+export const submissionDraft = query(
+	z.object({
+		id: z.number().int().positive(),
+		clientId: z
+			.string()
+			.trim()
+			.min(8)
+			.max(64)
+			.regex(/^[A-Za-z0-9-]+$/, 'client id must be opaque')
+	}),
+	async ({ id, clientId }) => {
+		const database = db();
+		const [row] = await database
+			.select({
+				id: events.id,
+				title: events.title,
+				description: events.description,
+				category: events.category,
+				startsAt: events.startsAt,
+				endsAt: events.endsAt,
+				sourceUrl: events.sourceUrl,
+				ctaUrl: events.ctaUrl,
+				method: events.submissionMethod,
+				seriesId: events.seriesId,
+				venueName: venues.name,
+				venueMunicipality: venues.municipality,
+				venueTimeZone: venues.timezone,
+				organizerName: organizers.name
+			})
+			.from(events)
+			.leftJoin(venues, eq(events.venueId, venues.id))
+			.leftJoin(organizers, eq(events.organizerId, organizers.id))
+			.where(
+				and(
+					eq(events.id, id),
+					eq(events.submitterClientId, clientId),
+					// Never a published event: revising is a route onto the site, not a way to edit it.
+					ne(events.status, 'published'),
+					// Still inside its window; an expired row is gone as far as /kø is concerned.
+					gte(events.updatedAt, submissionCutoff())
+				)
+			)
+			.limit(1);
+
+		if (!row) return null;
+
+		/*
+		 * The instant back to the wall clock somebody typed.
+		 *
+		 * In the venue's zone, never the server's — a 20:00 concert read back in UTC puts 18:00 in
+		 * the box, and the person "corrects" a time that was right.
+		 */
+		const zone = row.venueTimeZone ?? 'Europe/Oslo';
+		const start = instantToZonedWallClock(row.startsAt, zone);
+		const end = row.endsAt ? instantToZonedWallClock(row.endsAt, zone) : null;
+
+		/*
+		 * A recurring submission's rule is reconstructed from the series, not from the row.
+		 *
+		 * The occurrences are ordinary events and carry no rule of their own; the series is where
+		 * "every Thursday until June" actually lives. Without this a weekly submission would come
+		 * back as a single date and quietly lose its repetition on the next send.
+		 */
+		let recurrence: {
+			// Typed from core's list, not written out: a new frequency must not need a second edit
+			// here to reach the form (CLAUDE.md rule 1).
+			repeats: (typeof RECURRENCE_FREQUENCIES)[number];
+			repeatWeekdays: string[];
+			repeatNth: string;
+			repeatUntil: string;
+		} | null = null;
+
+		if (row.seriesId !== null) {
+			const [series] = await database
+				.select({
+					freq: eventSeries.freq,
+					weekdays: eventSeries.weekdays,
+					nth: eventSeries.nth,
+					until: eventSeries.until
+				})
+				.from(eventSeries)
+				.where(eq(eventSeries.id, row.seriesId))
+				.limit(1);
+			if (series) {
+				recurrence = {
+					repeats: series.freq,
+					repeatWeekdays: series.weekdays.map(String),
+					repeatNth: series.nth === null ? '' : String(series.nth),
+					repeatUntil: series.until ?? ''
+				};
+			}
+		}
+
+		/*
+		 * Annotated, not inferred.
+		 *
+		 * Inside an object literal TypeScript widens `'nei'` to `string`, and the form's field is a
+		 * union — so the value arrives at `f.set` as the wrong type with no cast available to us
+		 * (CLAUDE.md rule 4). A named const with a declared type keeps the literal union intact.
+		 */
+		const repeats: (typeof RECURRENCE_FREQUENCIES)[number] | 'nei' = recurrence?.repeats ?? 'nei';
+
+		return {
+			id: row.id,
+			title: row.title,
+			description: row.description ?? '',
+			category: row.category,
+			date: start.date,
+			startTime: start.time,
+			endTime: end?.time ?? '',
+			venueName: row.venueName ?? '',
+			municipality: row.venueMunicipality ?? '',
+			organizerName: row.organizerName ?? '',
+			sourceUrl: row.sourceUrl ?? '',
+			ctaUrl: row.ctaUrl ?? '',
+			method: row.method,
+			timeZone: zone,
+			repeats,
+			repeatWeekdays: recurrence?.repeatWeekdays ?? [],
+			repeatNth: recurrence?.repeatNth ?? '',
+			repeatUntil: recurrence?.repeatUntil ?? ''
+		};
+	}
+);
+
+export type SubmissionDraft = NonNullable<Awaited<ReturnType<typeof submissionDraft>>>;
 
 /** Is the photo shortcut available? The UI hides it rather than offering a broken button. */
 export const submissionCapabilities = query(async () => ({ photo: verifierEnabled() }));
