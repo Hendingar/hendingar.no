@@ -65,6 +65,40 @@ test('the revise link opens the form as a revision of that submission', async ({
 	await expect(page.locator('input[name*=revisionOf]')).toHaveValue(id!);
 });
 
+test('a revision opens filled in, so nothing has to be retyped', async ({ page }) => {
+	/*
+	 * The bug this exists for. `?rett=` carried only the id: the server knew which row to replace
+	 * and the fields knew nothing, so correcting one wrong date meant retyping the other ten. That
+	 * is the kind of friction that makes people abandon the loop rather than use it.
+	 */
+	await submit(page, 'Fiskefestival i Vinsen');
+	await page.goto('/ko');
+	const href = await page.locator('.card__actions a').first().getAttribute('href');
+
+	await page.goto(href!);
+	await expect(page.locator('#title')).toHaveValue('Fiskefestival i Vinsen', { timeout: 10_000 });
+	await expect(page.locator('#category')).toHaveValue('festival');
+	await expect(page.locator('#venueName')).toHaveValue('Vinsen59');
+	// The wall clock somebody typed, read back in the venue's zone rather than the server's — a
+	// 20:00 concert returning as 18:00 would have them "correct" a time that was right.
+	await expect(page.locator('#date')).toHaveValue('2027-05-19');
+	await expect(page.locator('#startTime')).toHaveValue('11:00');
+});
+
+test('one browser cannot read back another’s draft', async ({ page, context }) => {
+	await submit(page, 'Fiskefestival i Vinsen');
+	await page.goto('/ko');
+	const href = await page.locator('.card__actions a').first().getAttribute('href');
+
+	// Same URL, different browser: the id is not a capability, the browser id is.
+	const other = await context.browser()!.newContext();
+	const stranger = await other.newPage();
+	await stranger.goto(new URL(href!, page.url()).toString());
+	await stranger.waitForTimeout(1500);
+	await expect(stranger.locator('#title')).toHaveValue('');
+	await other.close();
+});
+
 test('revising replaces the submission instead of stacking another draft', async ({ page }) => {
 	/*
 	 * The loop this closes. Without replacement each attempt leaves a near-identical row behind,

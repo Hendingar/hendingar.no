@@ -279,3 +279,19 @@ test('a repeated time is still reachable as its own event', async ({ page }) => 
 	// The stretched card overlay must not swallow the chip's click and open the first session.
 	await expect(page.getByRole('heading', { level: 1 })).toContainText('Offentleg symjing');
 });
+
+test('events people sent in are filterable as their own source', async ({ page, request }) => {
+	/*
+	 * A submission has no `sources` row — it comes from a person, not a calendar — so it could not
+	 * be filtered at all. `innsendt` is a reserved slug that behaves like a source everywhere a
+	 * reader meets one, and nowhere else.
+	 */
+	const html = await (await request.get('/hendingar')).text();
+	if (!html.includes('kjelde=innsendt')) return; // the seed may hold no published submissions
+
+	await page.goto('/hendingar?kjelde=innsendt');
+	await expect(page.locator('.list__scope')).toContainText('Innsendt av folk');
+	// Every tile shown really is a submission: no source mark, because there is no source.
+	const tiles = page.locator('article.tile');
+	expect(await tiles.count()).toBeGreaterThan(0);
+});

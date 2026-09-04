@@ -16,7 +16,8 @@
 		"./ical": "./src/ical.ts",
 		"./consolidate": "./src/consolidate.ts",
 		"./similarity": "./src/similarity.ts",
-		"./submissions": "./src/submissions.ts"
+		"./submissions": "./src/submissions.ts",
+		"./directory": "./src/directory.ts"
 	},
 	"scripts": {
 		"typecheck": "tsc --noEmit",
