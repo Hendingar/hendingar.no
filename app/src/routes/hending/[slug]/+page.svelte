@@ -207,6 +207,19 @@
 					{/if}
 				</dl>
 
+				<!--
+					A real link, not a script-driven download.
+
+					`download` plus an href the server already marks as an attachment means this works
+					with JavaScript off, can be opened in a new tab, and can be long-pressed on a
+					phone — none of which a button that builds a blob can do.
+				-->
+				<p class="ev__ics">
+					<a class="btn" href="{eventPath(event.id, event.title)}/kalender.ics" download>
+						Legg i kalenderen
+					</a>
+				</p>
+
 				{#if event.ctaUrl}
 					<!-- Outbound. We never sell tickets — see the README non-goals. -->
 					<a class="btn btn--solid" href={event.ctaUrl} rel="noopener nofollow">Billettar</a>
@@ -275,6 +288,9 @@
 		font-size: var(--step-micro);
 		letter-spacing: 0.16em;
 		text-transform: uppercase;
+	}
+	.ev__ics {
+		margin-block: 1.25rem 0.75rem;
 	}
 	.ev__heart {
 		margin-block: 0.8rem 0;
