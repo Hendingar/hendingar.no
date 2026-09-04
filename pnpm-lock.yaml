@@ -4,6 +4,10 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+overrides:
+  '@azure/core-client': 1.11.0
+  '@typespec/ts-http-runtime': 0.3.8
+
 importers:
 
   .:
