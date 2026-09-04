@@ -79,8 +79,15 @@ test('a complete submission returns a verdict with reasoning for every check', a
 
 	const verdict = page.locator('.verdict');
 	await expect(verdict).toBeVisible();
-	// With no verifier reachable, the honest outcome is a human queue — never a silent publish.
-	await expect(verdict.locator('#verdict-h')).toHaveText('Til gjennomgang');
+	/*
+	 * With no verifier reachable the submission is declined, never silently published.
+	 *
+	 * It used to say "Til gjennomgang" — a human queue with nobody in it, which is a slower no that
+	 * nobody is ever told about. `declined` says the same thing honestly and points at the check
+	 * that could not run.
+	 */
+	await expect(verdict.locator('#verdict-h')).toHaveText('Ikkje publisert');
+	await expect(verdict.locator('.verdict__head')).toHaveAttribute('data-outcome', 'declined');
 	await expect(verdict.locator('.check')).toHaveCount(1);
 	await expect(verdict.locator('.check__reasoning')).toContainText(/manuell/i);
 });

@@ -121,6 +121,117 @@ class TestPipeline:
         assert response.recommendation == "review"
 
 
+class _StubFactory:
+    """Every model-judged check passes confidently, so only the rules decide the outcome."""
+
+    def __init__(self, payload: str):
+        self._payload = payload
+
+    def __call__(self):
+        return self
+
+    async def __aenter__(self):
+        return self
+
+    async def __aexit__(self, *_):
+        return False
+
+
+class TestCorroborationDoesNotBlock:
+    """The fishing festival.
+
+    A real submission — a poster photographed off a noticeboard — passed normalisation at 100%,
+    duplicate at 95%, plausibility at 90% and categorisation at 90%, and was still held back
+    because it had no source URL. Corroboration reported 60% confidence, which sat under the
+    floor, and "we could not cross-check this" became "a human must look at it" in a queue with
+    nobody in it.
+    """
+
+    def test_corroboration_is_not_a_blocking_check(self):
+        from verifier.verify import BLOCKING_CHECKS
+
+        assert "corroboration" not in BLOCKING_CHECKS
+        # The other four are the ones that genuinely say something about the event itself.
+        assert BLOCKING_CHECKS == {
+            "plausibility",
+            "duplicate",
+            "normalisation",
+            "categorisation",
+        }
+
+    def test_a_missing_source_still_reports_what_it_found(self):
+        from verifier.verify import check_corroboration
+
+        result = check_corroboration(_request())
+        # Honest about the gap — it just no longer decides the outcome on its own.
+        assert result.verdict == "uncertain"
+        assert "kjelde-URL" in result.reasoning
+
+    async def test_a_missing_source_does_not_hold_back_an_otherwise_clean_event(self, monkeypatch):
+        """The regression, end to end through `verify`."""
+        from verifier import verify as verify_module
+        from verifier.models import CheckResult
+
+        async def _passing(_factory, request, *, check: str):
+            return CheckResult(
+                check=check,
+                verdict="pass",
+                confidence=90,
+                reasoning="Ser ut som ei ekte lokal hending.",
+                deterministic=False,
+                model="stub",
+            )
+
+        monkeypatch.setattr(
+            verify_module,
+            "check_plausibility",
+            lambda f, r: _passing(f, r, check="plausibility"),
+        )
+        monkeypatch.setattr(
+            verify_module,
+            "check_categorisation",
+            lambda f, r: _passing(f, r, check="categorisation"),
+        )
+
+        response = await verify(object(), _request(source_url=None))
+
+        assert response.recommendation == "publish"
+        # And the summary leads with the decision, not with the caveat. Opening on "could not be
+        # confirmed" is what made a published event read as a refusal.
+        assert response.summary.startswith("Alle avgjerande sjekkar gjekk gjennom")
+        assert "kjelde-URL" in response.summary
+
+    async def test_a_real_failure_still_stops_it(self, monkeypatch):
+        from verifier import verify as verify_module
+        from verifier.models import CheckResult
+
+        async def _spam(_factory, _request):
+            return CheckResult(
+                check="plausibility",
+                verdict="fail",
+                confidence=95,
+                reasoning="Reklame.",
+                deterministic=False,
+                model="stub",
+            )
+
+        async def _fine(_factory, _request):
+            return CheckResult(
+                check="categorisation",
+                verdict="pass",
+                confidence=90,
+                reasoning="Greitt.",
+                deterministic=False,
+                model="stub",
+            )
+
+        monkeypatch.setattr(verify_module, "check_plausibility", _spam)
+        monkeypatch.setattr(verify_module, "check_categorisation", _fine)
+
+        response = await verify(object(), _request(source_url=None))
+        assert response.recommendation == "reject"
+
+
 @pytest.mark.parametrize("verdict_field", ["confidence"])
 def test_confidence_is_bounded(verdict_field):
     result = check_normalisation(_request())

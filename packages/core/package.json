@@ -13,7 +13,9 @@
 		"./verification": "./src/verification.ts",
 		"./recurrence": "./src/recurrence.ts",
 		"./slug": "./src/slug.ts",
-		"./ical": "./src/ical.ts"
+		"./ical": "./src/ical.ts",
+		"./consolidate": "./src/consolidate.ts",
+		"./similarity": "./src/similarity.ts"
 	},
 	"scripts": {
 		"typecheck": "tsc --noEmit",

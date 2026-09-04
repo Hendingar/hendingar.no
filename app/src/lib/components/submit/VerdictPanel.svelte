@@ -6,6 +6,7 @@
 		type VerificationCheck,
 		type VerificationVerdict
 	} from '@hendingar/core/verification';
+	import { formatEventTime } from '@hendingar/core/datetime';
 
 	type Check = {
 		check: VerificationCheck;
@@ -16,13 +17,27 @@
 		model: string | null;
 	};
 
+	type Outcome = 'approved' | 'duplicate' | 'shady' | 'declined';
+
 	let {
 		status,
+		outcome,
+		duplicateOf = null,
 		summary,
 		checks,
 		poster = null
 	}: {
 		status: 'published' | 'pending' | 'rejected';
+		/** What we concluded, which is the part the sender actually needs told. */
+		outcome: Outcome;
+		/** The event we already had, when this was a duplicate. Named, never merely alleged. */
+		duplicateOf?: {
+			title: string;
+			path: string;
+			startsAt: Date | string;
+			venueName: string | null;
+			venueTimeZone: string | null;
+		} | null;
 		summary: string;
 		checks: Check[];
 		/**
@@ -44,32 +59,78 @@
 		panel?.focus();
 	});
 
-	const headline: Record<typeof status, string> = {
-		published: 'Publisert',
-		pending: 'Til gjennomgang',
-		rejected: 'Ikkje publisert'
+	/*
+	 * Four outcomes, four different things to say.
+	 *
+	 * There used to be three statuses, one of which meant "a person will look at it" — and with
+	 * nobody in the queue that was a slower no that nobody was told about. "No, this is spam",
+	 * "no, we already have it" and "no, we could not read the date" are three different messages,
+	 * and only the last two deserve an apology.
+	 */
+	const headline: Record<Outcome, string> = {
+		approved: 'Publisert',
+		duplicate: 'Vi har henne alt',
+		shady: 'Ikkje publisert',
+		declined: 'Ikkje publisert'
 	};
 
-	const posterCaption: Record<'published' | 'pending' | 'rejected', string> = {
-		published: 'Dette er biletet hendinga blei lesen frå.',
-		pending: 'Dette er biletet vi las. Eit menneske ser på det same.',
-		rejected: 'Dette er biletet vi las.'
+	const explanation: Record<Outcome, string> = {
+		approved: 'Hendinga ligg ute no. Takk — ho er søkbar med ein gong.',
+		duplicate:
+			'Denne hendinga står her frå før, så vi la henne ikkje ut på nytt. Innsendinga er teken vare på og kreditert kjelda under.',
+		/*
+		 * No apology, and no invitation to try again.
+		 *
+		 * This is the one outcome where the sender is not a person we have failed. Explaining the
+		 * rule would be a guide to getting round it.
+		 */
+		shady: 'Dette ser ikkje ut som ei ekte lokal hending, så vi la henne ikkje ut.',
+		declined:
+			'Noko kom ikkje gjennom kontrollane, så vi la henne ikkje ut. Sjå kva som feila under — er det ein feil hos oss, sei frå, vi tek vare på saka.'
 	};
 
-	const explanation: Record<typeof status, string> = {
-		published: 'Hendinga ligg ute no. Takk — ho er søkbar med ein gong.',
-		pending: 'Vi fann noko vi ikkje kunne avgjere maskinelt, så eit menneske ser på henne først.',
-		rejected: 'Vi publiserte henne ikkje. Er dette feil, kan du seie frå — vi tek vare på saka.'
+	const posterCaption: Record<Outcome, string> = {
+		approved: 'Dette er biletet hendinga blei lesen frå.',
+		duplicate: 'Dette er biletet vi las.',
+		shady: 'Dette er biletet vi las.',
+		declined: 'Dette er biletet vi las.'
 	};
 </script>
 
 <section bind:this={panel} class="verdict frame" tabindex="-1" aria-labelledby="verdict-h">
-	<div class="verdict__head" data-status={status}>
+	<div class="verdict__head" data-status={status} data-outcome={outcome}>
 		<p class="label">Resultat</p>
-		<h2 class="display display--md" id="verdict-h">{headline[status]}</h2>
-		<p class="verdict__lede">{explanation[status]}</p>
+		<h2 class="display display--md" id="verdict-h">{headline[outcome]}</h2>
+		<p class="verdict__lede">{explanation[outcome]}</p>
 		<p class="verdict__summary">{summary}</p>
 	</div>
+
+	{#if outcome === 'duplicate' && duplicateOf}
+		<!--
+			Name the event, do not merely allege it.
+
+			Being told your submission was a copy of something, without being told of what, is
+			indistinguishable from being told no for no reason — and it removes the one thing the
+			sender could do about it, which is look and see whether we are right.
+		-->
+		<aside class="dupe">
+			<p class="label">Hendinga vi har frå før</p>
+			<a class="dupe__link" href={duplicateOf.path}>{duplicateOf.title}</a>
+			<p class="dupe__meta">
+				<!-- Separator inside the expression: a bare "·" between an {#if} and its text gets
+				     collapsed at the boundary, and the time ran straight into the venue name. -->
+				{formatEventTime(
+					typeof duplicateOf.startsAt === 'string'
+						? new Date(duplicateOf.startsAt)
+						: duplicateOf.startsAt,
+					duplicateOf.venueTimeZone
+				) + (duplicateOf.venueName ? ` · ${duplicateOf.venueName}` : '')}
+			</p>
+			<p class="dupe__note">
+				Er dette ei anna hending? Sei frå, så ser vi på det — vi har teke vare på innsendinga di.
+			</p>
+		</aside>
+	{/if}
 
 	{#if poster}
 		<!--
@@ -81,7 +142,7 @@
 		-->
 		<figure class="verdict__poster">
 			<img src={poster} alt="Biletet du sende inn" />
-			<figcaption>{posterCaption[status]}</figcaption>
+			<figcaption>{posterCaption[outcome]}</figcaption>
 		</figure>
 	{/if}
 
@@ -108,6 +169,40 @@
 </section>
 
 <style>
+	/*
+	 * The event we already had, set apart from the verdict copy.
+	 *
+	 * A left rule rather than a box: it is a citation, not a second verdict, and boxing it would
+	 * compete with the panel it sits inside.
+	 */
+	.dupe {
+		margin: 0 clamp(1rem, 3vw, 1.75rem) 1.25rem;
+		padding-inline-start: 1rem;
+		border-inline-start: var(--rule-fat) solid var(--peach-line);
+		display: grid;
+		gap: 0.35rem;
+	}
+	.dupe__link {
+		font-family: var(--font-display);
+		font-weight: 900;
+		font-stretch: 112%;
+		text-transform: uppercase;
+		font-size: var(--step-mid);
+		line-height: 1;
+		overflow-wrap: anywhere;
+	}
+	.dupe__meta {
+		margin: 0;
+		font-family: var(--font-mono);
+		font-size: var(--step-micro);
+		color: var(--peach-dim);
+	}
+	.dupe__note {
+		margin: 0.3rem 0 0;
+		font-size: 0.875rem;
+		color: var(--peach-dim);
+	}
+
 	.verdict__poster {
 		margin: 0;
 		border-block-end: var(--rule) solid var(--peach-line);

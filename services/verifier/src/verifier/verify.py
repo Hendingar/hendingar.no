@@ -19,6 +19,19 @@ log = logging.getLogger(__name__)
 # Below this, a passing verdict still goes to a human.
 CONFIDENCE_FLOOR = 70
 
+#: Checks that can hold an event back on their own.
+#:
+#: Corroboration is deliberately absent. It asks whether the event can be confirmed *somewhere
+#: else*, and the honest answer for most submissions is no: somebody photographing a poster on a
+#: noticeboard has no URL to give, and the poster is the source. Treating that absence as doubt
+#: about the event held back a real fishing festival whose other four checks passed at 90–100%,
+#: because a 60% confidence sat under the floor.
+#:
+#: Corroboration still reports what it found, and a `fail` from any check still rejects. What it can
+#: no longer do is turn "we could not cross-check this" into "a human must look at it" — which, with
+#: nobody in the queue, meant no.
+BLOCKING_CHECKS = frozenset({"plausibility", "duplicate", "normalisation", "categorisation"})
+
 SYSTEM = """Du vurderer innsende arrangement for hendingar.no, ein open kalender for lokale
 arrangement i Noreg.
 
@@ -221,13 +234,20 @@ async def check_categorisation(factory: LlmClientFactory, request: VerifyRequest
 
 
 def check_corroboration(request: VerifyRequest) -> CheckResult:
-    """A rule: either a source was given or it wasn't. Whether it resolves is a later problem."""
+    """A rule: either a source was given or it wasn't. Whether it resolves is a later problem.
+
+    Reports honestly and never blocks on its own — see ``BLOCKING_CHECKS``. Most people
+    photographing a poster on a noticeboard have no URL to give, and the poster is the source.
+    """
     if not request.source_url:
         return CheckResult(
             check="corroboration",
             verdict="uncertain",
             confidence=60,
-            reasoning="Ingen kjelde-URL oppgitt, så innsendinga kan ikkje stadfestast andre stader.",
+            reasoning=(
+                "Ingen kjelde-URL oppgitt, så vi kunne ikkje stadfeste hendinga andre stader. "
+                "Det åleine stoppar henne ikkje."
+            ),
             deterministic=True,
         )
     return CheckResult(
@@ -263,13 +283,27 @@ async def verify(factory: LlmClientFactory | None, request: VerifyRequest) -> Ve
 
     if any(c.verdict == "fail" for c in checks):
         recommendation = "reject"
-    elif any(c.verdict == "uncertain" or c.confidence < CONFIDENCE_FLOOR for c in checks):
+    elif any(
+        (c.verdict == "uncertain" or c.confidence < CONFIDENCE_FLOOR) and c.check in BLOCKING_CHECKS
+        for c in checks
+    ):
         recommendation = "review"
     else:
         recommendation = "publish"
 
-    failing = [c for c in checks if c.verdict != "pass"]
-    summary = (
-        "Alle sjekkar gjekk gjennom." if not failing else " ".join(c.reasoning for c in failing)
-    )
+    blocking = [
+        c
+        for c in checks
+        if c.verdict != "pass" and (c.check in BLOCKING_CHECKS or c.verdict == "fail")
+    ]
+    caveats = [c for c in checks if c.verdict != "pass" and c not in blocking]
+
+    if blocking:
+        summary = " ".join(c.reasoning for c in blocking)
+    elif caveats:
+        # Published, with the caveat stated. Leading with "could not be confirmed" on an event we
+        # just published read as a refusal, which is how a fishing festival looked rejected.
+        summary = "Alle avgjerande sjekkar gjekk gjennom. " + " ".join(c.reasoning for c in caveats)
+    else:
+        summary = "Alle sjekkar gjekk gjennom."
     return VerifyResponse(checks=checks, recommendation=recommendation, summary=summary)
