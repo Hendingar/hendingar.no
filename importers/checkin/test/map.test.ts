@@ -3,7 +3,14 @@ import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { CATEGORY_SLUGS } from '@hendingar/core/taxonomy';
 import { INSTANCES, buildBody, instanceBySlug, responseSchema } from '../src/api.ts';
-import { isFailure, mapCategory, mapEvent, posterUrlFor, slugifyVenue } from '../src/map.ts';
+import {
+	isFailure,
+	mapCategory,
+	mapEvent,
+	posterFrom,
+	posterUrlFor,
+	slugifyVenue
+} from '../src/map.ts';
 
 /**
  * Against a committed real response. No network (CLAUDE.md rule 6).
@@ -152,6 +159,45 @@ describe('posterUrlFor', () => {
 	it('is null for nothing', () => {
 		expect(posterUrlFor(null)).toBeNull();
 		expect(posterUrlFor('  ')).toBeNull();
+	});
+});
+
+describe('posterFrom', () => {
+	it('asks for the widths a card and an event page actually paint', () => {
+		// The payload's own `image700` is short of a 434px card on a 2× screen; the resizer answers
+		// any width from 500 up, and 400s below it.
+		expect(posterFrom('/static/12205/event_1/image700.jpg')).toEqual({
+			url: 'https://checkin.no/static/12205/event_1/image1000.jpg',
+			srcset: [
+				'https://checkin.no/static/12205/event_1/image500.jpg 500w',
+				'https://checkin.no/static/12205/event_1/image700.jpg 700w',
+				'https://checkin.no/static/12205/event_1/image1000.jpg 1000w'
+			].join(', ')
+		});
+	});
+
+	it('never asks below 500, which the resizer refuses', () => {
+		const { srcset } = posterFrom('/static/12205/event_1/image700.jpg');
+		for (const width of srcset!.split(', ').map((c) => Number(c.split(' ')[1]!.replace('w', '')))) {
+			expect(width).toBeGreaterThanOrEqual(500);
+		}
+	});
+
+	it('leaves a URL it cannot resize exactly as it found it', () => {
+		// Another host, or a filename in a shape whose number is not a width — rewriting either one
+		// invents a URL, and an invented URL is a broken poster on every card.
+		expect(posterFrom('https://example.com/a.jpg')).toEqual({
+			url: 'https://example.com/a.jpg',
+			srcset: null
+		});
+		expect(posterFrom('/static/12205/event_1/poster.jpg')).toEqual({
+			url: 'https://checkin.no/static/12205/event_1/poster.jpg',
+			srcset: null
+		});
+	});
+
+	it('is null for nothing', () => {
+		expect(posterFrom(null)).toEqual({ url: null, srcset: null });
 	});
 });
 

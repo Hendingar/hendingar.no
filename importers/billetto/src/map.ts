@@ -168,6 +168,13 @@ export function mapEvent(
 		 *
 		 * The URL carries an imgix signature covering its `w` and `h`, so the 640×360 they generate
 		 * cannot be requested larger without invalidating it. Worth knowing before anyone tries.
+		 *
+		 * Tried, and measured: the signed URL serves 640×360 (45 KB); the same URL at `w=1280`, or
+		 * with `dpr=2` appended, or with the query stripped entirely, all answer **403 sig_invalid**.
+		 * The `rect=0,0,1920,1080` in the query says the master is 1920×1080 — we simply cannot ask
+		 * for it. So Billetto is the one source with no `posterSrcset` and no way to earn one: 640
+		 * covers a 4-column desktop card at 2× (618 needed) and falls short of the 868 a 2-column
+		 * layout wants. Nothing to fix here short of Billetto signing a larger rendition.
 		 */
 		posterUrl: safeUrl(input.image),
 		/*

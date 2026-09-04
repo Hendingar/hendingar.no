@@ -78,6 +78,7 @@ export type MappedEvent = {
 	description: string | null;
 	ctaUrl: string | null;
 	posterUrl: string | null;
+	posterSrcset: string | null;
 	posterRightsVerified: boolean;
 	sourceUrl: string;
 };
@@ -97,6 +98,67 @@ function safeUrl(value: string | null | undefined, base?: string): string | null
 	} catch {
 		return null;
 	}
+}
+
+/**
+ * The card is at most 434 CSS pixels wide and the event page at most 832, so this ladder covers
+ * both to 2× without asking a third party's resizer for sizes nobody displays.
+ */
+const POSTER_WIDTHS = [400, 600, 800, 1200] as const;
+
+export type Poster = { url: string | null; srcset: string | null };
+
+/**
+ * The venue's imgix rendition, at sizes we actually display.
+ *
+ * The payload hands us a rendition the site itself uses in a listing strip: `?w=370&h=250&fit=crop
+ * &crop=faces,top&auto=compress`. 370 pixels is roughly a third of what a card needs on a 2×
+ * screen, and the parameters are unsigned — imgix will serve any size we ask for, which a live
+ * request confirmed (1200×750, 49 KB).
+ *
+ * Three things are deliberate:
+ *
+ * - **A signed rendition is left exactly as it arrived.** `s=` covers the query string, so editing
+ *   `w` returns `sig_invalid` rather than a bigger picture. Billetto's images are locked this way
+ *   and there is nothing to be done about it; none of the Kulturhus ones are today, but the guard
+ *   costs a line and the failure mode is every poster on the site 403ing.
+ * - **The editorial crop is preserved.** `w` and `h` are scaled together so `crop=faces,top` keeps
+ *   framing what the venue framed. Dropping `h` would give us the uncropped picture and quietly
+ *   throw away someone's decision about where the faces are.
+ * - **`auto=compress,format`**, upgraded from `auto=compress`: imgix then negotiates WebP or AVIF
+ *   with the browser, which is the cheapest resolution we will ever buy.
+ *
+ * A URL without a `w` is not a rendition we understand, so it is passed through untouched.
+ */
+export function posterFrom(image: string | null | undefined): Poster {
+	const url = safeUrl(image);
+	if (!url) return { url: null, srcset: null };
+
+	const source = new URL(url);
+	if (source.searchParams.has('s')) return { url, srcset: null };
+
+	// `set`, so the payload's duplicated `fit=crop&fit=crop&crop=faces,top&crop=faces,top` collapses
+	// to one of each rather than being carried into every candidate.
+	const params = new URLSearchParams();
+	for (const [key, value] of source.searchParams) params.set(key, value);
+
+	const width = Number(params.get('w'));
+	if (!Number.isFinite(width) || width <= 0) return { url, srcset: null };
+	const height = Number(params.get('h'));
+	const ratio = Number.isFinite(height) && height > 0 ? height / width : null;
+	params.set('auto', 'compress,format');
+
+	const at = (w: number): string => {
+		const query = new URLSearchParams(params);
+		query.set('w', String(w));
+		if (ratio !== null) query.set('h', String(Math.round(w * ratio)));
+		return `${source.origin}${source.pathname}?${query.toString()}`;
+	};
+
+	return {
+		url: at(POSTER_WIDTHS[POSTER_WIDTHS.length - 1]!),
+		srcset: POSTER_WIDTHS.map((w) => `${at(w)} ${w}w`).join(', ')
+	};
 }
 
 /** "2026-09-03 11:00:00" → ["2026-09-03", "11:00"]. Null for anything else. */
@@ -145,6 +207,7 @@ export function mapTicket(
 	}
 
 	const venueName = ticket.location?.trim() || instance.venueFallback;
+	const poster = posterFrom(parent.image);
 
 	return {
 		externalId,
@@ -157,7 +220,8 @@ export function mapTicket(
 		venueSlug: slugifyVenue(venueName),
 		description: parent.description?.trim() || null,
 		ctaUrl: safeUrl(ticket.link),
-		posterUrl: safeUrl(parent.image),
+		posterUrl: poster.url,
+		posterSrcset: poster.srcset,
 		posterRightsVerified: instance.posterRightsCleared,
 		// The event's own page when it has one, so a reader lands on the programme rather than in a
 		// checkout — we are an index, not a box office.

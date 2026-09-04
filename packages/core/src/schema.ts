@@ -279,6 +279,20 @@ export const events = pgTable(
 		/** Outbound ticket link. We never sell tickets — see README non-goals. */
 		ctaUrl: text('cta_url'),
 		posterUrl: text('poster_url'),
+		/**
+		 * The same poster at every size the source will serve it, as an `<img srcset>` list —
+		 * `"…/s_x.jpg 300w, …/m_x.jpg 500w, …/l_x.jpg 800w"`. Null when the source offers one size.
+		 *
+		 * A stored string rather than something the app derives, because the ladder is a fact about
+		 * the source's CDN and only the importer knows it: Det skjer names its variants with an
+		 * `s_`/`m_`/`l_` prefix, Kulturhus takes imgix query parameters, Fjord Norway takes
+		 * Cloudinary path segments, Checkin encodes the width in the filename. Deriving that in
+		 * `app/` would put four CDNs' URL grammar behind the one component that renders a tile.
+		 *
+		 * Rendering it needs a `sizes` too, or the browser assumes `100vw` and picks the largest
+		 * candidate every time — see EventThumb, which owns the measured `sizes` for a card.
+		 */
+		posterSrcset: text('poster_srcset'),
 		/** Do not re-host a poster whose rights are unverified (issue #3). */
 		posterRightsVerified: boolean('poster_rights_verified').notNull().default(false),
 		/**

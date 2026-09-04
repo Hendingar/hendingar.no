@@ -85,6 +85,7 @@ export type MappedEvent = {
 	description: string | null;
 	ctaUrl: string | null;
 	posterUrl: string | null;
+	posterSrcset: string | null;
 	posterRightsVerified: boolean;
 	sourceUrl: string;
 };
@@ -102,6 +103,40 @@ export function posterUrlFor(imageUrl: string | null | undefined): string | null
 	if (!raw) return null;
 	if (/^https?:\/\//i.test(raw)) return raw;
 	return `${MEDIA_BASE}${raw.startsWith('/') ? '' : '/'}${raw}`;
+}
+
+/**
+ * Checkin encodes the width in the filename — `image700.jpg` really is 700 pixels wide.
+ *
+ * 700 is what the payload asks for and it is short of a 434px card on a 2× screen (868). Live
+ * requests against `/static/12205/event_228158/` show the resizer answers any width from 500 up
+ * (`image500` 500×500, `image1000` 1000×1000, `image1400`, `image2000`) and returns **400 Bad
+ * Request** below 500 — so 500 is the floor of this ladder, not a design choice.
+ *
+ * Sizes are exact, not fitted to a box: a landscape source came back 500×262 and 1000×525.
+ */
+const POSTER_WIDTHS = [500, 700, 1000] as const;
+
+export type Poster = { url: string | null; srcset: string | null };
+
+/** The poster to link, and every width Checkin will serve it at. */
+export function posterFrom(imageUrl: string | null | undefined): Poster {
+	const url = posterUrlFor(imageUrl);
+	if (!url) return { url: null, srcset: null };
+
+	// Only a Checkin-hosted `imageNNN.ext` is a rendition we can resize. Anything else — an absolute
+	// URL on some other host, a filename in another shape — is left exactly as it arrived.
+	const match = url.startsWith(`${MEDIA_BASE}/`)
+		? /^(.*\/image)\d+(\.(?:jpe?g|png|webp))$/i.exec(url)
+		: null;
+	if (!match) return { url, srcset: null };
+
+	const sized = (w: number): string => `${match[1]!}${w}${match[2]!}`;
+
+	return {
+		url: sized(POSTER_WIDTHS[POSTER_WIDTHS.length - 1]!),
+		srcset: POSTER_WIDTHS.map((w) => `${sized(w)} ${w}w`).join(', ')
+	};
 }
 
 export function mapEvent(
@@ -135,6 +170,7 @@ export function mapEvent(
 	const venueName = rawVenue || instance.venueFallback;
 
 	const topics = (input.topicEvent ?? []).map((t) => t?.topic?.name);
+	const poster = posterFrom(input.imageUrl);
 
 	return {
 		externalId,
@@ -147,7 +183,8 @@ export function mapEvent(
 		description: input.sellingDescription?.trim() || null,
 		// Checkin IS the ticket seller, so the event page is the ticket link.
 		ctaUrl: eventUrl(input.id),
-		posterUrl: posterUrlFor(input.imageUrl),
+		posterUrl: poster.url,
+		posterSrcset: poster.srcset,
 		posterRightsVerified: instance.posterRightsCleared,
 		sourceUrl: eventUrl(input.id)
 	};

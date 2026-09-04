@@ -3,7 +3,14 @@ import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { CATEGORY_SLUGS } from '@hendingar/core/taxonomy';
 import { INSTANCES, extractEvents, instanceBySlug } from '../src/api.ts';
-import { isFailure, mapCategory, mapEvents, mapTicket, splitLocalDateTime } from '../src/map.ts';
+import {
+	isFailure,
+	mapCategory,
+	mapEvents,
+	mapTicket,
+	posterFrom,
+	splitLocalDateTime
+} from '../src/map.ts';
 
 /**
  * Against committed real page data. No network (CLAUDE.md rule 6).
@@ -165,6 +172,73 @@ describe('mapCategory', () => {
 		expect(anna / cats.length, 'the venue names its categories; we should use them').toBeLessThan(
 			0.2
 		);
+	});
+});
+
+describe('posterFrom', () => {
+	const listing =
+		'https://mff.dx.no/116112.jpg?w=370&h=250&fit=crop&fit=crop&crop=faces,top&crop=faces,top&auto=compress';
+
+	it('asks imgix for a size a card can actually use', () => {
+		// 370px is the venue's own listing-strip rendition. A card is up to 434 CSS pixels wide, so
+		// on a 2× screen that is less than half the pixels it paints.
+		const poster = posterFrom(listing);
+		expect(poster.url).toContain('w=1200');
+		expect(poster.srcset?.split(', ')).toHaveLength(4);
+		expect(poster.srcset).toContain('400w');
+		expect(poster.srcset).toContain('1200w');
+	});
+
+	it("keeps the venue's crop, scaling height with width", () => {
+		// `crop=faces,top` only means anything against an aspect. Dropping `h` would hand us the
+		// uncropped picture and throw away someone's decision about where the faces are.
+		const poster = posterFrom(listing);
+		for (const candidate of poster.srcset!.split(', ')) {
+			const url = new URL(candidate.split(' ')[0]!);
+			const w = Number(url.searchParams.get('w'));
+			const h = Number(url.searchParams.get('h'));
+			expect(h).toBe(Math.round((w * 250) / 370));
+			expect(url.searchParams.get('crop')).toBe('faces,top');
+		}
+	});
+
+	it('collapses the duplicated parameters upstream sends', () => {
+		const url = new URL(posterFrom(listing).url!);
+		expect(url.searchParams.getAll('fit')).toEqual(['crop']);
+		expect(url.searchParams.getAll('crop')).toEqual(['faces,top']);
+	});
+
+	it('lets imgix negotiate a modern format', () => {
+		expect(new URL(posterFrom(listing).url!).searchParams.get('auto')).toBe('compress,format');
+	});
+
+	it('leaves a signed rendition alone, because the signature covers the size', () => {
+		// Editing `w` on a signed imgix URL returns `sig_invalid`, not a bigger picture — measured
+		// against Billetto's, which are locked this way.
+		const poster = posterFrom(`${listing}&s=824b60d9c334c733f70399e212fd8f7b`);
+		expect(poster.srcset).toBeNull();
+		expect(poster.url).toContain('w=370');
+		expect(poster.url).toContain('s=824b60d9c334c733f70399e212fd8f7b');
+	});
+
+	it('passes through anything that is not a rendition we understand', () => {
+		expect(posterFrom('https://example.com/a.jpg')).toEqual({
+			url: 'https://example.com/a.jpg',
+			srcset: null
+		});
+		// The payload also carries unresolved templates, which are not URLs at all.
+		expect(posterFrom('@assets[type=first_image].url?w=370')).toEqual({ url: null, srcset: null });
+		expect(posterFrom(null)).toEqual({ url: null, srcset: null });
+	});
+
+	it('gives every poster in the fixture a candidate list', () => {
+		const withPoster = mapped.filter((m) => !isFailure(m) && m.posterUrl);
+		expect(withPoster.length).toBeGreaterThan(10);
+		for (const m of withPoster) {
+			if (isFailure(m)) continue;
+			expect(m.posterUrl).toContain('w=1200');
+			expect(m.posterSrcset).toContain('1200w');
+		}
 	});
 });
 

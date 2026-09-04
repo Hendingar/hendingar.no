@@ -10,7 +10,14 @@ import {
 	localised,
 	localisedSlug
 } from '../src/api.ts';
-import { isFailure, mapCategory, mapEvents, mapShowing, splitLocalDateTime } from '../src/map.ts';
+import {
+	isFailure,
+	mapCategory,
+	mapEvents,
+	mapShowing,
+	posterFrom,
+	splitLocalDateTime
+} from '../src/map.ts';
 
 /**
  * Against the committed real page. No network (CLAUDE.md rule 6).
@@ -166,6 +173,47 @@ describe('times', () => {
 	it('splits the payload format', () => {
 		expect(splitLocalDateTime('2026-09-04T19:00:00')).toEqual(['2026-09-04', '19:00']);
 		expect(splitLocalDateTime('later')).toBeNull();
+	});
+});
+
+describe('posterFrom', () => {
+	const original = 'https://res.cloudinary.com/djew0njor/image/upload/v1624441788/MSUJg8.jpg';
+
+	it('resizes instead of shipping the original whole', () => {
+		// Measured: this asset is 1500×1077 at 765 KB untransformed, and 94 KB at w_800 — for a tile
+		// that is at most 434 CSS pixels wide.
+		const poster = posterFrom(original);
+		expect(poster.url).toBe(
+			'https://res.cloudinary.com/djew0njor/image/upload/w_1200,c_limit,q_auto,f_auto/v1624441788/MSUJg8.jpg'
+		);
+		expect(poster.srcset?.split(', ')).toHaveLength(4);
+		expect(poster.srcset).toContain('w_400,c_limit,q_auto,f_auto');
+		expect(poster.srcset).toContain(' 400w');
+	});
+
+	it('never upscales, so a small original stays small under a large descriptor', () => {
+		for (const candidate of posterFrom(original).srcset!.split(', ')) {
+			expect(candidate).toContain('c_limit');
+		}
+	});
+
+	it('leaves a URL that is not a Cloudinary delivery URL untouched', () => {
+		// Inserting a transformation segment into something else is a 404 on every poster.
+		expect(posterFrom('https://example.com/a.jpg')).toEqual({
+			url: 'https://example.com/a.jpg',
+			srcset: null
+		});
+		expect(posterFrom(null)).toEqual({ url: null, srcset: null });
+	});
+
+	it('gives every poster in the fixture a candidate list', () => {
+		const withPoster = mapped.filter((m) => !isFailure(m) && m.posterUrl);
+		expect(withPoster.length).toBeGreaterThan(5);
+		for (const m of withPoster) {
+			if (isFailure(m)) continue;
+			expect(m.posterUrl).toContain('w_1200,c_limit,q_auto,f_auto');
+			expect(m.posterSrcset).toContain('1200w');
+		}
 	});
 });
 
