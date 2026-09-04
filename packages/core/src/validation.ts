@@ -45,8 +45,16 @@ const httpUrl = z
 		{ message: 'må vere ei http- eller https-adresse' }
 	);
 
-/** An ISO 8601 timestamp that keeps its offset. Importers must not flatten this to UTC. */
-const isoWithOffset = z
+/**
+ * An ISO 8601 timestamp that keeps its offset. Importers must not flatten this to UTC.
+ *
+ * Exported so an importer that has to *repair* a source's timestamps can check its own output
+ * against the rule rather than against a copy of the regex. `importers/bakhagen` reads a site that
+ * writes `T18:00+02:00` for a timed activity and `T23:59:59+02:00` for a whole-day one; it fills
+ * in the missing seconds and then asserts the result here, which is the only way that fix stays
+ * tied to what the schema actually demands (CLAUDE.md rule 1).
+ */
+export const isoWithOffset = z
 	.string()
 	.regex(
 		/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})$/,
