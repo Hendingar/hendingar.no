@@ -8,6 +8,7 @@
 	} from '@hendingar/core/verification';
 	import { formatEventTime } from '@hendingar/core/datetime';
 	import { SUBMISSION_TTL_HOURS } from '@hendingar/core/submissions';
+	import { linkLabel, safeHttpUrl } from '../../source-link.ts';
 
 	type Check = {
 		check: VerificationCheck;
@@ -26,7 +27,8 @@
 		duplicateOf = null,
 		summary,
 		checks,
-		poster = null
+		poster = null,
+		sourceUrl = null
 	}: {
 		status: 'published' | 'pending' | 'rejected';
 		/** What we concluded, which is the part the sender actually needs told. */
@@ -49,7 +51,19 @@
 		 * held in the browser throughout — nothing new is uploaded, and nothing is stored.
 		 */
 		poster?: string | null;
+		/**
+		 * The page the sender said the event came from, when they gave one.
+		 *
+		 * Shown with the verdict because the checks are about whether this is real, and the link is
+		 * the one thing on the panel that lets somebody go and look. It matters most when the
+		 * answer was no: the sender needs to see which URL we actually judged, not the one they
+		 * meant to paste.
+		 */
+		sourceUrl?: string | null;
 	} = $props();
+
+	/* Re-checked at the href rather than trusted: see source-link.ts. */
+	const safeSource = $derived(safeHttpUrl(sourceUrl));
 
 	/**
 	 * Move focus here once the verdict exists. The panel is rendered above the form, so a
@@ -119,6 +133,12 @@
 		<h2 class="display display--md" id="verdict-h">{headline[outcome]}</h2>
 		<p class="verdict__lede">{explanation[outcome]}</p>
 		<p class="verdict__summary">{summary}</p>
+		{#if safeSource}
+			<p class="verdict__source">
+				Kjelda du oppgav:
+				<a href={safeSource} rel="noopener nofollow ugc">{linkLabel(safeSource)}</a>
+			</p>
+		{/if}
 		{#if outcome !== 'approved'}
 			<p class="verdict__next"><a href="/ko">Sjå køen din →</a></p>
 		{/if}
@@ -188,17 +208,25 @@
 </section>
 
 <style>
+	.verdict__source {
+		margin: 0.75rem 0 0;
+		font-family: var(--font-mono);
+		font-size: var(--step-micro);
+		color: var(--peach-dim);
+		/* A host has no spaces, so a long one would push the panel wider than its column. */
+		overflow-wrap: anywhere;
+	}
+	.verdict__next {
+		margin: 0.75rem 0 0;
+		font-family: var(--font-mono);
+		font-size: var(--step-micro);
+	}
 	/*
 	 * The event we already had, set apart from the verdict copy.
 	 *
 	 * A left rule rather than a box: it is a citation, not a second verdict, and boxing it would
 	 * compete with the panel it sits inside.
 	 */
-	.verdict__next {
-		margin: 0.75rem 0 0;
-		font-family: var(--font-mono);
-		font-size: var(--step-micro);
-	}
 	.dupe {
 		margin: 0 clamp(1rem, 3vw, 1.75rem) 1.25rem;
 		padding-inline-start: 1rem;

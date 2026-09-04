@@ -11,6 +11,24 @@ import { RECURRENCE_FREQUENCIES, WEEKDAYS } from './recurrence.ts';
 
 export const categorySchema = z.enum(CATEGORY_SLUGS);
 
+/**
+ * A URL we are willing to put behind an anchor.
+ *
+ * `z.url()` alone is not that. It accepts anything `new URL()` parses, which includes
+ * `javascript:alert(1)`, `data:text/html,…` and `vbscript:` — so a field a stranger fills in and a
+ * page later renders as `<a href={…}>` is a stored cross-site-scripting hole, waiting for the first
+ * template that links it. `sourceUrl` and `ctaUrl` are both exactly that shape.
+ *
+ * Restricted to http and https, which is every URL either field can honestly hold: the point of
+ * them is a page a reader can open to check the event.
+ */
+const httpUrl = z
+	.url()
+	.max(2000)
+	.refine((value) => /^https?:$/i.test(new URL(value).protocol), {
+		message: 'må vere ei http- eller https-adresse'
+	});
+
 /** An ISO 8601 timestamp that keeps its offset. Importers must not flatten this to UTC. */
 const isoWithOffset = z
 	.string()
@@ -30,8 +48,8 @@ export const eventSubmissionSchema = z
 		venueName: z.string().trim().min(2).max(200),
 		municipality: z.string().trim().max(100).optional(),
 		organizerName: z.string().trim().max(200).optional(),
-		ctaUrl: z.url().max(2000).optional(),
-		sourceUrl: z.url().max(2000).optional()
+		ctaUrl: httpUrl.optional(),
+		sourceUrl: httpUrl.optional()
 	})
 	.refine((v) => !v.endsAt || Date.parse(v.endsAt) > Date.parse(v.startsAt), {
 		message: 'endsAt must be after startsAt',
@@ -46,7 +64,8 @@ export type EventSubmission = z.infer<typeof eventSubmissionSchema>;
  */
 export const importedEventSchema = eventSubmissionSchema.safeExtend({
 	externalId: z.string().min(1),
-	posterUrl: z.url().optional(),
+	/* Hotlinked into an `<img src>`, so it gets the same scheme restriction as the anchors. */
+	posterUrl: httpUrl.optional(),
 	posterRightsVerified: z.boolean().default(false)
 });
 
@@ -207,16 +226,8 @@ export const eventFormSchema = z
 		venueName: z.string().trim().min(2).max(200),
 		municipality: z.string().trim().max(100).optional(),
 		organizerName: z.string().trim().max(200).optional(),
-		ctaUrl: z
-			.url()
-			.max(2000)
-			.optional()
-			.or(z.literal('').transform(() => undefined)),
-		sourceUrl: z
-			.url()
-			.max(2000)
-			.optional()
-			.or(z.literal('').transform(() => undefined)),
+		ctaUrl: httpUrl.optional().or(z.literal('').transform(() => undefined)),
+		sourceUrl: httpUrl.optional().or(z.literal('').transform(() => undefined)),
 		/**
 		 * Does it repeat, and how.
 		 *

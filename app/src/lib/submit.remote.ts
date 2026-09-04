@@ -804,6 +804,8 @@ export const submitEvent = form(eventFormSchema, async (submission) => {
 		/** The submission this replaced, when it was a revision. Null for a first attempt. */
 		revisedFrom: revising,
 		eventId: created?.id ?? null,
+		/* Echoed back so the verdict can link it: the sender needs to see the URL we judged. */
+		sourceUrl: submission.sourceUrl ?? null,
 		duplicateOf,
 		recommendation: verdict.recommendation,
 		summary: recurrence
