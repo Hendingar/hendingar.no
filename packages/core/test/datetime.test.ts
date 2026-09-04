@@ -4,8 +4,13 @@ import {
 	DEFAULT_TIME_ZONE,
 	formatEventTime,
 	formatTimeDigits,
+	formatCalendarDate,
+	formatDayLabel,
+	formatMonthName,
 	instantToZonedWallClock,
+	isCalendarDate,
 	machineDateTime,
+	weekdayIndex,
 	zonedWallClockToInstant
 } from '../src/datetime.ts';
 
@@ -173,5 +178,54 @@ describe('instantToZonedWallClock', () => {
 		expect(instantToZonedWallClock(new Date('2026-01-05T12:00:00Z'), 'Europe/Oslo').date).toBe(
 			'2026-01-05'
 		);
+	});
+});
+
+describe('the calendar vocabulary', () => {
+	/**
+	 * The whole reason these are a table rather than an `Intl` call. Browsers have no `nn-NO`, so
+	 * `Intl` silently answers in Bokmål — "lørdag", "søndag" — on a site that is Nynorsk in every
+	 * other word.
+	 */
+	it('spells the weekend in Nynorsk', () => {
+		expect(formatCalendarDate('2026-09-12')).toBe('Laurdag 12. september 2026');
+		expect(formatCalendarDate('2026-09-13')).toBe('Sundag 13. september 2026');
+	});
+
+	it('names a month with its year', () => {
+		expect(formatMonthName('2026-09')).toBe('September 2026');
+		expect(formatMonthName('2027-01')).toBe('Januar 2027');
+	});
+
+	it('counts weekday columns from måndag', () => {
+		expect(weekdayIndex('2026-09-07')).toBe(0); // a Monday
+		expect(weekdayIndex('2026-09-12')).toBe(5);
+		expect(weekdayIndex('2026-09-13')).toBe(6);
+	});
+
+	it('accepts days that exist and rejects days that do not', () => {
+		expect(isCalendarDate('2026-09-12')).toBe(true);
+		expect(isCalendarDate('2024-02-29')).toBe(true);
+		// Shaped like a date, and not one — which is exactly what a hand-edited URL looks like.
+		expect(isCalendarDate('2026-02-31')).toBe(false);
+		expect(isCalendarDate('2026-13-01')).toBe(false);
+		expect(isCalendarDate('2026-9-1')).toBe(false);
+		expect(isCalendarDate('i-morgon')).toBe(false);
+	});
+});
+
+describe('formatDayLabel', () => {
+	it('prefers the relative words for the two days a reader thinks in', () => {
+		expect(formatDayLabel('2026-09-12', '2026-09-12')).toBe('I dag');
+		expect(formatDayLabel('2026-09-13', '2026-09-12')).toBe('I morgon');
+	});
+
+	it('spells anything further out in Nynorsk, without a year', () => {
+		expect(formatDayLabel('2026-09-19', '2026-09-12')).toBe('Laurdag 19. september');
+	});
+
+	/** Yesterday is not "i går": a still-running event is grouped under today, never behind it. */
+	it('spells a past day out rather than calling it relative', () => {
+		expect(formatDayLabel('2026-09-11', '2026-09-12')).toBe('Fredag 11. september');
 	});
 });

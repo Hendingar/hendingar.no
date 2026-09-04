@@ -65,7 +65,98 @@ export function formatEventTime(
 	return formatter(timeZone || DEFAULT_TIME_ZONE, style).format(instant);
 }
 
-const DAY: Intl.DateTimeFormatOptions = { weekday: 'long', day: 'numeric', month: 'long' };
+/*
+ * The calendar vocabulary, as data rather than from `Intl`.
+ *
+ * `nn-NO` does not exist in browser ICU — see the note at the top of this file — so every `Intl`
+ * date label on this site is really Bokmål: "lørdag", "søndag". That was invisible while the only
+ * spelled-out date was a day heading nobody reads letter by letter. A calendar puts a weekday
+ * column header directly above a spelled-out date, and "LA" over "lørdag" reads as a bug in a site
+ * that is Nynorsk everywhere else.
+ *
+ * Month names are identical in both written standards; only the weekdays actually differ. Both are
+ * listed here anyway so there is one table rather than a table and an `Intl` call that have to be
+ * kept agreeing with each other.
+ */
+
+/** January first, so `MONTH_NAMES[month - 1]` reads a 1-based month number. */
+export const MONTH_NAMES = [
+	'januar',
+	'februar',
+	'mars',
+	'april',
+	'mai',
+	'juni',
+	'juli',
+	'august',
+	'september',
+	'oktober',
+	'november',
+	'desember'
+] as const;
+
+/**
+ * Monday first, because that is how a Norwegian calendar is drawn — the week starts on måndag and
+ * the weekend is the last two columns. A Sunday-first grid would put laurdag and sundag on
+ * opposite edges.
+ */
+export const WEEKDAY_NAMES = [
+	'måndag',
+	'tysdag',
+	'onsdag',
+	'torsdag',
+	'fredag',
+	'laurdag',
+	'sundag'
+] as const;
+
+/** Column headers. Two letters, because seven three-letter headers do not fit 320px. */
+export const WEEKDAY_ABBR = ['må', 'ty', 'on', 'to', 'fr', 'la', 'su'] as const;
+
+/** `YYYY-MM-DD` that is also a day that exists. `2026-02-31` matches the shape and is not a date. */
+export function isCalendarDate(raw: string): boolean {
+	if (!/^\d{4}-\d{2}-\d{2}$/.test(raw)) return false;
+	const [y, m, d] = raw.split('-').map(Number);
+	if (y === undefined || m === undefined || d === undefined) return false;
+	if (m < 1 || m > 12 || d < 1) return false;
+	// Noon UTC throughout: a date built at midnight can be moved across a day boundary by any
+	// offset arithmetic that follows, and this module exists to stop exactly that.
+	const probe = new Date(Date.UTC(y, m - 1, d, 12));
+	return probe.getUTCFullYear() === y && probe.getUTCMonth() === m - 1 && probe.getUTCDate() === d;
+}
+
+/** Which column a calendar date falls in: 0 = måndag … 6 = sundag. */
+export function weekdayIndex(localDate: string): number {
+	const [y, m, d] = localDate.split('-').map(Number);
+	const day = new Date(Date.UTC(y ?? 1970, (m ?? 1) - 1, d ?? 1, 12)).getUTCDay();
+	// getUTCDay is Sunday-first. Rotate so måndag is 0.
+	return (day + 6) % 7;
+}
+
+/**
+ * A calendar date spelled out in full: "Laurdag 12. september 2026".
+ *
+ * The year is included because this is used where a date stands alone — a page title, a heading on
+ * a URL somebody bookmarked — and "12. september" on its own is only unambiguous for a reader who
+ * already knows which year they are looking at.
+ */
+export function formatCalendarDate(localDate: string): string {
+	const [y, m, d] = localDate.split('-').map(Number);
+	if (y === undefined || m === undefined || d === undefined) return localDate;
+	const weekday = WEEKDAY_NAMES[weekdayIndex(localDate)] ?? '';
+	return `${capitalise(weekday)} ${d}. ${MONTH_NAMES[m - 1] ?? ''} ${y}`;
+}
+
+/** A month, spelled out: "September 2026". */
+export function formatMonthName(monthKey: string): string {
+	const [y, m] = monthKey.split('-').map(Number);
+	if (y === undefined || m === undefined) return monthKey;
+	return `${capitalise(MONTH_NAMES[m - 1] ?? '')} ${y}`;
+}
+
+function capitalise(word: string): string {
+	return word.charAt(0).toUpperCase() + word.slice(1);
+}
 
 /**
  * Heading for a day group: "I dag", "I morgon", or a spelled-out date.
@@ -88,7 +179,9 @@ export function formatDayLabel(localDate: string, todayLocalDate: string): strin
 	tomorrow.setUTCDate(tomorrow.getUTCDate() + 1);
 	if (date.getTime() === tomorrow.getTime()) return 'I morgon';
 
-	return new Intl.DateTimeFormat(DATE_LOCALE, { ...DAY, timeZone: 'UTC' }).format(date);
+	// Nynorsk from the table above rather than Intl, which only speaks Bokmål here. The year is
+	// left off: a day group only ever appears inside a list scoped to the near future.
+	return `${capitalise(WEEKDAY_NAMES[weekdayIndex(localDate)] ?? '')} ${d}. ${MONTH_NAMES[m - 1] ?? ''}`;
 }
 
 /** Time only — the day is already carried by the group heading. */

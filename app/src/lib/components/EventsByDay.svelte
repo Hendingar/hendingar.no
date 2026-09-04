@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { formatDayLabel } from '@hendingar/core/datetime';
-	import EventTile from './EventTile.svelte';
-	import { stackOccurrences } from '../occurrences.ts';
+	import EventGrid from './EventGrid.svelte';
 	import type { UpcomingEvent } from '../events.remote';
 
 	/**
@@ -73,22 +72,9 @@
 				<span class="day__n">{day.events.length}</span>
 			</h3>
 		{/if}
-		<ul class="grid">
-			<!--
-				Repeats of the same event share a card. Public swimming runs four times a day; four
-				identical posters spend a screenful saying one thing. Each time is still its own
-				event with its own page — the grouping is presentation only.
-			-->
-			{#each stackOccurrences(day.events) as stack, i (stack.lead.id)}
-				<li class="rise" style:--rise-delay="{Math.min(i, 7) * 45}ms">
-					<EventTile
-						event={stack.lead}
-						occurrences={stack.occurrences}
-						hearts={hearts[stack.lead.id] ?? 0}
-					/>
-				</li>
-			{/each}
-		</ul>
+		<!-- The grid itself lives in EventGrid, because /kalender/<dato> needs it without a day
+		     heading of its own. -->
+		<EventGrid events={day.events} {hearts} />
 	</section>
 {/each}
 
@@ -133,33 +119,5 @@
 		font-size: var(--step-micro);
 		letter-spacing: 0.18em;
 		color: var(--peach-dim);
-	}
-
-	.grid {
-		list-style: none;
-		margin: 0;
-		padding: 0;
-		display: grid;
-		grid-template-columns: 1fr;
-		gap: clamp(0.75rem, 1.5vw, 1.25rem);
-	}
-	.grid li {
-		display: grid;
-		min-inline-size: 0;
-	}
-	@media (width >= 34rem) {
-		.grid {
-			grid-template-columns: repeat(2, 1fr);
-		}
-	}
-	@media (width >= 60rem) {
-		.grid {
-			grid-template-columns: repeat(3, 1fr);
-		}
-	}
-	@media (width >= 80rem) {
-		.grid {
-			grid-template-columns: repeat(4, 1fr);
-		}
 	}
 </style>
