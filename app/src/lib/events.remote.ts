@@ -71,6 +71,7 @@ export const listEvents = query(
 					venueTimeZone: venues.timezone,
 					municipality: venues.municipality,
 					posterUrl: events.posterUrl,
+					posterSrcset: events.posterSrcset,
 					/*
 					 * The source, so a tile can show whose calendar an event came from. We are an index, not a
 					 * replacement — a tile that shows no origin quietly claims the event as ours. Null for human
@@ -303,6 +304,7 @@ export const listUpcoming = query(z.number().int().min(1).max(60).default(24), a
 			venueTimeZone: venues.timezone,
 			municipality: venues.municipality,
 			posterUrl: events.posterUrl,
+			posterSrcset: events.posterSrcset,
 			sourceMarks: sourceMarksFor(events.id).as('source_marks'),
 			/*
 			 * The calendar day AT THE VENUE, resolved in SQL. Grouping by day is a calendar
@@ -366,6 +368,7 @@ export const getEvent = query(z.number().int().positive(), async (id) => {
 			startsAt: events.startsAt,
 			endsAt: events.endsAt,
 			posterUrl: events.posterUrl,
+			posterSrcset: events.posterSrcset,
 			ctaUrl: events.ctaUrl,
 			sourceUrl: events.sourceUrl,
 			submissionMethod: events.submissionMethod,

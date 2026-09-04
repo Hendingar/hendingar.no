@@ -130,10 +130,24 @@
 		<div class="ev__grid">
 			<div class="ev__main">
 				{#if event.posterUrl}
-					<!-- Hotlinked, never re-hosted: the poster's rights are the source's, not ours. -->
+					<!--
+						Hotlinked, never re-hosted: the poster's rights are the source's, not ours.
+
+						`sizes` measured the same way EventThumb's is, against this page's own layout
+						rather than a card's. `.ev__grid` is one column until its container reaches
+						52rem — which the shell hits at a 904px viewport, since it is
+						`min(88rem, 100vw)` less `clamp(1.25rem, 4vw, 4rem)` of padding on each side
+						— and two columns of `1.6fr 1fr` above it. So the poster is 92vw on a phone,
+						peaks at 831px there, and settles at 758px once the shell stops growing.
+						Widest it is ever painted: 832 CSS pixels, 1664 on a 2× screen.
+					-->
 					<img
 						class="ev__poster"
 						src={event.posterUrl}
+						srcset={event.posterSrcset}
+						sizes={event.posterSrcset
+							? '(width < 56.5rem) 92vw, (width < 88rem) 56vw, 760px'
+							: undefined}
 						alt={`Plakat for ${event.title}`}
 						loading="eager"
 						decoding="async"

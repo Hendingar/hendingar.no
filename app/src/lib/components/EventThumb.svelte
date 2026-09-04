@@ -14,8 +14,18 @@
 	let {
 		id,
 		posterUrl = null,
+		posterSrcset = null,
 		title
-	}: { id: number; posterUrl?: string | null; title: string } = $props();
+	}: {
+		id: number;
+		posterUrl?: string | null;
+		/**
+		 * The same poster at every size its source will serve, as an `<img srcset>` candidate list.
+		 * Null for a source that offers one size — the tile then renders a plain `src`.
+		 */
+		posterSrcset?: string | null;
+		title: string;
+	} = $props();
 
 	// Deterministic per event: no Math.random, so a tile never changes between server and client
 	// render, and a screenshot test stays stable.
@@ -26,12 +36,47 @@
 	// any time, so a broken image must degrade to the generated tile rather than to a broken icon.
 	let posterFailed = $state(false);
 	const showPoster = $derived(Boolean(posterUrl) && !posterFailed);
+
+	/**
+	 * How wide this thumbnail actually is, per breakpoint. **Measured, not guessed.**
+	 *
+	 * Without a `sizes`, a `srcset` of width candidates is assumed to be `100vw` and the browser
+	 * takes the largest file every time — the tile is nowhere near the width of the window, so that
+	 * would trade one wrong resolution for another and cost the bytes as well.
+	 *
+	 * The shell is `min(88rem, 100vw)` with `padding-inline: clamp(1.25rem, 4vw, 4rem)`, and
+	 * EventsByDay's grid steps 1 → 2 → 3 → 4 columns at 34rem, 60rem and 80rem with
+	 * `gap: clamp(0.75rem, 1.5vw, 1.25rem)`. Working the column width out at each step:
+	 *
+	 * | viewport | layout            | tile image | ×2 display |
+	 * | -------- | ----------------- | ---------- | ---------- |
+	 * | 320–543  | row, fixed 5.5rem | **88px**   | 176px      |
+	 * | 544      | 2 columns         | 244px      | 488px      |
+	 * | 959      | 2 columns         | **434px**  | **868px**  |
+	 * | 960      | 3 columns         | 285px      | 570px      |
+	 * | 1279     | 3 columns         | **379px**  | 758px      |
+	 * | 1280     | 4 columns         | 280px      | 560px      |
+	 * | ≥1408    | 4 columns, capped | **309px**  | 618px      |
+	 *
+	 * So 434 CSS pixels is the widest a card image is ever painted, anywhere — 868 device pixels on
+	 * the 2× screen most phones and laptops have. Below 34rem the tile is a row with a fixed 5.5rem
+	 * square, which is why a phone must NOT be sent the same file as a laptop: at 88px it needs a
+	 * twentieth of the pixels.
+	 *
+	 * Each entry rounds slightly up (48vw against a measured 46, 30vw against 29.7) so the browser
+	 * never picks a candidate too small for the slot, and covers the 3% the hover transform adds.
+	 * The breakpoints are the same numbers as EventTile's and EventsByDay's media queries: if one
+	 * moves, this moves.
+	 */
+	const SIZES = '(width < 34rem) 5.5rem, (width < 60rem) 48vw, (width < 80rem) 30vw, 310px';
 </script>
 
 {#if showPoster}
 	<img
 		class="thumb"
 		src={posterUrl}
+		srcset={posterSrcset}
+		sizes={posterSrcset ? SIZES : undefined}
 		alt=""
 		loading="lazy"
 		decoding="async"

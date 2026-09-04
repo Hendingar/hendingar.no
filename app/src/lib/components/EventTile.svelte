@@ -42,7 +42,12 @@
 </script>
 
 <article class="tile frame">
-	<EventThumb id={event.id} posterUrl={event.posterUrl} title={event.title} />
+	<EventThumb
+		id={event.id}
+		posterUrl={event.posterUrl}
+		posterSrcset={event.posterSrcset}
+		title={event.title}
+	/>
 
 	<div class="tile__body">
 		<p class="tile__top">

@@ -74,6 +74,7 @@ export type MappedEvent = {
 	description: string | null;
 	ctaUrl: string | null;
 	posterUrl: string | null;
+	posterSrcset: string | null;
 	posterRightsVerified: boolean;
 	sourceUrl: string;
 };
@@ -93,6 +94,49 @@ function safeUrl(value: string | null | undefined): string | null {
 	} catch {
 		return null;
 	}
+}
+
+/** Covers a 434px card and an 832px event page to 2×, and nothing beyond what we display. */
+const POSTER_WIDTHS = [400, 600, 800, 1200] as const;
+
+export type Poster = { url: string | null; srcset: string | null };
+
+/**
+ * The Cloudinary asset, resized by us instead of shipped whole.
+ *
+ * `secure_url` points at the untransformed original, and the originals here are press photography:
+ * one measured 1500×1077 at **765 KB**, for a tile that is 300 CSS pixels wide. That is the same
+ * bug as a too-small poster wearing the other face — the reader waits for pixels nothing renders.
+ *
+ * Cloudinary takes transformations as a path segment after `/upload/`, unsigned, so we can ask for
+ * the size we actually paint: the same photo at `w_800,c_limit,q_auto,f_auto` is 94 KB, an 87%
+ * saving with more detail on screen than the card ever had.
+ *
+ * - `c_limit` never upscales. A 900px original stays 900px under a `1200w` descriptor, which makes
+ *   the descriptor optimistic rather than wasteful — the browser may pick that candidate for a
+ *   slot it slightly under-fills, and no byte is spent inventing detail.
+ * - `q_auto` and `f_auto` let Cloudinary choose the quality and negotiate WebP/AVIF per browser.
+ *
+ * A URL that is not a Cloudinary delivery URL is passed through untouched, with no candidate list:
+ * inserting a transformation segment into something else would produce a 404 for every poster.
+ */
+export function posterFrom(image: string | null | undefined): Poster {
+	const url = safeUrl(image);
+	if (!url) return { url: null, srcset: null };
+
+	const marker = '/image/upload/';
+	// indexOf rather than split: a filename containing the marker would make `split` drop the tail.
+	const at = url.indexOf(marker);
+	if (at < 0) return { url, srcset: null };
+	const prefix = url.slice(0, at + marker.length);
+	const rest = url.slice(at + marker.length);
+
+	const sized = (w: number): string => `${prefix}w_${w},c_limit,q_auto,f_auto/${rest}`;
+
+	return {
+		url: sized(POSTER_WIDTHS[POSTER_WIDTHS.length - 1]!),
+		srcset: POSTER_WIDTHS.map((w) => `${sized(w)} ${w}w`).join(', ')
+	};
 }
 
 /** "2026-09-04T19:00:00" → ["2026-09-04", "19:00"]. Null for anything else. */
@@ -161,6 +205,7 @@ export function mapShowing(
 		instance.venueFallback;
 
 	const slug = localisedSlug(parent.locSlug);
+	const poster = posterFrom(parent.cloudinaryImages?.[0]?.image?.secure_url);
 
 	return {
 		externalId,
@@ -172,7 +217,8 @@ export function mapShowing(
 		venueSlug: slugifyVenue(venueName),
 		description: localised(parent.locShortDescription),
 		ctaUrl: safeUrl(showing.bookingUrl),
-		posterUrl: safeUrl(parent.cloudinaryImages?.[0]?.image?.secure_url),
+		posterUrl: poster.url,
+		posterSrcset: poster.srcset,
 		posterRightsVerified: instance.posterRightsCleared,
 		sourceUrl: slug ? `${instance.origin}/no/arrangementer/${slug}` : instance.url
 	};

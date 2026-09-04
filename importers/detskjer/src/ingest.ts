@@ -180,6 +180,7 @@ export async function ingest(
 					organizerId,
 					ctaUrl: mapped.ctaUrl,
 					posterUrl: mapped.posterUrl,
+					posterSrcset: mapped.posterSrcset,
 					posterRightsVerified: mapped.posterRightsVerified,
 					status: source.trusted ? ('published' as const) : ('pending' as const)
 				};
@@ -200,6 +201,7 @@ export async function ingest(
 						organizerId: events.organizerId,
 						ctaUrl: events.ctaUrl,
 						posterUrl: events.posterUrl,
+						posterSrcset: events.posterSrcset,
 						posterRightsVerified: events.posterRightsVerified,
 						status: events.status
 					})
@@ -222,6 +224,7 @@ export async function ingest(
 					existing.organizerId === values.organizerId &&
 					existing.ctaUrl === values.ctaUrl &&
 					existing.posterUrl === values.posterUrl &&
+					existing.posterSrcset === values.posterSrcset &&
 					existing.posterRightsVerified === values.posterRightsVerified &&
 					existing.status === values.status;
 

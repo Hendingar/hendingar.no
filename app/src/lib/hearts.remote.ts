@@ -116,6 +116,7 @@ export const listHearted = query(
 					venueTimeZone: venues.timezone,
 					municipality: venues.municipality,
 					posterUrl: events.posterUrl,
+					posterSrcset: events.posterSrcset,
 					sourceMarks: sql<{ name: string; iconUrl: string | null }[]>`
 					coalesce((
 						select json_agg(m order by m.name)

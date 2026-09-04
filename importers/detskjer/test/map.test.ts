@@ -3,7 +3,14 @@ import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { CATEGORY_SLUGS } from '@hendingar/core/taxonomy';
 import { collectPages, upstreamPageSchema, type FetchPage, SOURCE } from '../src/api.ts';
-import { MAPPED_SLUGS, isFailure, mapCategory, mapEvent, slugifyVenue } from '../src/map.ts';
+import {
+	MAPPED_SLUGS,
+	isFailure,
+	mapCategory,
+	mapEvent,
+	posterFrom,
+	slugifyVenue
+} from '../src/map.ts';
 
 /** Committed fixtures, captured from the live API. No test here touches the network. */
 function fixture(page: number): unknown {
@@ -225,6 +232,67 @@ describe('venue slugs', () => {
 			// The same slug must only ever come from the same name.
 			if (seen) expect(seen).toBe(name);
 			byName.set(slug, name);
+		}
+	});
+});
+
+describe('posterFrom', () => {
+	const base = 'https://s3-bestevent-prod.innocode.dev/production/uploads/event/original_poster/1';
+	const variants = [
+		`${base}/s_abc.jpg`,
+		`${base}/m_abc.jpg`,
+		`${base}/l_abc.jpg`,
+		`${base}/abc.jpg`
+	];
+
+	it('links the original, not the 300px thumbnail the array happens to start with', () => {
+		// The bug this replaced: `posterUrls[0]` is the `s_` variant, so every card, every og:image
+		// and every JSON-LD `image` pointed at a 300px file.
+		expect(posterFrom(variants).url).toBe(`${base}/abc.jpg`);
+	});
+
+	it('offers the three resized variants as candidates, with their box sizes', () => {
+		expect(posterFrom(variants).srcset).toBe(
+			`${base}/s_abc.jpg 300w, ${base}/m_abc.jpg 500w, ${base}/l_abc.jpg 800w`
+		);
+	});
+
+	it('reads the prefix rather than trusting the order', () => {
+		const shuffled = [variants[3]!, variants[2]!, variants[0]!, variants[1]!];
+		expect(posterFrom(shuffled)).toEqual(posterFrom(variants));
+	});
+
+	it('leaves the original out of the candidate list, because its width is not knowable', () => {
+		// A `cropped_poster` declares posterWidth 675×1200 and is served at 972×812, so a width
+		// descriptor for it would be a guess — and a wrong one makes a phone fetch the biggest file.
+		expect(posterFrom(variants).srcset).not.toContain(`${base}/abc.jpg `);
+	});
+
+	it('falls back to the largest variant when there is no original', () => {
+		expect(posterFrom([variants[0]!, variants[1]!]).url).toBe(`${base}/m_abc.jpg`);
+	});
+
+	it('gives no candidate list when there is nothing to choose between', () => {
+		expect(posterFrom([`${base}/abc.jpg`])).toEqual({ url: `${base}/abc.jpg`, srcset: null });
+		expect(posterFrom([])).toEqual({ url: null, srcset: null });
+	});
+
+	it('drops a candidate that is not an http url', () => {
+		expect(posterFrom(['javascript:alert(1)', `${base}/s_abc.jpg`, `${base}/m_abc.jpg`])).toEqual({
+			url: `${base}/m_abc.jpg`,
+			srcset: `${base}/s_abc.jpg 300w, ${base}/m_abc.jpg 500w`
+		});
+	});
+
+	it('gives every poster in the fixture a full candidate list', () => {
+		const withPoster = parsed(1).events.filter((e) => e.posterUrls.length > 0);
+		expect(withPoster.length).toBeGreaterThan(5);
+		for (const event of withPoster) {
+			const poster = posterFrom(event.posterUrls);
+			// Never the small variant, which is what the card used to be handed.
+			expect(poster.url).not.toMatch(/\/[sml]_/);
+			expect(poster.srcset).toContain('300w');
+			expect(poster.srcset).toContain('800w');
 		}
 	});
 });

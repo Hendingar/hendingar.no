@@ -14,7 +14,19 @@ export type Crop = { x: number; y: number; width: number; height: number };
 /** Wider than tall, because an event card is. Matches the aspect the tiles reserve. */
 export const THUMB_ASPECT = 16 / 10;
 
-/** Enough for a retina card, small enough that nobody waits for it. */
+/**
+ * Enough for a retina card, small enough that nobody waits for it.
+ *
+ * Measured rather than assumed, because "is this big enough" is otherwise unanswerable: the widest
+ * a card thumbnail is ever painted is **434 CSS pixels** (two columns at a 959px viewport — see the
+ * table in EventThumb), so a 2× screen wants 868. 960 clears that, and raising it would buy nothing
+ * a card can show while making every stored thumbnail larger. It is short of the event page's
+ * 832px slot at 2×, which is the one place a submitted poster is softer than an imported one — the
+ * fix there is a second rendition, not a bigger single file, and no submission has asked for it yet.
+ *
+ * These are OUR files, in our own blob container, and this constant only affects thumbnails
+ * generated after it changes. Nothing regenerates what is already stored.
+ */
 export const THUMB_WIDTH = 960;
 
 export const THUMB_QUALITY = 0.82;

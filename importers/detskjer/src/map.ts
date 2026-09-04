@@ -90,6 +90,7 @@ export type MappedEvent = {
 	organizerSlug: string | null;
 	ctaUrl: string | null;
 	posterUrl: string | null;
+	posterSrcset: string | null;
 	posterRightsVerified: boolean;
 	sourceUrl: string;
 };
@@ -104,6 +105,62 @@ function safeUrl(value: string | null | undefined): string | null {
 	} catch {
 		return null;
 	}
+}
+
+/**
+ * The resize boxes behind the `s_` / `m_` / `l_` filename prefixes, measured against the CDN.
+ *
+ * A 1200×960 poster comes back as 300×240, 500×400 and 800×640; a 804×994 one as 243×300, 404×500
+ * and 647×800. So the number is the LONGEST side, not the width — the descriptor below is exact
+ * for a landscape poster and up to 25% optimistic for a portrait one. That direction is the safe
+ * one: an optimistic descriptor makes the browser reach for one step larger than it strictly
+ * needs, where a pessimistic one would hand it a file too small for the slot.
+ */
+const POSTER_BOXES = [
+	{ prefix: 's_', box: 300 },
+	{ prefix: 'm_', box: 500 },
+	{ prefix: 'l_', box: 800 }
+] as const;
+
+export type Poster = { url: string | null; srcset: string | null };
+
+/**
+ * Every size the CDN holds of one poster, as a URL to link and a candidate list to render.
+ *
+ * `posterUrls` arrives as `[s_, m_, l_, original]` and we read the prefix rather than the index:
+ * the order is undocumented, and picking `[0]` is exactly how this importer spent its first
+ * release hotlinking the 300px thumbnail into a card that occupies up to 434 CSS pixels.
+ *
+ * The unprefixed original is what we store as the poster — it is what `og:image`, the JSON-LD and
+ * the event page use, and a 300px preview is below what Facebook will render. It is deliberately
+ * NOT in the candidate list: its dimensions are only knowable per event, and the upstream
+ * `posterWidth`/`posterHeight` describe the uploaded file rather than this one (a `cropped_poster`
+ * declared 675×1200 and is served at 972×812). A width descriptor we cannot verify would make the
+ * browser download the largest file on a phone showing an 88px thumbnail.
+ */
+export function posterFrom(urls: readonly string[]): Poster {
+	const byPrefix = new Map<string, string>();
+	let original: string | null = null;
+
+	for (const raw of urls) {
+		const url = safeUrl(raw);
+		if (!url) continue;
+		const name = new URL(url).pathname.split('/').pop() ?? '';
+		const prefix = /^([sml]_)/.exec(name)?.[1];
+		if (prefix) byPrefix.set(prefix, url);
+		else original ??= url;
+	}
+
+	const candidates = POSTER_BOXES.flatMap(({ prefix, box }) => {
+		const url = byPrefix.get(prefix);
+		return url ? [`${url} ${box}w`] : [];
+	});
+
+	return {
+		url: original ?? byPrefix.get('l_') ?? byPrefix.get('m_') ?? byPrefix.get('s_') ?? null,
+		// One candidate is not a choice — leave it null and let the app render a plain `src`.
+		srcset: candidates.length > 1 ? candidates.join(', ') : null
+	};
 }
 
 export function mapEvent(input: UpstreamEvent): MappedEvent | MapFailure {
@@ -143,6 +200,8 @@ export function mapEvent(input: UpstreamEvent): MappedEvent | MapFailure {
 	const rawVenue = input.location?.trim() || null;
 	const venueName = rawVenue && rawVenue.toLowerCase() !== title.toLowerCase() ? rawVenue : null;
 
+	const poster = posterFrom(input.posterUrls);
+
 	return {
 		externalId: String(input.id),
 		title,
@@ -163,7 +222,8 @@ export function mapEvent(input: UpstreamEvent): MappedEvent | MapFailure {
 		 * than that permission is absent — so reading it understated a permission we actually hold
 		 * from Innocode / Polaris. The agreement is the fact; the field is noise.
 		 */
-		posterUrl: safeUrl(input.posterUrls[0] ?? null),
+		posterUrl: poster.url,
+		posterSrcset: poster.srcset,
 		posterRightsVerified: SOURCE.posterRightsCleared,
 		sourceUrl: `https://detskjer.sunnhordland.no/events/${input.eventSlug}`
 	};
