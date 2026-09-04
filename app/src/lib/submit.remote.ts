@@ -1,9 +1,11 @@
 import { command, form, query } from '$app/server';
 import { z } from 'zod';
-import { and, eq, gte, lte } from 'drizzle-orm';
+import { and, eq, gte, isNull, lte } from 'drizzle-orm';
 import { eventSeries, events, organizers, venues, verifications } from '@hendingar/core/schema';
 import { eventFormSchema } from '@hendingar/core/validation';
 import { zonedWallClockToInstant } from '@hendingar/core/datetime';
+import { DUPLICATE_WINDOW_MS, comparePair } from '@hendingar/core/consolidate';
+import { eventPath } from '@hendingar/core/slug';
 import {
 	HORIZON_WEEKS,
 	describeRecurrence,
@@ -21,6 +23,101 @@ import { extractPoster, verifierEnabled, verifyEvent } from './server/verifier';
  * records its reasoning in `verifications`, and only a unanimous confident pass publishes
  * directly. Everything else waits for a person. See services/verifier/README.md.
  */
+
+/**
+ * Is this event already here?
+ *
+ * Asked as soon as the date, time and title are known — which after an extraction is before the
+ * person has filled in anything at all. Finding out at the end, having typed a description and a
+ * venue, is the worst possible moment to learn the work was unnecessary.
+ *
+ * The comparison is the same `comparePair` that `pnpm consolidate` uses across sources, so what
+ * counts as a duplicate on submission is what counts as a duplicate everywhere else. A submission
+ * has no `sourceId`, which is exactly right here: the rule that a source never duplicates itself
+ * is about repeat sessions of one calendar, and a person sending in a poster is not that.
+ */
+const duplicateProbeSchema = z.object({
+	title: z.string().trim().min(1).max(300),
+	/** Local date and time as the form holds them, resolved against the venue's zone. */
+	date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+	startTime: z.string().regex(/^\d{2}:\d{2}$/),
+	timeZone: z.string().trim().min(1).max(64),
+	venueName: z.string().trim().max(200).nullable().default(null)
+});
+
+export const findDuplicate = query(duplicateProbeSchema, async (probe) => {
+	const startsAt = zonedWallClockToInstant(probe.date, probe.startTime, probe.timeZone);
+
+	/*
+	 * Shortlist in SQL, decide in code.
+	 *
+	 * The window is the same hour `consolidate` allows, widened by nothing: a day would offer the
+	 * Wednesday showing of a play as a duplicate of the Tuesday one, which is a different evening
+	 * with different tickets.
+	 */
+	const from = new Date(startsAt.getTime() - DUPLICATE_WINDOW_MS);
+	const to = new Date(startsAt.getTime() + DUPLICATE_WINDOW_MS);
+
+	const candidates = await db()
+		.select({
+			id: events.id,
+			sourceId: events.sourceId,
+			title: events.title,
+			startsAt: events.startsAt,
+			venueName: venues.name,
+			posterUrl: events.posterUrl,
+			venueTimeZone: venues.timezone
+		})
+		.from(events)
+		.leftJoin(venues, eq(events.venueId, venues.id))
+		.where(
+			and(
+				gte(events.startsAt, from),
+				lte(events.startsAt, to),
+				eq(events.status, 'published'),
+				// Only canonical rows: offering someone a duplicate OF a duplicate is a maze.
+				isNull(events.duplicateOfId)
+			)
+		)
+		.limit(50);
+
+	const probeCandidate = {
+		id: -1,
+		sourceId: null,
+		title: probe.title,
+		startsAt,
+		venueName: probe.venueName
+	};
+
+	let best: {
+		id: number;
+		title: string;
+		startsAt: Date;
+		venueName: string | null;
+		venueTimeZone: string | null;
+		posterUrl: string | null;
+		path: string;
+		score: number;
+	} | null = null;
+
+	for (const candidate of candidates) {
+		const verdict = comparePair(probeCandidate, candidate);
+		if (!verdict.same) continue;
+		if (best && best.score >= verdict.score) continue;
+		best = {
+			id: candidate.id,
+			title: candidate.title,
+			startsAt: candidate.startsAt,
+			venueName: candidate.venueName,
+			venueTimeZone: candidate.venueTimeZone,
+			posterUrl: candidate.posterUrl,
+			path: eventPath(candidate.id, candidate.title),
+			score: verdict.score
+		};
+	}
+
+	return best;
+});
 
 /** Is the photo shortcut available? The UI hides it rather than offering a broken button. */
 export const submissionCapabilities = query(async () => ({ photo: verifierEnabled() }));
@@ -112,14 +209,58 @@ export const submitEvent = form(eventFormSchema, async (submission) => {
 	const candidates = await database
 		.select({
 			id: events.id,
+			sourceId: events.sourceId,
 			title: events.title,
 			startsAt: events.startsAt,
 			venueName: venues.name
 		})
 		.from(events)
 		.leftJoin(venues, eq(events.venueId, venues.id))
-		.where(and(gte(events.startsAt, dayBefore), lte(events.startsAt, dayAfter)))
+		.where(
+			and(
+				gte(events.startsAt, dayBefore),
+				lte(events.startsAt, dayAfter),
+				/*
+				 * Only what is actually on the site.
+				 *
+				 * Without this, a submission we rejected an hour ago counts as an event we "already
+				 * have" — so the second attempt is told it is a duplicate of something invisible,
+				 * and resubmitting a corrected version becomes impossible. It also made the e2e
+				 * suite order-dependent, since each run found the previous run's row.
+				 */
+				eq(events.status, 'published'),
+				// And never a duplicate of a duplicate: point at the row we would actually show.
+				isNull(events.duplicateOfId)
+			)
+		)
 		.limit(25);
+
+	/*
+	 * The duplicate decision is made here, not taken from the browser.
+	 *
+	 * `findDuplicate` runs the same comparison before the form so nobody wastes their time, but its
+	 * answer is a courtesy to the reader and not evidence. Anything that decides whether a row is
+	 * published has to be computed on the server from the values actually being stored.
+	 *
+	 * Same `comparePair` as `pnpm consolidate`, so a duplicate means one thing across the whole
+	 * system rather than one thing on submission and another on import.
+	 */
+	const probe = {
+		id: -1,
+		sourceId: null,
+		title: submission.title,
+		startsAt,
+		venueName: submission.venueName
+	};
+	let duplicateOfId: number | null = null;
+	let duplicateScore = 0;
+	for (const candidate of candidates) {
+		const pair = comparePair(probe, candidate);
+		if (pair.same && pair.score > duplicateScore) {
+			duplicateOfId = candidate.id;
+			duplicateScore = pair.score;
+		}
+	}
 
 	const verdict = await verifyEvent({
 		title: submission.title,
@@ -167,16 +308,36 @@ export const submitEvent = form(eventFormSchema, async (submission) => {
 	}
 
 	/*
-	 * A rejected submission is still stored, as `rejected`. Deleting it would mean the same spam
-	 * can be resubmitted forever with nothing to compare against, and a wrongly-rejected event
-	 * could never be recovered by a human.
+	 * The decision, made here and now. Nothing waits for a person.
+	 *
+	 * `review` used to mean a queue, and a queue with nobody in it is just a slower rejection that
+	 * nobody is told about. Every submission now leaves with one of four answers, and the reader is
+	 * told which — because "no" for spam, "no" because we already have it, and "no" because the
+	 * date is unreadable are three different messages and only one of them deserves an apology.
+	 *
+	 * A rejected submission is still stored. Deleting it would mean the same spam can be
+	 * resubmitted forever with nothing to compare against.
 	 */
-	const status =
-		verdict.recommendation === 'publish'
-			? ('published' as const)
-			: verdict.recommendation === 'reject'
-				? ('rejected' as const)
-				: ('pending' as const);
+	const duplicateCheck = verdict.checks.find((check) => check.check === 'duplicate');
+	const plausibility = verdict.checks.find((check) => check.check === 'plausibility');
+
+	const outcome: 'approved' | 'duplicate' | 'shady' | 'declined' =
+		duplicateOfId !== null || duplicateCheck?.verdict === 'fail'
+			? 'duplicate'
+			: plausibility?.verdict === 'fail'
+				? /*
+					 * Only plausibility earns `shady`.
+					 *
+					 * It is the check that asks whether this is spam or nonsense, and it is the only
+					 * outcome we do not apologise for. Letting any failed check land here would call
+					 * somebody a spammer for mistyping a postcode.
+					 */
+					('shady' as const)
+				: verdict.recommendation === 'publish'
+					? ('approved' as const)
+					: ('declined' as const);
+
+	const status = outcome === 'approved' ? ('published' as const) : ('rejected' as const);
 
 	/*
 	 * A repeating submission becomes a series plus one row per occurrence inside the horizon.
@@ -204,7 +365,14 @@ export const submitEvent = form(eventFormSchema, async (submission) => {
 		// A rule that matches nothing is a rule the person got wrong, not an empty series to store.
 		if (expanded.length === 0) {
 			return {
-				status: 'pending' as const,
+				status: 'rejected' as const,
+				/*
+				 * `declined`, not `shady`. Nobody was trying anything — they picked a weekday the
+				 * first date does not fall on, and the fix is one field away. Saying so is the whole
+				 * value of having four outcomes instead of "no".
+				 */
+				outcome: 'declined' as const,
+				duplicateOf: null,
 				recommendation: 'review' as const,
 				summary: 'Gjentakinga traff ingen datoar. Sjekk vekedag og første dato, og prøv igjen.',
 				checks: verdict.checks
@@ -246,6 +414,15 @@ export const submitEvent = form(eventFormSchema, async (submission) => {
 				ctaUrl: submission.ctaUrl,
 				status,
 				submissionMethod: submission.method,
+				submissionOutcome: outcome,
+				/*
+				 * Point at what it duplicates, using the column consolidation already uses.
+				 *
+				 * That makes the submission behave exactly like an imported duplicate: hidden from
+				 * every listing, and named on the canonical event's page as another report of the
+				 * same thing. It is not thrown away, and it is not shown twice.
+				 */
+				duplicateOfId: outcome === 'duplicate' ? duplicateOfId : null,
 				verificationNotes: verdict.summary
 			}))
 		)
@@ -268,8 +445,47 @@ export const submitEvent = form(eventFormSchema, async (submission) => {
 		);
 	}
 
+	/*
+	 * The event we think this duplicates, resolved for the panel.
+	 *
+	 * Sent back with the verdict so the reader can see the thing we already had rather than being
+	 * told, flatly, that theirs was a copy of something unnamed.
+	 */
+	let duplicateOf: {
+		title: string;
+		path: string;
+		startsAt: Date;
+		venueName: string | null;
+		venueTimeZone: string | null;
+	} | null = null;
+	if (outcome === 'duplicate' && duplicateOfId !== null) {
+		const [existing] = await database
+			.select({
+				id: events.id,
+				title: events.title,
+				startsAt: events.startsAt,
+				venueName: venues.name,
+				venueTimeZone: venues.timezone
+			})
+			.from(events)
+			.leftJoin(venues, eq(events.venueId, venues.id))
+			.where(eq(events.id, duplicateOfId))
+			.limit(1);
+		if (existing) {
+			duplicateOf = {
+				title: existing.title,
+				path: eventPath(existing.id, existing.title),
+				startsAt: existing.startsAt,
+				venueName: existing.venueName,
+				venueTimeZone: existing.venueTimeZone
+			};
+		}
+	}
+
 	return {
 		status,
+		outcome,
+		duplicateOf,
 		recommendation: verdict.recommendation,
 		summary: recurrence
 			? `${verdict.summary} Lagra som ${describeRecurrence(recurrence)} — ${inserted.length} datoar dei neste ${HORIZON_WEEKS} vekene.`

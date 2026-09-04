@@ -42,6 +42,27 @@ export const sourceKindEnum = pgEnum('source_kind', [
 	'link'
 ]);
 
+/**
+ * What we decided about a human submission, and why it is not on the site.
+ *
+ * `status` alone could not say this. It carries `published` or `rejected`, which answers "is it
+ * visible" and leaves the reader — who has just been told no — with no idea whether we thought
+ * their event was spam, a copy of something we already had, or simply unreadable. Those are three
+ * different messages and only one of them is worth apologising for.
+ *
+ * Null on imported events: an importer decides nothing, it copies.
+ */
+export const submissionOutcomeEnum = pgEnum('submission_outcome', [
+	/** Looks real, checks out, published immediately. */
+	'approved',
+	/** We already have this event. `duplicate_of_id` names which one. */
+	'duplicate',
+	/** Reads as spam, an advert, or nonsense. Kept, never shown, never apologised for. */
+	'shady',
+	/** Real-looking but failed a check we cannot wave through — a date in the past, no venue. */
+	'declined'
+]);
+
 export const ingestRunStatusEnum = pgEnum('ingest_run_status', [
 	'running',
 	'success',
@@ -282,6 +303,14 @@ export const events = pgTable(
 		verificationNotes: text('verification_notes'),
 		/** How this event arrived. */
 		submissionMethod: submissionMethodEnum('submission_method').notNull().default('import'),
+		/**
+		 * The decision, for submissions. Null for imports, which decide nothing.
+		 *
+		 * Kept alongside `status` rather than folded into it: `status` answers "is it visible" and
+		 * every listing filters on it, while this answers "what did we conclude" and is what the
+		 * person who sent it in actually needs told.
+		 */
+		submissionOutcome: submissionOutcomeEnum('submission_outcome'),
 		/**
 		 * When the review agent last looked at this event.
 		 *

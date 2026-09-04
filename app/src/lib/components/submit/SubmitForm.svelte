@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { CATEGORIES } from '@hendingar/core/taxonomy';
-	import { formatTimeDigits } from '@hendingar/core/datetime';
+	import { DEFAULT_TIME_ZONE, formatEventTime, formatTimeDigits } from '@hendingar/core/datetime';
 	import {
 		WEEKDAY_NAMES,
 		WEEKDAYS,
@@ -9,7 +9,7 @@
 		type Weekday
 	} from '@hendingar/core/recurrence';
 	import type { ExtractedEvent } from '@hendingar/core/validation';
-	import { submitEvent } from '../../submit.remote';
+	import { findDuplicate, submitEvent } from '../../submit.remote';
 	import { SvelteSet } from 'svelte/reactivity';
 	import { photoFilledFields } from '../../provenance.ts';
 	import PhotoCapture from './PhotoCapture.svelte';
@@ -79,6 +79,41 @@
 		field.set(formatTimeDigits(value));
 	}
 
+	/**
+	 * A likely duplicate, found before the form is filled in.
+	 *
+	 * Asked as soon as an extraction gives us a title and a time, which is before the person has
+	 * typed anything. Finding out at the end — having written a description, a venue and an
+	 * organiser — is the worst possible moment to learn the work was unnecessary.
+	 *
+	 * Advisory, never a block. They may well be looking at a different evening of the same show,
+	 * and the server decides again from the values actually submitted.
+	 */
+	let likelyDuplicate = $state<Awaited<ReturnType<typeof findDuplicate>> | null>(null);
+	let duplicateDismissed = $state(false);
+
+	async function probeForDuplicate(
+		date: string,
+		startTime: string,
+		venueName: string,
+		title: string
+	) {
+		likelyDuplicate = null;
+		duplicateDismissed = false;
+		if (!date || !startTime || !title) return;
+		try {
+			likelyDuplicate = await findDuplicate({
+				title,
+				date,
+				startTime,
+				timeZone: DEFAULT_TIME_ZONE,
+				venueName: venueName || null
+			});
+		} catch {
+			// A failed probe is a missing courtesy, not a failed submission. The server checks again.
+		}
+	}
+
 	function prefill(draft: ExtractedEvent, imageDataUrl: string | null = null) {
 		poster = imageDataUrl;
 		/*
@@ -134,7 +169,45 @@
 			repeatNth: NTH_VALUES.find((v) => v === String(draft.recurrence?.nth ?? '')),
 			repeatUntil: draft.recurrence?.until ?? undefined
 		});
+
+		/*
+		 * Ask now, not at the end.
+		 *
+		 * Deliberately not awaited: the form is already usable and the answer, when it arrives,
+		 * appears above it. Blocking the person from typing while we check would trade one wasted
+		 * minute for another.
+		 */
+		void probeForDuplicate(
+			firstDate ?? '',
+			draft.startTime ?? '',
+			draft.venueName ?? '',
+			draft.title ?? ''
+		);
 	}
+
+	/**
+	 * And again whenever the fields say something new.
+	 *
+	 * The probe originally ran only after an extraction, which meant somebody typing the form by
+	 * hand — the majority — never got the check at all until they pressed send. It watches the four
+	 * fields the comparison actually uses, and debounces, so a title being typed one letter at a
+	 * time is one request rather than thirty.
+	 */
+	let probeTimer: ReturnType<typeof setTimeout> | undefined;
+	$effect(() => {
+		const title = f.title.value() ?? '';
+		const date = f.date.value() ?? '';
+		const startTime = f.startTime.value() ?? '';
+		const venueName = f.venueName.value() ?? '';
+
+		clearTimeout(probeTimer);
+		if (!title || !date || !startTime) {
+			likelyDuplicate = null;
+			return;
+		}
+		probeTimer = setTimeout(() => void probeForDuplicate(date, startTime, venueName, title), 500);
+		return () => clearTimeout(probeTimer);
+	});
 
 	const NTH_VALUES = ['1', '2', '3', '4', '5', '-1'] as const;
 
@@ -160,6 +233,8 @@
 {#if submitEvent.result}
 	<VerdictPanel
 		status={submitEvent.result.status}
+		outcome={submitEvent.result.outcome}
+		duplicateOf={submitEvent.result.duplicateOf}
 		summary={submitEvent.result.summary}
 		checks={submitEvent.result.checks}
 		{poster}
@@ -237,6 +312,36 @@
 				<p class="form__unread">Klarte ikkje lese: {unreadable.join(', ')}. Fyll inn sjølv.</p>
 			{/if}
 		</div>
+
+		{#if likelyDuplicate && !duplicateDismissed}
+			<!--
+				Advisory, and above the fields it would save someone filling in.
+
+				Never a block. Two showings of the same play on consecutive evenings score alike on
+				title and venue, and the person in front of us knows which one they went to — so this
+				names what we found, links to it, and gets out of the way.
+			-->
+			<aside class="dupe-warn">
+				<p class="label">Finst denne alt?</p>
+				<p class="dupe-warn__lede">
+					Vi har ei hending som liknar. Er det den same, treng du ikkje sende inn på nytt.
+				</p>
+				<a class="dupe-warn__link" href={likelyDuplicate.path} target="_blank" rel="noopener">
+					{likelyDuplicate.title} →
+				</a>
+				<p class="dupe-warn__meta">
+					{formatEventTime(new Date(likelyDuplicate.startsAt), likelyDuplicate.venueTimeZone) +
+						(likelyDuplicate.venueName ? ` · ${likelyDuplicate.venueName}` : '')}
+				</p>
+				<button
+					type="button"
+					class="dupe-warn__dismiss"
+					onclick={() => (duplicateDismissed = true)}
+				>
+					Nei, dette er ei anna hending — hald fram
+				</button>
+			</aside>
+		{/if}
 
 		{#if poster}
 			<!--
@@ -550,6 +655,50 @@
 	 * else is pinned to the first. `grid-row: 1 / -1` is what lets it stay tall enough to be sticky
 	 * against the whole form rather than against one field.
 	 */
+	/* An advisory, not an error: a left rule and dim type, not a red box. */
+	.dupe-warn {
+		margin: 0 0 1.25rem;
+		padding-inline-start: 1rem;
+		border-inline-start: var(--rule-fat) solid var(--peach);
+		display: grid;
+		gap: 0.3rem;
+		justify-items: start;
+	}
+	.dupe-warn__lede {
+		margin: 0;
+		font-size: 0.9375rem;
+	}
+	.dupe-warn__link {
+		font-family: var(--font-display);
+		font-weight: 900;
+		font-stretch: 112%;
+		text-transform: uppercase;
+		font-size: var(--step-mid);
+		line-height: 1;
+		overflow-wrap: anywhere;
+	}
+	.dupe-warn__meta {
+		margin: 0;
+		font-family: var(--font-mono);
+		font-size: var(--step-micro);
+		color: var(--peach-dim);
+	}
+	.dupe-warn__dismiss {
+		margin-block-start: 0.4rem;
+		background: none;
+		border: 0;
+		padding: 0;
+		font-family: var(--font-mono);
+		font-size: var(--step-micro);
+		color: var(--peach-dim);
+		text-decoration: underline;
+		text-underline-offset: 0.25em;
+		cursor: pointer;
+	}
+	.dupe-warn__dismiss:hover {
+		color: var(--peach-hi);
+	}
+
 	.form__poster {
 		margin: 0 0 1.25rem;
 		border: var(--rule) solid var(--peach-line);
