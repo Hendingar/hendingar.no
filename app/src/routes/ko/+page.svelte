@@ -9,6 +9,7 @@
 	import { existingClientId } from '../../lib/client-id.ts';
 	import AppealPanel from '../../lib/components/AppealPanel.svelte';
 	import { mySubmissions, type QueuedSubmission } from '../../lib/submit.remote';
+	import { linkLabel, safeHttpUrl } from '../../lib/source-link.ts';
 
 	/**
 	 * Your own submissions, and why each one did or did not go out.
@@ -122,6 +123,22 @@
 						{#if row.duplicateOf}
 							<p class="card__dupe">
 								Vi har henne alt: <a href={row.duplicateOf.path}>{row.duplicateOf.title}</a>
+							</p>
+						{/if}
+
+						<!--
+							The link the sender gave, on the card that says it did not pass.
+
+							This is where somebody works out what to change, and half of that is
+							checking whether the URL they pasted is the one they meant. The scheme
+							is re-checked at the href because rows predate the schema that restricts
+							it — see source-link.ts.
+						-->
+						{#if safeHttpUrl(row.sourceUrl)}
+							{@const href = safeHttpUrl(row.sourceUrl) ?? ''}
+							<p class="card__source">
+								Kjelda du oppgav:
+								<a {href} rel="noopener nofollow ugc">{linkLabel(href)}</a>
 							</p>
 						{/if}
 
@@ -266,6 +283,14 @@
 	}
 	.card__fix {
 		color: var(--peach-dim);
+	}
+	.card__source {
+		margin: 0;
+		font-family: var(--font-mono);
+		font-size: var(--step-micro);
+		color: var(--peach-dim);
+		/* A host has no spaces; without this a long one widens the whole card grid. */
+		overflow-wrap: anywhere;
 	}
 	.reasons {
 		list-style: none;

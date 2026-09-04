@@ -12,6 +12,7 @@
 	import { getEvent } from '../../../lib/events.remote';
 	import { heartCounts } from '../../../lib/hearts.remote';
 	import HeartButton from '../../../lib/components/HeartButton.svelte';
+	import { linkLabel, safeHttpUrl } from '../../../lib/source-link.ts';
 
 	const id = eventIdFromParam(page.params.slug ?? '');
 	if (id === null) error(404, 'Fann ikkje hendinga');
@@ -25,6 +26,13 @@
 	const heartsForThis = (await heartCounts([event.id]))[0]?.hearts ?? 0;
 
 	const canonical = $derived(eventPath(event.id, event.title));
+	/*
+	 * The page the sender said this came from — only for events nobody imported.
+	 *
+	 * An imported event already lists its source rows above, each with the importer's own event
+	 * URL; repeating this one there would credit the same link twice under two different headings.
+	 */
+	const submittedSource = $derived(safeHttpUrl(event.sourceUrl));
 	const sameDay = $derived(
 		event.endsAt
 			? formatEventTime(event.startsAt, event.venueTimeZone, 'full').slice(0, 12) ===
@@ -250,10 +258,27 @@
 						</ul>
 					</div>
 				{:else}
+					<!--
+						A submitted event credits nobody, so this is the only place a reader can be
+						pointed at something to check it against.
+
+						`sourceUrl` is optional and is not a source row — it is whatever page the
+						sender said they got it from, so it is named as theirs, not as ours. The
+						scheme is re-checked at the href: rows written before the schema restricted
+						it may still hold a `javascript:` URL.
+					-->
 					<p class="ev__source">
 						<span class="muted">
 							Sendt inn av ein person{event.submissionMethod === 'photo' ? ' frå eit bilete' : ''}.
 						</span>
+						{#if submittedSource}
+							<span class="ev__source-link">
+								Oppgjeven kjelde:
+								<a href={submittedSource} rel="noopener nofollow ugc">
+									{linkLabel(submittedSource)}
+								</a>
+							</span>
+						{/if}
 					</p>
 				{/if}
 			</aside>
@@ -380,6 +405,10 @@
 		font-size: 0.8125rem;
 		display: grid;
 		gap: 0.3rem;
+	}
+	.ev__source-link {
+		/* A host can be long and has no spaces, so it breaks the sidebar without this. */
+		overflow-wrap: anywhere;
 	}
 
 	.checks {

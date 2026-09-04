@@ -397,6 +397,7 @@
 		duplicateOf={submitEvent.result.duplicateOf}
 		summary={submitEvent.result.summary}
 		checks={submitEvent.result.checks}
+		sourceUrl={submitEvent.result.sourceUrl}
 		{poster}
 	/>
 {/if}

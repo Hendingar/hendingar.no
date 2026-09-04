@@ -8,6 +8,11 @@ packages/core/migrations/
 .claude/skills/
 .claude/settings.local.json
 
+# Agent worktrees. `git worktree` puts them inside the repo, so without this every check here runs
+# over another branch's working copy as well as our own — including its importer fixtures, which
+# are deliberately unformatted and make prettier exit non-zero.
+.claude/worktrees/
+
 # Captured upstream responses. Reformatting one would stop it being what the server actually
 # sent, which is the only reason it is worth committing.
 importers/*/test/fixtures/
