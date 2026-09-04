@@ -81,7 +81,8 @@ export async function extractPoster(
 		ticketUrl: raw.ticket_url,
 		confidence: raw.confidence,
 		unreadable: raw.unreadable,
-		note: raw.note
+		note: raw.note,
+		thumbnail: raw.thumbnail ?? null
 	});
 }
 

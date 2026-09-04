@@ -43,6 +43,11 @@ Reglar:
   las det rett. Er biletet uskarpt, delvis dekt eller utan arrangement: sett låg confidence.
 - Viser biletet ikkje eit arrangement i det heile, sett confidence til 0 og forklar i `note`.
 - `note` skal vere éi setning på nynorsk, til personen som lasta opp biletet.
+- `thumbnail` er utsnittet som bør bli miniatyrbilete på eit hendingskort — den delen av biletet
+  som fortel kva dette er. Typisk hovudmotivet og tittelen; sjeldan finskrifta nedst eller
+  Facebook-kroma rundt. Bruk brøkdelar av biletet (0-1), der x/y er øvre venstre hjørne. Utsnittet
+  skal vere breiare enn det er høgt. Er du i tvil, la det stå tomt — eit dårleg utsnitt er verre
+  enn ingen.
 
 Kategoriar: musikk, teater, utstilling, sport, mote, kyrkjeliv, festival, litteratur, stand-up,
 show, mat-og-drikke, dans, marknad, konferanse, kurs, anna."""

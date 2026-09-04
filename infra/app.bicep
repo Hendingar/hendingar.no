@@ -21,6 +21,9 @@ param postgresAdminPassword string
 @description('Internal URL of the verifier service. Empty is valid and supported: submission still works, and everything routes to the human queue.')
 param verifierUrl string = ''
 
+@description('Blob container URL for approved posters. Empty disables keeping images at all.')
+param posterContainerUrl string = ''
+
 @description('''
 Custom domains bound to this app, as Microsoft.App ingress customDomains entries
 ({ name, certificateId, bindingType }).

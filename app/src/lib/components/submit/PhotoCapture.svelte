@@ -257,9 +257,15 @@
 				<li>Annonse i avisa</li>
 			</ul>
 
+			<!--
+				This used to promise we never kept the image, and we now keep some. Saying so plainly
+				is the whole point: the condition is narrow and the reader can check it against what
+				actually happens to their submission.
+			-->
 			<p class="capture__fine">
 				Biletet blir krympa i nettlesaren din før det blir sendt, og posisjonsdata i biletet blir
-				fjerna. Vi lagrar ikkje biletet — det blir lese éin gong og kasta.
+				fjerna. Vi les det éin gong for å fylle ut skjemaet. Blir hendinga publisert, tek vi vare på
+				eit utsnitt som miniatyrbilete på kortet — elles blir biletet ikkje lagra i det heile.
 			</p>
 		{/if}
 	</div>
