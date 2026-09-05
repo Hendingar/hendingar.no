@@ -67,6 +67,11 @@ export async function extractPoster(
 		{ image_base64: imageBase64, media_type: mediaType, today },
 		EXTRACT_TIMEOUT_MS
 	);
+	return toExtractedEvent(raw);
+}
+
+/** The two extraction endpoints answer with the same shape; only the input differs. */
+function toExtractedEvent(raw: Record<string, unknown>): ExtractedEvent {
 	return extractedEventSchema.parse({
 		title: raw.title,
 		description: raw.description,
@@ -85,6 +90,28 @@ export async function extractPoster(
 		note: raw.note,
 		thumbnail: raw.thumbnail ?? null
 	});
+}
+
+/**
+ * Read an event out of a linked page that publishes no structured data.
+ *
+ * Only ever the fallback. Where a page carries schema.org — which most Norwegian event sites do —
+ * the app reads it directly and never calls this: that is the site's own assertion about its own
+ * event, and a model reading the same page can only be less reliable and more expensive.
+ *
+ * Text, not markup. A page is mostly script and navigation by weight and none of it is the event.
+ */
+export async function extractPage(
+	text: string,
+	url: string,
+	today: string
+): Promise<ExtractedEvent> {
+	const raw = await post<Record<string, unknown>>(
+		'/extract-page',
+		{ text, url, today },
+		EXTRACT_TIMEOUT_MS
+	);
+	return toExtractedEvent(raw);
 }
 
 export type VerifyInput = {

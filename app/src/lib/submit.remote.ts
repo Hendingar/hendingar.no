@@ -16,7 +16,7 @@ import {
 	type Weekday
 } from '@hendingar/core/recurrence';
 import { db } from './server/db';
-import { extractPoster, verifierEnabled, verifyEvent } from './server/verifier';
+import { extractPage, extractPoster, verifierEnabled, verifyEvent } from './server/verifier';
 import { fetchPublicPage, type SafeFetchFailure } from './server/safe-fetch';
 import { extractEventFromPage } from './server/page-event';
 
@@ -539,22 +539,48 @@ export const extractFromPhoto = command(photoSchema, async ({ imageBase64, media
  * a form they can fill in themselves, which is the same promise the photo path makes.
  */
 export const extractFromUrl = command(
-	z.object({ url: z.string().trim().min(1).max(2000) }),
-	async ({ url }) => {
+	z.object({
+		url: z.string().trim().min(1).max(2000),
+		/*
+		 * The reader's local date, from their browser.
+		 *
+		 * A page saying "laurdag 14." resolves against today, and the server's today is not
+		 * necessarily theirs. The photo path passes the same argument for the same reason.
+		 */
+		today: z.string().regex(/^\d{4}-\d{2}-\d{2}$/)
+	}),
+	async ({ url, today }) => {
 		const page = await fetchPublicPage(url);
 		if (!page.ok) {
 			return { ok: false as const, error: FETCH_FAILURE_MESSAGE[page.reason] };
 		}
 
 		const extraction = extractEventFromPage(page.html);
+
+		/*
+		 * Nothing structured on the page, so ask the model to read it.
+		 *
+		 * Only here, and never before: schema.org is what the site asserts about its own event, and
+		 * a model reading the same page can only be less reliable and more expensive. This branch
+		 * is the open web — a village hall's own page, a shop's news post — where nobody marked
+		 * anything up.
+		 *
+		 * Failure is not an error. An unavailable verifier, a timeout, or a page that turns out not
+		 * to be about an event at all each leave the person in front of a form they can fill in
+		 * themselves, with their link kept. The same promise the photo path makes.
+		 */
 		if (extraction.source === 'none') {
-			/*
-			 * Nothing structured, and no model fallback yet.
-			 *
-			 * Honest about it rather than returning an empty draft that looks like a failed read:
-			 * the person is told the page had nothing to read and pointed at the form, with the
-			 * URL already filled in so the link is not lost.
-			 */
+			if (verifierEnabled()) {
+				try {
+					const draft = await extractPage(extraction.text, page.url, today);
+					// Zero confidence is the model saying "this page is not an event". Believe it.
+					if (draft.confidence > 0) {
+						return { ok: true as const, draft, sourceUrl: page.url, source: 'model' as const };
+					}
+				} catch {
+					// Falls through to the message below, which is what we would have said anyway.
+				}
+			}
 			return {
 				ok: false as const,
 				error:

@@ -2,7 +2,7 @@
 
 from fastapi.testclient import TestClient
 
-from verifier.app import MAX_IMAGE_BASE64_BYTES, create_app
+from verifier.app import MAX_IMAGE_BASE64_BYTES, MAX_PAGE_TEXT_CHARS, create_app
 from verifier.config import Config
 
 
@@ -43,6 +43,30 @@ def test_oversized_image_is_refused_before_it_reaches_the_model():
         },
     )
     assert response.status_code == 413
+
+
+def test_oversized_page_text_is_refused_before_it_reaches_the_model():
+    """The stub raises if the model is reached, so a 413 here proves the cap is applied first.
+
+    It matters more than the image cap: the text arrives from a page chosen by whoever pasted the
+    link, so its length is decided by a stranger rather than by their camera.
+    """
+    response = _client().post(
+        "/extract-page",
+        json={
+            "text": "a" * (MAX_PAGE_TEXT_CHARS + 1),
+            "url": "https://example.no/hending",
+            "today": "2026-09-05",
+        },
+    )
+    assert response.status_code == 413
+
+
+def test_page_extraction_requires_every_field():
+    # url and today are context the prompt depends on for relative dates and for reading a slug;
+    # accepting a request without them would silently degrade the answer rather than fail.
+    response = _client().post("/extract-page", json={"text": "Konsert på laurdag"})
+    assert response.status_code == 422
 
 
 def test_verify_runs_the_rule_based_checks_end_to_end():
