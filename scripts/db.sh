@@ -4,6 +4,22 @@
 # There is no `container compose`, so this script is the compose file. Keep it boring.
 set -euo pipefail
 
+# The port (and the rest) come from .env, so this script and the app agree about which database
+# "the database" means.
+#
+# Without this the defaults below applied whenever DB_PORT was not already exported, which put the
+# container on 5433 — a port other local stacks commonly hold. The symptom is not a clear conflict
+# but `bind(...): Address already in use` from deep inside the container runtime, which reads like
+# a broken volume or a stuck container and sends you looking in the wrong place entirely.
+env_file="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/.env"
+if [ -f "$env_file" ]; then
+  # `set -a` exports what the file assigns; the subshell keeps its `set +a` from leaking.
+  set -a
+  # shellcheck disable=SC1090
+  . "$env_file"
+  set +a
+fi
+
 NAME="${DB_CONTAINER_NAME:-hendingar-db}"
 VOLUME="${DB_VOLUME:-hendingar-pgdata}"
 IMAGE="${DB_IMAGE:-imresamu/postgis:17-3.5}"

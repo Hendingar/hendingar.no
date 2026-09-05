@@ -17,6 +17,8 @@ import {
 } from '@hendingar/core/recurrence';
 import { db } from './server/db';
 import { extractPoster, verifierEnabled, verifyEvent } from './server/verifier';
+import { fetchPublicPage, type SafeFetchFailure } from './server/safe-fetch';
+import { extractEventFromPage } from './server/page-event';
 
 /**
  * Event submission — the form, the photo shortcut, and the verification that gates both.
@@ -520,6 +522,68 @@ export const extractFromPhoto = command(photoSchema, async ({ imageBase64, media
 		};
 	}
 });
+
+/**
+ * Read an event out of a page somebody pasted a link to.
+ *
+ * The third way in, beside the form and the photo. Most Norwegian event sites already publish
+ * schema.org data — WordPress with Modern Events Calendar does, Hageselskapet's CMS does, the
+ * ticketing platforms do — so for a great many links this is not a guess at all: it is what the
+ * site itself asserts about its own event, which is better than anything read off a rendering.
+ *
+ * A `command` rather than a `query`, because it makes our server perform a request to an address
+ * of the caller's choosing. That is a side effect with a security boundary around it — see
+ * `server/safe-fetch.ts` — and it must not be something a crawler can trigger by following a link.
+ *
+ * Never throws. A link that cannot be read leaves the person exactly where they were, in front of
+ * a form they can fill in themselves, which is the same promise the photo path makes.
+ */
+export const extractFromUrl = command(
+	z.object({ url: z.string().trim().min(1).max(2000) }),
+	async ({ url }) => {
+		const page = await fetchPublicPage(url);
+		if (!page.ok) {
+			return { ok: false as const, error: FETCH_FAILURE_MESSAGE[page.reason] };
+		}
+
+		const extraction = extractEventFromPage(page.html);
+		if (extraction.source === 'none') {
+			/*
+			 * Nothing structured, and no model fallback yet.
+			 *
+			 * Honest about it rather than returning an empty draft that looks like a failed read:
+			 * the person is told the page had nothing to read and pointed at the form, with the
+			 * URL already filled in so the link is not lost.
+			 */
+			return {
+				ok: false as const,
+				error:
+					'Fann ingen hendingsdata på sida. Fyll inn skjemaet under — lenkja er teken vare på.',
+				sourceUrl: page.url
+			};
+		}
+
+		return {
+			ok: true as const,
+			draft: extraction.event,
+			/* The URL we actually read, after redirects — not the one that was typed. */
+			sourceUrl: page.url,
+			source: extraction.source
+		};
+	}
+);
+
+/** One sentence per failure, in the second person, saying what to do next. */
+const FETCH_FAILURE_MESSAGE: Record<SafeFetchFailure, string> = {
+	scheme: 'Det ser ikkje ut som ei nettadresse. Lim inn ei http- eller https-lenkje.',
+	'blocked-address': 'Den adressa kan vi ikkje hente. Bruk ei offentleg nettside.',
+	unresolvable: 'Fann ikkje den nettstaden.',
+	'too-many-redirects': 'Lenkja sende oss i ring. Prøv adressa til sjølve hendinga.',
+	'too-large': 'Sida er for stor til å lese.',
+	'not-html': 'Lenkja peikar ikkje på ei nettside. Lim inn adressa til hendinga.',
+	unreachable: 'Fekk ikkje kontakt med nettstaden.',
+	status: 'Nettstaden ville ikkje gje oss sida.'
+};
 
 function slugify(value: string): string {
 	return value

@@ -310,7 +310,7 @@ export const eventFormSchema = z
 			.optional()
 			.default([]),
 		/** Provenance, so /datasamling can report how events actually arrive. */
-		method: z.enum(['form', 'photo']).default('form'),
+		method: z.enum(['form', 'photo', 'link']).default('form'),
 		/**
 		 * The browser sending this, so it can find the submission again in `/ko` and revise it.
 		 *

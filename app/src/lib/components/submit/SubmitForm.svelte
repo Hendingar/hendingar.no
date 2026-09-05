@@ -15,6 +15,7 @@
 	import { SvelteSet } from 'svelte/reactivity';
 	import { photoFilledFields } from '../../provenance.ts';
 	import PhotoCapture from './PhotoCapture.svelte';
+	import UrlCapture from './UrlCapture.svelte';
 	import VerdictPanel from './VerdictPanel.svelte';
 	import { page } from '$app/state';
 	import { pushState } from '$app/navigation';
@@ -81,7 +82,7 @@
 					repeatNth: NTH_VALUES.find((v) => v === draft.repeatNth),
 					repeatUntil: draft.repeatUntil || undefined
 				});
-				method = draft.method === 'photo' ? 'photo' : 'form';
+				method = draft.method === 'photo' || draft.method === 'link' ? draft.method : 'form';
 				mode = 'form';
 			})
 			.catch(() => {
@@ -138,7 +139,25 @@
 	const f = submitEvent.fields;
 
 	/** Provenance. Set once a photo actually fills the form, so /datasamling can count honestly. */
-	let method = $state<'form' | 'photo'>('form');
+	let method = $state<'form' | 'photo' | 'link'>('form');
+
+	/** How the form introduces itself, per way in. Keyed so a fourth way cannot silently read as a form. */
+	const INTRO_LABEL: Record<'form' | 'photo' | 'link', string> = {
+		form: 'Skjema',
+		photo: 'Forslag frå biletet',
+		link: 'Forslag frå sida'
+	};
+	const INTRO_HEADING: Record<'form' | 'photo' | 'link', string> = {
+		form: 'Skriv det inn',
+		photo: 'Sjekk at dette stemmer',
+		link: 'Sjekk at dette stemmer'
+	};
+	const INTRO_LEDE: Record<'form' | 'photo' | 'link', string> = {
+		form: '',
+		photo:
+			'Dette er eit forslag, lese ut av biletet. Rett det som er feil og fyll inn resten — ingenting blir sendt før du trykkjer send.',
+		link: 'Dette er eit forslag, lese frå sida du lenkja til. Rett det som er feil og fyll inn resten — ingenting blir sendt før du trykkjer send.'
+	};
 	/** Fields the model admitted it could not read, so we can point at them instead of hiding it. */
 	let unreadable = $state<string[]>([]);
 
@@ -194,8 +213,9 @@
 	 * is worth very little; the tabs working without JavaScript is worth a lot, and that mechanism
 	 * was here first.
 	 */
-	let mode = $state<'form' | 'photo'>(
-		page.url.searchParams.get('med') === 'bilete' ? 'photo' : 'form'
+	const MODE_BY_PARAM: Record<string, 'photo' | 'link'> = { bilete: 'photo', lenkje: 'link' };
+	let mode = $state<'form' | 'photo' | 'link'>(
+		MODE_BY_PARAM[page.url.searchParams.get('med') ?? ''] ?? 'form'
 	);
 
 	/**
@@ -266,7 +286,42 @@
 		}
 	}
 
-	function prefill(draft: ExtractedEvent, imageDataUrl: string | null = null) {
+	/**
+	 * The same handover as a read poster, from a read page.
+	 *
+	 * Routed through `prefill` rather than duplicating it — everything after "we have a draft" is
+	 * identical, including the duplicate probe and the recurrence expansion, and the one place that
+	 * logic was written twice is what CLAUDE.md warns about. Two things differ and both are set
+	 * afterwards: the method, because nobody photographed anything, and the source URL, because a
+	 * link submission has one by definition and it is the whole reason to trust the draft.
+	 */
+	function prefillFromUrl(draft: ExtractedEvent, sourceUrl: string) {
+		/*
+		 * The source URL goes through `prefill`, not a second `fields.set` afterwards.
+		 *
+		 * A follow-up `f.set({ sourceUrl })` does not merge with the one before it — it left the
+		 * form holding the URL and nothing else, so a page that read perfectly arrived as an empty
+		 * form with a single field filled. Measured, not guessed: the server returned the whole
+		 * draft and the duplicate probe matched on its title, while every input on screen was blank.
+		 */
+		prefill(draft, null, { sourceUrl });
+		method = 'link';
+		/*
+		 * The badges say "lese frå biletet", which is not what happened.
+		 *
+		 * Provenance is still worth showing — these fields were read, not typed — but it needs its
+		 * own wording, so until the badge can say "lese frå sida" it is cleared rather than left
+		 * telling the person something untrue about where their data came from.
+		 */
+		fromPhoto.clear();
+	}
+
+	function prefill(
+		draft: ExtractedEvent,
+		imageDataUrl: string | null = null,
+		/** Extra fields, written in the SAME `fields.set` call — see `prefillFromUrl`. */
+		extra: { sourceUrl?: string } = {}
+	) {
 		poster = imageDataUrl;
 		// Kept for the upload that happens *after* a verdict of `approved`, and only then.
 		posterCrop = draft.thumbnail ?? null;
@@ -339,7 +394,8 @@
 			// Narrowed to the option values the select offers, so an out-of-range nth from the model
 			// is dropped rather than written into a field that cannot hold it.
 			repeatNth: NTH_VALUES.find((v) => v === String(draft.recurrence?.nth ?? '')),
-			repeatUntil: draft.recurrence?.until ?? undefined
+			repeatUntil: draft.recurrence?.until ?? undefined,
+			...extra
 		});
 
 		/*
@@ -463,14 +519,26 @@
 		value="photo"
 		bind:group={mode}
 	/>
+	<input
+		class="visually-hidden"
+		type="radio"
+		id="mode-lenkje"
+		name="submit-mode"
+		value="link"
+		bind:group={mode}
+	/>
 
 	<div class="modes__bar">
 		<label class="mode" for="mode-skjema">Med skjema</label>
 		<label class="mode" for="mode-bilete">Med bilete</label>
+		<label class="mode" for="mode-lenkje">Med lenkje</label>
 	</div>
 
 	<div class="panel panel--photo">
 		<PhotoCapture enabled={photoEnabled} onextract={prefill} />
+	</div>
+	<div class="panel panel--link">
+		<UrlCapture onextract={prefillFromUrl} />
 	</div>
 	<div class="panel panel--form">
 		{@render formPanel()}
@@ -496,15 +564,17 @@
 	<!-- `oninput` mints the browser id on the first keystroke — see `claimIdentity`. -->
 	<form {...submitEvent} class="form frame" oninput={claimIdentity}>
 		<div bind:this={intro} class="form__intro" tabindex="-1">
-			<p class="label">{method === 'photo' ? 'Forslag frå biletet' : 'Skjema'}</p>
-			<h2 class="display display--md">
-				{method === 'photo' ? 'Sjekk at dette stemmer' : 'Skriv det inn'}
-			</h2>
-			{#if method === 'photo'}
-				<p class="form__read">
-					Dette er eit forslag, lese ut av biletet. Rett det som er feil og fyll inn resten —
-					ingenting blir sendt før du trykkjer send.
-				</p>
+			<!--
+				Say where the draft came from, because it changes what the person is being asked to do.
+
+				An empty form asks them to write; a filled one asks them to check. Naming the actual
+				source — a picture or a page — is what makes "check this" a request they can act on,
+				since it tells them what to check it against.
+			-->
+			<p class="label">{INTRO_LABEL[method]}</p>
+			<h2 class="display display--md">{INTRO_HEADING[method]}</h2>
+			{#if method !== 'form'}
+				<p class="form__read">{INTRO_LEDE[method]}</p>
 			{/if}
 			{#if unreadable.length > 0}
 				<p class="form__unread">Klarte ikkje lese: {unreadable.join(', ')}. Fyll inn sjølv.</p>
@@ -1083,13 +1153,15 @@
 	 * exists only so a finished extraction can flip to the form.
 	 */
 	#mode-skjema:checked ~ .modes__bar .mode[for='mode-skjema'],
-	#mode-bilete:checked ~ .modes__bar .mode[for='mode-bilete'] {
+	#mode-bilete:checked ~ .modes__bar .mode[for='mode-bilete'],
+	#mode-lenkje:checked ~ .modes__bar .mode[for='mode-lenkje'] {
 		color: var(--navy-900);
 		background: var(--peach);
 		border-color: var(--peach);
 	}
 	#mode-skjema:focus-visible ~ .modes__bar .mode[for='mode-skjema'],
-	#mode-bilete:focus-visible ~ .modes__bar .mode[for='mode-bilete'] {
+	#mode-bilete:focus-visible ~ .modes__bar .mode[for='mode-bilete'],
+	#mode-lenkje:focus-visible ~ .modes__bar .mode[for='mode-lenkje'] {
 		outline: 2px solid var(--peach-hi);
 		outline-offset: 2px;
 	}
@@ -1104,8 +1176,20 @@
 		container-type: inline-size;
 	}
 
+	/*
+	 * Each tab hides the two panels that are not its own.
+	 *
+	 * Written out rather than "hide every panel, then show the checked one": a `:not()` chain here
+	 * would put the default state at the mercy of specificity, and with no radio checked at all —
+	 * which is what a browser does after a back-forward restore — the form panel must still be the
+	 * one on screen.
+	 */
 	#mode-skjema:checked ~ .panel--photo,
-	#mode-bilete:checked ~ .panel--form {
+	#mode-skjema:checked ~ .panel--link,
+	#mode-bilete:checked ~ .panel--form,
+	#mode-bilete:checked ~ .panel--link,
+	#mode-lenkje:checked ~ .panel--form,
+	#mode-lenkje:checked ~ .panel--photo {
 		display: none;
 	}
 	.form {

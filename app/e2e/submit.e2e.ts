@@ -249,3 +249,47 @@ test('the photo panel can be opened straight from a URL', async ({ page }) => {
 	await expect(page.locator('#mode-bilete')).toBeChecked();
 	await expect(page.locator('.capture input[type="file"]')).toBeVisible();
 });
+
+/**
+ * The third way in: paste a link, we read the page.
+ *
+ * Deliberately no test that reads a real site. Every case here is refused before a socket opens,
+ * so the suite stays hermetic (CLAUDE.md rule 6) while still exercising the whole stack — the
+ * component, the remote command, and the address filter that stands between a stranger's URL and
+ * our managed identity.
+ */
+test('the link panel can be opened straight from a URL', async ({ page }) => {
+	await page.goto('/send-inn?med=lenkje');
+	await expect(page.locator('#mode-lenkje')).toBeChecked();
+	await expect(page.locator('#crawl-url')).toBeVisible();
+	// The limitation people hit first, said before they hit it.
+	await expect(page.locator('.link__fine')).toContainText(/innlogging/i);
+});
+
+test('an address inside our own network is refused, not fetched', async ({ page }) => {
+	/*
+	 * The attack this feature would otherwise open. The app runs on Azure Container Apps with a
+	 * managed identity, and 169.254.169.254 answers a plain GET with a real access token for the
+	 * subscription. Anything that makes our server fetch a URL a stranger chose has to refuse it.
+	 */
+	await page.goto('/send-inn?med=lenkje');
+	for (const url of [
+		'http://169.254.169.254/metadata/identity/oauth2/token',
+		'http://127.0.0.1:5432/',
+		'http://10.0.0.5/admin'
+	]) {
+		await page.locator('#crawl-url').fill(url);
+		await page.getByRole('button', { name: /Les sida/ }).click();
+		await expect(page.locator('.link__status--bad')).toContainText(/offentleg nettside/i);
+	}
+	// It never left the link panel, so nothing was read and nothing was prefilled.
+	await expect(page.locator('#mode-lenkje')).toBeChecked();
+});
+
+test('the button is disabled until there is something to read', async ({ page }) => {
+	await page.goto('/send-inn?med=lenkje');
+	const button = page.getByRole('button', { name: /Les sida/ });
+	await expect(button).toBeDisabled();
+	await page.locator('#crawl-url').fill('https://example.no/hending');
+	await expect(button).toBeEnabled();
+});

@@ -1,0 +1,1 @@
+ALTER TYPE "public"."submission_method" ADD VALUE 'link';

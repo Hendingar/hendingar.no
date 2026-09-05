@@ -74,7 +74,8 @@ export const ingestRunStatusEnum = pgEnum('ingest_run_status', [
 export const submissionMethodEnum = pgEnum('submission_method', [
 	'import', // a deterministic importer
 	'form', // a human filled in the form
-	'photo' // a human photographed a poster and confirmed the extraction
+	'photo', // a human photographed a poster and confirmed the extraction
+	'link' // a human pasted a URL and confirmed what we read off the page
 ]);
 
 /** The verification pipeline's stages — names and labels live in ./verification.ts (rule 1). */
