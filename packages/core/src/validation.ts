@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { isCalendarDate } from './datetime.ts';
 import { CATEGORY_SLUGS } from './taxonomy.ts';
 import { VERIFICATION_VERDICTS } from './verification.ts';
 import { RECURRENCE_FREQUENCIES, WEEKDAYS } from './recurrence.ts';
@@ -130,6 +131,27 @@ export const eventQuerySchema = z.object({
 });
 
 export type EventQuery = z.infer<typeof eventQuerySchema>;
+
+/**
+ * A calendar month, `YYYY-MM`. What `/kalender` is addressed by.
+ *
+ * Here rather than in the app because it is a wire type: the month view sends it, two queries
+ * receive it, and the route reads the same shape out of the query string. A second copy of the
+ * pattern in `app/` is how the URL and the query start disagreeing about what a month looks like.
+ */
+export const calendarMonthSchema = z
+	.string()
+	.regex(/^\d{4}-(0[1-9]|1[0-2])$/, 'must be a month on the form YYYY-MM');
+
+/**
+ * One calendar day, `YYYY-MM-DD` — and a day that exists.
+ *
+ * The shape is not enough: `2026-02-31` matches every date regex ever written, and a query that
+ * accepts it returns an empty day rather than the 404 a nonsense URL deserves.
+ */
+export const calendarDateSchema = z
+	.string()
+	.refine(isCalendarDate, 'must be a real calendar date on the form YYYY-MM-DD');
 
 /**
  * What the vision model is asked to return when reading a poster.

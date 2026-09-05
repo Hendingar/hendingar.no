@@ -10,11 +10,26 @@
 	 */
 	const links = [
 		{ href: '/hendingar', label: 'Hendingar' },
+		// The same events, asked the other way round: "what is on that Saturday" rather than "what
+		// is next". Next to Hendingar because they are two views of one list, not two features.
+		{ href: '/kalender', label: 'Kalender' },
 		// "Datasamling" reads as data collection in the GDPR sense — the wrong question entirely.
 		// "Kjelder" is what the page is actually about. The URL is unchanged so existing links hold.
 		{ href: '/datasamling', label: 'Kjelder' },
 		{ href: '/send-inn', label: 'Send inn' }
 	];
+
+	/**
+	 * A section stays marked while you are anywhere inside it.
+	 *
+	 * `/kalender/2026-09-12` is still the calendar, and an exact pathname match would drop the
+	 * marker the moment a reader opened a day — telling them, wrongly, that they had left the
+	 * section they are plainly still in.
+	 */
+	function isCurrent(href: string): boolean {
+		const path = page.url.pathname;
+		return path === href || path.startsWith(`${href}/`);
+	}
 
 	/*
 	 * "Hjarta" appears only once this browser has hearted something.
@@ -55,7 +70,7 @@
 			<ul>
 				{#each links as link (link.href)}
 					<li>
-						<a href={link.href} aria-current={page.url.pathname === link.href ? 'page' : undefined}>
+						<a href={link.href} aria-current={isCurrent(link.href) ? 'page' : undefined}>
 							{link.label}
 						</a>
 					</li>
