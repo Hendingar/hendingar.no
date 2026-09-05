@@ -18,8 +18,22 @@
 	let {
 		event,
 		occurrences = [],
-		hearts = 0
-	}: { event: UpcomingEvent; occurrences?: Occurrence[]; hearts?: number } = $props();
+		hearts = 0,
+		views = null
+	}: {
+		event: UpcomingEvent;
+		occurrences?: Occurrence[];
+		hearts?: number;
+		/**
+		 * How many browsers have opened this event, when the listing is about that.
+		 *
+		 * Null on every ordinary listing, and rendered only when given. A view count on the front
+		 * page would be a popularity signal on a page whose job is "what is on near you soonest",
+		 * and it would push every quiet event further down in the reader's mind for no reason.
+		 * /poppis/vist is explicitly about the number, so there it earns its place.
+		 */
+		views?: number | null;
+	} = $props();
 
 	// More than one time to show. A single occurrence keeps the plain clock it always had.
 	const repeats = $derived(occurrences.length > 1);
@@ -112,6 +126,17 @@
 					</li>
 				{/each}
 			</ul>
+		{/if}
+
+		{#if views !== null}
+			<!--
+				Said in words, not as a bare number. "412" beside a title could be anything — a price,
+				a room, a distance — and the whole reason this line exists is that /poppis/vist is
+				ordered by it.
+
+				No singular form: "har opna denne" is the same for one as for many in nynorsk.
+			-->
+			<p class="tile__views">{views} har opna denne</p>
 		{/if}
 	</div>
 
@@ -406,6 +431,20 @@
 		font-size: var(--step-micro);
 		letter-spacing: 0.16em;
 		text-transform: uppercase;
+		color: var(--peach-dim);
+	}
+	/*
+	 * Quieter than the venue line above it: it is the reason this card is where it is on the page,
+	 * not something a reader needs in order to decide whether to go.
+	 */
+	.tile__views {
+		margin: 0.15rem 0 0;
+		font-family: var(--font-mono);
+		font-size: var(--step-micro);
+		/*
+		 * --peach-dim, not --peach-quiet. brand.css marks quiet as "large display numerals only —
+		 * 3.1:1, never body", and this is small text at body weight.
+		 */
 		color: var(--peach-dim);
 	}
 </style>

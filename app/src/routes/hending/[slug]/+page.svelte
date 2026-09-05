@@ -12,6 +12,8 @@
 	import { getEvent } from '../../../lib/events.remote';
 	import { heartCounts } from '../../../lib/hearts.remote';
 	import HeartButton from '../../../lib/components/HeartButton.svelte';
+	import { recordView, viewCounts } from '../../../lib/views.remote';
+	import { markSeen } from '../../../lib/seen.ts';
 	import { linkLabel, safeHttpUrl } from '../../../lib/source-link.ts';
 
 	const id = eventIdFromParam(page.params.slug ?? '');
@@ -24,6 +26,33 @@
 	 * is decided in the browser, because that is the only place that fact exists.
 	 */
 	const heartsForThis = (await heartCounts([event.id]))[0]?.hearts ?? 0;
+
+	/*
+	 * How many browsers have opened this, server-rendered with the rest of the page.
+	 *
+	 * The count read here is the one *before* this visit. Rendering the incremented figure would
+	 * mean waiting for a write before showing the page, to move a number by one — and it would make
+	 * every reader's own visit the thing they see, which is the least interesting reading of it.
+	 */
+	const viewsForThis = (await viewCounts([event.id]))[0]?.views ?? 0;
+
+	/**
+	 * Count this visit, once per browser, ever.
+	 *
+	 * In an effect because it must not run during SSR — a crawler is not a reader, and counting
+	 * one would make the number a measure of how often we are indexed. `markSeen` writes to
+	 * localStorage before the request goes out and returns false ever after, so a reload does not
+	 * count again; the id it remembers never leaves the device, and the server is told only "one
+	 * more" (see views.remote.ts).
+	 *
+	 * Deliberately not awaited and deliberately silent. This is the least important thing on the
+	 * page: a blocked request, a browser with storage turned off, or a collector that is down must
+	 * cost the reader nothing at all.
+	 */
+	$effect(() => {
+		if (!markSeen(event.id)) return;
+		void recordView(event.id).catch(() => {});
+	});
 
 	const canonical = $derived(eventPath(event.id, event.title));
 	/*
@@ -132,6 +161,17 @@
 			<p class="ev__heart">
 				<HeartButton eventId={event.id} hearts={heartsForThis} size="large" />
 			</p>
+			{#if viewsForThis > 0}
+				<!--
+					Only once somebody has been here. "0 har opna denne" on a page somebody is
+					currently reading is both wrong-looking and useless, and it would sit under every
+					newly imported event for days.
+
+					"Opna", not "vist": we know a browser opened the page and nothing about whether
+					anyone read it. See views.remote.ts.
+				-->
+				<p class="ev__views">{viewsForThis} har opna denne</p>
+			{/if}
 		</div>
 
 		<div class="ev__grid">
@@ -427,6 +467,13 @@
 		font-size: 0.8125rem;
 		display: grid;
 		gap: 0.3rem;
+	}
+	.ev__views {
+		margin: 0.4rem 0 0;
+		font-family: var(--font-mono);
+		font-size: var(--step-micro);
+		/* --peach-dim, not --peach-quiet: brand.css reserves quiet for large display numerals. */
+		color: var(--peach-dim);
 	}
 	.ev__source-link {
 		/* A host can be long and has no spaces, so it breaks the sidebar without this. */

@@ -419,6 +419,39 @@ export const eventHearts = pgTable(
 	]
 );
 
+/**
+ * How many browsers have opened an event's page.
+ *
+ * A single counter per event, and deliberately NOT a row per reader.
+ *
+ * Hearts store one row per (event, browser) because a heart must be togglable and de-duplicable on
+ * the server. A view needs neither. Storing the same shape here would build something we do not
+ * have and should not want: a record, on our server, of which reader looked at which event — a
+ * reading history, assembled from a page load rather than from anything the reader chose to do.
+ *
+ * So the browser decides whether a view is new (it remembers what it has already counted) and the
+ * server keeps only the total. That makes the dedupe defeatable — clear your storage and you can
+ * count again — and it is the right trade here: the cost of that abuse is a slightly inflated
+ * number on a community events site, and the alternative costs every reader a browsing record.
+ *
+ * The number therefore means "how many browsers told us they opened this", which is what
+ * /poppis/vist says it means.
+ */
+export const eventViews = pgTable(
+	'event_views',
+	{
+		eventId: integer('event_id')
+			.primaryKey()
+			.references(() => events.id, { onDelete: 'cascade' }),
+		views: integer('views').notNull().default(0),
+		updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow()
+	},
+	// Ordering by views is the whole of /poppis/vist, and it is the only read that is not by id.
+	(t) => [index('event_views_views_idx').on(t.views)]
+);
+
+export type EventView = typeof eventViews.$inferSelect;
+
 export type EventHeart = typeof eventHearts.$inferSelect;
 
 export type Event = typeof events.$inferSelect;

@@ -16,11 +16,20 @@
 	 */
 	let {
 		events,
-		hearts = {}
+		hearts = {},
+		views = null
 	}: {
 		events: UpcomingEvent[];
 		/** Heart counts by event id, fetched in bulk by the page rather than per tile. */
 		hearts?: Record<number, number>;
+		/**
+		 * Open counts by event id — only for /poppis/vist, which is ordered by them.
+		 *
+		 * Null on every other listing, so no tile renders the number. A view count on the front
+		 * page would turn "what is on near you soonest" into a popularity ranking in the reader's
+		 * head, and push every quiet event down for no reason.
+		 */
+		views?: Record<number, number> | null;
 	} = $props();
 </script>
 
@@ -36,6 +45,7 @@
 				event={stack.lead}
 				occurrences={stack.occurrences}
 				hearts={hearts[stack.lead.id] ?? 0}
+				views={views ? (views[stack.lead.id] ?? 0) : null}
 			/>
 		</li>
 	{/each}

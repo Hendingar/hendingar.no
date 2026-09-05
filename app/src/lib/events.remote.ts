@@ -1,9 +1,17 @@
 import { error } from '@sveltejs/kit';
 import { query } from '$app/server';
 import { z } from 'zod';
-import { and, asc, count, eq, gte, isNull, lte, max, min, ne, or, sql } from 'drizzle-orm';
+import { and, asc, count, desc, eq, gte, isNull, lte, max, min, ne, or, sql } from 'drizzle-orm';
 import type { AnyColumn, SQL } from 'drizzle-orm';
-import { events, organizers, sources, venues, verifications } from '@hendingar/core/schema';
+import {
+	eventHearts,
+	eventViews,
+	events,
+	organizers,
+	sources,
+	venues,
+	verifications
+} from '@hendingar/core/schema';
 import {
 	calendarDateSchema,
 	calendarMonthSchema,
@@ -370,6 +378,93 @@ export const listUpcoming = query(z.number().int().min(1).max(60).default(24), a
 });
 
 export type UpcomingEvent = Awaited<ReturnType<typeof listUpcoming>>[number];
+
+/**
+ * What is coming up that people actually engaged with — hearts, or opens.
+ *
+ * Two orderings of one query rather than two queries, because everything except the sort column
+ * and the join is identical, and a second copy is how the two pages drift apart.
+ *
+ * "Next up", so the same window every other listing uses: published, canonical, and not already
+ * over. Popularity is only interesting about something you can still go to — a sold-out concert
+ * from March topping the list forever would be a leaderboard, not a listing.
+ *
+ * The count is carried on the row so the card can show it. An event nobody has hearted or opened
+ * scores 0 and simply sorts last; it is not excluded, or a quiet week would render an empty page.
+ */
+export const listPopular = query(
+	z.object({
+		by: z.enum(['hearts', 'views']),
+		limit: z.number().int().min(1).max(60).default(24)
+	}),
+	async ({ by, limit }) => {
+		const now = new Date();
+
+		/*
+		 * Correlated subqueries rather than joins.
+		 *
+		 * A join to event_hearts would need a GROUP BY over every selected column — including the
+		 * json aggregation in `sourceMarks` — and a left join to a table with no row yields null
+		 * rather than 0, which sorts differently in Postgres. Both problems disappear here.
+		 */
+		const hearts = sql<number>`
+			coalesce((select count(*) from ${eventHearts} where ${eventHearts.eventId} = ${events.id}), 0)
+		`;
+		const views = sql<number>`
+			coalesce((select ${eventViews.views} from ${eventViews} where ${eventViews.eventId} = ${events.id}), 0)
+		`;
+		const score = by === 'hearts' ? hearts : views;
+
+		return (
+			db()
+				.select({
+					id: events.id,
+					title: events.title,
+					category: events.category,
+					startsAt: events.startsAt,
+					endsAt: events.endsAt,
+					venueName: venues.name,
+					venueTimeZone: venues.timezone,
+					municipality: venues.municipality,
+					posterUrl: events.posterUrl,
+					posterSrcset: events.posterSrcset,
+					sourceMarks: sourceMarksFor(events.id).as('source_marks'),
+					hearts: hearts.mapWith(Number).as('hearts'),
+					views: views.mapWith(Number).as('views'),
+					localDate: sql<string>`
+					to_char(
+						greatest(${events.startsAt}, now())
+							at time zone coalesce(${venues.timezone}, 'Europe/Oslo'),
+						'YYYY-MM-DD'
+					)
+				`.as('local_date'),
+					todayLocalDate: sql<string>`
+					to_char(now() at time zone coalesce(${venues.timezone}, 'Europe/Oslo'), 'YYYY-MM-DD')
+				`.as('today_local_date')
+				})
+				.from(events)
+				.leftJoin(venues, eq(events.venueId, venues.id))
+				.where(
+					and(
+						eq(events.status, 'published'),
+						isNull(events.duplicateOfId),
+						or(gte(events.startsAt, now), gte(events.endsAt, now))
+					)
+				)
+				/*
+				 * Soonest first among equals.
+				 *
+				 * Most events score zero, so without a second key the tail of the page would be in
+				 * whatever order Postgres happened to return — different on every reload, which reads
+				 * as a broken page rather than as a tie.
+				 */
+				.orderBy(desc(score), asc(events.startsAt))
+				.limit(limit)
+		);
+	}
+);
+
+export type PopularEvent = Awaited<ReturnType<typeof listPopular>>[number];
 
 /*
  * ---------------------------------------------------------------------------------------------
