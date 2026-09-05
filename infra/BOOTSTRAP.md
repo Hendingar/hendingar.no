@@ -224,6 +224,40 @@ Until this exists, the deploy still succeeds and the site still works: the verif
 `/health` (which does not call the model), every submission routes to the human queue, and the
 photo shortcut returns "kunne ikkje lese plakaten". Nothing 500s — but the feature is off.
 
+**4. `Storage Blob Data Contributor` for the runtime identity, on the posters container.** Same
+constraint, same operator, same "only after the first deploy" caveat — the storage account is
+created by `infra/main.bicep`.
+
+This one has already been learned the hard way. It _was_ declared in the Bicep, and every deploy
+from 2026-09-04 onwards failed:
+
+```
+InvalidTemplateDeployment: Authorization failed for template resource ... of type
+'Microsoft.Authorization/roleAssignments'. The client ... does not have permission to perform
+action 'Microsoft.Authorization/roleAssignments/write'
+```
+
+That is a **pre-flight** error, so nothing in the template was applied — not the app revision, not
+the storage account the assignment was scoped to. The site simply stopped receiving deploys, and
+the message named the missing permission rather than the rule it broke.
+
+```bash
+SUB=7bcda9cc-633e-4b98-8c36-926f9d181bb0
+RG=rg-hendingar-swc-dev
+MI_PRINCIPAL=$(az identity show -g "$RG" -n id-hendingar --query principalId -o tsv)
+SA=$(az resource list -g "$RG" --resource-type Microsoft.Storage/storageAccounts --query '[0].id' -o tsv)
+
+# Storage Blob Data Contributor, scoped to the one container — not the account. It adds and
+# overwrites blobs here and never changes who may read them.
+az role assignment create \
+  --assignee-object-id "$MI_PRINCIPAL" --assignee-principal-type ServicePrincipal \
+  --role ba92f5b4-2d11-453d-a403-e96b0029c9fe \
+  --scope "$SA/blobServices/default/containers/posters"
+```
+
+Until this exists the site works and submissions still publish; what fails is keeping the poster
+of an approved submission, so those events show a generated tile instead of the picture.
+
 Check the model quota before the first deploy, since `Standard` is the only SKU with any in this
 subscription:
 
@@ -239,7 +273,7 @@ This is inherent, not a bug — the grant target doesn't exist until the first r
 | Run | What happens                                                                                                                                       |
 | --- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 1   | Platform converges (incl. the AI account), both images build in ACR, migrations apply. **"Deploy verifier" fails** — nothing can pull from ACR yet |
-| —   | Run the `AcrPull` **and** `Cognitive Services OpenAI User` commands above                                                                          |
+| —   | Run the `AcrPull`, `Cognitive Services OpenAI User` **and** `Storage Blob Data Contributor` commands above                                         |
 | 2   | Everything passes; the app serves the image and the verifier answers on its internal URL                                                           |
 
 Steady state after that is a single run per push.
