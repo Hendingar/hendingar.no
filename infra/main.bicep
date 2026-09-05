@@ -160,8 +160,23 @@ resource containerEnv 'Microsoft.App/managedEnvironments@2024-03-01' = {
  * put a Node process in front of every thumbnail for no privacy gained. Writing still requires the
  * managed identity — public means readable, never writable.
  */
+/*
+ * Storage account names are the tightest naming rule in Azure: 3-24 characters, lower-case letters
+ * and digits only. Every other name in this file can spell itself out; this one cannot.
+ *
+ * 'st' + 'hendingar' + 'dev' + a 13-character uniqueString is 27, and the deployment is rejected in
+ * pre-flight with the whole template — so nothing else in this file applies either. That went
+ * unnoticed for a day because an authorization failure on a role assignment was reported first and
+ * validation stopped there.
+ *
+ * `take` rather than a shorter hand-written name, so the rule holds if appName or env ever change.
+ * It trims the tail of the suffix, leaving ten of its thirteen characters here: still far more
+ * uniqueness than one account per environment needs.
+ */
+var postersAccountName = take('st${appName}${env}${suffix}', 24)
+
 resource posters 'Microsoft.Storage/storageAccounts@2023-05-01' = {
-  name: 'st${appName}${env}${suffix}'
+  name: postersAccountName
   location: location
   tags: tags
   sku: {
