@@ -18,8 +18,8 @@
 	import {
 		calendarRange,
 		horizonWeeks,
-		monthEventCounts,
-		monthPlaces,
+		dayCounts,
+		placeCounts,
 		weekEvents
 	} from '../../lib/events.remote';
 
@@ -87,20 +87,65 @@
 		return monthKey;
 	}
 
+	/**
+	 * The month view is a stack you scroll, not a page you step through.
+	 *
+	 * Arrows made "what about the week after next" a question you answered by leaving the page and
+	 * coming back to a different one, having lost your place. Months below each other answer it by
+	 * scrolling — which is what a wall calendar does, and what the rail above already implies by
+	 * showing half a year at once.
+	 *
+	 * Six of them, because that is what the rail covers: a page that stacked all twenty-three
+	 * months this database holds would render sixty grids to show you two. Anything further out is
+	 * a link at the foot, which starts a new stack there.
+	 */
+	const STACK_MONTHS = 6;
+
+	/*
+	 * Always six, even where we hold nothing yet.
+	 *
+	 * Clipping the stack to the last month with data was the first attempt, and on a database
+	 * holding only the current month it rendered exactly one grid — so "scroll down for next
+	 * month" silently stopped being a thing the page did. An empty October is a true answer and a
+	 * working affordance; a missing October is neither. What we do and do not cover is the rail's
+	 * job to say, and it says it.
+	 */
+	const stack = $derived(Array.from({ length: STACK_MONTHS }, (_, i) => shiftMonth(month, i)));
+	const spanFrom = $derived(stack[0] ?? month);
+	const spanTo = $derived(stack.at(-1) ?? month);
+
 	/*
 	 * Derived and awaited in the markup, not a top-level await.
 	 *
-	 * A top-level `await monthEventCounts(month)` captures the month once, so the grid would never
-	 * change when you pressed an arrow. Awaiting the derived promise in the template keeps the
+	 * A top-level `await dayCounts(...)` captures the span once, so the grids would never change
+	 * when you followed a month link. Awaiting the derived promise in the template keeps the
 	 * dependency live and still suspends the component on the server, so every month is
 	 * server-rendered — which matters on a page whose whole job is to be crawlable by date.
+	 *
+	 * One query for the whole stack rather than one per grid: six round trips reading overlapping
+	 * windows of the same table, to render one screenful, is a cost nobody has to pay.
 	 */
-	const counts = $derived(monthEventCounts(month));
-	const places = $derived(monthPlaces(month));
+	const counts = $derived(dayCounts({ from: spanFrom, to: spanTo }));
+	const places = $derived(placeCounts({ from: spanFrom, to: spanTo }));
 
-	const previousMonth = $derived(month > range.first ? shiftMonth(month, -1) : null);
-	const nextMonth = $derived(month < range.last ? shiftMonth(month, 1) : null);
+	/** The stack before this one, and the one after. Absent at the ends of what we hold. */
+	const earlier = $derived(
+		month > range.first
+			? (() => {
+					const back = shiftMonth(month, -STACK_MONTHS);
+					return back < range.first ? range.first : back;
+				})()
+			: null
+	);
+	/* Only when there is actually something past the stack — an empty stack of empty months is
+	   not an invitation. */
+	const later = $derived(spanTo < range.last ? shiftMonth(spanTo, 1) : null);
 	const monthName = $derived(formatMonthName(month));
+
+	/** How much a single month of the shared count list holds. */
+	function monthTotal(all: { date: string; total: number }[], key: string): number {
+		return all.reduce((n, c) => (c.date.startsWith(key) ? n + c.total : n), 0);
+	}
 
 	/**
 	 * Weeks are bounded by the same data the months are, so neither set of arrows can walk you off
@@ -141,10 +186,10 @@
 			content="Hendingar i Sunnhordland {formatWeekRange(activeWeek).toLowerCase()}, time for time."
 		/>
 	{:else}
-		<title>{monthName} — kalender — hendingar.no</title>
+		<title>{monthName} og framover — kalender — hendingar.no</title>
 		<meta
 			name="description"
-			content="Kalender over hendingar i Sunnhordland i {monthName}. Tal på hendingar per dag — trykk på ein dag for å sjå kva som skjer."
+			content="Kalender over hendingar i Sunnhordland frå {monthName}. Tal på hendingar per dag, månad for månad — trykk på ein dag for å sjå kva som skjer."
 		/>
 	{/if}
 </svelte:head>
@@ -186,13 +231,15 @@
 			</a>
 		</nav>
 
-		<nav class="steps" aria-label={activeWeek ? 'Bytt veke' : 'Bytt månad'}>
-			<!--
-				An arrow only exists when there is a month or a week behind it. Rendering a disabled
-				control at the edge of the data would be a button that says "there is more this way"
-				and then refuses — the placeholder keeps the name centred either way.
-			-->
-			{#if activeWeek}
+		{#if activeWeek}
+			<nav class="steps" aria-label="Bytt veke">
+				<!--
+					An arrow only exists when there is a week behind it. Rendering a disabled control at
+					the edge of the data would be a button that says "there is more this way" and then
+					refuses — the placeholder keeps the name centred either way.
+
+					The month view has no stepper at all any more: its months are stacked and you scroll.
+				-->
 				{#if previousWeek}
 					<a
 						class="steps__step"
@@ -225,38 +272,8 @@
 				{:else}
 					<span class="steps__step steps__step--none" aria-hidden="true"></span>
 				{/if}
-			{:else}
-				{#if previousMonth}
-					<a
-						class="steps__step"
-						href="/kalender?maanad={previousMonth}"
-						rel="prev"
-						aria-label="Førre månad: {formatMonthName(previousMonth)}"
-					>
-						<span class="steps__arrow" aria-hidden="true">←</span>
-						<span class="steps__label">{formatMonthName(previousMonth)}</span>
-					</a>
-				{:else}
-					<span class="steps__step steps__step--none" aria-hidden="true"></span>
-				{/if}
-
-				<h2 class="display display--md steps__now">{monthName}</h2>
-
-				{#if nextMonth}
-					<a
-						class="steps__step steps__step--next"
-						href="/kalender?maanad={nextMonth}"
-						rel="next"
-						aria-label="Neste månad: {formatMonthName(nextMonth)}"
-					>
-						<span class="steps__label">{formatMonthName(nextMonth)}</span>
-						<span class="steps__arrow" aria-hidden="true">→</span>
-					</a>
-				{:else}
-					<span class="steps__step steps__step--none" aria-hidden="true"></span>
-				{/if}
-			{/if}
-		</nav>
+			</nav>
+		{/if}
 	</div>
 
 	{#if activeWeek}
@@ -271,8 +288,52 @@
 			<WeekGrid dates={week.dates} timed={week.timed} spanning={week.spanning} today={week.today} />
 		{/if}
 	{:else}
-		<MonthGrid monthKey={month} counts={await counts} today={range.today} />
-		<Hotspots monthKey={month} counts={await counts} places={await places} today={range.today} />
+		{@const all = await counts}
+
+		<Hotspots from={spanFrom} to={spanTo} counts={all} places={await places} today={range.today} />
+
+		{#if earlier}
+			<p class="months__step">
+				<a href="/kalender?maanad={earlier}" rel="prev">
+					<span aria-hidden="true">↑</span> Tidlegare månader
+				</a>
+			</p>
+		{/if}
+
+		<!--
+			Months below each other, each its own labelled region so the date is part of the document
+			structure rather than a visual break a screen reader cannot perceive.
+		-->
+		{#each stack as key (key)}
+			<section class="month" id="maanad-{key}" aria-labelledby="h-{key}">
+				<h2 class="display display--md month__h" id="h-{key}">
+					{formatMonthName(key)}
+					<span class="month__n">
+						{#if monthTotal(all, key) === 0}
+							Ingenting registrert enno
+						{:else}
+							{monthTotal(all, key)}
+							{monthTotal(all, key) === 1 ? 'hending' : 'hendingar'}
+						{/if}
+					</span>
+				</h2>
+				<!-- Sliced from the one query the whole stack shares. Each grid still decides its own
+				     hotspots from its own month, so a quiet March is not judged against a busy May. -->
+				<MonthGrid
+					monthKey={key}
+					counts={all.filter((c) => c.date.startsWith(key))}
+					today={range.today}
+				/>
+			</section>
+		{/each}
+
+		{#if later}
+			<p class="months__step months__step--later">
+				<a href="/kalender?maanad={later}" rel="next">
+					Fleire månader <span aria-hidden="true">↓</span>
+				</a>
+			</p>
+		{/if}
 	{/if}
 
 	<p class="cal-page__foot">
@@ -306,6 +367,63 @@
 		font-stretch: 108%;
 		font-size: var(--step-mid);
 		max-inline-size: 34ch;
+	}
+
+	/*
+	 * A stacked month, and the heading that stays with it.
+	 *
+	 * Sticky because the whole point of stacking is that you scroll past the month you started in;
+	 * without it, "which month am I looking at" becomes the question the page stops answering
+	 * halfway down. The same reasoning already makes day headings sticky on a narrow listing.
+	 *
+	 * It needs a solid background: the grid passes underneath, and a transparent heading over a
+	 * row of squares is unreadable.
+	 */
+	.month + .month {
+		margin-block-start: clamp(2rem, 4vw, 3rem);
+	}
+	.month__h {
+		position: sticky;
+		inset-block-start: 0;
+		z-index: 3;
+		display: flex;
+		flex-wrap: wrap;
+		align-items: baseline;
+		gap: 0.4rem 0.9rem;
+		font-size: clamp(1.1rem, 5cqw, 2rem);
+		background: var(--navy-800);
+		margin-block: 0 0.75rem;
+		padding-block: 0.5rem 0.45rem;
+		border-block-end: var(--rule) solid var(--peach-line);
+	}
+	.month__n {
+		font-family: var(--font-mono);
+		font-size: var(--step-micro);
+		font-weight: 700;
+		letter-spacing: 0.16em;
+		text-transform: uppercase;
+		color: var(--peach-dim);
+	}
+
+	/* The stack has ends, and they are links rather than dead space. */
+	.months__step {
+		margin-block: clamp(1rem, 2vw, 1.5rem);
+		font-family: var(--font-mono);
+		font-size: var(--step-micro);
+		font-weight: 700;
+		letter-spacing: 0.18em;
+		text-transform: uppercase;
+	}
+	.months__step a {
+		text-decoration: none;
+		border-block-end: var(--rule) solid var(--peach-line);
+		padding-block-end: 0.2em;
+	}
+	.months__step a:hover {
+		border-color: var(--peach);
+	}
+	.months__step--later {
+		text-align: center;
 	}
 
 	.cal-page__bar {

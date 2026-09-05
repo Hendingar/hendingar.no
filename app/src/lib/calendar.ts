@@ -232,6 +232,19 @@ export function busiestDays(
 export const DEFAULT_SPAN_START = 9 * 60;
 export const DEFAULT_SPAN_END = 23 * 60;
 
+/**
+ * How early the grid is willing to start, whatever the data says.
+ *
+ * The span widening to fit its earliest event sounds right and is not: one 02:00 club night in a
+ * whole week opened the grid at 02:00 and put seven empty hours above everything else, so the
+ * first screenful of a busy week was blank. A floor bounds that to one outlier's worth of space.
+ *
+ * Anything earlier is not dropped — `outsideSpan` collects it and the week view lists it above the
+ * grid with its clock time. An event we cannot place is still an event we have to show.
+ */
+export const SPAN_FLOOR = 7 * 60;
+export const SPAN_CEIL = 24 * 60;
+
 /** A shortest drawable block. A zero-length event still has to be clickable. */
 export const MIN_BLOCK_MINUTES = 30;
 
@@ -278,13 +291,35 @@ export function weekSpan(blocks: readonly { start: number; end: number }[]): {
 	let start = DEFAULT_SPAN_START;
 	let end = DEFAULT_SPAN_END;
 	for (const block of blocks) {
-		start = Math.min(start, Math.floor(block.start / 60) * 60);
+		// Outliers are ignored here rather than obeyed; `outsideSpan` picks them up instead.
+		if (block.start >= SPAN_FLOOR) start = Math.min(start, Math.floor(block.start / 60) * 60);
 		end = Math.max(end, Math.ceil(block.end / 60) * 60);
 	}
-	return { start, end: Math.min(end, 24 * 60) };
+	return { start: Math.max(start, SPAN_FLOOR), end: Math.min(end, SPAN_CEIL) };
 }
 
-export type Placed<T> = T & { start: number; end: number; column: number; columns: number };
+/**
+ * The blocks the grid cannot place, because they fall outside the hours it draws.
+ *
+ * Returned rather than hidden. The week view lists them above the grid with their clock time — a
+ * 02:00 night is a real thing to go to, and a calendar that silently omits it because it did not
+ * fit the axis is lying by omission about the one night it mattered.
+ */
+export function outsideSpan<T extends { start: number; end: number }>(
+	blocks: readonly T[],
+	span: { start: number; end: number }
+): T[] {
+	return blocks.filter((b) => b.start < span.start || b.start >= span.end);
+}
+
+export type Placed<T> = T & {
+	start: number;
+	end: number;
+	column: number;
+	columns: number;
+	/** Which run of transitively-overlapping blocks this belongs to. Lane capping works per run. */
+	cluster: number;
+};
 
 /**
  * Lay a single day's blocks out side by side where they overlap.
@@ -311,6 +346,7 @@ export function layOutDay<T extends { start: number; end: number }>(
 	const placed: Placed<T>[] = [];
 	let cluster: Placed<T>[] = [];
 	let clusterEnd = -Infinity;
+	let clusterId = -1;
 	// The end of the last block in each column, so a block can reuse a column that has finished.
 	let columnEnds: number[] = [];
 
@@ -323,7 +359,10 @@ export function layOutDay<T extends { start: number; end: number }>(
 	};
 
 	for (const block of sorted) {
-		if (block.start >= clusterEnd) flush();
+		if (block.start >= clusterEnd) {
+			flush();
+			clusterId += 1;
+		}
 
 		let column = columnEnds.findIndex((end) => end <= block.start);
 		if (column === -1) {
@@ -333,7 +372,7 @@ export function layOutDay<T extends { start: number; end: number }>(
 			columnEnds[column] = block.end;
 		}
 
-		const entry: Placed<T> = { ...block, column, columns: 1 };
+		const entry: Placed<T> = { ...block, column, columns: 1, cluster: clusterId };
 		cluster.push(entry);
 		placed.push(entry);
 		clusterEnd = Math.max(clusterEnd, block.end);
@@ -341,4 +380,91 @@ export function layOutDay<T extends { start: number; end: number }>(
 	flush();
 
 	return placed;
+}
+
+/**
+ * How many blocks may sit side by side before the rest become a count.
+ *
+ * Three, and the number is a legibility floor rather than a taste. A day column is about 240px
+ * when the grid is laid out for three lanes; split fourteen ways — which real Saturdays in this
+ * region genuinely are — each block is 17px and renders one letter per line. That is not a denser
+ * view of the week, it is an unreadable one, and it is what shipped.
+ *
+ * When a run overflows, the last lane becomes a link to the day page instead of an event, so a
+ * three-lane run shows two events and an exact count of the rest. Nothing is hidden without being
+ * counted, and the page behind the count already renders every event as a full tile.
+ */
+export const MAX_LANES = 3;
+
+/** A run's hidden blocks, collapsed into one marker occupying the final lane. */
+export type LaneOverflow = {
+	start: number;
+	end: number;
+	count: number;
+	column: number;
+	columns: number;
+};
+
+/**
+ * Cap how wide a run of overlapping blocks may get, collapsing the remainder into a count.
+ *
+ * Pure, and separate from `layOutDay`, because the two answer different questions: that one asks
+ * "what overlaps what", this one asks "how much of that fits". Keeping them apart means the
+ * overlap invariant is still testable without a width in sight.
+ *
+ * A run that overflows by exactly one block is NOT capped — collapsing a single event into
+ * "+1 fleire" costs the reader a click to learn one thing, and the lane it would free is the lane
+ * the marker then occupies.
+ */
+export function capLanes<
+	T extends { start: number; end: number; column: number; columns: number; cluster: number }
+>(placed: readonly T[], maxLanes: number = MAX_LANES): { visible: T[]; overflow: LaneOverflow[] } {
+	const visible: T[] = [];
+	const overflow: LaneOverflow[] = [];
+
+	const runs = new Map<number, T[]>();
+	for (const block of placed) {
+		const run = runs.get(block.cluster);
+		if (run) run.push(block);
+		else runs.set(block.cluster, [block]);
+	}
+
+	for (const run of runs.values()) {
+		const width = run[0]?.columns ?? 1;
+		// `<= maxLanes` keeps a run that exactly fits, and `=== maxLanes + 1` keeps one that
+		// overflows by a single block, which a marker would not shorten.
+		if (width <= maxLanes + 1) {
+			for (const block of run) visible.push(block);
+			continue;
+		}
+
+		const keep = maxLanes - 1;
+		const hidden = run.filter((b) => b.column >= keep);
+		for (const block of run) {
+			if (block.column < keep) visible.push({ ...block, columns: maxLanes });
+		}
+		overflow.push({
+			start: Math.min(...hidden.map((b) => b.start)),
+			end: Math.max(...hidden.map((b) => b.end)),
+			count: hidden.length,
+			column: keep,
+			columns: maxLanes
+		});
+	}
+
+	return { visible, overflow };
+}
+
+/**
+ * The widest run anywhere in the week, which is how wide a day column has to be.
+ *
+ * One number for all seven days: columns of different widths are not a week. Floored at 1 so an
+ * empty week still gets a column, and it is already capped because it is read off capped output.
+ */
+export function laneCount(days: readonly { visible: { columns: number }[] }[]): number {
+	let lanes = 1;
+	for (const day of days) {
+		for (const block of day.visible) lanes = Math.max(lanes, block.columns);
+	}
+	return lanes;
 }

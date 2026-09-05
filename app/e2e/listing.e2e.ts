@@ -246,7 +246,16 @@ test('the event page credits every source that reported it', async ({ page, requ
 });
 
 test('repeats of the same event on one day share a card', async ({ page }) => {
-	await page.goto('/hendingar');
+	/*
+	 * Filtered to sport, so this does not depend on how much else the seed happens to hold.
+	 *
+	 * Unfiltered, the swimming sessions are eight days out and the first page is twenty-four
+	 * events: add a handful of events before them — as the seed did, to cover the week grid — and
+	 * the page boundary falls through the middle of the stack, so two of the four times are simply
+	 * on the next page. The spec then fails for a reason that has nothing to do with stacking.
+	 * Against real data it would never have reached day eight at all.
+	 */
+	await page.goto('/hendingar?kategori=sport');
 
 	/*
 	 * Public swimming runs four times in the seed. Four identical posters down the page spend a
@@ -270,7 +279,8 @@ test('repeats of the same event on one day share a card', async ({ page }) => {
 });
 
 test('a repeated time is still reachable as its own event', async ({ page }) => {
-	await page.goto('/hendingar');
+	// Filtered for the same reason as above: the stack must be whole on the page under test.
+	await page.goto('/hendingar?kategori=sport');
 	const card = page.locator('article.tile').filter({ hasText: 'Offentleg symjing' }).first();
 	const second = card.locator('.times__t').nth(1);
 	const href = await second.getAttribute('href');

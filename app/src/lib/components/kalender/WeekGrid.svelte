@@ -2,7 +2,15 @@
 	import { WEEKDAY_ABBR, WEEKDAY_NAMES, formatEventClock } from '@hendingar/core/datetime';
 	import { eventPath } from '@hendingar/core/slug';
 	import { categoryLabel } from '@hendingar/core/taxonomy';
-	import { blockMinutes, layOutDay, weekSpan } from '../../calendar.ts';
+	import {
+		blockMinutes,
+		capLanes,
+		laneCount,
+		layOutDay,
+		outsideSpan,
+		weekSpan
+	} from '../../calendar.ts';
+	import WeekPeek from './WeekPeek.svelte';
 	import type { WeekSpanningEvent, WeekTimedEvent } from '../../events.remote';
 
 	/**
@@ -42,13 +50,94 @@
 		Array.from({ length: Math.ceil((span.end - span.start) / 60) }, (_, i) => span.start / 60 + i)
 	);
 
-	/** Laid out per day, so overlapping blocks split a column rather than hiding each other. */
+	/**
+	 * The ones the axis cannot hold, and the ones it can.
+	 *
+	 * A 02:00 night is a real thing to go to. The grid refuses to open at 02:00 for it — that put
+	 * seven empty hours above everything else — so it is listed above the grid instead, with its
+	 * clock time. Shown, not placed; the alternative was showing it and wrecking the week, or
+	 * placing it and losing it.
+	 */
+	const outside = $derived(outsideSpan(blocks, span));
+	const inSpan = $derived(blocks.filter((b) => !outside.includes(b)));
+
+	/**
+	 * Laid out per day, then capped.
+	 *
+	 * Splitting a column between everything that overlaps is right up to a point and catastrophic
+	 * past it: a real Saturday here runs fourteen things at once, which tiled down to 17px each and
+	 * rendered one letter per line. `capLanes` keeps what stays legible and turns the rest into an
+	 * exact count linking to the day page, which already shows every event as a full tile.
+	 */
 	const byDay = $derived(
 		dates.map((date) => ({
 			date,
-			placed: layOutDay(blocks.filter((b) => b.event.localDate === date))
+			...capLanes(layOutDay(inSpan.filter((b) => b.event.localDate === date)))
 		}))
 	);
+
+	/**
+	 * One column width for the whole week, taken from its busiest run.
+	 *
+	 * A day column has to be wide enough that its own lanes are readable, and all seven have to
+	 * match or it is not a week. So a quiet week stays narrow enough to fit a laptop, and a busy
+	 * one widens and scrolls — which is the honest trade, because the alternative is slivers.
+	 */
+	const lanes = $derived(laneCount(byDay));
+
+	/*
+	 * The hover preview.
+	 *
+	 * `null` until the pointer lands on a block, so nothing about it exists during SSR and there is
+	 * no hydration mismatch to arrange. Opened on focus as well as hover, so a keyboard reader
+	 * tabbing the grid gets the same card.
+	 */
+	let peek = $state<{ event: WeekTimedEvent; x: number; y: number } | null>(null);
+
+	/** Roughly the card's size. Only used to decide which side of the block it opens on. */
+	const PEEK_W = 272;
+	const PEEK_H = 300;
+
+	function openPeek(item: WeekTimedEvent, target: EventTarget | null, viaFocus = false) {
+		if (!(target instanceof HTMLElement)) return;
+		/*
+		 * Hover opens it only where hovering is a thing the device does.
+		 *
+		 * On a touchscreen `mouseenter` fires synthetically on tap, so without this the card would
+		 * flash over the block a finger is already committed to opening. Focus always opens it:
+		 * that is the keyboard reader's route in, and it is deliberate on any device.
+		 */
+		if (!viaFocus && !window.matchMedia('(hover: hover)').matches) return;
+		const r = target.getBoundingClientRect();
+		const room = window.innerWidth - r.right;
+		peek = {
+			event: item,
+			// Flip to the left when the block is close to the right edge, so the card never opens
+			// off-screen on the Sunday column.
+			x: room > PEEK_W + 16 ? r.right + 12 : Math.max(8, r.left - PEEK_W - 12),
+			// And ride up when the block is low, so a 21:00 concert's card is not half below the fold.
+			y: Math.max(8, Math.min(r.top, window.innerHeight - PEEK_H - 8))
+		};
+	}
+
+	function closePeek() {
+		peek = null;
+	}
+
+	/**
+	 * The block's accessible name, written out in full.
+	 *
+	 * The visible text inside a block is truncated by its own height — a 30-minute slot shows a
+	 * time and little else. If the name were built from that text, how a link is announced would
+	 * depend on how tall its box happened to be, and the shortest events would be the least
+	 * findable. Naming the link explicitly and marking the visible spans decorative keeps the two
+	 * independent: the layout can clip whatever it needs to.
+	 */
+	function blockLabel(item: WeekTimedEvent): string {
+		const at = formatEventClock(item.startsAt, item.venueTimeZone);
+		const where = item.venueName ? `, ${item.venueName}` : '';
+		return `${at} ${item.title}${where}`;
+	}
 
 	/**
 	 * How many events *start* on each day.
@@ -93,7 +182,7 @@
 	of the same week, and the one nobody is looking at is the one that rots.
 -->
 <div class="week" role="region" aria-label="Vekevising">
-	<div class="week__frame">
+	<div class="week__frame" style:--lanes={lanes}>
 		<div class="week__corner"></div>
 		{#each dates as date, i (date)}
 			{@const total = startCounts.get(date) ?? 0}
@@ -159,6 +248,29 @@
 			</ul>
 		{/if}
 
+		{#if outside.length > 0}
+			<p class="week__bandlabel week__bandlabel--outside">Utanom<br />rutenettet</p>
+			<ul class="week__band week__band--outside">
+				{#each outside as block (block.event.id)}
+					<li class="week__span" style:grid-column={bandColumn(block.event.localDate)}>
+						<a
+							class="week__spanlink"
+							href={eventPath(block.event.id, block.event.title)}
+							onmouseenter={(e) => openPeek(block.event, e.currentTarget)}
+							onmouseleave={closePeek}
+							onfocus={(e) => openPeek(block.event, e.currentTarget, true)}
+							onblur={closePeek}
+						>
+							<span class="week__spantime">
+								{formatEventClock(block.event.startsAt, block.event.venueTimeZone)}
+							</span>
+							<span class="week__spantitle display display--sm">{block.event.title}</span>
+						</a>
+					</li>
+				{/each}
+			</ul>
+		{/if}
+
 		<div class="week__gutter" style:--hours={hours.length}>
 			{#each hours as hour (hour)}
 				<span class="week__hour" style:--h={hour - span.start / 60}>
@@ -174,7 +286,7 @@
 				style:grid-column={column(day.date)}
 				style:--hours={hours.length}
 			>
-				{#each day.placed as block (block.event.id)}
+				{#each day.visible as block (block.event.id)}
 					<a
 						class="week__block"
 						href={eventPath(block.event.id, block.event.title)}
@@ -182,20 +294,58 @@
 						style:--len={block.end - block.start}
 						style:--col={block.column}
 						style:--cols={block.columns}
+						onmouseenter={(e) => openPeek(block.event, e.currentTarget)}
+						onmouseleave={closePeek}
+						onfocus={(e) => openPeek(block.event, e.currentTarget, true)}
+						onblur={closePeek}
+						aria-label={blockLabel(block.event)}
 					>
-						<span class="week__time">
+						<!-- Decorative: the link is named above, so clipping any of this is free. -->
+						<span class="week__time" aria-hidden="true">
 							{formatEventClock(block.event.startsAt, block.event.venueTimeZone)}
 						</span>
-						<span class="week__title display display--sm">{block.event.title}</span>
-						<span class="week__meta">
+						<span class="week__title display display--sm" aria-hidden="true">
+							{block.event.title}
+						</span>
+						<span class="week__meta" aria-hidden="true">
 							{block.event.venueName ?? categoryLabel(block.event.category)}
 						</span>
+					</a>
+				{/each}
+
+				<!--
+					What did not fit, counted rather than dropped.
+
+					A link to the day page, which renders every one of them as a full tile — so the
+					grid can stay legible without the week quietly becoming a lie about how much is on.
+				-->
+				{#each day.overflow as more, i (i)}
+					<a
+						class="week__more"
+						href="/kalender/{day.date}"
+						style:--from={more.start - span.start}
+						style:--len={more.end - more.start}
+						style:--col={more.column}
+						style:--cols={more.columns}
+						aria-label="{more.count} hendingar til denne dagen"
+					>
+						<span class="week__morecount">+{more.count}</span>
+						<span class="week__morelabel">fleire</span>
 					</a>
 				{/each}
 			</div>
 		{/each}
 	</div>
 </div>
+
+<!--
+	Outside `.week`, not inside it. The scroller carries `contain: paint`, which clips fixed-position
+	descendants as well as scrolled ones — a card rendered inside would be cut off by exactly the
+	edge it exists to escape.
+-->
+{#if peek}
+	<WeekPeek event={peek.event} x={peek.x} y={peek.y} />
+{/if}
 
 <style>
 	.week {
@@ -231,12 +381,30 @@
 
 	.week__frame {
 		display: grid;
-		/* The gutter, then seven equal days. `56rem` is the floor at which a title is still
-		   readable inside a column; below it the parent scrolls rather than the columns shrinking. */
-		grid-template-columns: 2.75rem repeat(7, minmax(6.5rem, 1fr));
-		min-inline-size: 52rem;
-		/* An hour of the day, as a length. Everything on the grid is positioned in multiples. */
-		--hour: clamp(2.25rem, 3.4cqw, 3rem);
+		/*
+		 * Wide enough that this week's busiest run is readable, and no wider.
+		 *
+		 * `--lanes` comes from the data: one lane is a quiet week that fits a laptop, three is a
+		 * Saturday with more on than a column can hold. 5rem a lane is the floor at which a block
+		 * still shows a time and a clipped title rather than one letter per line.
+		 */
+		grid-template-columns: 2.75rem repeat(7, minmax(max(6.5rem, calc(var(--lanes) * 5rem)), 1fr));
+		/*
+		 * An hour of the day, as a length — and deliberately NOT in `cqw`.
+		 *
+		 * A container unit here would be re-resolved inside every block, because a block is itself
+		 * a size container (for the rules below), and `--hour` is inherited as a token rather than
+		 * as a computed length. Every block would then be positioned against its own width.
+		 */
+		--hour: 2.5rem;
+		/* Never narrower than seven readable columns; the parent scrolls instead. */
+		min-inline-size: calc(2.75rem + 7 * max(6.5rem, var(--lanes) * 5rem));
+	}
+
+	@media (width >= 60rem) {
+		.week__frame {
+			--hour: 3rem;
+		}
 	}
 
 	.week__corner {
@@ -293,6 +461,7 @@
 	.week__bandlabel {
 		grid-column: 1;
 		grid-row: 2;
+		/* Both band rows share this; `grid-row` is what tells them apart. */
 		margin: 0;
 		padding: 0.5rem 0.5rem 0.5rem 0;
 		font-family: var(--font-mono);
@@ -304,6 +473,16 @@
 		text-align: end;
 		line-height: 1.25;
 		border-block-end: var(--rule) solid var(--peach-line);
+	}
+	.week .week__spantime {
+		font-family: var(--font-mono);
+		font-size: 0.625rem;
+		font-weight: 700;
+		letter-spacing: 0.12em;
+		background: var(--peach);
+		color: var(--navy-900);
+		padding: 0.1em 0.35em;
+		flex: none;
 	}
 	.week__band {
 		grid-row: 2;
@@ -322,6 +501,17 @@
 		padding: 0.4rem 0;
 		border-block-end: var(--rule) solid var(--peach-line);
 	}
+	/*
+	 * The second band row, and it must be declared after `.week__band` rather than before it.
+	 * Both selectors are one class, so source order is the whole of the cascade here — put this
+	 * first and the row-2 rule silently wins, which drops the out-of-hours events into the
+	 * multi-day band beside a three-week exhibition.
+	 */
+	.week__bandlabel--outside,
+	.week__band--outside {
+		grid-row: 3;
+	}
+
 	.week .week__span {
 		min-inline-size: 0;
 	}
@@ -428,10 +618,48 @@
 		margin-inline: 0.1rem;
 		text-decoration: none;
 		overflow: hidden;
+		/*
+		 * The block sizes its own contents.
+		 *
+		 * A block's height is its duration, so a 30-minute slot is 20px tall and a three-hour one
+		 * is 150px. One fixed layout for both meant the short ones clipped their venue line
+		 * mid-glyph — text spilling over the edge of the peach, which reads as broken rather than
+		 * as truncated. Each piece now drops out at the height below which it cannot be read.
+		 */
+		container: weekblock / size;
 	}
-	.week__block:hover {
+	.week__block:hover,
+	.week__block:focus-visible {
 		background: var(--peach-hi);
-		z-index: 2;
+		/* Raised so a hovered block in a three-lane run is legible over its neighbours. */
+		z-index: 3;
+	}
+
+	/* Roughly: a venue line needs the block to be about four lines tall to be worth the space. */
+	@container weekblock (height < 3.9rem) {
+		.week__meta {
+			display: none;
+		}
+	}
+
+	@container weekblock (height < 2.9rem) {
+		.week__title {
+			-webkit-line-clamp: 1;
+			line-clamp: 1;
+		}
+	}
+	/*
+	 * Under about 30px there is room for one line, and it is the title.
+	 *
+	 * Dropping the title instead was tried and looked exactly like a bug: a row of bare peach
+	 * rectangles each showing a clock. The vertical position already says when a block starts —
+	 * that is what a time grid is — so the time is the redundant half and the title is the only
+	 * thing that says what the reader is looking at.
+	 */
+	@container weekblock (height < 1.9rem) {
+		.week__time {
+			display: none;
+		}
 	}
 	.week .week__time {
 		font-family: var(--font-mono);
@@ -442,7 +670,64 @@
 	.week .week__title {
 		font-size: 0.8125rem;
 		line-height: 1.05;
+		/* Clamped, not clipped: a cut-off line of display type reads as a rendering fault. */
+		display: -webkit-box;
+		-webkit-box-orient: vertical;
+		-webkit-line-clamp: 3;
+		line-clamp: 3;
+		overflow: hidden;
 	}
+	/*
+	 * What did not fit. A hairline frame rather than a filled block, because it is a count and a
+	 * way onward, not an event — filling it would make it compete with the things it stands for.
+	 */
+	.week__more {
+		position: absolute;
+		inset-block-start: calc(var(--from) / 60 * var(--hour));
+		block-size: calc(var(--len) / 60 * var(--hour));
+		inset-inline-start: calc(var(--col) / var(--cols) * 100%);
+		inline-size: calc(100% / var(--cols));
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		gap: 0.1rem;
+		margin-inline: 0.1rem;
+		border: var(--rule) dashed var(--peach);
+		background: var(--peach-wash-2);
+		text-decoration: none;
+		overflow: hidden;
+		container: weekblock / size;
+	}
+	.week__more:hover {
+		background: var(--peach);
+		color: var(--navy-900);
+		border-style: solid;
+		z-index: 3;
+	}
+	.week .week__morecount {
+		font-family: var(--font-display);
+		font-weight: 900;
+		font-stretch: 112%;
+		font-size: 0.9375rem;
+		line-height: 1;
+	}
+	.week .week__morelabel {
+		font-family: var(--font-mono);
+		font-size: 0.5625rem;
+		letter-spacing: 0.1em;
+		text-transform: uppercase;
+		color: var(--peach-dim);
+	}
+	.week__more:hover .week__morelabel {
+		color: var(--navy-dim);
+	}
+	@container weekblock (height < 2.6rem) {
+		.week__morelabel {
+			display: none;
+		}
+	}
+
 	.week .week__meta {
 		margin-block-start: auto;
 		font-family: var(--font-mono);

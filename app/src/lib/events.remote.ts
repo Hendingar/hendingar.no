@@ -14,7 +14,7 @@ import {
 } from '@hendingar/core/schema';
 import {
 	calendarDateSchema,
-	calendarMonthSchema,
+	calendarSpanSchema,
 	calendarWeekSchema,
 	eventQuerySchema
 } from '@hendingar/core/validation';
@@ -535,14 +535,19 @@ export const calendarRange = query(async () => {
 export type CalendarRange = Awaited<ReturnType<typeof calendarRange>>;
 
 /**
- * How many events fall on each day of a month, at each venue's own clock.
+ * How many events fall on each day of a run of months, at each venue's own clock.
+ *
+ * A span rather than a month because the calendar stacks months and scrolls: asking per month
+ * meant a round trip per grid, six of them on first paint, all reading overlapping windows of the
+ * same table. One window, one scan, and the page slices the result per month.
  *
  * Only days that have something are returned. An absent day is an empty day — the grid draws those
  * as a plain unlinked number, because a square that leads to a page saying "nothing here" is a
  * worse control than one that never invited the tap.
  */
-export const monthEventCounts = query(calendarMonthSchema, async (monthKey) => {
-	const { first, last } = monthBounds(monthKey);
+export const dayCounts = query(calendarSpanSchema, async ({ from: fromMonth, to: toMonth }) => {
+	const first = monthBounds(fromMonth).first;
+	const last = monthBounds(toMonth).last;
 	const { from, to } = instantWindowForDays(first, last);
 
 	const rows = await db()
@@ -553,7 +558,7 @@ export const monthEventCounts = query(calendarMonthSchema, async (monthKey) => {
 			and(
 				eq(events.status, 'published'),
 				isNull(events.duplicateOfId),
-				// A window on the indexed instant, deliberately a day wider than the month at each
+				// A window on the indexed instant, deliberately a day wider than the span at each
 				// end; countByDay below decides which of those rows actually belong to it.
 				gte(events.startsAt, from),
 				lte(events.startsAt, to)
@@ -566,7 +571,7 @@ export const monthEventCounts = query(calendarMonthSchema, async (monthKey) => {
 		.sort((a, b) => a.date.localeCompare(b.date));
 });
 
-export type DayCount = Awaited<ReturnType<typeof monthEventCounts>>[number];
+export type DayCount = Awaited<ReturnType<typeof dayCounts>>[number];
 
 /**
  * Everything on one calendar day, in the shape the listing already renders.
@@ -759,7 +764,18 @@ export const weekEvents = query(calendarWeekSchema, async (weekKey) => {
 			endsAt: events.endsAt,
 			venueName: venues.name,
 			venueTimeZone: venues.timezone,
-			municipality: venues.municipality
+			municipality: venues.municipality,
+			/*
+			 * The poster, for the hover preview.
+			 *
+			 * A block in a three-lane column is about 70px wide and can hold a time and a clipped
+			 * title. That is enough to find something and not enough to decide about it, so
+			 * hovering one shows the poster at a size worth looking at. Selected here rather than
+			 * fetched on hover: a request per mouse-over would fire dozens of times crossing a
+			 * busy Saturday, and the rows are already in hand.
+			 */
+			posterUrl: events.posterUrl,
+			posterSrcset: events.posterSrcset
 		})
 		.from(events)
 		.leftJoin(venues, eq(events.venueId, venues.id))
@@ -828,7 +844,7 @@ export type WeekTimedEvent = Awaited<ReturnType<typeof weekEvents>>['timed'][num
 export type WeekSpanningEvent = Awaited<ReturnType<typeof weekEvents>>['spanning'][number];
 
 /**
- * Where a month's events are, by municipality.
+ * Where a span's events are, by municipality.
  *
  * The other half of "hotspot": the grid says which days are busy, this says which places are. A
  * reader planning a Saturday in Kvinnherad is asking a question no arrangement of squares answers.
@@ -837,8 +853,9 @@ export type WeekSpanningEvent = Awaited<ReturnType<typeof weekEvents>>['spanning
  * total has to add up — a place list that quietly omits rows is the same failure as a source list
  * that under-reports itself, and this repo has already paid for that one.
  */
-export const monthPlaces = query(calendarMonthSchema, async (monthKey) => {
-	const { first, last } = monthBounds(monthKey);
+export const placeCounts = query(calendarSpanSchema, async ({ from: fromMonth, to: toMonth }) => {
+	const first = monthBounds(fromMonth).first;
+	const last = monthBounds(toMonth).last;
 	const { from, to } = instantWindowForDays(first, last);
 
 	const rows = await db()
@@ -878,7 +895,7 @@ export const monthPlaces = query(calendarMonthSchema, async (monthKey) => {
 		});
 });
 
-export type PlaceCount = Awaited<ReturnType<typeof monthPlaces>>[number];
+export type PlaceCount = Awaited<ReturnType<typeof placeCounts>>[number];
 
 /**
  * One event, with everything needed to render a page for it.

@@ -166,6 +166,24 @@ export const calendarWeekSchema = z
 	.refine(isIsoWeek, 'must be a real ISO week on the form YYYY-Www');
 
 /**
+ * A run of consecutive months, `{ from, to }` inclusive — what the stacked calendar asks for.
+ *
+ * The bound is the point. A remote query is a public endpoint, and the calendar reads two columns
+ * for every event in its window: `{ from: '1900-01', to: '2100-12' }` is a full table scan anyone
+ * could ask for. Eighteen months is comfortably more than the page ever stacks and far less than
+ * the table holds.
+ */
+const monthOrdinal = (key: string) => Number(key.slice(0, 4)) * 12 + Number(key.slice(5, 7));
+
+export const calendarSpanSchema = z
+	.object({ from: calendarMonthSchema, to: calendarMonthSchema })
+	.refine((v) => v.to >= v.from, { message: 'to must not be before from', path: ['to'] })
+	.refine((v) => monthOrdinal(v.to) - monthOrdinal(v.from) <= 17, {
+		message: 'span must be 18 months or fewer',
+		path: ['to']
+	});
+
+/**
  * What the vision model is asked to return when reading a poster.
  *
  * Deliberately permissive where a poster is: every field except the title is nullable, because a

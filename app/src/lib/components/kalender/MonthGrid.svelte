@@ -221,15 +221,29 @@
 
 	.cal .cal__top {
 		display: flex;
+		flex-wrap: wrap;
 		align-items: baseline;
 		justify-content: space-between;
-		gap: 0.3rem;
+		gap: 0.15rem 0.3rem;
 	}
 
-	/* The date is what you scan for, so it gets the display face. */
+	/*
+	 * The date is what you scan for, so it gets the display face — and it never breaks.
+	 *
+	 * `.display` sets `overflow-wrap: anywhere`, which is right for a Norwegian compound in a
+	 * headline and catastrophic for a numeral: in a 48px phone cell it split "10" across two lines,
+	 * so the tenth read as a one above a nought. The count wraps below it instead when they cannot
+	 * share a line.
+	 */
 	.cal .cal__n {
 		font-size: clamp(0.95rem, 3.4cqw, 1.75rem);
 		color: var(--peach);
+		white-space: nowrap;
+		overflow-wrap: normal;
+	}
+	.cal .cal__count,
+	.cal .cal__n {
+		white-space: nowrap;
 	}
 
 	/* An empty day is dimmer and inert. Its number is still legible — peach-dim is AA everywhere. */
@@ -260,15 +274,23 @@
 		letter-spacing: 0.16em;
 	}
 
+	/*
+	 * Pips, not a rule.
+	 *
+	 * Stretched across the cell they became six long dashes and read as an underline — a decoration
+	 * rather than a count. Fixed-width marks packed from the left are countable at a glance, which
+	 * is the whole job: the shape of a month without reading a single number.
+	 */
 	.cal .cal__pips {
-		display: grid;
-		grid-template-columns: repeat(6, minmax(0, 1fr));
+		display: flex;
 		gap: 2px;
 		align-items: end;
 	}
 	.cal .cal__pip {
 		display: block;
+		inline-size: 0.4rem;
 		block-size: 3px;
+		flex: none;
 		background: var(--peach);
 		opacity: 0.85;
 	}
@@ -307,12 +329,16 @@
 	}
 
 	/*
-	 * The pip row is the first thing to go when a square gets small: at 320px a cell is about 40px
-	 * wide and six pips inside it are three grey smudges. The fill and the numeral both still work.
+	 * A phone cell is about 48px, which is not enough for a date and a count side by side once the
+	 * date is set in an expanded display face. Shrink the date rather than let the pair wrap on
+	 * every square — a month of two-line cells is twice as tall for no more information.
 	 */
-	@container (width < 22rem) {
-		.cal .cal__pips {
-			display: none;
+	@container (width < 26rem) {
+		.cal .cal__n {
+			font-size: 0.9rem;
+		}
+		.cal .cal__day {
+			padding-inline: 0.3rem;
 		}
 	}
 </style>

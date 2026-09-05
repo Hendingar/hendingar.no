@@ -64,18 +64,45 @@ test('an empty but real date is a page, and nonsense is a 404', async ({ request
 });
 
 test('a hand-edited month falls back rather than erroring', async ({ request }) => {
+	const first = (html: string) => /id="h-(\d{4}-\d{2})"/.exec(html)?.[1];
+
 	const current = await (await request.get('/kalender')).text();
-	const heading = /class="[^"]*steps__now[^"]*"[^>]*>([^<]+)</.exec(current)?.[1]?.trim();
-	expect(heading).toMatch(/^[A-ZÅÆØ]\p{L}+ \d{4}$/u);
+	expect(first(current)).toMatch(/^\d{4}-\d{2}$/);
 
 	for (const bad of ['tull', '2026-13', '2019-01']) {
 		const response = await request.get(`/kalender?maanad=${bad}`);
 		expect(response.status()).toBe(200);
-		const shown = /class="[^"]*steps__now[^"]*"[^>]*>([^<]+)</.exec(await response.text())?.[1];
-		// Clamped into the range the data actually covers — never an empty grid from 2019.
-		expect(shown?.trim()).not.toContain('2019');
-		expect(shown?.trim()).toBeTruthy();
+		// Clamped into the range the data actually covers — never an empty stack from 2019.
+		expect(first(await response.text())).not.toContain('2019');
+		expect(first(await response.text())).toBeTruthy();
 	}
+});
+
+/**
+ * Months below each other, so "what about the month after next" is a scroll rather than a trip to
+ * a different page and back.
+ */
+test('the month view stacks months you can scroll through', async ({ request, page }) => {
+	const html = await (await request.get('/kalender')).text();
+
+	// Several months, all server-rendered — a stack that only exists after hydration indexes one
+	// month, on a page whose whole job is being findable by date.
+	const months = [...html.matchAll(/id="maanad-(\d{4}-\d{2})"/g)].map((m) => m[1]);
+	expect(months.length).toBeGreaterThan(1);
+	// In order, and consecutive.
+	expect([...months].sort()).toEqual(months);
+
+	await page.goto('/kalender');
+	const sections = page.locator('section.month');
+	expect(await sections.count()).toBe(months.length);
+
+	// Each one is a labelled region carrying its own name and total.
+	const heading = sections.first().locator('.month__h');
+	await expect(heading).toContainText(/\d{4}/);
+	await expect(heading.locator('.month__n')).toContainText(/hending(ar)?/);
+
+	// The month stepper is gone: nothing here pages you away from your place.
+	await expect(page.locator('.steps__now')).toHaveCount(0);
 });
 
 test('Kalender is in the menu and stays marked on a day page', async ({ page }) => {
@@ -213,7 +240,11 @@ test('a day square says how busy it is in more than one way', async ({ page }) =
 	await page.goto('/kalender');
 
 	// The fill step is an attribute, so it is inspectable and cannot drift from the count silently.
-	const busy = page.locator('td[data-density]:not([data-density="0"])').first();
+	const busy = page
+		.locator('section.month')
+		.first()
+		.locator('td[data-density]:not([data-density="0"])')
+		.first();
 	await expect(busy).toHaveCount(1);
 
 	// Colour is never the only signal: the count is in the cell and the figure is in the link name.
@@ -270,4 +301,117 @@ test('the week grid scrolls inside itself rather than pushing the page sideways'
 		return el ? el.scrollWidth > el.clientWidth : false;
 	});
 	expect(scrollable).toBe(true);
+});
+
+/*
+ * The week grid under real load.
+ *
+ * The seeded database is too quiet to reproduce this, so these assert the *rules* rather than a
+ * particular Saturday: whatever the data, a block is never a sliver and nothing is hidden without
+ * being counted.
+ */
+
+test('no block is ever too narrow to read', async ({ page }) => {
+	await page.setViewportSize({ width: 1440, height: 1000 });
+	await page.goto('/kalender');
+	const week = await page.locator('a.rail__bar').first().getAttribute('href');
+	await page.goto(week!);
+
+	const widths = await page.evaluate(() =>
+		Array.from(document.querySelectorAll('.week__block')).map(
+			(b) => b.getBoundingClientRect().width
+		)
+	);
+	if (widths.length === 0) test.skip(true, 'this week has nothing on the grid');
+	// 3 lanes at a 5rem floor; anything under 60px is the sliver bug returning.
+	expect(Math.min(...widths)).toBeGreaterThanOrEqual(60);
+});
+
+test('every line in a block is drawn whole or not at all', async ({ page }) => {
+	await page.setViewportSize({ width: 1440, height: 1000 });
+	await page.goto('/kalender');
+	const week = await page.locator('a.rail__bar').first().getAttribute('href');
+	await page.goto(week!);
+
+	/*
+	 * A short block used to show half a line of text.
+	 *
+	 * The block is a fixed-height flex column, so an overlong child does not escape it — it gets
+	 * squashed, and its text is then cut through the middle of the glyphs. That is why measuring
+	 * boxes finds nothing: the box is inside, the letters are sliced. What identifies it is a line
+	 * rendered shorter than its own line-height, which is what this counts.
+	 *
+	 * The seed carries a 30-minute event so there is always something here for this to be wrong
+	 * about; without one it passed against a database that could not fail it.
+	 */
+	const sliced = await page.evaluate(() => {
+		const bad: string[] = [];
+		for (const block of Array.from(document.querySelectorAll('.week__block'))) {
+			for (const span of Array.from(block.children)) {
+				const cs = getComputedStyle(span);
+				if (cs.display === 'none') continue;
+				const lineHeight = parseFloat(cs.lineHeight) || parseFloat(cs.fontSize) * 1.2;
+				const height = span.getBoundingClientRect().height;
+				if (height > 0 && height < lineHeight - 1) {
+					bad.push(`${span.className}: ${height.toFixed(1)}px of ${lineHeight.toFixed(1)}px`);
+				}
+			}
+		}
+		return bad;
+	});
+	expect(sliced, 'every line in a block is either drawn whole or not at all').toEqual([]);
+});
+
+test('a block names itself in full however little of it is drawn', async ({ page }) => {
+	await page.goto('/kalender');
+	const week = await page.locator('a.rail__bar').first().getAttribute('href');
+	await page.goto(week!);
+
+	const block = page.locator('.week__block').first();
+	if ((await page.locator('.week__block').count()) === 0) test.skip(true, 'nothing on the grid');
+
+	// The name is written on the link, so truncating the visible text cannot rename it.
+	expect(await block.getAttribute('aria-label')).toMatch(/^\d{2}:\d{2} .+/);
+	// And the visible pieces are decorative, so a screen reader is not told the title twice.
+	await expect(block.locator('.week__title')).toHaveAttribute('aria-hidden', 'true');
+});
+
+test('hovering a block previews it, with its picture', async ({ page }) => {
+	await page.setViewportSize({ width: 1440, height: 1000 });
+	await page.goto('/kalender');
+	const week = await page.locator('a.rail__bar').first().getAttribute('href');
+	await page.goto(week!);
+	if ((await page.locator('.week__block').count()) === 0) test.skip(true, 'nothing on the grid');
+
+	await expect(page.locator('.peek')).toHaveCount(0);
+	await page.locator('.week__block').first().hover();
+
+	const peek = page.locator('.peek');
+	await expect(peek).toBeVisible();
+	// A picture, whether the source gave us a poster or we drew one.
+	await expect(peek.locator('img, [role="img"]')).toHaveCount(1);
+	// Decorative, and never in the way of the block the reader is aiming at.
+	await expect(peek).toHaveAttribute('aria-hidden', 'true');
+	await expect(peek).toHaveCSS('pointer-events', 'none');
+
+	// It opens on focus too, so a keyboard reader gets the same card.
+	await page.mouse.move(0, 0);
+	await expect(peek).toHaveCount(0);
+	await page.locator('.week__block').first().focus();
+	await expect(page.locator('.peek')).toBeVisible();
+});
+
+test('an overflowing run is counted, not quietly dropped', async ({ page }) => {
+	await page.setViewportSize({ width: 1440, height: 1000 });
+	await page.goto('/kalender');
+	const week = await page.locator('a.rail__bar').first().getAttribute('href');
+	await page.goto(week!);
+
+	const markers = page.locator('.week__more');
+	if ((await markers.count()) === 0) test.skip(true, 'no run in this week overflows');
+
+	// The count is exact, and it leads to the page that shows every one of them.
+	await expect(markers.first()).toHaveAttribute('href', /^\/kalender\/\d{4}-\d{2}-\d{2}$/);
+	await expect(markers.first()).toHaveAttribute('aria-label', /^\d+ hendingar til/);
+	await expect(markers.first().locator('.week__morecount')).toContainText(/^\+\d+$/);
 });
