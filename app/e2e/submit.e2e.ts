@@ -202,9 +202,17 @@ test('a verdict gets an address, and reloading it still shows the verdict', asyn
 	await expect(page.locator('.verdict')).toBeVisible();
 	await expect(page).toHaveURL(/\/send-inn\/kvittering\/\d+$/);
 
-	// The whole point: this is a real route, not only a decorated address bar.
+	/*
+	 * The whole point: this is a real route, not only a decorated address bar.
+	 *
+	 * Given its own timeout because the assertion after a reload is not the same kind of wait as
+	 * the one before it. Everything above is already in the document; this one has to mount a
+	 * client-rendered page, read the browser id, and complete a round trip to the database before
+	 * anything appears. Playwright's five-second default was enough locally and on the PR, and not
+	 * enough on a loaded runner — it flaked once on main against a tree that had just passed.
+	 */
 	await page.reload();
-	await expect(page.locator('.verdict')).toBeVisible();
+	await expect(page.locator('.verdict')).toBeVisible({ timeout: 20_000 });
 	await expect(page.locator('.verdict__head')).toHaveAttribute('data-outcome', 'declined');
 
 	// And back returns to the form rather than leaving the site.
@@ -231,8 +239,10 @@ test('a verdict belonging to another browser is not readable', async ({ page, co
 	await context.clearCookies();
 	await page.evaluate(() => localStorage.clear());
 	await page.goto(url);
+	// Same round trip as above, so the same allowance — and assert the refusal is on screen before
+	// concluding anything from the absence of a verdict, or an empty page would pass this test.
+	await expect(page.getByText('Fann ikkje denne kvitteringa')).toBeVisible({ timeout: 20_000 });
 	await expect(page.locator('.verdict')).toHaveCount(0);
-	await expect(page.getByText('Fann ikkje denne kvitteringa')).toBeVisible();
 });
 
 /**
