@@ -488,6 +488,14 @@ export const listEventsOnDate = query(calendarDateSchema, async (date) => {
 			venueTimeZone: venues.timezone,
 			municipality: venues.municipality,
 			posterUrl: events.posterUrl,
+			/*
+			 * The card renders a srcset, so every query feeding a card must select it.
+			 *
+			 * Missing here because this query and the column landed in two branches that were each
+			 * green on their own and only conflict once both are on main — the calendar was written
+			 * against an events table that did not have this column yet.
+			 */
+			posterSrcset: events.posterSrcset,
 			sourceMarks: sourceMarksFor(events.id).as('source_marks')
 		})
 		.from(events)
