@@ -305,3 +305,122 @@ export function formatTimeDigits(raw: string): string {
 	const minutes = digits.slice(singleDigitHour ? 1 : 2, singleDigitHour ? 3 : 4);
 	return minutes.length > 0 ? `${hour}:${minutes}` : hour;
 }
+
+/*
+ * ---------------------------------------------------------------------------------------------
+ * ISO weeks
+ *
+ * The week view and the horizon rail are both addressed by week, so a week needs a spelling that
+ * survives a URL: `2026-W37`. ISO 8601 is the only sane choice — it is what Norwegian calendars
+ * print in the margin, and "veke 37" is how people here actually refer to a week.
+ *
+ * Two traps, both handled by anchoring on Thursday:
+ *
+ *   1. A week belongs to the year its **Thursday** falls in, so 29 December 2025 is `2026-W01`
+ *      and 1 January 2027 is `2026-W53`. Deriving the year from the date's own year puts those
+ *      two days a whole year away from the week they are in.
+ *   2. A year has 53 weeks only sometimes. `2026-W53` is real; `2025-W53` is not. A regex cannot
+ *      tell them apart, which is the same class of bug as `2026-02-31` — see `isIsoWeek`.
+ *
+ * Everything below builds its dates at **noon UTC**, so no offset arithmetic can slide a result
+ * onto the day before. Same rule as the rest of this module.
+ * ---------------------------------------------------------------------------------------------
+ */
+
+const DAY_MS = 86_400_000;
+
+/** A UTC date back to `YYYY-MM-DD`. */
+function toLocalDate(date: Date): string {
+	return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}-${String(
+		date.getUTCDate()
+	).padStart(2, '0')}`;
+}
+
+function atNoonUtc(localDate: string): Date {
+	const [y, m, d] = localDate.split('-').map(Number);
+	return new Date(Date.UTC(y ?? 1970, (m ?? 1) - 1, d ?? 1, 12));
+}
+
+/** The måndag of the ISO week a date falls in. */
+function mondayOf(date: Date): Date {
+	const monday = new Date(date.getTime());
+	monday.setUTCDate(monday.getUTCDate() - ((monday.getUTCDay() + 6) % 7));
+	return monday;
+}
+
+/** Step a calendar date by whole days. Rolls months and years. */
+export function addDays(localDate: string, delta: number): string {
+	const date = atNoonUtc(localDate);
+	date.setUTCDate(date.getUTCDate() + delta);
+	return toLocalDate(date);
+}
+
+/**
+ * The ISO week a calendar date belongs to, as `YYYY-Www`.
+ *
+ * The year is the week's, not the date's: 1 January 2027 is a Friday, so it is still `2026-W53`.
+ */
+export function isoWeekKey(localDate: string): string {
+	const monday = mondayOf(atNoonUtc(localDate));
+	// Thursday decides the year the whole week belongs to.
+	const thursday = new Date(monday.getTime() + 3 * DAY_MS);
+	const isoYear = thursday.getUTCFullYear();
+	const firstMonday = mondayOf(new Date(Date.UTC(isoYear, 0, 4, 12)));
+	const week = Math.round((monday.getTime() - firstMonday.getTime()) / (7 * DAY_MS)) + 1;
+	return `${isoYear}-W${String(week).padStart(2, '0')}`;
+}
+
+/** The måndag that opens an ISO week, as `YYYY-MM-DD`. */
+export function isoWeekStart(weekKey: string): string {
+	const [year, week] = weekKey.split('-W').map(Number);
+	// 4 January is in week 1 by definition, whichever weekday it happens to be.
+	const firstMonday = mondayOf(new Date(Date.UTC(year ?? 1970, 0, 4, 12)));
+	return toLocalDate(new Date(firstMonday.getTime() + ((week ?? 1) - 1) * 7 * DAY_MS));
+}
+
+/** The seven calendar dates of an ISO week, måndag first. */
+export function isoWeekDates(weekKey: string): string[] {
+	const monday = isoWeekStart(weekKey);
+	return Array.from({ length: 7 }, (_, i) => addDays(monday, i));
+}
+
+/** Step a week key by whole weeks. Crosses the year boundary by recomputing, never by arithmetic. */
+export function shiftWeek(weekKey: string, delta: number): string {
+	return isoWeekKey(addDays(isoWeekStart(weekKey), delta * 7));
+}
+
+/**
+ * `YYYY-Www` that is also a week that exists.
+ *
+ * The shape is not enough: `2025-W53` matches it and there is no such week — 2025 has 52. Checked
+ * by round-tripping through the måndag, which lands in the neighbouring year for a week that
+ * overflows and so fails to spell itself back.
+ */
+export function isIsoWeek(raw: string): boolean {
+	if (!/^\d{4}-W(0[1-9]|[1-4]\d|5[0-3])$/.test(raw)) return false;
+	return isoWeekKey(isoWeekStart(raw)) === raw;
+}
+
+/** "Veke 37" — how a week is named in the margin of a Norwegian calendar. */
+export function formatWeekName(weekKey: string): string {
+	return `Veke ${Number(weekKey.slice(6))}`;
+}
+
+/**
+ * The span a week covers, spelled for a human: "7.–13. september 2026".
+ *
+ * Collapses whatever the two ends share, because a week that runs from September into October
+ * needs both month names and one that does not is only cluttered by the repetition.
+ */
+export function formatWeekRange(weekKey: string): string {
+	const dates = isoWeekDates(weekKey);
+	const first = dates[0] ?? '';
+	const last = dates[6] ?? '';
+	const [fy, fm, fd] = first.split('-').map(Number);
+	const [ly, lm, ld] = last.split('-').map(Number);
+	const fromMonth = MONTH_NAMES[(fm ?? 1) - 1] ?? '';
+	const toMonth = MONTH_NAMES[(lm ?? 1) - 1] ?? '';
+	if (fy !== ly) return `${fd}. ${fromMonth} ${fy} – ${ld}. ${toMonth} ${ly}`;
+	if (fm !== lm) return `${fd}. ${fromMonth} – ${ld}. ${toMonth} ${ly}`;
+	return `${fd}.–${ld}. ${toMonth} ${ly}`;
+}

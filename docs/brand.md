@@ -34,6 +34,37 @@ and it was being used for the "does not" descriptions and the verification-pipel
 82%, the floor that clears 4.5:1 against the _worst_ of our three navies. Don't lower it because a
 mock looks nicer.
 
+### The density wash, and its ceiling
+
+The calendar shows how busy a day is as an _area_ as well as a number, so a month can be read at a
+glance instead of square by square. That is four steps of peach over navy:
+
+| Token            | Alpha | Peach on it, over `--navy-800` | over `--navy-700` |
+| ---------------- | ----- | ------------------------------ | ----------------- |
+| `--peach-wash-1` | 6%    | 6.49:1                         | 5.53:1            |
+| `--peach-wash-2` | 12%   | 5.74:1                         | 4.93:1            |
+| `--peach-wash-3` | 18%   | 5.05:1                         | **4.38:1** ✗      |
+| `--peach-wash-4` | 22%   | **4.63:1**                     | **4.04:1** ✗      |
+
+Two rules come out of that table, and both are load-bearing:
+
+**22% is the top step**, because 4.63:1 is what is left of AA there. The mock reached for 38%, which
+measures **3.25:1** — the same failure `--peach-dim` had at 55%, arrived at the same way. Anything
+that must read as _more_ than the top step inverts instead (`--navy-900` on `--peach`, 8.29:1).
+That is why the busiest days in the month grid carry a filled count chip rather than a darker square.
+
+**The wash is for the page ground only.** Unlike every other token here it does _not_ survive the
+worst-case check against `--navy-700`: the top two steps fail there. A component using it must sit
+on `--navy-800`. If a washed thing ever needs to go inside a raised panel, the scale has to be
+re-measured against that surface, not assumed.
+
+A wash is never the only signal. The month grid states the same count three ways — the numeral, the
+wash, and a row of pips — because colour alone fails WCAG 1.4.1, and because adjacent steps of a
+four-step scale are not distinguishable in isolation however well they measure.
+
+`--navy-dim` (78%) is the mirror token for de-emphasised ink on a peach ground, and has the same
+history: 65% measured 3.83:1 and failed, 78% measures 5.23:1.
+
 Worst case means `navy-700`, not the page background — always check a token against the lightest
 surface it can land on, not the one in the design you happen to be looking at.
 
@@ -43,7 +74,7 @@ surface it can land on, not the one in the design you happen to be looking at.
 | ------------------------------------------- | ---------- | ------------- |
 | `--peach` on `--navy-800`                   | **7.26:1** | AAA body text |
 | `--peach-hi` on `--navy-800`                | **8.47:1** | AAA           |
-| `--navy-900` on `--peach` (inverted blocks) | **9.09:1** | AAA           |
+| `--navy-900` on `--peach` (inverted blocks) | **8.29:1** | AAA           |
 
 The reference palette we took this from sat at 6.17:1 — already AA. Dropping the navy slightly
 bought AAA at no cost to the look. **If you introduce a new pairing, measure it.** The README
@@ -89,9 +120,9 @@ Two guards now exist so it cannot silently return:
 
 | Pair                                             | Ratio  |
 | ------------------------------------------------ | ------ |
-| `.btn:hover` — navy-900 on peach-hi              | 9.6:1  |
+| `.btn:hover` — navy-900 on peach-hi              | 9.67:1 |
 | focus ring — peach-hi on navy-800                | 8.47:1 |
-| focus ring on inverted bands — navy-900 on peach | 9.09:1 |
+| focus ring on inverted bands — navy-900 on peach | 8.29:1 |
 
 ## Poster vocabulary
 

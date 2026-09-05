@@ -1,13 +1,25 @@
 import { describe, expect, it } from 'vitest';
 import {
+	DEFAULT_SPAN_END,
+	DEFAULT_SPAN_START,
+	MAX_PIPS,
+	MIN_BLOCK_MINUTES,
+	blockMinutes,
+	busiestDays,
 	countByDay,
+	densityStep,
+	hotspotFloor,
 	instantWindowForDays,
 	isMonthKey,
+	layOutDay,
 	localDayKey,
+	minutesOfDay,
 	monthBounds,
 	monthGrid,
 	monthKeyOf,
-	shiftMonth
+	pipCount,
+	shiftMonth,
+	weekSpan
 } from './calendar.ts';
 
 /**
@@ -158,5 +170,212 @@ describe('month keys', () => {
 
 	it('reads the month off a calendar date', () => {
 		expect(monthKeyOf('2026-09-12')).toBe('2026-09');
+	});
+});
+
+describe('densityStep', () => {
+	/**
+	 * Absolute, not relative to the month. A square must mean the same thing in a busy July as in
+	 * a dead February, or the fill is decoration rather than information.
+	 */
+	it('steps on the documented boundaries', () => {
+		expect([0, 1, 2, 3, 5, 6, 9, 10, 40].map(densityStep)).toEqual([0, 1, 1, 2, 2, 3, 3, 4, 4]);
+	});
+
+	it('treats a negative count as empty rather than inverting the scale', () => {
+		expect(densityStep(-1)).toBe(0);
+	});
+
+	it('never asks for more pips than a square can show', () => {
+		expect(pipCount(0)).toBe(0);
+		expect(pipCount(4)).toBe(4);
+		expect(pipCount(40)).toBe(MAX_PIPS);
+	});
+});
+
+describe('hotspotFloor', () => {
+	it('marks the top of a busy month', () => {
+		// Peak 9 → 80% is 7.2, rounded up to 8. The 9 and any 8 are hotspots; a 7 is not.
+		expect(hotspotFloor([1, 4, 9, 2, 8, 7])).toBe(8);
+	});
+
+	/**
+	 * The reason there is a floor at all. Without it the busiest day of an almost-empty month gets
+	 * a badge saying "hotspot" for two events, which drains the word everywhere else.
+	 */
+	it('marks nothing in a month that never gets busy', () => {
+		expect(hotspotFloor([1, 2, 1])).toBe(Infinity);
+		expect(hotspotFloor([])).toBe(Infinity);
+	});
+
+	it('never drops below the floor even when the peak is exactly on it', () => {
+		expect(hotspotFloor([5, 1, 1])).toBe(5);
+	});
+});
+
+describe('busiestDays', () => {
+	const counts = [
+		{ date: '2026-09-03', total: 4 },
+		{ date: '2026-09-11', total: 9 },
+		{ date: '2026-09-18', total: 4 },
+		{ date: '2026-09-20', total: 0 }
+	];
+
+	it('ranks by count and breaks ties by date, so the order never wobbles', () => {
+		expect(busiestDays(counts)).toEqual([
+			{ date: '2026-09-11', total: 9 },
+			{ date: '2026-09-03', total: 4 },
+			{ date: '2026-09-18', total: 4 }
+		]);
+	});
+
+	it('leaves empty days out — a busiest day with nothing on it is not one', () => {
+		expect(busiestDays([{ date: '2026-09-20', total: 0 }])).toEqual([]);
+	});
+
+	it('does not reorder its input', () => {
+		const original = counts.slice();
+		busiestDays(counts);
+		expect(counts).toEqual(original);
+	});
+});
+
+describe('minutesOfDay', () => {
+	/**
+	 * The point of drawing a week. Two events "at 19:00" belong on the same line of the grid even
+	 * when they are an hour apart as instants, because a week view is a wall clock.
+	 */
+	it('reads the venue’s clock, not the server’s and not UTC', () => {
+		const instant = new Date('2026-09-12T20:00:00+02:00');
+		expect(minutesOfDay(instant, 'Europe/Oslo')).toBe(20 * 60);
+		expect(minutesOfDay(instant, 'Europe/Helsinki')).toBe(21 * 60);
+		// Stated so this fails loudly rather than tautologically if the zone is ever dropped.
+		expect(instant.getUTCHours()).toBe(18);
+	});
+
+	it('falls back to the pilot zone for a venue with none', () => {
+		expect(minutesOfDay(new Date('2026-09-12T20:30:00+02:00'), null)).toBe(20 * 60 + 30);
+	});
+});
+
+describe('blockMinutes', () => {
+	const oslo = 'Europe/Oslo';
+
+	it('spans start to end when both are on the same day', () => {
+		expect(
+			blockMinutes({
+				startsAt: new Date('2026-09-12T19:00:00+02:00'),
+				endsAt: new Date('2026-09-12T21:30:00+02:00'),
+				venueTimeZone: oslo
+			})
+		).toEqual({ start: 19 * 60, end: 21 * 60 + 30 });
+	});
+
+	/**
+	 * A concert that runs past midnight belongs to the day it starts — the same rule the counts
+	 * use. Drawing it into the next column would put it on a day whose square never counted it.
+	 */
+	it('cuts a past-midnight event off at its own day rather than bleeding into the next', () => {
+		const block = blockMinutes({
+			startsAt: new Date('2026-09-12T22:30:00+02:00'),
+			endsAt: new Date('2026-09-13T01:00:00+02:00'),
+			venueTimeZone: oslo
+		});
+		expect(block.start).toBe(22 * 60 + 30);
+		expect(block.end).toBe(22 * 60 + 30 + MIN_BLOCK_MINUTES);
+		expect(block.end).toBeLessThanOrEqual(24 * 60);
+	});
+
+	it('gives an event with no end a drawable length instead of a zero-height box', () => {
+		const block = blockMinutes({
+			startsAt: new Date('2026-09-12T19:00:00+02:00'),
+			endsAt: null,
+			venueTimeZone: oslo
+		});
+		expect(block.end - block.start).toBe(MIN_BLOCK_MINUTES);
+	});
+});
+
+describe('weekSpan', () => {
+	it('keeps the readable evening window when nothing falls outside it', () => {
+		expect(weekSpan([{ start: 19 * 60, end: 21 * 60 }])).toEqual({
+			start: DEFAULT_SPAN_START,
+			end: DEFAULT_SPAN_END
+		});
+		expect(weekSpan([])).toEqual({ start: DEFAULT_SPAN_START, end: DEFAULT_SPAN_END });
+	});
+
+	it('opens up for an event outside it, rounded to whole hours so the gutter can label them', () => {
+		expect(weekSpan([{ start: 6 * 60 + 45, end: 23 * 60 + 10 }])).toEqual({
+			start: 6 * 60,
+			end: 24 * 60
+		});
+	});
+
+	it('never runs past the end of the day', () => {
+		expect(weekSpan([{ start: 23 * 60, end: 24 * 60 }]).end).toBe(24 * 60);
+	});
+});
+
+describe('layOutDay', () => {
+	it('gives a day with no overlaps the full width', () => {
+		const placed = layOutDay([
+			{ start: 600, end: 660 },
+			{ start: 700, end: 760 }
+		]);
+		expect(placed.map((p) => p.columns)).toEqual([1, 1]);
+		expect(placed.map((p) => p.column)).toEqual([0, 0]);
+	});
+
+	it('splits the width between two events at the same time', () => {
+		const placed = layOutDay([
+			{ start: 1140, end: 1260 },
+			{ start: 1140, end: 1200 }
+		]);
+		expect(placed.every((p) => p.columns === 2)).toBe(true);
+		expect(placed.map((p) => p.column).sort()).toEqual([0, 1]);
+	});
+
+	/**
+	 * The invariant the whole function exists for: nothing is ever hidden underneath anything.
+	 *
+	 * Asserted over a chain — A overlaps B, B overlaps C, A and C never touch — because that is the
+	 * shape a naive implementation gets wrong in both directions. It either gives A and C the same
+	 * column while B is still on screen, hiding one, or it counts the blocks and spends a third of
+	 * the day on empty space. The chain costs two columns: C takes A's column back once A has finished.
+	 */
+	it('never puts two overlapping blocks in the same column', () => {
+		const placed = layOutDay([
+			{ start: 600, end: 720 },
+			{ start: 690, end: 810 },
+			{ start: 780, end: 900 }
+		]);
+		for (const a of placed) {
+			for (const b of placed) {
+				if (a === b) continue;
+				if (a.start < b.end && b.start < a.end) expect(a.column).not.toBe(b.column);
+			}
+		}
+		expect(placed.every((p) => p.columns === 2)).toBe(true);
+	});
+
+	it('reuses a column once its block has finished', () => {
+		const placed = layOutDay([
+			{ start: 600, end: 660 },
+			{ start: 600, end: 780 },
+			{ start: 670, end: 700 }
+		]);
+		// Three blocks, but only two are ever on screen together.
+		expect(placed.every((p) => p.columns === 2)).toBe(true);
+	});
+
+	it('does not mutate or reorder its input', () => {
+		const input = [
+			{ start: 700, end: 760 },
+			{ start: 600, end: 660 }
+		];
+		const copy = structuredClone(input);
+		layOutDay(input);
+		expect(input).toEqual(copy);
 	});
 });

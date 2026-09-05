@@ -8,8 +8,16 @@ import {
 	formatDayLabel,
 	formatMonthName,
 	instantToZonedWallClock,
+	addDays,
+	formatWeekName,
+	formatWeekRange,
 	isCalendarDate,
+	isIsoWeek,
+	isoWeekDates,
+	isoWeekKey,
+	isoWeekStart,
 	machineDateTime,
+	shiftWeek,
 	weekdayIndex,
 	zonedWallClockToInstant
 } from '../src/datetime.ts';
@@ -227,5 +235,87 @@ describe('formatDayLabel', () => {
 	/** Yesterday is not "i går": a still-running event is grouped under today, never behind it. */
 	it('spells a past day out rather than calling it relative', () => {
 		expect(formatDayLabel('2026-09-11', '2026-09-12')).toBe('Fredag 11. september');
+	});
+});
+
+/**
+ * ISO weeks. Every case is a fixed date — a week test written against "this week" passes the day
+ * it is written and rots quietly afterwards, which is the failure mode the whole calendar guards.
+ */
+describe('ISO weeks', () => {
+	it('numbers a week from the year its Thursday falls in', () => {
+		// The trap. Both of these are in a week that belongs to the *other* year.
+		expect(isoWeekKey('2026-01-01')).toBe('2026-W01');
+		expect(isoWeekKey('2027-01-01')).toBe('2026-W53');
+		expect(isoWeekKey('2025-12-29')).toBe('2026-W01');
+		// Stated explicitly so this fails loudly rather than tautologically if the rule is ever
+		// "simplified" to reading the year off the date.
+		expect('2027-01-01'.slice(0, 4)).toBe('2027');
+	});
+
+	it('agrees with the number a Norwegian calendar prints', () => {
+		expect(isoWeekKey('2026-09-05')).toBe('2026-W36');
+		expect(isoWeekKey('2026-09-07')).toBe('2026-W37');
+		expect(isoWeekKey('2026-09-13')).toBe('2026-W37');
+	});
+
+	it('opens every week on måndag', () => {
+		expect(isoWeekStart('2026-W37')).toBe('2026-09-07');
+		expect(weekdayIndex(isoWeekStart('2026-W01'))).toBe(0);
+		expect(weekdayIndex(isoWeekStart('2026-W53'))).toBe(0);
+	});
+
+	it('round-trips a date through its week and back to that week', () => {
+		for (const date of ['2026-01-01', '2026-06-15', '2026-12-31', '2027-01-03']) {
+			expect(isoWeekDates(isoWeekKey(date))).toContain(date);
+		}
+	});
+
+	it('gives a week seven consecutive days', () => {
+		expect(isoWeekDates('2026-W37')).toEqual([
+			'2026-09-07',
+			'2026-09-08',
+			'2026-09-09',
+			'2026-09-10',
+			'2026-09-11',
+			'2026-09-12',
+			'2026-09-13'
+		]);
+	});
+
+	it('steps across a year boundary without arithmetic on the number', () => {
+		// 2026 has 53 weeks, so +1 from its last week is W01 of 2027 — not "2026-W54".
+		expect(shiftWeek('2026-W53', 1)).toBe('2027-W01');
+		expect(shiftWeek('2027-W01', -1)).toBe('2026-W53');
+		expect(shiftWeek('2026-W37', 4)).toBe('2026-W41');
+	});
+
+	/**
+	 * The `2026-02-31` case, for weeks. A regex cannot tell a real W53 from an invented one, and a
+	 * query that accepts the invented one answers with somebody else's week rather than a 404.
+	 */
+	it('rejects a week number the year does not have', () => {
+		expect(isIsoWeek('2026-W53')).toBe(true); // 2026 genuinely has 53
+		expect(isIsoWeek('2025-W53')).toBe(false); // 2025 has 52
+		expect(isIsoWeek('2026-W00')).toBe(false);
+		expect(isIsoWeek('2026-W54')).toBe(false);
+		expect(isIsoWeek('2026-37')).toBe(false);
+		expect(isIsoWeek('veke-37')).toBe(false);
+	});
+
+	it('names and spells a week the way the page says it', () => {
+		expect(formatWeekName('2026-W37')).toBe('Veke 37');
+		expect(formatWeekRange('2026-W37')).toBe('7.–13. september 2026');
+		// A week that straddles two months keeps both names.
+		expect(formatWeekRange('2026-W40')).toBe('28. september – 4. oktober 2026');
+		// And one that straddles two years keeps both years.
+		expect(formatWeekRange('2026-W53')).toBe('28. desember 2026 – 3. januar 2027');
+	});
+
+	it('steps days across months and years', () => {
+		expect(addDays('2026-09-30', 1)).toBe('2026-10-01');
+		expect(addDays('2026-01-01', -1)).toBe('2025-12-31');
+		// A leap year, because February is where day arithmetic goes wrong.
+		expect(addDays('2028-02-28', 1)).toBe('2028-02-29');
 	});
 });

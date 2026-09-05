@@ -25,6 +25,33 @@
 	--peach-line: rgb(247 169 138 / 30%); /* hairlines — decorative, never text */
 	--peach-ghost: rgb(247 169 138 / 8%); /* fills */
 
+	/*
+	 * Density wash — four steps of peach over navy, for showing "how much" as an area rather than
+	 * as a number. The calendar's month squares are the first user.
+	 *
+	 * **22% is the ceiling, and it is measured.** Peach text on `--peach-wash-4` composites to
+	 * 4.63:1 over `--navy-800`, which is AA with nothing to spare. The step that looked best in
+	 * the mock was 38% and measures 3.25:1 — a straight failure, exactly the way `--peach-dim`
+	 * failed at 55%. Anything that needs to read as *more* than the top step inverts instead
+	 * (`--navy-900` on `--peach`, 8.29:1), which cannot fail.
+	 *
+	 * **These are measured against `--navy-800`, the page ground, and are only valid there.** On
+	 * `--navy-700` the same washes give 4.38:1 at 18% and 4.04:1 at 22% — both failures. A wash
+	 * belongs on the page, not inside a raised panel.
+	 */
+	--peach-wash-1: rgb(247 169 138 / 6%);
+	--peach-wash-2: rgb(247 169 138 / 12%);
+	--peach-wash-3: rgb(247 169 138 / 18%);
+	--peach-wash-4: rgb(247 169 138 / 22%);
+
+	/*
+	 * Navy ink on a peach ground, de-emphasised. The mirror of `--peach-dim`, and the same trap:
+	 * 65% measured 3.83:1 and failed; 78% measures 5.23:1. Used by every inverted block — the
+	 * manifesto bands, and the calendar's week blocks and running-event bands.
+	 */
+	--navy-dim: rgb(22 34 59 / 78%);
+	--navy-line: rgb(22 34 59 / 30%); /* hairlines on peach — decorative, never text */
+
 	/* --- type --- */
 	--font-display: 'Archivo Variable', 'Archivo', system-ui, sans-serif;
 	--font-mono: 'Space Mono', ui-monospace, 'SF Mono', monospace;
@@ -222,13 +249,12 @@ body {
 }
 
 .invert .label {
-	/* 65% measured 3.83:1 on peach — a fail for small text. 78% clears 4.5. */
-	color: rgb(22 34 59 / 78%);
+	color: var(--navy-dim);
 }
 
 .invert .frame,
 .invert .rule {
-	border-color: rgb(22 34 59 / 30%);
+	border-color: var(--navy-line);
 }
 
 /* --- links -------------------------------------------------------------- */

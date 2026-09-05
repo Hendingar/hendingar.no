@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { isCalendarDate } from './datetime.ts';
+import { isCalendarDate, isIsoWeek } from './datetime.ts';
 import { CATEGORY_SLUGS } from './taxonomy.ts';
 import { VERIFICATION_VERDICTS } from './verification.ts';
 import { RECURRENCE_FREQUENCIES, WEEKDAYS } from './recurrence.ts';
@@ -152,6 +152,18 @@ export const calendarMonthSchema = z
 export const calendarDateSchema = z
 	.string()
 	.refine(isCalendarDate, 'must be a real calendar date on the form YYYY-MM-DD');
+
+/**
+ * One ISO week, `YYYY-Www` — what `/kalender?veke=` is addressed by.
+ *
+ * `isIsoWeek` rather than the regex alone, for the reason `calendarDateSchema` refuses
+ * `2026-02-31`: `2025-W53` matches the shape and there is no such week. A query that accepts it
+ * silently answers with the first week of 2026 — somebody else's week, rendered as though it were
+ * the one asked for.
+ */
+export const calendarWeekSchema = z
+	.string()
+	.refine(isIsoWeek, 'must be a real ISO week on the form YYYY-Www');
 
 /**
  * What the vision model is asked to return when reading a poster.

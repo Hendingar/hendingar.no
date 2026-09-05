@@ -7,11 +7,22 @@ import { events, organizers, sources, venues, verifications } from '@hendingar/c
 import {
 	calendarDateSchema,
 	calendarMonthSchema,
+	calendarWeekSchema,
 	eventQuerySchema
 } from '@hendingar/core/validation';
 import { SUBMITTED_SLUG } from '@hendingar/core/directory';
 import { categoryLabel } from '@hendingar/core/taxonomy';
-import { DEFAULT_TIME_ZONE } from '@hendingar/core/datetime';
+import {
+	DEFAULT_TIME_ZONE,
+	addDays,
+	isoWeekDates,
+	isoWeekKey,
+	isoWeekStart,
+	shiftWeek
+} from '@hendingar/core/datetime';
+// The rail covers exactly as far ahead as a repeating event is worked out. Imported rather than
+// spelled 26 here, so the page cannot promise a horizon the data does not have (ADR 0009).
+import { HORIZON_WEEKS } from '@hendingar/core/recurrence';
 import {
 	countByDay,
 	instantWindowForDays,
@@ -551,6 +562,228 @@ export const adjacentEventDays = query(calendarDateSchema, async (date) => {
 		next: days.find((d) => d > date) ?? null
 	};
 });
+
+/**
+ * How many events fall in each of the next N weeks — the horizon rail.
+ *
+ * The rail answers a question the month grid structurally cannot: *when* is the busy stretch. A
+ * grid shows you one month, and finding the weekend worth travelling for means paging through
+ * four of them and remembering what you saw. Twenty-six bars is that whole answer in one glance.
+ *
+ * **The current week is counted whole, past days included.** The alternative — counting only what
+ * is still ahead — makes the first bar shrink a little every day and read as "this week is quiet"
+ * on a Sunday. It would also disagree with the grid directly below it, which shows past days with
+ * their real counts. The bar is marked as *now* instead, which is the honest way to say it.
+ *
+ * Reads two columns for every event in the window and buckets them in TypeScript, for the reason
+ * `countByDay` exists: one function decides day membership for the counts, the grid and the day
+ * pages, so they cannot drift apart. At a few hundred events a week that is not a trade worth
+ * thinking about; if it ever becomes one, the fix is a materialised per-day count, not a second
+ * `to_char` in SQL.
+ */
+export const horizonWeeks = query(
+	z.number().int().min(4).max(HORIZON_WEEKS).default(HORIZON_WEEKS),
+	async (weeks) => {
+		const today = localDayKey(new Date(), DEFAULT_TIME_ZONE);
+		const firstWeek = isoWeekKey(today);
+		const firstDate = isoWeekStart(firstWeek);
+		const lastDate = addDays(firstDate, weeks * 7 - 1);
+		const { from, to } = instantWindowForDays(firstDate, lastDate);
+
+		const rows = await db()
+			.select({ startsAt: events.startsAt, venueTimeZone: venues.timezone })
+			.from(events)
+			.leftJoin(venues, eq(events.venueId, venues.id))
+			.where(
+				and(
+					eq(events.status, 'published'),
+					isNull(events.duplicateOfId),
+					gte(events.startsAt, from),
+					lte(events.startsAt, to)
+				)
+			);
+
+		const byDay = countByDay(rows);
+		const bars = Array.from({ length: weeks }, (_, i) => {
+			const weekKey = shiftWeek(firstWeek, i);
+			return {
+				weekKey,
+				start: isoWeekStart(weekKey),
+				total: isoWeekDates(weekKey).reduce((n, date) => n + (byDay.get(date) ?? 0), 0)
+			};
+		});
+
+		return {
+			weeks: bars,
+			today,
+			currentWeek: firstWeek,
+			/** The last day the rail covers, so the page can name where it stops rather than just stopping. */
+			horizonEnd: lastDate,
+			total: bars.reduce((n, b) => n + b.total, 0)
+		};
+	}
+);
+
+export type HorizonWeek = Awaited<ReturnType<typeof horizonWeeks>>['weeks'][number];
+
+/**
+ * How far back an event may have started and still be drawn as running through a week.
+ *
+ * A bound, not a rule about exhibitions. Without one the query's lower bound is unbounded and
+ * Postgres reads the whole history of the table to find the handful of things still running; with
+ * it, both halves of the `or` are index ranges. A quarter is comfortably longer than anything our
+ * sources actually publish, and the cost of being wrong is that a very long exhibition is missing
+ * from one band — not that a count is wrong.
+ */
+const LONGEST_RUN_DAYS = 92;
+
+/**
+ * One week's events, split into the two things a week view draws.
+ *
+ * `timed` are blocks on the grid: they start and end on the same calendar day at their venue, so
+ * they have a position and a height. `spanning` are the band across the top — a three-week
+ * exhibition has no meaningful 19:00, and drawing it as a block would either claim it happens once
+ * or paint a column-tall rectangle over everything else.
+ *
+ * An event that runs past midnight is `timed` on the day it starts, not `spanning`. It is one
+ * evening out, and the day it belongs to is the day it began — the same rule the counts use.
+ */
+export const weekEvents = query(calendarWeekSchema, async (weekKey) => {
+	const dates = isoWeekDates(weekKey);
+	const first = dates[0] ?? '';
+	const last = dates[6] ?? '';
+	const { from, to } = instantWindowForDays(first, last);
+	const lookback = instantWindowForDays(addDays(first, -LONGEST_RUN_DAYS), first).from;
+
+	const rows = await db()
+		.select({
+			id: events.id,
+			title: events.title,
+			category: events.category,
+			startsAt: events.startsAt,
+			endsAt: events.endsAt,
+			venueName: venues.name,
+			venueTimeZone: venues.timezone,
+			municipality: venues.municipality
+		})
+		.from(events)
+		.leftJoin(venues, eq(events.venueId, venues.id))
+		.where(
+			and(
+				eq(events.status, 'published'),
+				isNull(events.duplicateOfId),
+				/*
+				 * Two index ranges rather than one open-ended scan: things starting inside the week,
+				 * and things that started earlier and have not finished. Written as an `or` of two
+				 * bounded ranges so the planner can bitmap them together — `coalesce(ends_at, …) >=`
+				 * on its own gives up the index on `starts_at` and reads the table.
+				 */
+				or(
+					and(gte(events.startsAt, from), lte(events.startsAt, to)),
+					and(gte(events.startsAt, lookback), lte(events.startsAt, from), gte(events.endsAt, from))
+				)
+			)
+		)
+		.orderBy(asc(events.startsAt));
+
+	type Row = (typeof rows)[number];
+	const timed: (Row & { localDate: string })[] = [];
+	const spanning: (Row & {
+		fromDate: string;
+		toDate: string;
+		startsBefore: boolean;
+		endsAfter: boolean;
+	})[] = [];
+
+	for (const row of rows) {
+		const startDay = localDayKey(row.startsAt, row.venueTimeZone);
+		const endDay = row.endsAt ? localDayKey(row.endsAt, row.venueTimeZone) : startDay;
+
+		if (startDay === endDay) {
+			if (startDay >= first && startDay <= last) timed.push({ ...row, localDate: startDay });
+			continue;
+		}
+
+		// Clamped to the week, so the band draws what is visible rather than running off both ends.
+		const fromDate = startDay < first ? first : startDay;
+		const toDate = endDay > last ? last : endDay;
+		if (fromDate <= toDate) {
+			spanning.push({
+				...row,
+				fromDate,
+				toDate,
+				startsBefore: startDay < first,
+				endsAfter: endDay > last
+			});
+		}
+	}
+
+	// Longest first, so the band reads as layers rather than as a jumble.
+	spanning.sort(
+		(a, b) =>
+			a.fromDate.localeCompare(b.fromDate) ||
+			b.toDate.localeCompare(a.toDate) ||
+			a.title.localeCompare(b.title, 'nb-NO')
+	);
+
+	return { weekKey, dates, timed, spanning, today: localDayKey(new Date(), DEFAULT_TIME_ZONE) };
+});
+
+export type WeekTimedEvent = Awaited<ReturnType<typeof weekEvents>>['timed'][number];
+export type WeekSpanningEvent = Awaited<ReturnType<typeof weekEvents>>['spanning'][number];
+
+/**
+ * Where a month's events are, by municipality.
+ *
+ * The other half of "hotspot": the grid says which days are busy, this says which places are. A
+ * reader planning a Saturday in Kvinnherad is asking a question no arrangement of squares answers.
+ *
+ * A venue with no municipality is counted and returned with a null name rather than dropped. The
+ * total has to add up — a place list that quietly omits rows is the same failure as a source list
+ * that under-reports itself, and this repo has already paid for that one.
+ */
+export const monthPlaces = query(calendarMonthSchema, async (monthKey) => {
+	const { first, last } = monthBounds(monthKey);
+	const { from, to } = instantWindowForDays(first, last);
+
+	const rows = await db()
+		.select({
+			startsAt: events.startsAt,
+			venueTimeZone: venues.timezone,
+			municipality: venues.municipality
+		})
+		.from(events)
+		.leftJoin(venues, eq(events.venueId, venues.id))
+		.where(
+			and(
+				eq(events.status, 'published'),
+				isNull(events.duplicateOfId),
+				gte(events.startsAt, from),
+				lte(events.startsAt, to)
+			)
+		);
+
+	const totals = new Map<string | null, number>();
+	for (const row of rows) {
+		const date = localDayKey(row.startsAt, row.venueTimeZone);
+		if (date < first || date > last) continue;
+		totals.set(row.municipality, (totals.get(row.municipality) ?? 0) + 1);
+	}
+
+	return [...totals]
+		.map(([municipality, total]) => ({ municipality, total }))
+		.sort((a, b) => {
+			if (a.total !== b.total) return b.total - a.total;
+			// A venue with no municipality sorts last whatever its count: it is a gap in our data
+			// rather than a place, and listing it among named places would read as one.
+			if ((a.municipality === null) !== (b.municipality === null)) {
+				return a.municipality === null ? 1 : -1;
+			}
+			return (a.municipality ?? '').localeCompare(b.municipality ?? '', 'nb-NO');
+		});
+});
+
+export type PlaceCount = Awaited<ReturnType<typeof monthPlaces>>[number];
 
 /**
  * One event, with everything needed to render a page for it.
