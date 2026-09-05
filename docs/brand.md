@@ -104,6 +104,20 @@ Borrowed deliberately, each with a job:
   from layered SVG patterns with radial-gradient masks. No images, no bitmap, scales cleanly.
 - **Outline display type**, ovals, four-point sparkles
 
+### The card is the poster, and it stays the poster
+
+Tapping a card does not replace one page with another: the card's poster and its title carry
+across and become the event page's. Both sides declare a `view-transition-name` derived from the
+event id, so the browser matches them and morphs rather than cross-fading — the machinery is in
+`brand.css` under `.vt-morph`, and the reasoning for every part of it is written there.
+
+Two constraints worth knowing before touching it. The name must be **unique in the document**: two
+elements sharing one makes the browser abandon the whole transition, every morph on the page, with
+nothing logged — which is why an e2e spec asserts uniqueness against a real listing. And it is
+timed to `--dur-base`, the same 240ms as the cross-fade it replaces. A poster should land, not
+travel; a slower or springier morph reads as the page being dragged about, which is the same
+mistake as rotating body copy.
+
 ## The one hard rule about rotation
 
 Rotated text is for **decorative labels only**. Never rotate text a visitor must read to understand
