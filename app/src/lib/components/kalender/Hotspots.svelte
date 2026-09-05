@@ -1,5 +1,10 @@
 <script lang="ts">
-	import { MONTH_NAMES, WEEKDAY_ABBR, weekdayIndex } from '@hendingar/core/datetime';
+	import {
+		MONTH_NAMES,
+		WEEKDAY_ABBR,
+		formatMonthName,
+		weekdayIndex
+	} from '@hendingar/core/datetime';
 	import { busiestDays } from '../../calendar.ts';
 	import type { DayCount, PlaceCount } from '../../events.remote';
 
@@ -16,12 +21,15 @@
 	 * The places need the database, because which municipality a venue is in is not in the grid.
 	 */
 	let {
-		monthKey,
+		from,
+		to,
 		counts,
 		places,
 		today
 	}: {
-		monthKey: string;
+		/** First and last month of the stack, so the band can say what it is describing. */
+		from: string;
+		to: string;
 		counts: DayCount[];
 		places: PlaceCount[];
 		today: string;
@@ -42,7 +50,18 @@
 	const restTotal = $derived(rest.reduce((n, p) => n + p.total, 0));
 	const placePeak = $derived(shown.reduce((n, p) => Math.max(n, p.total), 0));
 
-	const monthName = $derived(MONTH_NAMES[Number(monthKey.slice(5, 7)) - 1] ?? '');
+	/**
+	 * What the band is describing, said plainly.
+	 *
+	 * It covers the whole stack rather than one month, because the stack is what the reader is
+	 * scrolling. A heading that said "in September" above numbers drawn from six months would be
+	 * the kind of quietly wrong that nobody catches.
+	 */
+	const spanLabel = $derived(
+		from === to
+			? formatMonthName(from).toLowerCase()
+			: `${(MONTH_NAMES[Number(from.slice(5, 7)) - 1] ?? '').toLowerCase()}–${formatMonthName(to).toLowerCase()}`
+	);
 
 	function share(value: number, peak: number): number {
 		return peak === 0 ? 0 : Math.max(4, Math.round((value / peak) * 100));
@@ -51,18 +70,23 @@
 
 {#if days.length > 0 || shown.length > 0}
 	<section class="hot" aria-labelledby="hot-h">
-		<h2 class="visually-hidden" id="hot-h">Kvar det er mest å gjere i {monthName}</h2>
+		<h2 class="visually-hidden" id="hot-h">Kvar det er mest å gjere, {spanLabel}</h2>
 
 		<div class="hot__cols">
 			{#if days.length > 0}
 				<div class="hot__col">
-					<h3 class="label hot__h">Travlaste dagar</h3>
+					<h3 class="label hot__h">Travlaste dagar <span class="hot__span">{spanLabel}</span></h3>
 					<ul class="hot__list">
 						{#each days as day (day.date)}
 							<li class="hot__row">
 								<a class="hot__key" href="/kalender/{day.date}">
 									<span class="hot__n display display--md">{Number(day.date.slice(8))}</span>
-									<span class="hot__wd">{WEEKDAY_ABBR[weekdayIndex(day.date)]}</span>
+									<span class="hot__wd">
+										{WEEKDAY_ABBR[weekdayIndex(day.date)]}
+										<!-- The month, because these days are drawn from six of them and "the 12th"
+										     on its own is now genuinely ambiguous. -->
+										{(MONTH_NAMES[Number(day.date.slice(5, 7)) - 1] ?? '').slice(0, 3)}
+									</span>
 									{#if day.date === today}<span class="visually-hidden">, i dag</span>{/if}
 								</a>
 								<!-- Decorative: the figure is in the link text beside it. A bar that a screen
@@ -79,7 +103,7 @@
 
 			{#if shown.length > 0}
 				<div class="hot__col">
-					<h3 class="label hot__h">Tettast stad</h3>
+					<h3 class="label hot__h">Tettast stad <span class="hot__span">{spanLabel}</span></h3>
 					<ul class="hot__list">
 						{#each shown as place (place.municipality ?? 'ukjend')}
 							<li class="hot__row">
@@ -142,7 +166,17 @@
 		}
 	}
 	.hot__h {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: baseline;
+		gap: 0.5rem;
 		margin-block: 0 0.9rem;
+	}
+	.hot__span {
+		font-weight: 400;
+		letter-spacing: 0.12em;
+		text-transform: none;
+		opacity: 0.75;
 	}
 	.hot__list {
 		list-style: none;
@@ -162,9 +196,10 @@
 		display: flex;
 		align-items: baseline;
 		gap: 0.45rem;
+		/* Wider than it was: a date now carries its month as well as its weekday. */
 		/* A fixed key column so the bars start on one line and are comparable by length alone —
 		   ragged starts turn a chart back into a list of numbers. */
-		inline-size: 8.5rem;
+		inline-size: 9.5rem;
 		flex: none;
 		text-decoration: none;
 	}

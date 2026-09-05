@@ -329,6 +329,51 @@ await db
 	.onConflictDoNothing({ target: [events.sourceId, events.externalId] });
 
 /*
+ * A half-hour event, and five at the same time.
+ *
+ * Both shapes exist to be drawn badly by the week grid, and both were. A 30-minute block is about
+ * 24px tall, which is not enough for a time, a title and a venue: the lines were squashed to 8px
+ * and their glyphs sliced through the middle. Five at once is one past the point where a column
+ * can be shared, so the grid has to keep what fits and count the rest.
+ *
+ * Without these the seed cannot fail either of those specs, so they would pass on every laptop and
+ * in CI while the page was visibly broken against real data. That is the same trap the four
+ * swimming sessions above exist to avoid.
+ */
+// Today, so it is always in the week the specs open — the current one. A time earlier than now
+// is fine: the calendar shows the past, and the block renders either way.
+const tightDay = 0;
+await db
+	.insert(events)
+	.values([
+		{
+			sourceId: library.id,
+			externalId: 'seed-tight-short',
+			title: 'Bokprat på kvarteret',
+			category: 'litteratur' as const,
+			startsAt: daysFromNow(tightDay, 18),
+			endsAt: daysFromNow(tightDay, 18, 30),
+			venueId: libraryVenue.id,
+			status: 'published' as const,
+			posterUrl: POSTER,
+			posterRightsVerified: true
+		},
+		...[0, 1, 2, 3, 4].map((n) => ({
+			sourceId: library.id,
+			externalId: `seed-tight-parallel-${n}`,
+			title: `Parallellsesjon ${n + 1}`,
+			category: 'kurs' as const,
+			startsAt: daysFromNow(tightDay, 19),
+			endsAt: daysFromNow(tightDay, 21),
+			venueId: libraryVenue.id,
+			status: 'published' as const,
+			posterUrl: POSTER,
+			posterRightsVerified: true
+		}))
+	])
+	.onConflictDoNothing({ target: [events.sourceId, events.externalId] });
+
+/*
  * The same event, reported by both sources — because consolidation is invisible until something
  * needs consolidating.
  *

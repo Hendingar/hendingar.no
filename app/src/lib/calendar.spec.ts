@@ -4,19 +4,23 @@ import {
 	DEFAULT_SPAN_START,
 	MAX_PIPS,
 	MIN_BLOCK_MINUTES,
+	SPAN_FLOOR,
 	blockMinutes,
 	busiestDays,
+	capLanes,
 	countByDay,
 	densityStep,
 	hotspotFloor,
 	instantWindowForDays,
 	isMonthKey,
+	laneCount,
 	layOutDay,
 	localDayKey,
 	minutesOfDay,
 	monthBounds,
 	monthGrid,
 	monthKeyOf,
+	outsideSpan,
 	pipCount,
 	shiftMonth,
 	weekSpan
@@ -306,10 +310,58 @@ describe('weekSpan', () => {
 	});
 
 	it('opens up for an event outside it, rounded to whole hours so the gutter can label them', () => {
-		expect(weekSpan([{ start: 6 * 60 + 45, end: 23 * 60 + 10 }])).toEqual({
-			start: 6 * 60,
+		expect(weekSpan([{ start: 7 * 60 + 45, end: 23 * 60 + 10 }])).toEqual({
+			start: 7 * 60,
 			end: 24 * 60
 		});
+	});
+
+	/**
+	 * The bug this floor exists for.
+	 *
+	 * One 02:00 club night in a week of 600 events opened the grid at 02:00, so the first screenful
+	 * of the busiest week on the site was seven empty hours. Obeying the earliest event sounds
+	 * right and is how you get a calendar that a single outlier can ruin.
+	 */
+	it('refuses to open before the floor, however early one event is', () => {
+		expect(weekSpan([{ start: 2 * 60, end: 4 * 60 }])).toEqual({
+			start: DEFAULT_SPAN_START,
+			end: DEFAULT_SPAN_END
+		});
+		expect(weekSpan([{ start: 0, end: 30 }]).start).toBe(DEFAULT_SPAN_START);
+		// And a 07:00 start, which is on the floor, still opens it.
+		expect(weekSpan([{ start: SPAN_FLOOR, end: 8 * 60 }]).start).toBe(SPAN_FLOOR);
+	});
+});
+
+describe('outsideSpan', () => {
+	/** Refusing to place an event is not the same as refusing to show it. */
+	it('hands back exactly what the grid cannot draw', () => {
+		const blocks = [
+			{ id: 'night', start: 2 * 60, end: 4 * 60 },
+			{ id: 'evening', start: 19 * 60, end: 21 * 60 }
+		];
+		const span = weekSpan(blocks);
+		expect(outsideSpan(blocks, span).map((b) => b.id)).toEqual(['night']);
+	});
+
+	it('returns nothing when everything fits', () => {
+		const blocks = [{ start: 10 * 60, end: 11 * 60 }];
+		expect(outsideSpan(blocks, weekSpan(blocks))).toEqual([]);
+	});
+
+	/** Together they must account for every block: the grid plus the list is the whole day. */
+	it('partitions the blocks with weekSpan rather than overlapping it', () => {
+		const blocks = [
+			{ start: 1 * 60, end: 90 },
+			{ start: 9 * 60, end: 10 * 60 },
+			{ start: 23 * 60 + 30, end: 24 * 60 }
+		];
+		const span = weekSpan(blocks);
+		const out = outsideSpan(blocks, span);
+		const inside = blocks.filter((b) => !out.includes(b));
+		expect(out.length + inside.length).toBe(blocks.length);
+		expect(inside.every((b) => b.start >= span.start && b.start < span.end)).toBe(true);
 	});
 
 	it('never runs past the end of the day', () => {
@@ -377,5 +429,105 @@ describe('layOutDay', () => {
 		const copy = structuredClone(input);
 		layOutDay(input);
 		expect(input).toEqual(copy);
+	});
+});
+
+describe('capLanes', () => {
+	/** Fourteen things at once is a real Saturday here, and what broke the shipped grid. */
+	function concurrent(n: number) {
+		return layOutDay(Array.from({ length: n }, () => ({ start: 600, end: 900 })));
+	}
+
+	it('leaves a run that fits exactly as it is', () => {
+		const { visible, overflow } = capLanes(concurrent(3), 3);
+		expect(visible).toHaveLength(3);
+		expect(overflow).toEqual([]);
+	});
+
+	/**
+	 * Collapsing one event into "+1 fleire" costs a click to learn one thing, and the lane it
+	 * frees is the lane the marker then takes. So a single extra block is kept.
+	 */
+	it('keeps a run that overflows by exactly one', () => {
+		const { visible, overflow } = capLanes(concurrent(4), 3);
+		expect(visible).toHaveLength(4);
+		expect(overflow).toEqual([]);
+	});
+
+	it('collapses the rest into one marker holding the last lane', () => {
+		const { visible, overflow } = capLanes(concurrent(14), 3);
+
+		// Two events stay, and every one of them is told it is in a three-lane run so the widths
+		// add up with the marker beside them.
+		expect(visible).toHaveLength(2);
+		expect(visible.every((b) => b.columns === 3)).toBe(true);
+		expect(visible.map((b) => b.column).sort()).toEqual([0, 1]);
+
+		expect(overflow).toHaveLength(1);
+		expect(overflow[0]).toMatchObject({ count: 12, column: 2, columns: 3, start: 600, end: 900 });
+	});
+
+	/** Nothing is hidden without being counted — the marker plus what is shown is the whole day. */
+	it('accounts for every block it hides', () => {
+		for (const n of [1, 2, 3, 4, 5, 9, 14, 30]) {
+			const { visible, overflow } = capLanes(concurrent(n), 3);
+			const counted = overflow.reduce((t, o) => t + o.count, 0);
+			expect(visible.length + counted, `${n} concurrent`).toBe(n);
+		}
+	});
+
+	it('spans the marker across only the blocks it stands for', () => {
+		const placed = layOutDay([
+			// Five all-afternoon blocks and one short one: six lanes, well past the cap.
+			...Array.from({ length: 5 }, () => ({ start: 600, end: 1200 })),
+			{ start: 700, end: 800 }
+		]);
+		const { visible, overflow } = capLanes(placed, 3);
+
+		expect(visible).toHaveLength(2);
+		expect(overflow).toHaveLength(1);
+		expect(overflow[0]?.count).toBe(4);
+		// The marker covers what it stands for — 600–1200, not the 700–800 of the short one alone.
+		expect(overflow[0]?.start).toBe(600);
+		expect(overflow[0]?.end).toBe(1200);
+	});
+
+	it('caps each run of the day on its own', () => {
+		const placed = layOutDay([
+			// A busy morning...
+			...Array.from({ length: 8 }, () => ({ start: 600, end: 700 })),
+			// ...and a quiet evening that must not inherit its cap.
+			{ start: 1140, end: 1200 },
+			{ start: 1140, end: 1200 }
+		]);
+		const { visible, overflow } = capLanes(placed, 3);
+		expect(overflow).toHaveLength(1);
+		const evening = visible.filter((b) => b.start === 1140);
+		expect(evening).toHaveLength(2);
+		expect(evening.every((b) => b.columns === 2)).toBe(true);
+	});
+
+	it('does not mutate what it was given', () => {
+		const placed = concurrent(14);
+		const copy = structuredClone(placed);
+		capLanes(placed, 3);
+		expect(placed).toEqual(copy);
+	});
+});
+
+describe('laneCount', () => {
+	it('gives the whole week one column width, taken from its widest day', () => {
+		const quiet = capLanes(layOutDay([{ start: 600, end: 700 }]), 3);
+		const busy = capLanes(
+			layOutDay(Array.from({ length: 9 }, () => ({ start: 600, end: 700 }))),
+			3
+		);
+		expect(laneCount([quiet, busy])).toBe(3);
+		expect(laneCount([quiet])).toBe(1);
+	});
+
+	it('never returns zero, so an empty week still has a column', () => {
+		expect(laneCount([])).toBe(1);
+		expect(laneCount([{ visible: [] }])).toBe(1);
 	});
 });
