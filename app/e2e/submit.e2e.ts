@@ -202,9 +202,17 @@ test('a verdict gets an address, and reloading it still shows the verdict', asyn
 	await expect(page.locator('.verdict')).toBeVisible();
 	await expect(page).toHaveURL(/\/send-inn\/kvittering\/\d+$/);
 
-	// The whole point: this is a real route, not only a decorated address bar.
+	/*
+	 * The whole point: this is a real route, not only a decorated address bar.
+	 *
+	 * Given its own timeout because the assertion after a reload is not the same kind of wait as
+	 * the one before it. Everything above is already in the document; this one has to mount a
+	 * client-rendered page, read the browser id, and complete a round trip to the database before
+	 * anything appears. Playwright's five-second default was enough locally and on the PR, and not
+	 * enough on a loaded runner — it flaked once on main against a tree that had just passed.
+	 */
 	await page.reload();
-	await expect(page.locator('.verdict')).toBeVisible();
+	await expect(page.locator('.verdict')).toBeVisible({ timeout: 20_000 });
 	await expect(page.locator('.verdict__head')).toHaveAttribute('data-outcome', 'declined');
 
 	// And back returns to the form rather than leaving the site.
@@ -231,8 +239,10 @@ test('a verdict belonging to another browser is not readable', async ({ page, co
 	await context.clearCookies();
 	await page.evaluate(() => localStorage.clear());
 	await page.goto(url);
+	// Same round trip as above, so the same allowance — and assert the refusal is on screen before
+	// concluding anything from the absence of a verdict, or an empty page would pass this test.
+	await expect(page.getByText('Fann ikkje denne kvitteringa')).toBeVisible({ timeout: 20_000 });
 	await expect(page.locator('.verdict')).toHaveCount(0);
-	await expect(page.getByText('Fann ikkje denne kvitteringa')).toBeVisible();
 });
 
 /**
@@ -248,4 +258,48 @@ test('the photo panel can be opened straight from a URL', async ({ page }) => {
 	// The radio backing the tab, not a class: it is what actually drives the CSS panel switch.
 	await expect(page.locator('#mode-bilete')).toBeChecked();
 	await expect(page.locator('.capture input[type="file"]')).toBeVisible();
+});
+
+/**
+ * The third way in: paste a link, we read the page.
+ *
+ * Deliberately no test that reads a real site. Every case here is refused before a socket opens,
+ * so the suite stays hermetic (CLAUDE.md rule 6) while still exercising the whole stack — the
+ * component, the remote command, and the address filter that stands between a stranger's URL and
+ * our managed identity.
+ */
+test('the link panel can be opened straight from a URL', async ({ page }) => {
+	await page.goto('/send-inn?med=lenkje');
+	await expect(page.locator('#mode-lenkje')).toBeChecked();
+	await expect(page.locator('#crawl-url')).toBeVisible();
+	// The limitation people hit first, said before they hit it.
+	await expect(page.locator('.link__fine')).toContainText(/innlogging/i);
+});
+
+test('an address inside our own network is refused, not fetched', async ({ page }) => {
+	/*
+	 * The attack this feature would otherwise open. The app runs on Azure Container Apps with a
+	 * managed identity, and 169.254.169.254 answers a plain GET with a real access token for the
+	 * subscription. Anything that makes our server fetch a URL a stranger chose has to refuse it.
+	 */
+	await page.goto('/send-inn?med=lenkje');
+	for (const url of [
+		'http://169.254.169.254/metadata/identity/oauth2/token',
+		'http://127.0.0.1:5432/',
+		'http://10.0.0.5/admin'
+	]) {
+		await page.locator('#crawl-url').fill(url);
+		await page.getByRole('button', { name: /Les sida/ }).click();
+		await expect(page.locator('.link__status--bad')).toContainText(/offentleg nettside/i);
+	}
+	// It never left the link panel, so nothing was read and nothing was prefilled.
+	await expect(page.locator('#mode-lenkje')).toBeChecked();
+});
+
+test('the button is disabled until there is something to read', async ({ page }) => {
+	await page.goto('/send-inn?med=lenkje');
+	const button = page.getByRole('button', { name: /Les sida/ });
+	await expect(button).toBeDisabled();
+	await page.locator('#crawl-url').fill('https://example.no/hending');
+	await expect(button).toBeEnabled();
 });
