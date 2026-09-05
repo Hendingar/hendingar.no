@@ -106,6 +106,51 @@ test('a source we do not collect says so and links out instead', async ({ page }
 	await expect(first.getByRole('link', { name: /^Opne / })).toBeVisible();
 });
 
+test('a source row opens its own events in the main listing', async ({ page }) => {
+	await page.goto('/datasamling');
+
+	// A row that has something to show. The link is deliberately absent when a source has nothing
+	// ahead of it, so picking the first collected row would depend on what happens to be on.
+	const row = page
+		.locator('details.row:not([data-kind="link"])')
+		.filter({ has: page.locator('.see a') })
+		.first();
+	await row.locator('summary').click();
+
+	const name = (await row.locator('.row__name').innerText()).trim();
+	const link = row.locator('.see a');
+	const href = await link.getAttribute('href');
+	expect(href, 'the row links to the listing filtered by this source').toMatch(
+		/^\/hendingar\?kjelde=[^&]+$/
+	);
+	const slug = new URL(href!, 'http://localhost').searchParams.get('kjelde')!;
+
+	await link.click();
+	await page.waitForURL(new RegExp(`kjelde=${slug}`));
+
+	/*
+	 * The listing came back filtered, and says so: the scope line names the source.
+	 *
+	 * Located by class rather than by text. `waitForURL` returns the moment the router swaps the
+	 * address, which on a client-side navigation is before the new page's awaited data has replaced
+	 * the old DOM — so a page-wide text match resolves against /datasamling, where this source's
+	 * name legitimately appears twice, and dies of a strict-mode violation instead of retrying.
+	 */
+	await expect(page.locator('.list__scope')).toContainText(name);
+	// Its chip is the active one too, marked structurally rather than by colour.
+	await expect(
+		page.getByRole('navigation', { name: 'Filtrer på kjelde' }).locator('[aria-current="page"]')
+	).toContainText(name);
+	// And there really are events under it, which is what the row promised by offering a link.
+	expect(await page.locator('article.tile').count()).toBeGreaterThan(0);
+});
+
+test('a source we only link to offers no listing filter', async ({ page }) => {
+	await page.goto('/datasamling');
+	// We hold none of its events, so a filtered listing would be an empty page with our name on it.
+	await expect(page.locator('details.row[data-kind="link"] .see')).toHaveCount(0);
+});
+
 test('every source row carries an icon or its initials', async ({ page }) => {
 	await page.goto('/datasamling');
 	for (const row of await page.locator('details.row').all()) {
