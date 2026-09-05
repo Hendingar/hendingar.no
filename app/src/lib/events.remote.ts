@@ -488,6 +488,16 @@ export const listEventsOnDate = query(calendarDateSchema, async (date) => {
 			venueTimeZone: venues.timezone,
 			municipality: venues.municipality,
 			posterUrl: events.posterUrl,
+			/*
+			 * The srcset too, not just the poster.
+			 *
+			 * `EventTile` renders whatever the listing hands it, and without this a day page would
+			 * hotlink the source's largest file into an 88px thumbnail — the exact waste the
+			 * `sizes`/`srcset` work exists to stop. It is also what makes these rows an
+			 * `UpcomingEvent`: the tile type requires the field, so omitting it does not degrade
+			 * quietly, it fails to typecheck.
+			 */
+			posterSrcset: events.posterSrcset,
 			sourceMarks: sourceMarksFor(events.id).as('source_marks')
 		})
 		.from(events)
