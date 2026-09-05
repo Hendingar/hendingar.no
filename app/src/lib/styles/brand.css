@@ -348,3 +348,65 @@ button:focus-visible {
 	animation-duration: var(--dur-base);
 	animation-timing-function: var(--ease-out);
 }
+
+/*
+ * The tapped card's poster and title become the event page's.
+ *
+ * `view-transition-name` is declared here, with the per-event value arriving as a custom property,
+ * rather than written inline on each element. Two reasons, both load-bearing. It is a rule five
+ * routes share — `/`, `/hendingar`, `/hjarta`, `/kalender/<dato>` and the event page itself — and
+ * a shared rule belongs in brand.css. And an inline `view-transition-name` would outrank the
+ * reduced-motion override below; only `!important` could reach past it.
+ *
+ * The name must be unique in the document, and a repeat skips the WHOLE transition — every morph
+ * on the page stops happening, silently, with nothing logged. Ours is `event-<part>-<id>`, and an
+ * event is rendered once per listing: the `{#each}` around the tiles is keyed by that same id, and
+ * Svelte throws outright on a repeated key. An e2e spec asserts uniqueness against a real listing,
+ * because "quietly does nothing" is not a failure a screenshot would catch.
+ */
+.vt-morph {
+	view-transition-name: var(--vt-name, none);
+}
+
+/*
+ * Reduced motion, stated a second time on purpose.
+ *
+ * +layout.svelte declines to start a transition at all, so nothing here can fire today. The rule
+ * exists because the guard and the names live in different files: `@view-transition` hands the
+ * same job to the browser, which never consults that handler, and a reader who asked for less
+ * movement would get posters flying across the screen.
+ */
+@media (prefers-reduced-motion: reduce) {
+	.vt-morph {
+		view-transition-name: none;
+	}
+}
+
+/*
+ * Timed to the cross-fade it replaces: 240ms, decelerating. Slower reads as the page being
+ * dragged, and this is a poster site — the picture should land, not travel.
+ */
+::view-transition-group(*) {
+	animation-duration: var(--dur-base);
+	animation-timing-function: var(--ease-out);
+}
+
+/*
+ * A card thumbnail is a 16:9 crop; the event page paints the whole poster, whatever shape it is.
+ * The default snapshot styling is `inline-size: 100%; block-size: auto`, which preserves each
+ * snapshot's own aspect ratio and therefore squashes one of them while the group resizes between
+ * the two. Filling the group and cropping is the honest version of the same move: the two images
+ * differ by a crop, not by a stretch. Titles are left on the default, which is what text wants.
+ *
+ * Its own rule rather than joined to the timing above: `view-transition-class` is newer than the
+ * rest of this file, and a browser that does not know the syntax drops the rule it appears in. On
+ * its own it costs that browser the crop and nothing else.
+ */
+.vt-morph--poster {
+	view-transition-class: poster;
+}
+::view-transition-old(.poster),
+::view-transition-new(.poster) {
+	block-size: 100%;
+	object-fit: cover;
+}

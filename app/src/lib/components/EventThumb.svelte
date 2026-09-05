@@ -72,8 +72,21 @@
 </script>
 
 {#if showPoster}
+	<!--
+		Named for the view transition, so tapping the card grows this poster into the one on the
+		event page rather than cross-fading the whole document. `.vt-morph` and the crop rule live in
+		brand.css; the id is all this component contributes.
+
+		Only the real poster is named. The generated tile has no counterpart on the event page — that
+		page renders no image at all when there is no poster — so naming it would buy an unmatched
+		snapshot per card and nothing else. Unmatched is not broken (it fades like the rest of the
+		page), it is simply work for no morph. A poster that 404s falls back to the generated tile
+		and drops out of the transition with it, which is the honest outcome: there is no picture to
+		carry across.
+	-->
 	<img
-		class="thumb"
+		class="thumb vt-morph vt-morph--poster"
+		style:--vt-name="event-poster-{id}"
 		src={posterUrl}
 		srcset={posterSrcset}
 		sizes={posterSrcset ? SIZES : undefined}
