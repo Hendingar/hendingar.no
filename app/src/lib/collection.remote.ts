@@ -1,5 +1,5 @@
 import { query } from '$app/server';
-import { and, count, desc, eq, gte, sql } from 'drizzle-orm';
+import { and, count, desc, eq, gte, or, sql } from 'drizzle-orm';
 import { events, ingestRuns, sources, venues } from '@hendingar/core/schema';
 import { publicSubmissionTitle } from '@hendingar/core/verification';
 import { db } from './server/db';
@@ -41,6 +41,14 @@ export const listCollection = query(async () => {
 				.from(events)
 				.where(eq(events.sourceId, source.id));
 
+			/*
+			 * "Framover" means not finished yet, which is the rule the listing uses.
+			 *
+			 * On `startsAt` alone a festival that opened yesterday and runs all week counts as
+			 * past, so a source could report 0 framover while /hendingar?kjelde= still listed it.
+			 * The row now gates its link to that listing on this number, so the two definitions
+			 * have to be the same one — see listEvents in events.remote.ts.
+			 */
 			const [upcoming] = await database
 				.select({ total: count() })
 				.from(events)
@@ -48,7 +56,7 @@ export const listCollection = query(async () => {
 					and(
 						eq(events.sourceId, source.id),
 						eq(events.status, 'published'),
-						gte(events.startsAt, now)
+						or(gte(events.startsAt, now), gte(events.endsAt, now))
 					)
 				);
 

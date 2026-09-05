@@ -117,6 +117,36 @@
 				</div>
 			</dl>
 
+			<!--
+				Straight from the numbers to the events they count.
+
+				This is where "vis meg desse" belongs: after the facts about what we hold from this
+				source, before the endpoint and the run strip, which are about the machinery rather
+				than the events. The listing already reads ?kjelde=<slug> for its own chips, so this
+				row is simply a second way into the same view.
+
+				Deliberately without a number. "Hendingar" above counts every row we have ever
+				collected from this source, past ones included; the listing shows what has not
+				finished yet, with cross-source duplicates folded into a single row. Those answer
+				different questions and routinely disagree, and a count on the link would promise
+				that they did not.
+			-->
+			{#if source.eventsUpcoming > 0}
+				<p class="see">
+					<!-- The name is in the link text, not just the row above it, so a screen reader's
+					     list of links does not read as eighteen identical entries. -->
+					<a href="/hendingar?kjelde={encodeURIComponent(source.slug)}">
+						Sjå hendingane frå {source.name} i lista →
+					</a>
+				</p>
+			{:else}
+				<!-- No link when there is nothing to open. `eventsUpcoming` counts this source's own
+				     rows, duplicates included, on the same "not finished yet" rule the listing uses —
+				     so a zero here means the filtered listing really is empty, and a link would only
+				     lead somewhere that says so. -->
+				<p class="see see--none">Ingenting framover frå denne kjelda akkurat no.</p>
+			{/if}
+
 			{#if source.endpoint}
 				<p class="endpoint">
 					<span class="visually-hidden">Endepunkt: </span><code>{source.endpoint}</code>
@@ -257,6 +287,19 @@
 	dd {
 		margin: 0;
 		font-size: 0.9375rem;
+	}
+	/* Selected through the wrapper, never as a bare `a`: a component rule on an element type
+	   outranks brand.css for every such element inside it (CLAUDE.md). */
+	.see {
+		margin: 0;
+		font-family: var(--font-mono);
+		font-size: 0.8125rem;
+	}
+	.see a:hover {
+		color: var(--peach-hi);
+	}
+	.see--none {
+		color: var(--peach-dim);
 	}
 	.endpoint {
 		margin: 0;
