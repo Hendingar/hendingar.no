@@ -13,6 +13,10 @@
 		// The same events, asked the other way round: "what is on that Saturday" rather than "what
 		// is next". Next to Hendingar because they are two views of one list, not two features.
 		{ href: '/kalender', label: 'Kalender' },
+		// A third view of the same list, ordered by what people engaged with rather than by when.
+		// After Kalender because it answers "what is worth going to", which only makes sense once
+		// you know what is on at all.
+		{ href: '/poppis', label: 'Poppis' },
 		// "Datasamling" reads as data collection in the GDPR sense — the wrong question entirely.
 		// "Kjelder" is what the page is actually about. The URL is unchanged so existing links hold.
 		{ href: '/datasamling', label: 'Kjelder' },
