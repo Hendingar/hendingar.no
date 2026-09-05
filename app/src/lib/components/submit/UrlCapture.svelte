@@ -61,7 +61,10 @@
 		message = '';
 		keepUrl = '';
 
-		const result = await extractFromUrl({ url: value }).catch(() => null);
+		// sv-SE renders as YYYY-MM-DD, which is what the schema wants — and the date has to come
+		// from here, because "laurdag 14." on the page resolves against the reader's today.
+		const today = new Date().toLocaleDateString('sv-SE');
+		const result = await extractFromUrl({ url: value, today }).catch(() => null);
 
 		if (!result) {
 			phase = 'error';

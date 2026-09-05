@@ -40,6 +40,24 @@ class ExtractRequest(BaseModel):
     today: str = Field(description="YYYY-MM-DD, local date where the poster was photographed")
 
 
+class ExtractPageRequest(BaseModel):
+    """The readable text of a web page somebody linked to, plus where it came from.
+
+    The fallback for pages that publish no structured data. Where a page carries schema.org — as
+    most Norwegian event sites do — the app reads that itself and never gets here: that is the
+    site's own assertion about its own event, and no model can improve on it.
+
+    Text, not HTML. The markup is stripped before sending, because none of it is the event and all
+    of it is tokens.
+    """
+
+    text: str
+    # The page's address. Given to the model as context only: a path like /arrangement/haustfest
+    # often carries the name, and the host says who is speaking.
+    url: str
+    today: str = Field(description="YYYY-MM-DD, local date of the reader")
+
+
 class ExtractedRecurrence(BaseModel):
     """A stated repetition: "torsdager", "kvar tysdag", "første måndag i månaden".
 
