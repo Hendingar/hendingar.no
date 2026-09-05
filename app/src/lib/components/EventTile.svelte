@@ -71,7 +71,16 @@
 			category and venue into the link's accessible name, and a separate "read more" would
 			give every tile the same meaningless name.
 		-->
-		<h3 class="display display--md tile__t">
+		<!--
+			The name goes on the heading, not on the link inside it.
+
+			A named element forms a stacking context. The link's stretched `::after` is what makes the
+			whole tile clickable, so naming the link would bury that hit area under the heart and the
+			repeat times, both of which are deliberately above it. On the heading the overlay keeps its
+			containing block — a stacking context is not one — and everything with a z-index above 0
+			still paints, and is still clicked, over the top.
+		-->
+		<h3 class="display display--md tile__t vt-morph" style:--vt-name="event-title-{event.id}">
 			<a class="tile__link" href={eventPath(event.id, event.title)}>{event.title}</a>
 		</h3>
 

@@ -119,7 +119,14 @@
 				{categoryLabel(event.category)}
 				{#if event.venueMunicipality}· {event.venueMunicipality}{/if}
 			</p>
-			<h1 class="display ev__h">{event.title}</h1>
+			<!--
+				The other half of the card morph: this heading and the tapped card's title share a
+				`view-transition-name`, so the small title becomes the big one instead of the two
+				cross-fading past each other. Arrive from anywhere else and the name simply matches
+				nothing, which costs one unmatched snapshot and looks exactly like the plain fade it
+				already was.
+			-->
+			<h1 class="display ev__h vt-morph" style:--vt-name="event-title-{event.id}">{event.title}</h1>
 			<!-- Larger here than on a card: this is the page where hearting is a deliberate act
 			     rather than something you tap in passing. -->
 			<p class="ev__heart">
@@ -142,7 +149,8 @@
 						Widest it is ever painted: 832 CSS pixels, 1664 on a 2× screen.
 					-->
 					<img
-						class="ev__poster"
+						class="ev__poster vt-morph vt-morph--poster"
+						style:--vt-name="event-poster-{event.id}"
 						src={event.posterUrl}
 						srcset={event.posterSrcset}
 						sizes={event.posterSrcset

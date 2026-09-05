@@ -160,8 +160,23 @@ resource containerEnv 'Microsoft.App/managedEnvironments@2024-03-01' = {
  * put a Node process in front of every thumbnail for no privacy gained. Writing still requires the
  * managed identity — public means readable, never writable.
  */
+/*
+ * Storage account names are the tightest naming rule in Azure: 3-24 characters, lower-case letters
+ * and digits only. Every other name in this file can spell itself out; this one cannot.
+ *
+ * 'st' + 'hendingar' + 'dev' + a 13-character uniqueString is 27, and the deployment is rejected in
+ * pre-flight with the whole template — so nothing else in this file applies either. That went
+ * unnoticed for a day because an authorization failure on a role assignment was reported first and
+ * validation stopped there.
+ *
+ * `take` rather than a shorter hand-written name, so the rule holds if appName or env ever change.
+ * It trims the tail of the suffix, leaving ten of its thirteen characters here: still far more
+ * uniqueness than one account per environment needs.
+ */
+var postersAccountName = take('st${appName}${env}${suffix}', 24)
+
 resource posters 'Microsoft.Storage/storageAccounts@2023-05-01' = {
-  name: 'st${appName}${env}${suffix}'
+  name: postersAccountName
   location: location
   tags: tags
   sku: {
@@ -196,23 +211,19 @@ resource postersContainer 'Microsoft.Storage/storageAccounts/blobServices/contai
 }
 
 /*
- * The app writes posters as itself.
+ * The app writes posters as itself — but the grant that lets it is NOT declared here.
  *
- * Storage Blob Data Contributor rather than Owner: it needs to add and overwrite blobs in this one
- * container and never to change who may read them.
+ * It used to be, and it took every deploy down with it. The CI principal is Contributor on the
+ * resource group and Contributor cannot write role assignments, so ARM refused the whole template
+ * during pre-flight validation: not one resource in this file was applied, including the storage
+ * account the assignment was scoped to. The site stopped receiving deploys for a day, and the
+ * failure named a permission rather than the rule it broke.
+ *
+ * infra/BOOTSTRAP.md states the rule outright — "No role assignments in the Bicep, deliberately" —
+ * and lists this one, with AcrPull and Cognitive Services OpenAI User, as a one-time operator step
+ * to run after the first deploy has created the container. This comment is here because the rule
+ * lives in a document a person editing this file might not open first.
  */
-resource postersWriter 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  scope: postersContainer
-  name: guid(postersContainer.id, runtimeIdentity.id, 'blob-data-contributor')
-  properties: {
-    roleDefinitionId: subscriptionResourceId(
-      'Microsoft.Authorization/roleDefinitions',
-      'ba92f5b4-2d11-453d-a403-e96b0029c9fe'
-    )
-    principalId: runtimeIdentity.properties.principalId
-    principalType: 'ServicePrincipal'
-  }
-}
 
 // The only place a language model lives. Part of the platform, not the app: it is long-lived and
 // must not be re-applied by an image deploy. See docs/decisions/0006-agentic-verification.md.
