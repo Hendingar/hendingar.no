@@ -449,14 +449,32 @@ await db
 	.onConflictDoNothing({ target: [events.sourceId, events.externalId] });
 
 /*
- * Two human submissions, so /datasamling's submission log is not empty on a machine that has only
- * ever run the seed — the same reason the source metadata is registered here.
+ * Three human submissions, so /datasamling's submission log is not empty on a machine that has
+ * only ever run the seed — the same reason the source metadata is registered here.
  *
- * One pending and one rejected, because those two rows exercise different behaviour: the rejected
- * one has its title withheld on the log, and a seed with only happy rows would never show that.
- * `sourceId` stays null — that is what makes an event a submission rather than an import.
+ * One of each outcome, because all three render differently and a seed missing one hides a whole
+ * behaviour: the rejected row has its title withheld, the pending row is a title with nowhere to
+ * go, and the published row is the only one that is a LINK — to its own page, and to the
+ * `/hendingar?kjelde=innsendt` listing the section points at. With only the first two, the log
+ * looked correct while the thing it exists to celebrate — a submission that went out — could not
+ * be seen at all.
+ *
+ * `sourceId` stays null on every one: that is what makes an event a submission rather than an
+ * import.
  */
 const submissionSeeds = [
+	{
+		title: 'Bygdekino: Kunsten å vere lykkeleg',
+		category: 'anna' as const,
+		startsAt: daysFromNow(6, 19),
+		endsAt: daysFromNow(6, 21),
+		venueId: venue.id,
+		status: 'published' as const,
+		submissionOutcome: 'approved' as const,
+		submissionMethod: 'photo' as const,
+		verificationNotes:
+			'Alle avgjerande sjekkar gjekk gjennom. Ingen kjelde-URL oppgitt, så vi kunne ikkje stadfeste hendinga andre stader. Det åleine stoppar henne ikkje.'
+	},
 	{
 		title: 'Quiz på Kaikanten',
 		category: 'anna' as const,

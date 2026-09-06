@@ -132,10 +132,38 @@ export const listCollection = query(async () => {
 		.from(events)
 		.where(and(sql`${events.sourceId} is null`, eq(events.status, 'pending')));
 
+	/*
+	 * How many submitted events `/hendingar?kjelde=innsendt` actually holds.
+	 *
+	 * Not `submittedCount`, which counts everything ever sent in — including the ones that were
+	 * declined and the ones whose evening has passed. The link is offered only when there is
+	 * something behind it, because that filter degrades badly when there is not: `/hendingar`
+	 * validates `kjelde` against the sources it can offer, and an unknown slug is dropped rather
+	 * than refused, so a link to an empty "innsendt" quietly shows the whole listing instead.
+	 *
+	 * The conditions are `listSourceCounts`'s submitted branch, exactly: published, canonical,
+	 * dated, still to come, no source row, and not an import that happens to lack one.
+	 */
+	const [submittedLive] = await database
+		.select({ total: count() })
+		.from(events)
+		.where(
+			and(
+				eq(events.status, 'published'),
+				sql`${events.duplicateOfId} is null`,
+				eq(events.kind, 'dated'),
+				sql`${events.sourceId} is null`,
+				sql`${events.submissionMethod} <> 'import'`,
+				or(gte(events.startsAt, now), gte(events.endsAt, now))
+			)
+		);
+
 	return {
 		generatedAt: now,
 		sources: collected,
 		submittedCount: submitted?.total ?? 0,
+		/** Published, upcoming, and reachable at `/hendingar?kjelde=innsendt`. */
+		submittedLiveCount: submittedLive?.total ?? 0,
 		pendingCount: pending?.total ?? 0,
 		submissions: submissions.map((row) => ({
 			...row,

@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { formatEventTime } from '@hendingar/core/datetime';
+	import { eventPath } from '@hendingar/core/slug';
 	import { WITHHELD_TITLE } from '@hendingar/core/verification';
 	import type { SubmissionLogRow } from '../../collection.remote';
 
@@ -48,7 +49,24 @@
 					<span class="entry__title">
 						<!-- Rejected submissions are retained as evidence but their text is withheld:
 						     republishing what we judged to be spam would defeat rejecting it. -->
-						{row.title ?? WITHHELD_TITLE}
+						{#if row.status === 'published' && row.title}
+							<!--
+								The row says an event went out; this is how you go and look at it.
+
+								Only for `published`, because only a published event has a page —
+								`getEvent` filters on it, so a link on a pending or rejected row would
+								be a 404 offered by us. Those two stay plain text, which is also the
+								honest rendering: there is nothing to see yet, or nothing to see.
+
+								A stretched overlay makes the whole row tappable while the accessible
+								name stays the title alone. The same idiom as `EventTile`, including
+								the reason: wrapping the row would fold the timestamp, the method and
+								the verdict into the link's name on every one of them.
+							-->
+							<a class="entry__link" href={eventPath(row.id, row.title)}>{row.title}</a>
+						{:else}
+							{row.title ?? WITHHELD_TITLE}
+						{/if}
 					</span>
 					{#if row.notes}
 						<span class="entry__notes">{row.notes}</span>
@@ -68,12 +86,50 @@
 		padding: 0;
 	}
 	.entry {
+		position: relative;
 		display: grid;
 		grid-template-columns: auto minmax(0, 1fr) auto auto;
 		align-items: baseline;
 		gap: 0.6rem 0.9rem;
 		padding: 0.75rem 0.25rem;
 		border-block-end: var(--rule) solid var(--peach-line);
+	}
+	/*
+	 * The whole row is the target, not the four words of the title.
+	 *
+	 * `::after` stretched over the positioned row, which is what makes a 44px-tall row tappable on
+	 * a phone without wrapping anything else in the link. The row lifts on hover rather than
+	 * underlining the title: this is a log, and a list of underlined lines reads as a menu.
+	 */
+	.entry:has(.entry__link) {
+		transition: background var(--dur-fast) ease;
+	}
+	.entry:hover:has(.entry__link) {
+		background: var(--peach-ghost);
+	}
+	.entry__link {
+		color: inherit;
+		text-decoration: none;
+	}
+	.entry__link::after {
+		content: '';
+		position: absolute;
+		inset: 0;
+	}
+	.entry:hover .entry__link {
+		color: var(--peach-hi);
+	}
+	.entry:has(.entry__link:focus-visible) {
+		outline: 2px solid var(--peach);
+		outline-offset: 2px;
+	}
+	.entry__link:focus-visible {
+		outline: none;
+	}
+	@media (prefers-reduced-motion: reduce) {
+		.entry:has(.entry__link) {
+			transition: none;
+		}
 	}
 	.entry__when,
 	.entry__method {
