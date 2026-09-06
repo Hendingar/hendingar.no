@@ -3,6 +3,8 @@ import {
 	DATE_LOCALE,
 	DEFAULT_TIME_ZONE,
 	formatEventTime,
+	formatWeekendRange,
+	weekendDates,
 	schemaDateTime,
 	formatTimeDigits,
 	formatCalendarDate,
@@ -357,5 +359,72 @@ describe('schemaDateTime', () => {
 	it('leaves machineDateTime as the instant, for <time> and iCal', () => {
 		const instant = new Date('2026-09-12T18:00:00Z');
 		expect(machineDateTime(instant)).toBe('2026-09-12T18:00:00.000Z');
+	});
+});
+
+describe('weekendDates', () => {
+	/*
+	 * 2026-09-11 is a Friday. The whole rule is one line, and these are the two halves of the
+	 * ambiguity it resolves.
+	 */
+	it('steps forward to the coming Friday from Monday to Thursday', () => {
+		for (const weekday of ['2026-09-07', '2026-09-08', '2026-09-09', '2026-09-10']) {
+			expect(weekendDates(weekday), weekday).toEqual(['2026-09-11', '2026-09-12', '2026-09-13']);
+		}
+	});
+
+	it('stays in the weekend we are standing in', () => {
+		/*
+		 * The decision worth testing. On a Saturday "neste helg" arguably means the weekend after
+		 * this one — but hiding tonight's concerts from somebody who opened the page on Saturday
+		 * afternoon would answer a grammar question instead of theirs.
+		 */
+		for (const inWeekend of ['2026-09-11', '2026-09-12', '2026-09-13']) {
+			expect(weekendDates(inWeekend), inWeekend).toEqual([
+				'2026-09-11',
+				'2026-09-12',
+				'2026-09-13'
+			]);
+		}
+	});
+
+	it('moves on the moment the weekend is over', () => {
+		// Monday. The previous weekend is done and must not be what the tab offers.
+		expect(weekendDates('2026-09-14')).toEqual(['2026-09-18', '2026-09-19', '2026-09-20']);
+	});
+
+	it('crosses a month and a year without special-casing either', () => {
+		expect(weekendDates('2026-10-29')).toEqual(['2026-10-30', '2026-10-31', '2026-11-01']);
+		expect(weekendDates('2026-12-31')).toEqual(['2027-01-01', '2027-01-02', '2027-01-03']);
+	});
+
+	it('always returns exactly Friday, Saturday and Sunday', () => {
+		// Every day of a year, because an off-by-one here shows up as a tab that quietly lists
+		// Thursday for one week in seven.
+		let date = '2026-01-01';
+		for (let i = 0; i < 366; i += 1) {
+			const dates = weekendDates(date);
+			expect(dates.map(weekdayIndex), date).toEqual([4, 5, 6]);
+			date = addDays(date, 1);
+		}
+	});
+});
+
+describe('formatWeekendRange', () => {
+	it('writes the month once when both days share it', () => {
+		expect(formatWeekendRange(['2026-09-11', '2026-09-12', '2026-09-13'])).toBe(
+			'fredag 11. – sundag 13. september'
+		);
+	});
+
+	it('writes both months when the weekend crosses one', () => {
+		// "fredag 30. – sundag 1. november" would be wrong about the Friday.
+		expect(formatWeekendRange(['2026-10-30', '2026-10-31', '2026-11-01'])).toBe(
+			'fredag 30. oktober – sundag 1. november'
+		);
+	});
+
+	it('says nothing rather than something broken', () => {
+		expect(formatWeekendRange([])).toBe('');
 	});
 });

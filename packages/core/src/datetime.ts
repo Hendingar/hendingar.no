@@ -134,6 +134,76 @@ export function weekdayIndex(localDate: string): number {
 }
 
 /**
+ * The weekend a reader means when they say "neste helg", as three calendar dates.
+ *
+ * Friday, Saturday, Sunday. The rule is one line and covers both halves of the ambiguity:
+ * `4 - weekdayIndex` is positive Monday to Thursday, so it steps forward to the coming Friday, and
+ * zero or negative Friday to Sunday, so it steps *back* to the Friday of the weekend we are
+ * already in.
+ *
+ * That second half is the decision worth stating. On a Saturday, "neste helg" in Norwegian
+ * arguably means the *following* weekend — but a listing that hid tonight's concerts from somebody
+ * opening the page on Saturday afternoon would be answering a grammar question instead of the one
+ * they asked. So the tab always shows the nearest weekend, and the page prints its dates rather
+ * than leaving anybody to work out which one it meant.
+ *
+ * Pure, and takes today rather than reading a clock: which weekend it is depends on the reader's
+ * date at the venue, and a function that fetched that itself could not be tested.
+ */
+export function weekendDates(todayLocalDate: string): string[] {
+	const friday = addDays(todayLocalDate, 4 - weekdayIndex(todayLocalDate));
+	return [friday, addDays(friday, 1), addDays(friday, 2)];
+}
+
+/**
+ * The part of that weekend a reader can still do something about.
+ *
+ * `weekendDates` alone put Friday's finished concerts in front of somebody opening the page on
+ * Sunday, which is not what a tab called "neste helg" is for. Dropping the days that have gone
+ * leaves three dates on a Friday, two on a Saturday, one on a Sunday — and on Monday the weekend
+ * has rolled over, so it is three again.
+ *
+ * String comparison is date comparison for `YYYY-MM-DD`, which is the one thing that format is
+ * for, and it keeps this free of a clock.
+ */
+export function weekendAhead(todayLocalDate: string): string[] {
+	return weekendDates(todayLocalDate).filter((date) => date >= todayLocalDate);
+}
+
+/**
+ * "fre. 12. – sun. 14. september", or with both months when the weekend straddles one.
+ *
+ * Spelled out under the heading so "Neste helg" is never a guess. Nynorsk month names from the
+ * table above rather than Intl, which only speaks Bokmål here.
+ */
+export function formatWeekendRange(dates: readonly string[]): string {
+	const first = dates[0];
+	const last = dates[dates.length - 1];
+	if (!first || !last) return '';
+
+	const [, firstMonth, firstDay] = first.split('-').map(Number);
+	const [, lastMonth, lastDay] = last.split('-').map(Number);
+	if (firstMonth === undefined || lastMonth === undefined) return '';
+
+	const firstName = MONTH_NAMES[firstMonth - 1] ?? '';
+	const lastName = MONTH_NAMES[lastMonth - 1] ?? '';
+
+	// Full weekday names, not the two-letter forms: those exist because seven of them have to fit
+	// a 320px grid header, and this is a subheading with room to be read.
+	const from = `${WEEKDAY_NAMES[weekdayIndex(first)]} ${firstDay}.`;
+	const to = `${WEEKDAY_NAMES[weekdayIndex(last)]} ${lastDay}.`;
+
+	// One day left — a Sunday — reads as a day, not as a range from itself to itself.
+	if (first === last) return `${from} ${firstName}`;
+
+	// The month is written once when both days share one, and twice when the weekend crosses one —
+	// "fredag 30. – sundag 1. november" would be wrong about the Friday.
+	return firstMonth === lastMonth
+		? `${from} – ${to} ${firstName}`
+		: `${from} ${firstName} – ${to} ${lastName}`;
+}
+
+/**
  * A calendar date spelled out in full: "Laurdag 12. september 2026".
  *
  * The year is included because this is used where a date stands alone — a page title, a heading on

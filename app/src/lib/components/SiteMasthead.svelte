@@ -10,6 +10,16 @@
 	 */
 	const links = [
 		{ href: '/hendingar', label: 'Hendingar' },
+		/*
+		 * First after the full list, because it is the question this site is asked most often and
+		 * the one it was worst at answering: "what is on this weekend" previously meant opening the
+		 * calendar, working out which squares were the weekend, and visiting three day pages.
+		 *
+		 * A tab rather than a filter on /hendingar. A filter would have to be a URL to be
+		 * shareable, and a URL that answers a different question every Monday is not a filter — it
+		 * is a page.
+		 */
+		{ href: '/neste-helg', label: 'Neste helg' },
 		// The same events, asked the other way round: "what is on that Saturday" rather than "what
 		// is next". Next to Hendingar because they are two views of one list, not two features.
 		{ href: '/kalender', label: 'Kalender' },

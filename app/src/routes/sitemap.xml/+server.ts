@@ -65,6 +65,9 @@ export const GET: RequestHandler = async ({ url }) => {
 	const paths = [
 		'/',
 		'/hendingar',
+		// Its content changes every week, which is a reason to list it rather than not: a crawler
+		// that returns finds a different page, which is exactly what a listing should look like.
+		'/neste-helg',
 		'/kalender',
 		'/datasamling',
 		'/send-inn',
