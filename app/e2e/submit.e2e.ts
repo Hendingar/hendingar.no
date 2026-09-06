@@ -137,51 +137,31 @@ test('a complete submission returns a verdict with reasoning for every check', a
 	// It names the queue, not a person: there is no manual review any more, and the sender's route
 	// forward is /kø rather than waiting.
 	await expect(verdict.locator('.check__reasoning')).toContainText(/køen din/i);
-});
 
-/**
- * The answer takes the page instead of sitting on top of the form.
- *
- * The verdict used to render above the ways in with all fourteen fields still below it, so the
- * layout never said "this is the answer to what you just did" — and the form you had already
- * submitted competed with the checks explaining why it was refused.
- */
-test('the verdict replaces the form rather than stacking on top of it', async ({ page }) => {
-	await page.goto('/send-inn');
-	await expect(page.locator('form.form')).toBeVisible();
-	await page.locator('#title').fill('E2E svaret tek sida');
-	await page.locator('#category').selectOption('anna');
-	await page.locator('#date').fill('2027-04-02');
-	await page.locator('#startTime').fill('18:00');
-	await page.locator('#venueName').fill('Vinsen');
-	await page.getByRole('button', { name: /Send inn hendinga/ }).click();
-
-	await expect(page.locator('.verdict')).toBeVisible();
+	/*
+	 * The answer takes the page instead of sitting on top of the form.
+	 *
+	 * The verdict used to render above the ways in with all fourteen fields still below it, so the
+	 * layout never said "this is the answer to what you just did" — and the form you had already
+	 * submitted competed with the checks explaining why it was refused.
+	 */
 	await expect(page.locator('form.form')).toHaveCount(0);
 	await expect(page.locator('.ways')).toHaveCount(0);
-});
 
-/**
- * A check that did not pass is marked, not merely listed.
- *
- * All five stay in order — showing only the problems would teach people the system is a gate
- * rather than five stated questions — but nothing distinguished them, so finding the reason meant
- * reading every paragraph. The rule is the marker, so the computed border is what this asserts.
- */
-test('a check that stopped the submission is marked out from the ones that passed', async ({
-	page
-}) => {
-	await page.goto('/send-inn');
-	await page.locator('#title').fill('E2E merkt kontroll');
-	await page.locator('#category').selectOption('anna');
-	await page.locator('#date').fill('2027-04-03');
-	await page.locator('#startTime').fill('18:00');
-	await page.locator('#venueName').fill('Vinsen');
-	await page.getByRole('button', { name: /Send inn hendinga/ }).click();
-
-	const check = page.locator('.check').first();
-	await expect(check).toBeVisible();
-	// With no verifier reachable this check cannot pass, which is the case worth marking.
+	/*
+	 * A check that did not pass is marked, not merely listed.
+	 *
+	 * All five stay in order — showing only the problems would teach people the system is a gate
+	 * rather than five stated questions — but nothing distinguished them, so finding the reason
+	 * meant reading every paragraph. The rule is the marker, so the computed border is what this
+	 * asserts.
+	 *
+	 * Both of these are asserted on the submission this test already makes, rather than in tests
+	 * of their own. Every extra submitting spec is another round trip through verification and the
+	 * duplicate check, and this suite already loses specs to that on a loaded runner — main itself
+	 * failed `submit:166` and `hearts:88` that way today.
+	 */
+	const check = verdict.locator('.check').first();
 	await expect(check).not.toHaveAttribute('data-verdict', 'pass');
 	const border = await check.evaluate(
 		(el) => getComputedStyle(el).borderInlineStartColor || getComputedStyle(el).borderLeftColor
