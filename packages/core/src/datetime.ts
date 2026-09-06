@@ -171,6 +171,24 @@ export function weekendAhead(todayLocalDate: string): string[] {
 }
 
 /**
+ * The weekend AFTER the nearest one — what "neste helg" means once "denne helga" is also on offer.
+ *
+ * Seven days on from `weekendDates`, and that is the whole rule. It needs no `...Ahead` companion:
+ * every one of its three days is in the future from any day of the week, so there is nothing to
+ * filter out and the page always shows three.
+ *
+ * This is the other half of the ambiguity `weekendDates` documents. On its own, a single weekend
+ * tab had to choose, and it chose the nearest one so that somebody opening the site on a Saturday
+ * afternoon still saw that evening's concerts. With both weekends addressable the choice
+ * disappears: "denne helga" is the one you are standing in or walking into, "neste helg" is the one
+ * after it, and neither has to stand for the other. That is why the pair is worth more than the
+ * sum — not because a reader needed two pages, but because two pages let each be named honestly.
+ */
+export function nextWeekendDates(todayLocalDate: string): string[] {
+	return weekendDates(todayLocalDate).map((date) => addDays(date, 7));
+}
+
+/**
  * "fre. 12. – sun. 14. september", or with both months when the weekend straddles one.
  *
  * Spelled out under the heading so "Neste helg" is never a guess. Nynorsk month names from the

@@ -25,7 +25,17 @@
 	const ways = $derived([
 		{ href: `/kalender/${counts.today}`, label: 'I dag', n: counts.todayCount },
 		{ href: `/kalender/${counts.tomorrow}`, label: 'I morgon', n: counts.tomorrowCount },
-		{ href: '/neste-helg', label: 'Neste helg', n: counts.weekendCount },
+		/*
+		 * Both weekends, because they answer different questions.
+		 *
+		 * "Denne helga" is what is on now — on a Friday or Saturday it is tonight. "Neste helg" is
+		 * what to plan for, and a week out it is the one people are actually deciding about. A
+		 * single weekend tab had to stand for both and could only ever be right about one; the pair
+		 * lets each be named honestly, and they can never claim the same event (a unit test walks a
+		 * year asserting the two date sets never overlap).
+		 */
+		{ href: '/denne-helga', label: 'Denne helga', n: counts.weekendCount },
+		{ href: '/neste-helg', label: 'Neste helg', n: counts.nextWeekendCount },
 		{ href: '/hendingar', label: 'Alt framover', n: counts.upcomingCount }
 	]);
 </script>
@@ -64,9 +74,24 @@
 		padding: 0;
 		border-block-start: var(--rule) solid var(--peach-line);
 	}
-	@media (width >= 60rem) {
+	/*
+	 * Five in two columns leaves the last one alone on its row, so it takes the whole row instead
+	 * of sitting beside a hole. "Alt framover" is the right one to widen: it is the catch-all, and
+	 * a full-width row reads as the end of the ladder rather than as a widow.
+	 */
+	.ways li:last-child {
+		grid-column: 1 / -1;
+	}
+	/*
+	 * Five across only once there is genuinely room. At 60rem five columns are 192px each and
+	 * "Alt framover" starts breaking; 64rem gives every label its own line.
+	 */
+	@media (width >= 64rem) {
 		.ways ul {
-			grid-template-columns: repeat(4, minmax(0, 1fr));
+			grid-template-columns: repeat(5, minmax(0, 1fr));
+		}
+		.ways li:last-child {
+			grid-column: auto;
 		}
 	}
 
@@ -78,7 +103,12 @@
 	.ways__a {
 		display: flex;
 		flex-direction: column;
-		justify-content: center;
+		/*
+		 * Bottom-aligned, not centred, so the five counts sit on one line whatever the labels do.
+		 * "Alt framover" is the longest and wraps to two lines at some widths; centred, that pushed
+		 * its count a line lower than the other four and the row stopped reading as a row.
+		 */
+		justify-content: flex-end;
 		gap: 0.5rem;
 		/* Comfortably past the 44px floor — this is the row the page is built to have pressed. */
 		min-block-size: 4.75rem;
@@ -101,7 +131,7 @@
 	.ways li:nth-child(odd) .ways__a {
 		border-inline-start: 0;
 	}
-	@media (width >= 60rem) {
+	@media (width >= 64rem) {
 		.ways li:nth-child(odd) .ways__a {
 			border-inline-start: var(--rule) solid var(--peach-line);
 		}
@@ -119,7 +149,9 @@
 		font-family: var(--font-display);
 		font-weight: 800;
 		font-stretch: 108%;
-		font-size: clamp(1.15rem, 2.4vw, 1.45rem);
+		/* Capped at 1.3rem rather than 1.45: five columns is a narrower cell than four was, and the
+		   longest label has to fit one of them without breaking. */
+		font-size: clamp(1.1rem, 2.2vw, 1.3rem);
 		line-height: 1;
 		letter-spacing: -0.01em;
 		text-transform: uppercase;

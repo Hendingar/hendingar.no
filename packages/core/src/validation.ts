@@ -166,6 +166,20 @@ export const calendarWeekSchema = z
 	.refine(isIsoWeek, 'must be a real ISO week on the form YYYY-Www');
 
 /**
+ * Which of the two weekend pages is asking — `/denne-helga` or `/neste-helg`.
+ *
+ * A named weekend rather than a date, deliberately. `2026-09-18` would be a third way to address
+ * days that `/kalender/<dato>` already addresses, and it would let anyone ask for an arbitrary
+ * three-day window through a page that promises a weekend. These two names are facts about today,
+ * which is exactly what makes each of them a page rather than a filter.
+ *
+ * Defaulted, so the query keeps answering the question it answered before this pair existed.
+ */
+export const weekendSchema = z.enum(['denne', 'neste']).default('denne');
+
+export type WeekendChoice = z.infer<typeof weekendSchema>;
+
+/**
  * A run of consecutive months, `{ from, to }` inclusive — what the stacked calendar asks for.
  *
  * The bound is the point. A remote query is a public endpoint, and the calendar reads two columns

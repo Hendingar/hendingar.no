@@ -232,6 +232,48 @@ body {
 	border-color: var(--navy-900);
 }
 
+/*
+ * Tabs: two or three real links that switch between views of one question.
+ *
+ * A primitive, not a page detail. `/poppis` uses it for its two orderings and the weekend pages
+ * for `denne-helga` / `neste-helg`, and it landed here the second time exactly as CLAUDE.md warns
+ * it would — scoped inside one route's `<style>`, the next writer could not see it and wrote a
+ * second copy with slightly different tracking and padding.
+ *
+ * A joined strip: adjacent tabs share one hairline rather than drawing two side by side. `.tab +
+ * .tab` is the whole trick, and it is why these are markup siblings with no gap between them.
+ */
+.tab {
+	font-family: var(--font-mono);
+	font-size: var(--step-micro);
+	font-weight: 700;
+	letter-spacing: 0.18em;
+	text-transform: uppercase;
+	text-decoration: none;
+	/* 0.9em block padding clears the 44px target at the 12px micro step. */
+	padding: 0.9em 1.4em;
+	color: var(--peach-dim);
+	border: var(--rule) solid var(--peach-line);
+	transition:
+		color var(--dur-fast) ease,
+		border-color var(--dur-fast) ease;
+}
+
+.tab + .tab {
+	border-inline-start: 0;
+}
+
+.tab:hover {
+	color: var(--peach-hi);
+}
+
+/* The one you are on. Never colour alone — every caller also sets `aria-current="page"`. */
+.tab--on {
+	color: var(--navy-900);
+	background: var(--peach);
+	border-color: var(--peach);
+}
+
 /* Shared by the "does not" fineprint and the importer note. */
 .fineprint {
 	margin-block-start: 1.5rem;

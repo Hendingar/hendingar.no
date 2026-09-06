@@ -65,26 +65,4 @@
 		gap: 0;
 		margin-block-start: 0.9rem;
 	}
-	.tab {
-		font-family: var(--font-mono);
-		font-size: var(--step-micro);
-		font-weight: 700;
-		letter-spacing: 0.18em;
-		text-transform: uppercase;
-		padding: 0.9em 1.4em;
-		color: var(--peach-dim);
-		text-decoration: none;
-		border: var(--rule) solid var(--peach-line);
-	}
-	.tab + .tab {
-		border-inline-start: 0;
-	}
-	.tab:hover {
-		color: var(--peach-hi);
-	}
-	.tab--on {
-		color: var(--navy-900);
-		background: var(--peach);
-		border-color: var(--peach);
-	}
 </style>

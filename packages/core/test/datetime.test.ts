@@ -5,6 +5,8 @@ import {
 	formatEventTime,
 	formatStartsIn,
 	formatWeekendRange,
+	nextWeekendDates,
+	weekendAhead,
 	STARTS_IN_HORIZON_MINUTES,
 	weekendDates,
 	schemaDateTime,
@@ -428,6 +430,55 @@ describe('formatWeekendRange', () => {
 
 	it('says nothing rather than something broken', () => {
 		expect(formatWeekendRange([])).toBe('');
+	});
+});
+
+describe('nextWeekendDates', () => {
+	it('is the weekend after the nearest one', () => {
+		// 2026-09-11 is a Friday. From any day of that week, "denne helga" is the 11th–13th and
+		// "neste helg" is the 18th–20th.
+		for (const day of ['2026-09-07', '2026-09-10', '2026-09-11', '2026-09-13']) {
+			expect(nextWeekendDates(day), day).toEqual(['2026-09-18', '2026-09-19', '2026-09-20']);
+		}
+	});
+
+	it('never overlaps the weekend on offer beside it', () => {
+		/*
+		 * The pair is the whole point: two tabs that showed any of the same days would be two names
+		 * for one answer. Walked across a year because the overlap, if it existed, would appear on
+		 * one weekday in seven and be invisible the rest of the time.
+		 */
+		let date = '2026-01-01';
+		for (let i = 0; i < 366; i += 1) {
+			const thisWeekend = weekendAhead(date);
+			const next = nextWeekendDates(date);
+			expect(
+				next.filter((d) => thisWeekend.includes(d)),
+				date
+			).toEqual([]);
+			// And it is strictly later, not merely different.
+			expect(next[0]! > thisWeekend[thisWeekend.length - 1]!, date).toBe(true);
+			date = addDays(date, 1);
+		}
+	});
+
+	it('always returns exactly Friday, Saturday and Sunday, all three still to come', () => {
+		let date = '2026-01-01';
+		for (let i = 0; i < 366; i += 1) {
+			const dates = nextWeekendDates(date);
+			expect(dates.map(weekdayIndex), date).toEqual([4, 5, 6]);
+			// Unlike weekendAhead there is nothing to filter: a week out, every day is ahead.
+			expect(
+				dates.every((d) => d > date),
+				date
+			).toBe(true);
+			date = addDays(date, 1);
+		}
+	});
+
+	it('crosses a month and a year without special-casing either', () => {
+		expect(nextWeekendDates('2026-10-29')).toEqual(['2026-11-06', '2026-11-07', '2026-11-08']);
+		expect(nextWeekendDates('2026-12-24')).toEqual(['2027-01-01', '2027-01-02', '2027-01-03']);
 	});
 });
 

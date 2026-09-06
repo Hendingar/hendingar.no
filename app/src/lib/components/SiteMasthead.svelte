@@ -19,7 +19,10 @@
 		 * shareable, and a URL that answers a different question every Monday is not a filter — it
 		 * is a page.
 		 */
-		{ href: '/neste-helg', label: 'Neste helg' },
+		// One weekend entry, not two. The pair lives as tabs on the weekend pages themselves and as
+		// two of the five ways in on the front page; a seventh nav item would spend the masthead's
+		// width saying "helg" twice. This is the one people ask for — what is on now.
+		{ href: '/denne-helga', label: 'Denne helga' },
 		// The same events, asked the other way round: "what is on that Saturday" rather than "what
 		// is next". Next to Hendingar because they are two views of one list, not two features.
 		{ href: '/kalender', label: 'Kalender' },
