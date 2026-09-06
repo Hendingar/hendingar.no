@@ -11,7 +11,9 @@ import {
 	timestamp,
 	uniqueIndex
 } from 'drizzle-orm/pg-core';
+import { sql } from 'drizzle-orm';
 import { CATEGORY_SLUGS } from './taxonomy.ts';
+import { STANDING_SPAN_DAYS, type EventKind } from './standing.ts';
 import { RECURRENCE_FREQUENCIES } from './recurrence.ts';
 import { VERIFICATION_CHECKS, VERIFICATION_VERDICTS } from './verification.ts';
 
@@ -375,11 +377,38 @@ export const events = pgTable(
 		 */
 		reviewedAt: timestamp('reviewed_at', { withTimezone: true }),
 
+		/**
+		 * An appointment, or a place that is simply open.
+		 *
+		 * GENERATED, not written by anyone. Fifteen importers build their own `values` object, and a
+		 * column each of them had to remember to set is a column the sixteenth would forget — the
+		 * row would default to `dated` and land back in the middle of the day list, which is the
+		 * exact failure this exists to end. Derived from the two columns it depends on, it cannot
+		 * be set wrong and cannot drift from the data.
+		 *
+		 * The threshold is interpolated from `STANDING_SPAN_DAYS` so the rule has one home in
+		 * TypeScript, testable by `classifyEventKind`, rather than a number buried in a migration.
+		 * See src/standing.ts and docs/decisions/0013-standing-offers.md.
+		 */
+		kind: text('kind')
+			.notNull()
+			.generatedAlwaysAs(
+				sql.raw(
+					`case when ends_at is not null and ends_at - starts_at >= interval '${STANDING_SPAN_DAYS} days' then 'standing' else 'dated' end`
+				)
+			)
+			.$type<EventKind>(),
 		createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 		updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow()
 	},
 	(t) => [
 		uniqueIndex('events_source_external_idx').on(t.sourceId, t.externalId),
+		/*
+		 * Every listing filters on this now, so it belongs in the index the listings already use
+		 * rather than as a separate scan. Leading with `kind` because it has two values and the
+		 * queries always pin it to one.
+		 */
+		index('events_kind_starts_at_idx').on(t.kind, t.startsAt),
 		// Makes materialising idempotent: topping up a series can never double-write a day.
 		uniqueIndex('events_series_starts_at_idx').on(t.seriesId, t.startsAt),
 		index('events_starts_at_idx').on(t.startsAt),

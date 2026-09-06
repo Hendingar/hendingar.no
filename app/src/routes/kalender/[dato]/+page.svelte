@@ -4,6 +4,7 @@
 	import { formatCalendarDate, formatMonthName, isCalendarDate } from '@hendingar/core/datetime';
 	import { eventPath } from '@hendingar/core/slug';
 	import EventGrid from '../../../lib/components/EventGrid.svelte';
+	import AlsoOpen from '../../../lib/components/AlsoOpen.svelte';
 	import PageMeta from '../../../lib/components/PageMeta.svelte';
 	import { canonicalUrl } from '../../../lib/origin.ts';
 	import { breadcrumbJsonLd, itemListJsonLd, jsonLdScript } from '../../../lib/jsonld.ts';
@@ -85,6 +86,7 @@
 		<!-- EventGrid, not a new card: the same tiles as the front page and /hendingar, so a day
 		     looks like the site rather than like a second product. -->
 		<EventGrid {events} {hearts} />
+		<AlsoOpen />
 	{:else}
 		<p class="day-page__empty">Ingen hendingar denne dagen — enno.</p>
 		<p class="day-page__note">

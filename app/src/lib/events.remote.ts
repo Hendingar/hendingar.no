@@ -59,6 +59,21 @@ import { withStartsIn } from './starts-in.ts';
  * same unfiltered data.
  */
 
+/**
+ * Only the rows that belong under a date.
+ *
+ * Every listing and every count in this file sorts or groups by `starts_at`, and a standing offer
+ * has no meaningful one — "Sunnhordland Escape" runs 2023 to 2027, so `greatest(starts_at, now())`
+ * filed it under TODAY, every day, for five years, above the concerts.
+ *
+ * `events.kind` is a generated column, so this cannot go stale and no importer can forget to set
+ * it. The standing rows are not lost: `standingOffers` below serves them, and `getEvent` still
+ * finds one by id so its own page and any link to it keep working.
+ *
+ * See packages/core/src/standing.ts and docs/decisions/0013-standing-offers.md.
+ */
+const datedOnly = eq(events.kind, 'dated');
+
 /** One source's mark on a tile. Its name is the tooltip; the icon is what a reader recognises. */
 export type SourceMark = { name: string; iconUrl: string | null };
 
@@ -144,6 +159,7 @@ export const listEvents = query(
 					 * evening twice under two spellings.
 					 */
 					isNull(events.duplicateOfId),
+					datedOnly,
 					// An event that has started but not ended is still happening, and must stay
 					// visible. Filtering on startsAt alone hid a three-hour concert for its whole
 					// duration, and a weekend festival for the entire weekend.
@@ -210,6 +226,7 @@ export const listSourceCounts = query(async () => {
 			and(
 				eq(events.status, 'published'),
 				isNull(events.duplicateOfId),
+				datedOnly,
 				or(gte(events.startsAt, now), gte(events.endsAt, now))
 			)
 		)
@@ -229,6 +246,7 @@ export const listSourceCounts = query(async () => {
 			and(
 				eq(events.status, 'published'),
 				isNull(events.duplicateOfId),
+				datedOnly,
 				isNull(events.sourceId),
 				ne(events.submissionMethod, 'import'),
 				or(gte(events.startsAt, now), gte(events.endsAt, now))
@@ -268,6 +286,7 @@ export const siteStatus = query(async () => {
 			and(
 				eq(events.status, 'published'),
 				isNull(events.duplicateOfId),
+				datedOnly,
 				or(gte(events.startsAt, now), gte(events.endsAt, now))
 			)
 		);
@@ -284,6 +303,26 @@ export const siteStatus = query(async () => {
 		.from(sources)
 		.where(eq(sources.kind, 'link'));
 
+	/*
+	 * Counted separately, and named separately on the page.
+	 *
+	 * `upcomingCount` above says "hendingar framover" and must mean it — a five-year span sitting
+	 * inside that number would make the site's headline figure quietly untrue. But they are still
+	 * collected and still ours, so leaving them out of the coverage line entirely would understate
+	 * what the index holds. Two numbers, each saying what it is.
+	 */
+	const [standing] = await database
+		.select({ total: count() })
+		.from(events)
+		.where(
+			and(
+				eq(events.status, 'published'),
+				isNull(events.duplicateOfId),
+				eq(events.kind, 'standing'),
+				gte(events.endsAt, now)
+			)
+		);
+
 	const lastCollectedAt = collected.reduce<Date | null>(
 		(latest, s) => (s.lastRunAt && (!latest || s.lastRunAt > latest) ? s.lastRunAt : latest),
 		null
@@ -294,6 +333,8 @@ export const siteStatus = query(async () => {
 		sourceCount: collected.length,
 		linkedCount: linked?.total ?? 0,
 		upcomingCount: upcoming?.total ?? 0,
+		/** Places that are open rather than events that happen — see `standingOffers`. */
+		standingCount: standing?.total ?? 0,
 		regions: [...new Set(collected.map((s) => s.region))].sort(),
 		lastCollectedAt
 	};
@@ -315,6 +356,7 @@ export const listCategoryCounts = query(async () => {
 			and(
 				eq(events.status, 'published'),
 				isNull(events.duplicateOfId),
+				datedOnly,
 				or(gte(events.startsAt, now), gte(events.endsAt, now))
 			)
 		)
@@ -369,6 +411,7 @@ export const waysInCounts = query(async () => {
 			and(
 				eq(events.status, 'published'),
 				isNull(events.duplicateOfId),
+				datedOnly,
 				or(gte(events.startsAt, now), gte(events.endsAt, now))
 			)
 		)
@@ -404,6 +447,49 @@ export const waysInCounts = query(async () => {
 		upcomingCount: rows.reduce((n, row) => n + row.total, 0)
 	};
 });
+
+/**
+ * The places that are simply open — museums, galleries, a swimming hall, an escape room.
+ *
+ * Everything the listings above exclude, which is the point: these have no meaningful start time,
+ * so they cannot be sorted into a day without claiming one. They are not a lesser kind of row, they
+ * are a different question — "what can I do" rather than "what is on tonight".
+ *
+ * Ordered by title. Not by `starts_at`, which for these is an arbitrary date years in the past, and
+ * not by how long they run, which means nothing to a reader. Alphabetical is the only order that
+ * does not imply a ranking nobody intended.
+ *
+ * No date filter beyond "not finished": a standing offer that has genuinely closed should drop off,
+ * and `ends_at >= now()` is what says so.
+ */
+export const standingOffers = query(async () => {
+	return db()
+		.select({
+			id: events.id,
+			title: events.title,
+			category: events.category,
+			startsAt: events.startsAt,
+			endsAt: events.endsAt,
+			venueName: venues.name,
+			municipality: venues.municipality,
+			posterUrl: events.posterUrl,
+			posterSrcset: events.posterSrcset,
+			sourceMarks: sourceMarksFor(events.id).as('source_marks')
+		})
+		.from(events)
+		.leftJoin(venues, eq(events.venueId, venues.id))
+		.where(
+			and(
+				eq(events.status, 'published'),
+				isNull(events.duplicateOfId),
+				eq(events.kind, 'standing'),
+				gte(events.endsAt, new Date())
+			)
+		)
+		.orderBy(asc(events.title));
+});
+
+export type StandingOffer = Awaited<ReturnType<typeof standingOffers>>[number];
 
 /** The row shape callers get, derived from the query rather than hand-written. */
 export type EventSummary = Awaited<ReturnType<typeof listEvents>>[number];
@@ -455,6 +541,7 @@ export const listUpcoming = query(z.number().int().min(1).max(60).default(24), a
 				eq(events.status, 'published'),
 				// One row per event — see listEvents.
 				isNull(events.duplicateOfId),
+				datedOnly,
 				// Still-running events belong to today.
 				or(gte(events.startsAt, new Date()), gte(events.endsAt, new Date()))
 			)
@@ -536,6 +623,7 @@ export const listPopular = query(
 				and(
 					eq(events.status, 'published'),
 					isNull(events.duplicateOfId),
+					datedOnly,
 					or(gte(events.startsAt, now), gte(events.endsAt, now))
 				)
 			)
@@ -606,7 +694,7 @@ export const calendarRange = query(async () => {
 	const [row] = await db()
 		.select({ earliest: min(events.startsAt), latest: max(events.startsAt) })
 		.from(events)
-		.where(and(eq(events.status, 'published'), isNull(events.duplicateOfId)));
+		.where(and(eq(events.status, 'published'), isNull(events.duplicateOfId), datedOnly));
 
 	const today = localDayKey(new Date(), DEFAULT_TIME_ZONE);
 	const current = monthKeyOf(today);
@@ -647,6 +735,7 @@ export const dayCounts = query(calendarSpanSchema, async ({ from: fromMonth, to:
 			and(
 				eq(events.status, 'published'),
 				isNull(events.duplicateOfId),
+				datedOnly,
 				// A window on the indexed instant, deliberately a day wider than the span at each
 				// end; countByDay below decides which of those rows actually belong to it.
 				gte(events.startsAt, from),
@@ -704,6 +793,7 @@ export const listEventsOnDate = query(calendarDateSchema, async (date) => {
 			and(
 				eq(events.status, 'published'),
 				isNull(events.duplicateOfId),
+				datedOnly,
 				gte(events.startsAt, from),
 				lte(events.startsAt, to)
 			)
@@ -775,6 +865,7 @@ export const weekendEvents = query(weekendSchema, async (which) => {
 			and(
 				eq(events.status, 'published'),
 				isNull(events.duplicateOfId),
+				datedOnly,
 				gte(events.startsAt, from),
 				lte(events.startsAt, to),
 				/*
@@ -834,6 +925,7 @@ export const adjacentEventDays = query(calendarDateSchema, async (date) => {
 			and(
 				eq(events.status, 'published'),
 				isNull(events.duplicateOfId),
+				datedOnly,
 				gte(events.startsAt, from),
 				lte(events.startsAt, to)
 			)
@@ -881,6 +973,7 @@ export const horizonWeeks = query(
 				and(
 					eq(events.status, 'published'),
 					isNull(events.duplicateOfId),
+					datedOnly,
 					gte(events.startsAt, from),
 					lte(events.startsAt, to)
 				)
@@ -966,6 +1059,7 @@ export const weekEvents = query(calendarWeekSchema, async (weekKey) => {
 			and(
 				eq(events.status, 'published'),
 				isNull(events.duplicateOfId),
+				datedOnly,
 				/*
 				 * Two index ranges rather than one open-ended scan: things starting inside the week,
 				 * and things that started earlier and have not finished. Written as an `or` of two
@@ -1053,6 +1147,7 @@ export const placeCounts = query(calendarSpanSchema, async ({ from: fromMonth, t
 			and(
 				eq(events.status, 'published'),
 				isNull(events.duplicateOfId),
+				datedOnly,
 				gte(events.startsAt, from),
 				lte(events.startsAt, to)
 			)

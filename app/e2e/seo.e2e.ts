@@ -48,6 +48,7 @@ test('every indexable page declares one canonical URL', async ({ request, baseUR
 		'/hendingar',
 		'/denne-helga',
 		'/neste-helg',
+		'/alltid-ope',
 		'/hendingar?kategori=musikk',
 		'/kalender',
 		'/datasamling',
@@ -113,6 +114,7 @@ test('every indexable page carries a full share card', async ({ request }) => {
 		'/hendingar',
 		'/denne-helga',
 		'/neste-helg',
+		'/alltid-ope',
 		'/kalender',
 		'/datasamling',
 		'/send-inn'

@@ -1,0 +1,2 @@
+ALTER TABLE "events" ADD COLUMN "kind" text GENERATED ALWAYS AS (case when ends_at is not null and ends_at - starts_at >= interval '30 days' then 'standing' else 'dated' end) STORED NOT NULL;--> statement-breakpoint
+CREATE INDEX "events_kind_starts_at_idx" ON "events" USING btree ("kind","starts_at");

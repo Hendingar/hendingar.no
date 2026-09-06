@@ -10,6 +10,7 @@
 	import type { WeekendChoice } from '@hendingar/core/validation';
 	import { eventPath } from '@hendingar/core/slug';
 	import EventsByDay from './EventsByDay.svelte';
+	import AlsoOpen from './AlsoOpen.svelte';
 	import PageMeta from './PageMeta.svelte';
 	import { localDayKey } from '../calendar.ts';
 	import { canonicalUrl } from '../origin.ts';
@@ -138,6 +139,7 @@
 		</p>
 		<!-- headingLevel 2 so each day nests under this page's h1. -->
 		<EventsByDay {events} {hearts} headingLevel={2} />
+		<AlsoOpen />
 	{:else if which === 'neste'}
 		<!--
 			A week out, empty means "not collected yet" — not "nothing is on".

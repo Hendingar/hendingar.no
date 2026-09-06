@@ -150,6 +150,27 @@ await db
 			endsAt: daysFromNow(9, 18),
 			venueId: venue.id,
 			status: 'published'
+		},
+		{
+			/*
+			 * A place that is open, not an event that happens — `kind` resolves to `standing`.
+			 *
+			 * Modelled on the row that forced ADR 0013: an escape room the museum's calendar
+			 * publishes as one event running for years. Without it in the seed, every guard about
+			 * standing offers would pass against data that could not fail them, and the listing
+			 * filter could come off without anything noticing.
+			 *
+			 * The dates are relative like everything else here, so the span stays over the
+			 * threshold however long this seed sits unused.
+			 */
+			sourceId: source.id,
+			externalId: 'seed-standing',
+			title: 'Sunnhordland Escape',
+			category: 'anna',
+			startsAt: daysFromNow(-400, 0),
+			endsAt: daysFromNow(400, 0),
+			venueId: venue.id,
+			status: 'published'
 		}
 	])
 	.onConflictDoNothing({ target: [events.sourceId, events.externalId] });

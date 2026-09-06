@@ -71,6 +71,9 @@ export const GET: RequestHandler = async ({ url }) => {
 		// and what is coming — and neither ever holds the other's events.
 		'/denne-helga',
 		'/neste-helg',
+		// Places rather than events, so its content turns over far more slowly than the listings —
+		// which is a reason to list it, not to leave it out: it is the most stable page on the site.
+		'/alltid-ope',
 		'/kalender',
 		'/datasamling',
 		'/send-inn',
