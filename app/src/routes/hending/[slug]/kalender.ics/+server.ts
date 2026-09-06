@@ -3,6 +3,7 @@ import { and, eq } from 'drizzle-orm';
 import { buildIcal, icalFilename } from '@hendingar/core/ical';
 import { events, venues } from '@hendingar/core/schema';
 import { eventIdFromParam, eventPath } from '@hendingar/core/slug';
+import { canonicalUrl } from '../../../../lib/origin.ts';
 import { db } from '../../../../lib/server/db';
 import type { RequestHandler } from './$types';
 
@@ -54,9 +55,10 @@ export const GET: RequestHandler = async ({ params, url }) => {
 		location: location || null,
 		startsAt: row.startsAt,
 		endsAt: row.endsAt,
-		// Absolute, built from the request: the file is read outside any browser context, so a
-		// relative link in it would point nowhere.
-		url: new URL(eventPath(row.id, row.title), url.origin).toString(),
+		// Absolute, and named under the one canonical host rather than whichever of the three
+		// answered this request: the file outlives the request, lands in somebody's calendar, and
+		// a `www` or `dev` URL sitting there for months is not a link we want shared.
+		url: canonicalUrl(url, eventPath(row.id, row.title)),
 		sourceUrl: row.sourceUrl
 	});
 

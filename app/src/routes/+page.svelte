@@ -5,15 +5,14 @@
 	import ManifestBand from '../lib/components/landing/ManifestBand.svelte';
 	import VerifyPipeline from '../lib/components/landing/VerifyPipeline.svelte';
 	import CallToAction from '../lib/components/landing/CallToAction.svelte';
+	import PageMeta from '../lib/components/PageMeta.svelte';
 </script>
 
-<svelte:head>
-	<title>hendingar.no — kva skjer i Sunnhordland</title>
-	<meta
-		name="description"
-		content="Hendingar frå lokale kalendrar samla i éi liste. Vi seier kvar dei kjem frå og når vi henta dei sist. Gratis, utan reklame."
-	/>
-</svelte:head>
+<PageMeta
+	title="hendingar.no — kva skjer i Sunnhordland"
+	description="Hendingar frå lokale kalendrar samla i éi liste. Vi seier kvar dei kjem frå og når vi henta dei sist. Gratis, utan reklame."
+	path="/"
+/>
 
 <!--
 	Events, then what the list actually is, then everything about us.

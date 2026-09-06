@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { page } from '$app/state';
 	import SubmitForm from '../../lib/components/submit/SubmitForm.svelte';
+	import PageMeta from '../../lib/components/PageMeta.svelte';
 	import { submissionCapabilities } from '../../lib/submit.remote';
 
 	// Top-level await, not `.loading` — the form and the explanation must exist in the server-
@@ -15,13 +16,11 @@
 	});
 </script>
 
-<svelte:head>
-	<title>Send inn ei hending — hendingar.no</title>
-	<meta
-		name="description"
-		content="Legg til ei hending på hendingar.no. Ta bilete av ein plakat eller ei Facebook-hending, eller fyll ut skjemaet. Alle innsendingar går gjennom fem opne kontrollar."
-	/>
-</svelte:head>
+<PageMeta
+	title="Send inn ei hending — hendingar.no"
+	description="Legg til ei hending på hendingar.no. Ta bilete av ein plakat eller ei Facebook-hending, eller fyll ut skjemaet. Alle innsendingar går gjennom fem opne kontrollar."
+	path="/send-inn"
+/>
 
 <section class="hero shell">
 	<p class="label">Send inn</p>

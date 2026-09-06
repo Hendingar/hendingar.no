@@ -1,5 +1,6 @@
 <script lang="ts">
 	import EventGrid from '../../../lib/components/EventGrid.svelte';
+	import PageMeta from '../../../lib/components/PageMeta.svelte';
 	import { listPopular } from '../../../lib/events.remote';
 
 	/**
@@ -19,13 +20,11 @@
 	const anyHearts = $derived(events.some((e) => e.hearts > 0));
 </script>
 
-<svelte:head>
-	<title>Flest hjarte — hendingar.no</title>
-	<meta
-		name="description"
-		content="Hendingar som kjem i Sunnhordland, sortert etter kor mange som har hjarta dei."
-	/>
-</svelte:head>
+<PageMeta
+	title="Flest hjarte — hendingar.no"
+	description="Hendingar som kjem i Sunnhordland, sortert etter kor mange som har hjarta dei."
+	path="/poppis/hjarta"
+/>
 
 <section class="list shell">
 	{#if events.length === 0}

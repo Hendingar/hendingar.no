@@ -1,5 +1,6 @@
 <script lang="ts">
 	import EventGrid from '../../../lib/components/EventGrid.svelte';
+	import PageMeta from '../../../lib/components/PageMeta.svelte';
 	import { listPopular } from '../../../lib/events.remote';
 
 	/**
@@ -15,13 +16,11 @@
 	const anyViews = $derived(events.some((e) => e.views > 0));
 </script>
 
-<svelte:head>
-	<title>Mest opna — hendingar.no</title>
-	<meta
-		name="description"
-		content="Hendingar som kjem i Sunnhordland, sortert etter kor mange som har opna dei."
-	/>
-</svelte:head>
+<PageMeta
+	title="Mest opna — hendingar.no"
+	description="Hendingar som kjem i Sunnhordland, sortert etter kor mange som har opna dei."
+	path="/poppis/vist"
+/>
 
 <section class="list shell">
 	{#if events.length === 0}

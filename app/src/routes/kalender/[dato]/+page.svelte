@@ -3,6 +3,7 @@
 	import { page } from '$app/state';
 	import { formatCalendarDate, formatMonthName, isCalendarDate } from '@hendingar/core/datetime';
 	import EventGrid from '../../../lib/components/EventGrid.svelte';
+	import PageMeta from '../../../lib/components/PageMeta.svelte';
 	import { monthKeyOf } from '../../../lib/calendar.ts';
 	import { adjacentEventDays, listEventsOnDate } from '../../../lib/events.remote';
 	import { heartCounts } from '../../../lib/hearts.remote';
@@ -35,15 +36,13 @@
 	const month = monthKeyOf(date);
 </script>
 
-<svelte:head>
-	<title>{heading} — hendingar.no</title>
-	<meta
-		name="description"
-		content={events.length > 0
-			? `${events.length === 1 ? 'Éi hending' : `${events.length} hendingar`} i Sunnhordland ${heading.toLowerCase()}.`
-			: `Ingen registrerte hendingar i Sunnhordland ${heading.toLowerCase()}.`}
-	/>
-</svelte:head>
+<PageMeta
+	title="{heading} — hendingar.no"
+	description={events.length > 0
+		? `${events.length === 1 ? 'Éi hending' : `${events.length} hendingar`} i Sunnhordland ${heading.toLowerCase()}.`
+		: `Ingen registrerte hendingar i Sunnhordland ${heading.toLowerCase()}.`}
+	path="/kalender/{date}"
+/>
 
 <div class="shell day-page">
 	<p class="label">
