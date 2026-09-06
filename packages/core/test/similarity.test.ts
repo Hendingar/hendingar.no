@@ -5,8 +5,10 @@ import {
 	levenshtein,
 	levenshteinRatio,
 	normaliseTitle,
-	titleSimilarity
+	titleSimilarity,
+	venueSimilarity
 } from '../src/similarity.ts';
+import { VENUE_MISMATCH_THRESHOLD } from '../src/consolidate.ts';
 
 /**
  * The cases are real.
@@ -72,6 +74,75 @@ describe('titleSimilarity', () => {
 	it('is 0 when either title is empty', () => {
 		expect(titleSimilarity('', 'Konsert')).toBe(0);
 		expect(titleSimilarity('Konsert', '   ')).toBe(0);
+	});
+});
+
+/**
+ * Venue names, which are a different problem.
+ *
+ * These pairs are real too — every one is a venue name a source in this database actually writes.
+ * The threshold they are measured against is `VENUE_MISMATCH_THRESHOLD`, 0.6.
+ */
+const SAME_PLACE: [string, string][] = [
+	// Case, which is all that separates two calendars naming the same house.
+	['Stord kulturhus', 'Stord Kulturhus'],
+	// A branch qualifier appended by the source.
+	['Bømlo Folkebibliotek', 'Bømlo folkebibliotek -Bremnes']
+];
+
+const DIFFERENT_PLACES: [string, string][] = [
+	// Two parishes. The first pair is the one that was merging: 0.60 on edit distance.
+	['Nysæter kyrkje', 'Moster kyrkje'],
+	['Bremnes kyrkje', 'Moster kyrkje'],
+	['Stord Kyrkje', 'Bømlo kyrkje'],
+	['Stord Kyrkje', 'Bremnes kyrkje'],
+	['Nysæter kyrkje', 'Bømlo kyrkje'],
+	// A library and the house it stands in: near neighbours, still not interchangeable.
+	['Stord bibliotek', 'Stord kulturhus'],
+	['Stord vidaregåande skule', 'Stord kulturhus']
+];
+
+describe('venueSimilarity', () => {
+	it.each(SAME_PLACE)('reads %s and %s as one place', (a, b) => {
+		expect(venueSimilarity(a, b)).toBeGreaterThanOrEqual(VENUE_MISMATCH_THRESHOLD);
+	});
+
+	it.each(DIFFERENT_PLACES)('keeps %s and %s apart', (a, b) => {
+		expect(venueSimilarity(a, b)).toBeLessThan(VENUE_MISMATCH_THRESHOLD);
+	});
+
+	it('leaves a real gap, where titleSimilarity left a hundredth', () => {
+		/*
+		 * The measurement that justifies a second function rather than reusing `titleSimilarity`.
+		 * On edit distance the worst same-place pair and the closest different-place pair were
+		 * 0.67 and 0.60 — seven hundredths apart, with the threshold inside the gap and a real
+		 * false merge already through it. On token overlap they are 0.67 and 0.33.
+		 */
+		const worstSame = Math.min(...SAME_PLACE.map(([a, b]) => venueSimilarity(a, b)));
+		const closestDifferent = Math.max(...DIFFERENT_PLACES.map(([a, b]) => venueSimilarity(a, b)));
+		expect(worstSame - closestDifferent).toBeGreaterThan(0.25);
+	});
+
+	it('is exactly why titleSimilarity is the wrong instrument here', () => {
+		// Kept as a measurement rather than a comment: edit distance calls these two churches a
+		// match, and this line fails the day somebody points venue comparison back at it.
+		expect(titleSimilarity('Nysæter kyrkje', 'Moster kyrkje')).toBeGreaterThanOrEqual(
+			VENUE_MISMATCH_THRESHOLD
+		);
+		expect(venueSimilarity('Nysæter kyrkje', 'Moster kyrkje')).toBeLessThan(
+			VENUE_MISMATCH_THRESHOLD
+		);
+	});
+
+	it('is symmetric, because merging must not depend on which row was read first', () => {
+		for (const [a, b] of [...SAME_PLACE, ...DIFFERENT_PLACES]) {
+			expect(venueSimilarity(a, b)).toBeCloseTo(venueSimilarity(b, a), 10);
+		}
+	});
+
+	it('is 0 when either name is empty', () => {
+		expect(venueSimilarity('', 'Storsalen')).toBe(0);
+		expect(venueSimilarity('Storsalen', '  ')).toBe(0);
 	});
 });
 

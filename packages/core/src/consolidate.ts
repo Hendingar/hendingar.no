@@ -1,4 +1,10 @@
-import { DUPLICATE_TITLE_THRESHOLD, normaliseTitle, titleSimilarity } from './similarity.ts';
+import {
+	DUPLICATE_TITLE_THRESHOLD,
+	normaliseTitle,
+	titleSimilarity,
+	venueSimilarity
+} from './similarity.ts';
+import { resolveVenueName } from './venue-aliases.ts';
 
 /**
  * Deciding which events are the same event.
@@ -11,6 +17,17 @@ import { DUPLICATE_TITLE_THRESHOLD, normaliseTitle, titleSimilarity } from './si
 export type Candidate = {
 	id: number;
 	sourceId: number | null;
+	/**
+	 * The `sources.slug` this row came from, or null for a human submission.
+	 *
+	 * Carried alongside `sourceId` rather than instead of it, because the two answer different
+	 * questions. The id answers "is this the same calendar?", which is the rule that makes the
+	 * whole thing safe and needs nothing but identity. The slug answers "what does this calendar
+	 * mean by the word 'Storsalen'?" — a question about a named, stable source, which a serial id
+	 * that differs between the local and the production database cannot be asked. See
+	 * `venue-aliases.ts`.
+	 */
+	sourceSlug: string | null;
 	title: string;
 	startsAt: Date;
 	venueName: string | null;
@@ -38,6 +55,20 @@ export const DUPLICATE_WINDOW_MS = 60 * 60 * 1000;
  * A building and one of its rooms score lower than two different churches, so no threshold both
  * refuses the churches and allows the room. Which is why the venue is not consulted for every
  * pair — see `TITLE_DISTINCTIVE_TOKENS`.
+ *
+ * The number is unchanged, and it is still the right number; what changed is the two inputs, both
+ * of which were lying to it.
+ *
+ * - The third row is no longer a string comparison at all. `Storsalen` resolves to
+ *   `Stord kulturhus` before it is scored, because a room name is knowledge and not spelling —
+ *   see `venue-aliases.ts`. Fifty events sat behind that one row.
+ * - The second row is scored by `venueSimilarity` rather than `titleSimilarity`. Edit distance
+ *   rewarded the shared word "kyrkje", and had already pushed `Nysæter kyrkje` / `Moster kyrkje`
+ *   to 0.60 — over this line by a hundredth, merging three groups of services in two parishes.
+ *   On token overlap those pairs score 0.33.
+ *
+ * So the threshold now sits between 1.00 and 0.33 rather than between 1.00 and 0.60, which is the
+ * gap it was always meant to have.
  */
 export const VENUE_MISMATCH_THRESHOLD = 0.6;
 
@@ -85,7 +116,18 @@ export function comparePair(a: Candidate, b: Candidate): PairVerdict {
 		normaliseTitle(a.title).split(' ').filter(Boolean).length >= TITLE_DISTINCTIVE_TOKENS;
 
 	if (!distinctive && a.venueName && b.venueName) {
-		const venueScore = titleSimilarity(a.venueName, b.venueName);
+		/*
+		 * Resolve first, then score.
+		 *
+		 * A source that owns a building writes the room; everybody else writes the building. That
+		 * is knowledge about places, not a spelling difference, so it is looked up rather than
+		 * guessed at — and looked up per source, because `Storsalen` is the main hall of Stord
+		 * kulturhus in one calendar and of Bømlo Kulturhus in another. An unlisted name resolves to
+		 * itself and goes through the same comparison it always did.
+		 */
+		const venueA = resolveVenueName(a.sourceSlug, a.venueName);
+		const venueB = resolveVenueName(b.sourceSlug, b.venueName);
+		const venueScore = venueSimilarity(venueA, venueB);
 		if (venueScore < VENUE_MISMATCH_THRESHOLD) {
 			return { same: false, reason: 'different venues', score };
 		}

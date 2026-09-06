@@ -17,6 +17,7 @@
 		"./ical": "./src/ical.ts",
 		"./consolidate": "./src/consolidate.ts",
 		"./similarity": "./src/similarity.ts",
+		"./venue-aliases": "./src/venue-aliases.ts",
 		"./submissions": "./src/submissions.ts",
 		"./directory": "./src/directory.ts"
 	},

@@ -101,6 +101,39 @@ export function titleSimilarity(a: string, b: string): number {
 }
 
 /**
+ * How alike are two *venue* names? Not the same question as two titles.
+ *
+ * `titleSimilarity` was used here too, and it is the wrong instrument. Edit distance is what makes
+ * it good at titles — "Hjarte" and "Hjartet" are one keystroke apart and mean the same show — but
+ * venue names in this region are a distinctive word plus a shared generic one, and edit distance
+ * scores the generic word as agreement:
+ *
+ *   Nysæter kyrkje  / Moster kyrkje     levenshtein 0.60   token overlap 0.33   DIFFERENT churches
+ *   Bremnes kyrkje  / Moster kyrkje     levenshtein 0.57   token overlap 0.33   DIFFERENT churches
+ *   Stord Kyrkje    / Bømlo kyrkje      levenshtein 0.54   token overlap 0.33   DIFFERENT churches
+ *
+ * That first row is not hypothetical. Measured on the live database, `Nysæter kyrkje` and
+ * `Moster kyrkje` cleared VENUE_MISMATCH_THRESHOLD by a hundredth, and three groups of Christmas
+ * and Sunday services in two different parishes were merged into one row each — the exact false
+ * merge `TITLE_DISTINCTIVE_TOKENS` exists to prevent, arriving through the check meant to catch
+ * it. Six real services were hidden from the site by it.
+ *
+ * Dropping edit distance moves all three pairs to 0.33, a third of the threshold rather than a
+ * hundredth over it, and costs nothing that was working: what venue names actually vary by is case
+ * (`Stord kulturhus` / `Stord Kulturhus`, folded away by `normaliseTitle`) and extra words
+ * (`Bømlo Folkebibliotek` / `Bømlo folkebibliotek -Bremnes`, 0.67 on token overlap). A room called
+ * something else entirely is not a spelling problem and is not solved by any string rule — see
+ * `venue-aliases.ts`.
+ */
+export function venueSimilarity(a: string, b: string): number {
+	const left = normaliseTitle(a);
+	const right = normaliseTitle(b);
+	if (!left || !right) return 0;
+	if (left === right) return 1;
+	return jaccard(left, right);
+}
+
+/**
  * The score at which two events from different sources are the same event.
  *
  * Fitted to real pairs rather than chosen: the worst true duplicate observed scores 0.76 and the
