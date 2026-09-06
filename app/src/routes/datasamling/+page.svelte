@@ -2,6 +2,8 @@
 	import { formatEventTime } from '@hendingar/core/datetime';
 	import { freshness } from '@hendingar/core/schedule';
 	import SourceRow from '../../lib/components/collection/SourceRow.svelte';
+	import PlatformGroup from '../../lib/components/collection/PlatformGroup.svelte';
+	import { SOURCE_PLATFORMS, platformOf } from '@hendingar/core/directory';
 	import SubmissionLog from '../../lib/components/collection/SubmissionLog.svelte';
 	import { listCollection } from '../../lib/collection.remote';
 
@@ -14,6 +16,58 @@
 		.map((s) => freshness(s.lastRunAt, s.scheduleCron, now));
 	const allFresh = states.length > 0 && states.every((s) => s === 'fresh');
 	const anyBroken = states.some((s) => s === 'stale' || s === 'never');
+
+	/*
+	 * Platform organisers fold into their platform; everything else is a row of its own.
+	 *
+	 * Derived here rather than stored on the source, because the slug prefix every platform
+	 * importer already uses IS the fact — so adding an organiser stays one config entry in its
+	 * importer, with no second edit here and no chance of the two drifting apart. See
+	 * `platformOf` in packages/core.
+	 *
+	 * Order is preserved from the query (by name), and a platform takes the position of its first
+	 * organiser, so the page does not reshuffle when a profile is added.
+	 */
+	type CollectedRow = (typeof data.sources)[number];
+	type Entry =
+		| { kind: 'source'; source: CollectedRow }
+		| {
+				kind: 'platform';
+				platform: (typeof SOURCE_PLATFORMS)[number];
+				sources: CollectedRow[];
+		  };
+
+	const entries = $derived.by(() => {
+		/*
+		 * One pass, appending each organiser to its platform's entry if that entry already exists.
+		 *
+		 * A platform takes the position of its FIRST organiser, so the page keeps the query's
+		 * ordering and does not reshuffle when a profile is added.
+		 *
+		 * No Map or Set to key the lookup on: the repo's lint rule asks for the reactive versions
+		 * wherever a built-in collection appears in a component, and reaching for reactive state to
+		 * deduplicate inside a derived would be answering a question nobody asked. A linear scan
+		 * over what is currently eighteen sources is not the thing to optimise.
+		 */
+		const out: Entry[] = [];
+
+		for (const source of data.sources) {
+			const platform = platformOf(source.slug);
+			if (!platform) {
+				out.push({ kind: 'source', source });
+				continue;
+			}
+			const existing = out.find(
+				(entry) => entry.kind === 'platform' && entry.platform.slug === platform.slug
+			);
+			if (existing?.kind === 'platform') {
+				existing.sources.push(source);
+				continue;
+			}
+			out.push({ kind: 'platform', platform, sources: [source] });
+		}
+		return out;
+	});
 
 	const totalEvents = data.sources.reduce((n, s) => n + s.eventsTotal, 0);
 	const totalUpcoming = data.sources.reduce((n, s) => n + s.eventsUpcoming, 0);
@@ -110,15 +164,20 @@
 	<p class="label">Kjelder</p>
 	<h2 id="h-sources" class="display block__h">Kvar det kjem frå</h2>
 	<p class="block__lede">
-		Éi linje per kjelde. Opne ei av dei for rytme, endepunkt og køyringshistorikk.
+		Éi linje per kjelde. Opne ei av dei for rytme, endepunkt og køyringshistorikk. Nokre kjelder er
+		plattformer der fleire arrangørar legg ut kvar for seg — dei ligg samla under plattforma.
 	</p>
 
 	{#if data.sources.length === 0}
 		<p class="empty">Ingen kjelder registrerte enno.</p>
 	{:else}
 		<div class="rows">
-			{#each data.sources as source (source.slug)}
-				<SourceRow {source} {now} />
+			{#each entries as entry (entry.kind === 'platform' ? entry.platform.slug : entry.source.slug)}
+				{#if entry.kind === 'platform'}
+					<PlatformGroup platform={entry.platform} sources={entry.sources} {now} />
+				{:else}
+					<SourceRow source={entry.source} {now} />
+				{/if}
 			{/each}
 		</div>
 	{/if}
