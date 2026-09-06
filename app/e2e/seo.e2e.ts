@@ -78,3 +78,96 @@ test('pages we do not want indexed say so, and have no canonical', async ({ requ
 		expect(html, path).not.toContain('rel="canonical"');
 	}
 });
+
+/**
+ * What a pasted link looks like.
+ *
+ * ADR 0011 names the shape of our traffic — "that person almost always arrives from a shared
+ * link, once, on a phone" — and until recently such a link arrived as a line of grey text. None of
+ * this is visible in a browser, so nothing but a spec notices when it goes.
+ */
+
+const OG_REQUIRED = [
+	'og:site_name',
+	'og:locale',
+	'og:type',
+	'og:url',
+	'og:title',
+	'og:description',
+	'og:image',
+	'og:image:width',
+	'og:image:height',
+	'og:image:alt'
+];
+
+function meta(html: string, key: string): string | undefined {
+	const property = new RegExp(`<meta property="${key}" content="([^"]*)"`).exec(html)?.[1];
+	return property ?? new RegExp(`<meta name="${key}" content="([^"]*)"`).exec(html)?.[1];
+}
+
+test('every indexable page carries a full share card', async ({ request }) => {
+	for (const path of ['/', '/hendingar', '/kalender', '/datasamling', '/send-inn']) {
+		const html = await (await request.get(path)).text();
+
+		for (const key of OG_REQUIRED) {
+			expect(meta(html, key), `${path} is missing ${key}`).toBeTruthy();
+		}
+		// Not only for X: Slack and others read this to choose between a thumbnail and a full-width
+		// image, and fall back to the small one without it.
+		expect(meta(html, 'twitter:card'), path).toBe('summary_large_image');
+
+		// og:url and the canonical must agree. Two different answers to "where does this live" is
+		// worse than one wrong one.
+		const canonical = /<link rel="canonical" href="([^"]+)"/.exec(html)?.[1];
+		expect(meta(html, 'og:url'), path).toBe(canonical);
+	}
+});
+
+test('an event points its card at its own generated image', async ({ request }) => {
+	const listing = await (await request.get('/hendingar')).text();
+	const href = /href="(\/hending\/\d+[^"]*)"/.exec(listing)?.[1];
+	expect(href).toBeTruthy();
+
+	const html = await (await request.get(href!)).text();
+	expect(meta(html, 'og:type')).toBe('article');
+	const image = meta(html, 'og:image');
+	expect(image).toContain(`${href}/og.png`);
+
+	// The calendar file is announced, not only linked: a calendar client handed this page looks
+	// for the alternate rather than for an anchor.
+	expect(html).toContain('type="text/calendar"');
+});
+
+test('every event has a picture, poster or not', async ({ request }) => {
+	/*
+	 * The whole reason this route exists. `og:image` used to be emitted only when an event carried
+	 * a poster, and the main source marks every one of its posters rights-unverified — so most
+	 * shares had no image at all. Both cases are asserted, because the posterless one is the one
+	 * that regresses silently.
+	 */
+	const listing = await (await request.get('/hendingar')).text();
+	const paths = [...listing.matchAll(/href="(\/hending\/\d+[^"]*)"/g)].map((m) => m[1]);
+	expect(paths.length).toBeGreaterThan(1);
+
+	for (const path of [...new Set(paths)].slice(0, 3)) {
+		const response = await request.get(`${path}/og.png`);
+		expect(response.status(), path).toBe(200);
+		expect(response.headers()['content-type'], path).toBe('image/png');
+
+		const body = await response.body();
+		// The PNG magic number. A 200 carrying an HTML error page would pass a status check.
+		expect([...body.subarray(0, 4)], path).toEqual([0x89, 0x50, 0x4e, 0x47]);
+		expect(body.byteLength, path).toBeGreaterThan(5_000);
+	}
+});
+
+test('the site has a card of its own, and a missing event has none', async ({ request }) => {
+	const site = await request.get('/og.png');
+	expect(site.status()).toBe(200);
+	expect(site.headers()['content-type']).toBe('image/png');
+	expect([...(await site.body()).subarray(0, 4)]).toEqual([0x89, 0x50, 0x4e, 0x47]);
+
+	for (const path of ['/hending/99999999/og.png', '/hending/abc/og.png']) {
+		expect((await request.get(path)).status(), path).toBe(404);
+	}
+});

@@ -16,6 +16,7 @@
 	import { markSeen } from '../../../lib/seen.ts';
 	import { linkLabel, safeHttpUrl } from '../../../lib/source-link.ts';
 	import { canonicalUrl } from '../../../lib/origin.ts';
+	import PageMeta from '../../../lib/components/PageMeta.svelte';
 
 	const id = eventIdFromParam(page.params.slug ?? '');
 	if (id === null) error(404, 'Fann ikkje hendinga');
@@ -64,6 +65,26 @@
 	 * page stays readable, because somebody is holding a link to it, but only one of them asks to
 	 * be the search result.
 	 */
+	/**
+	 * One string for the search snippet and the share card both.
+	 *
+	 * Cut at a word boundary rather than mid-syllable: a snippet ending "…konsert med Sig" reads as
+	 * a broken page. Falls back to naming the kind of thing it is, because an event with no
+	 * description still has to say something to somebody deciding whether to open it.
+	 */
+	const summary = $derived.by(() => {
+		const text = event.description?.trim();
+		if (!text) {
+			return `${categoryLabel(event.category)}${event.venueName ? ` på ${event.venueName}` : ''}${
+				event.venueMunicipality ? ` i ${event.venueMunicipality}` : ''
+			}.`;
+		}
+		if (text.length <= 160) return text;
+		const cut = text.slice(0, 160);
+		const space = cut.lastIndexOf(' ');
+		return `${(space > 100 ? cut.slice(0, space) : cut).trimEnd()}…`;
+	});
+
 	const canonical = $derived(
 		event.duplicateOfId !== null && event.duplicateOfTitle !== null
 			? eventPath(event.duplicateOfId, event.duplicateOfTitle)
@@ -136,19 +157,26 @@
 	);
 </script>
 
+<PageMeta
+	title="{event.title} — hendingar.no"
+	description={summary}
+	path={canonical}
+	type="article"
+	image={canonicalUrl(page.url, `${canonical}/og.png`)}
+	imageAlt="Delebilete for {event.title}"
+/>
+
 <svelte:head>
-	<title>{event.title} — hendingar.no</title>
-	<meta
-		name="description"
-		content={event.description?.slice(0, 160) ??
-			`${categoryLabel(event.category)} ${event.venueName ? `på ${event.venueName}` : ''}`.trim()}
+	<!--
+		The calendar file, announced rather than only linked. A reader clicks the link below; a
+		calendar client that is handed this page looks for this.
+	-->
+	<link
+		rel="alternate"
+		type="text/calendar"
+		href="{canonical}/kalender.ics"
+		title="{event.title} som kalenderfil"
 	/>
-	<link rel="canonical" href={canonicalUrl(page.url, canonical)} />
-	<meta property="og:title" content={event.title} />
-	<meta property="og:type" content="article" />
-	{#if event.posterUrl}
-		<meta property="og:image" content={event.posterUrl} />
-	{/if}
 	<!-- eslint-disable-next-line svelte/no-at-html-tags -- JSON.stringify output, not user markup -->
 	{@html `<script type="application/ld+json">${jsonLd}</${'script'}>`}
 </svelte:head>
