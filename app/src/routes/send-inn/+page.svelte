@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { page } from '$app/state';
+	import CheckRail from '../../lib/components/CheckRail.svelte';
 	import SubmitForm from '../../lib/components/submit/SubmitForm.svelte';
 	import PageMeta from '../../lib/components/PageMeta.svelte';
 	import { submissionCapabilities } from '../../lib/submit.remote';
@@ -28,10 +29,16 @@
 		<span class="hero__line">Veit du om</span>
 		<span class="hero__line hero__line--slant">noko som skjer?</span>
 	</h1>
+	<!--
+		Two sentences, not five.
+
+		The old lede described the photo shortcut, the form, the account-free promise and the
+		source link — and then the panels below described the shortcuts again, and the section at
+		the bottom described the checks a third time. What the shortcuts do is stated on the
+		shortcuts; this only has to say what the page is for.
+	-->
 	<p class="hero__lede">
-		Ta eit bilete av plakaten — eller av ei Facebook-hending på skjermen — og få eit ferdig utfylt
-		forslag. Eller skriv det inn sjølv. Du treng ingen konto, og vi lenkjer alltid tilbake til
-		kjelda.
+		Ta eit bilete av plakaten, så les vi det og fyller ut skjemaet for deg. Du treng ingen konto.
 	</p>
 </section>
 
@@ -47,14 +54,22 @@
 	<SubmitForm photoEnabled={capabilities.photo} revisionOf={revising} />
 </section>
 
+<!--
+	The five checks, named rather than described.
+
+	They used to be a paragraph here that said "fem kontrollar" without saying what any of them
+	was — so the one thing that makes an open submission form trustworthy was the least legible
+	thing on the page. This is the same rail the landing page renders, from the same source in
+	core, so the names cannot drift from the ones the verdict prints back.
+-->
 <section class="how shell" aria-labelledby="how-h">
-	<p class="label">Kva skjer så</p>
-	<h2 class="display display--md" id="how-h">Sjekka med ein gong, ikkje sett i kø</h2>
-	<p class="how__lede">
-		Fem kontrollar går i det du trykkjer send. Går alt gjennom, ligg hendinga ute same sekund. Gjer
-		ho ikkje det, får du vite kva som stoppa henne og kvifor — og ho ventar på deg i
-		<a href="/ko">køen din</a> til du har retta det. Ingen sit og ser på henne: rører du henne ikkje på
-		48 timar, blir ho sletta.
+	<p class="label">Kva skjer i det du trykkjer send</p>
+	<h2 class="display how__h" id="how-h">Fem kontrollar,<br />ingen kø</h2>
+	<CheckRail />
+	<p class="fineprint how__fine">
+		Går alt gjennom, ligg hendinga ute same sekund. Gjer ho ikkje det, får du vite kva som stoppa
+		henne og kvifor — og ho ventar på deg i <a href="/ko">køen din</a> til du har retta det. Ingen sit
+		og ser på henne: rører du henne ikkje på 48 timar, blir ho sletta.
 	</p>
 </section>
 
@@ -84,13 +99,18 @@
 		gap: clamp(1rem, 3vw, 1.75rem);
 	}
 	.how {
-		padding-block: clamp(1.75rem, 4vw, 3rem);
-		display: grid;
-		gap: 0.5rem;
+		padding-block: clamp(2rem, 5vw, 3.5rem);
 		border-block-start: var(--rule) solid var(--peach-line);
+		container-type: inline-size;
 	}
-	.how__lede {
-		margin: 0;
-		max-inline-size: 60ch;
+	/* cqw, not vw: the rail is the container, and a shared viewport step is what overflowed the
+	   hero on desktop and clipped the CTA at 320px. See docs/brand.md. */
+	.how__h {
+		font-size: clamp(1.75rem, 5.5cqw, 3.75rem);
+		margin-block: 0.3em 0.7em;
+	}
+	.how__fine {
+		max-inline-size: 74ch;
+		margin-block-start: 2rem;
 	}
 </style>
