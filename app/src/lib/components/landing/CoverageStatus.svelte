@@ -39,6 +39,20 @@
 		{/if}
 	</p>
 	<p class="coverage__line coverage__line--muted">
+		{#if status.standingCount > 0}
+			<!--
+				Named separately, because the number above says "hendingar framover" and must mean it.
+
+				A five-year escape-room span counted inside that figure would make the site's headline
+				number quietly untrue; leaving these out of the strip entirely would understate what
+				the index holds. Two numbers, each saying what it is.
+			-->
+			I tillegg har vi
+			<a href="/alltid-ope"
+				>{status.standingCount}
+				{status.standingCount === 1 ? 'stad som alltid er open' : 'stader som alltid er opne'}</a
+			>.
+		{/if}
 		Dette er ikkje alt som skjer — berre det vi klarer å hente.
 		{#if status.linkedCount > 0}
 			Vi lenkjer òg til {status.linkedCount} kalendrar vi ikkje hentar frå.

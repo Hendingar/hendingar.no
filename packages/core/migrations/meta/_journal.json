@@ -134,6 +134,13 @@
       "when": 1788686693107,
       "tag": "0018_overrated_omega_sentinel",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1788709412936,
+      "tag": "0019_tired_amazoness",
+      "breakpoints": true
     }
   ]
 }

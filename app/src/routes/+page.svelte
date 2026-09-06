@@ -3,6 +3,7 @@
 	import CategoryLinks from '../lib/components/landing/CategoryLinks.svelte';
 	import UpcomingByDay from '../lib/components/landing/UpcomingByDay.svelte';
 	import CoverageStatus from '../lib/components/landing/CoverageStatus.svelte';
+	import StandingOffers from '../lib/components/landing/StandingOffers.svelte';
 	import JoinStrip from '../lib/components/landing/JoinStrip.svelte';
 	import PageMeta from '../lib/components/PageMeta.svelte';
 	import { page } from '$app/state';
@@ -83,6 +84,19 @@
 	{#snippet failed()}
 		<!-- The status strip is context for the list above, not the content. If it cannot load,
 		     saying nothing is better than an error where a fact should be. -->
+	{/snippet}
+</svelte:boundary>
+
+<svelte:boundary>
+	<!--
+		Places that are open rather than events that happen — once, after the list, not inside it.
+
+		Below the coverage strip on purpose: that strip is the last word about the event LIST, and
+		these are not part of it. Above it, the section would read as a caveat on the count.
+	-->
+	<StandingOffers />
+	{#snippet failed()}
+		<!-- An extra section that cannot load is simply absent. The events above are the page. -->
 	{/snippet}
 </svelte:boundary>
 

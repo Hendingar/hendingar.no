@@ -20,9 +20,12 @@
 		 * is a page.
 		 */
 		// One weekend entry, not two. The pair lives as tabs on the weekend pages themselves and as
-		// two of the five ways in on the front page; a seventh nav item would spend the masthead's
+		// two of the five ways in on the front page; an extra nav item would spend the masthead's
 		// width saying "helg" twice. This is the one people ask for — what is on now.
 		{ href: '/denne-helga', label: 'Denne helga' },
+		// Places rather than events. It earns a top-level entry because it answers a different
+		// question from every other item here — "what can I do" rather than "what is on".
+		{ href: '/alltid-ope', label: 'Alltid ope' },
 		// The same events, asked the other way round: "what is on that Saturday" rather than "what
 		// is next". Next to Hendingar because they are two views of one list, not two features.
 		{ href: '/kalender', label: 'Kalender' },

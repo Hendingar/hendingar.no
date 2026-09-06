@@ -79,6 +79,21 @@ export function slugifyVenue(name: string): string {
  * correlation is not the rule: **fifty-six of the hundred and twenty-two public events carry no
  * audience tag at all**, and they include Sigvart Dagsland, Riksteatret and Teater Vestland. A
  * filter built on the tags silently drops half the programme, and the better half.
+ *
+ * ## Why they are still dropped now that /alltid-ope exists
+ *
+ * ADR 0013 gave standing offers a home, and these rows need no help to reach it: an `activity`
+ * states a season as its date range, so `events.kind` classifies it `standing` on its own. So
+ * importing them was tried, and measured. It admits 806 rows, of which **112 survive as live
+ * standing offers, and most are youth football squads** — "Bremnes G12", "G13", "G14", "G15",
+ * "G16", "G19", "J12", one per age group per season. A page called "Alltid ope" would have been
+ * fifty training schedules with a museum somewhere in the middle.
+ *
+ * Which is the paragraph above happening again, one screen further on. These rows are real and
+ * useful, but they are a club directory — something you join for a season, not somewhere you can
+ * walk in this afternoon — and they need a page that says so and groups them by club or venue.
+ * Until there is one, moving them from "buried in the day list" to "flooding a different page" is
+ * not an improvement.
  */
 export function isPublishableEvent(input: UpstreamEvent, timeZone: string): boolean {
 	if (orNull(input.event_status) !== 'public') return false;

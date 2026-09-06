@@ -75,8 +75,21 @@ const CONTRACTING_RULES: readonly Rule[] = [
 	},
 	{
 		name: 'add-column-not-null-without-default',
-		// NOT NULL with no DEFAULT on the same statement: the old revision's inserts omit it.
-		pattern: /\bADD\s+COLUMN\b(?:(?!\bDEFAULT\b)[\s\S])*?\bNOT\s+NULL\b(?![\s\S]*?\bDEFAULT\b)/i,
+		/*
+		 * NOT NULL with no DEFAULT on the same statement: the old revision's inserts omit it.
+		 *
+		 * `GENERATED ALWAYS AS (…) STORED` is the one shape where that reasoning does not hold, and
+		 * it is excluded rather than waved through. A generated column is not written by anyone —
+		 * the database computes it from other columns on every insert — so the running revision
+		 * omitting it is not merely tolerated, it is the only thing it is allowed to do. Postgres
+		 * rejects an INSERT that supplies a value for one.
+		 *
+		 * Without this carve-out the rule fires on a migration that is strictly additive and safe,
+		 * and the honest options left are to hand-edit a generated migration or to drop the NOT
+		 * NULL — the first is forbidden and the second throws away a guarantee for nothing.
+		 */
+		pattern:
+			/\bADD\s+COLUMN\b(?:(?!\bDEFAULT\b|\bGENERATED\s+ALWAYS\s+AS\b)[\s\S])*?\bNOT\s+NULL\b(?![\s\S]*?\bDEFAULT\b)/i,
 		why: 'the running revision inserts rows without this column and has no value to supply'
 	},
 	{

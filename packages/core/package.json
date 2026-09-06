@@ -21,7 +21,8 @@
 		"./submissions": "./src/submissions.ts",
 		"./directory": "./src/directory.ts",
 		"./text": "./src/text.ts",
-		"./address": "./src/address.ts"
+		"./address": "./src/address.ts",
+		"./standing": "./src/standing.ts"
 	},
 	"scripts": {
 		"typecheck": "tsc --noEmit",

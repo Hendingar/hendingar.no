@@ -60,6 +60,30 @@ describe('findContractingStatements', () => {
 		).toEqual([]);
 	});
 
+	it('allows NOT NULL on a GENERATED column, which nobody writes at all', () => {
+		/*
+		 * The one shape where "the old revision has no value to supply" is not a problem: it is not
+		 * supposed to supply one. Postgres computes a generated column on every insert and rejects
+		 * an INSERT that tries to set it, so a deploy where the old code is still writing rows is
+		 * exactly the case this is safe in.
+		 */
+		expect(
+			findContractingStatements(
+				`ALTER TABLE "events" ADD COLUMN "kind" text GENERATED ALWAYS AS (case when ends_at - starts_at >= interval '30 days' then 'standing' else 'dated' end) STORED NOT NULL;`
+			)
+		).toEqual([]);
+	});
+
+	it('still refuses a plain NOT NULL column with no default', () => {
+		// The carve-out above must not have opened the door generally — the word GENERATED is what
+		// makes it safe, and a column without it is the original hazard.
+		expect(
+			findContractingStatements(`ALTER TABLE "events" ADD COLUMN "kind" text NOT NULL;`).map(
+				(s) => s.rule
+			)
+		).toContain('add-column-not-null-without-default');
+	});
+
 	it('allows a dropped index, because slow is not the same as wrong', () => {
 		expect(findContractingStatements(`DROP INDEX "events_starts_at_idx";`)).toEqual([]);
 	});
