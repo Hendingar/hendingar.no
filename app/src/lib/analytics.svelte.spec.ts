@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { startAnalytics } from './analytics.ts';
+import { startAnalytics, track } from './analytics.ts';
 
 /**
  * Whether the tracker actually starts, in a real browser, with the network stubbed.
@@ -37,6 +37,25 @@ describe('startAnalytics', () => {
 		expect(config?.[2]).toEqual({
 			server_container_url: 'https://global.t.d8a.tech/05801cfd-cf47-4892-9a2a-b301f6b2c429/d/c'
 		});
+	});
+
+	it('denies analytics storage, and does so before config', () => {
+		/*
+		 * Ordering is the whole assertion. `consent` after `config` is too late — the tracker has
+		 * already written `_d8a` and `_d8a_<property>` by then, and two first-party cookies is the
+		 * difference between this site needing a consent banner and not.
+		 */
+		const consentAt = d8a.mock.calls.findIndex((call) => call[0] === 'consent');
+		const configAt = d8a.mock.calls.findIndex((call) => call[0] === 'config');
+		expect(consentAt, 'consent must be asked for').toBeGreaterThanOrEqual(0);
+		expect(consentAt).toBeLessThan(configAt);
+		expect(d8a.mock.calls[consentAt]?.[1]).toBe('default');
+		expect(d8a.mock.calls[consentAt]?.[2]).toEqual({ analytics_storage: 'denied' });
+	});
+
+	it('sends a named event once the tracker is up', () => {
+		track('add_to_calendar', { event_id: 12 });
+		expect(d8a).toHaveBeenCalledWith('event', 'add_to_calendar', { event_id: 12 });
 	});
 
 	it('does nothing at all from a development host', async () => {

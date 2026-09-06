@@ -7,6 +7,8 @@
 	import HeartButton from './HeartButton.svelte';
 	import type { UpcomingEvent } from '../events.remote';
 	import type { Occurrence } from '../occurrences.ts';
+	import { page } from '$app/state';
+	import { surfaceOf, track } from '../analytics.ts';
 
 	/**
 	 * `occurrences` is every time this event runs today, the lead included.
@@ -95,7 +97,17 @@
 			still paints, and is still clicked, over the top.
 		-->
 		<h3 class="display display--md tile__t vt-morph" style:--vt-name="event-title-{event.id}">
-			<a class="tile__link" href={eventPath(event.id, event.title)}>{event.title}</a>
+			<a
+				class="tile__link"
+				href={eventPath(event.id, event.title)}
+				onclick={() =>
+					track('select_content', {
+						content_type: 'event',
+						event_id: event.id,
+						category: event.category,
+						list_name: surfaceOf(page.url.pathname)
+					})}>{event.title}</a
+			>
 		</h3>
 
 		{#if event.venueName}

@@ -32,11 +32,30 @@ Scope discipline is a feature. hendingar.no is deliberately **not**:
   wherever tickets actually live.
 - **A social network** — no follows, no feeds, no engagement metrics, no notifications designed
   to pull you back in.
-- **An ad platform** — no ads and no data sales, ever. There _is_ one analytics tracker: page
-  views go to a [d8a](https://d8a.tech) collector so we can tell whether anybody is reading this.
-  No Google-owned script runs in the page, nothing follows you to another site, and there is no
+- **An ad platform** — no ads and no data sales, ever. There _is_ one analytics tracker: a
+  [d8a](https://d8a.tech) collector, so we can tell whether anybody is reading this and whether it
+  sends them anywhere. It runs **cookieless** — we deny `analytics_storage` before the tracker
+  starts, so it writes nothing to your browser and cannot recognise you on a second visit. No
+  Google-owned script runs in the page, nothing follows you to another site, and there is no
   advertising profile — but a third party does receive a page view and an IP, and saying "no
   tracking" while that is true would be a lie.
+
+  Six events, and this is the whole list (`app/src/lib/analytics.ts`):
+
+  | Event             | What it carries                                                      |
+  | ----------------- | -------------------------------------------------------------------- |
+  | `page_view`       | the page's URL and title                                             |
+  | `view_event`      | event id, category, source, how many days ahead                      |
+  | `select_content`  | event id, category, which listing it was opened from                 |
+  | `click`           | the **host** a link went to, and whether it was a ticket or a source |
+  | `add_to_calendar` | event id                                                             |
+  | `submit_result`   | how it was sent in, and which of the four outcomes                   |
+
+  Every parameter is a fact about the _event_, never about the reader. No search terms, no filter
+  choices, no scroll depth, no time on page, nothing joinable back to a person. Those are the
+  engagement metrics named two bullets up, and a non-goal is only worth having if it holds when it
+  is inconvenient.
+
 - **A walled garden** — accounts stay optional, and everything is exportable. Leaving is easy
   by design.
 

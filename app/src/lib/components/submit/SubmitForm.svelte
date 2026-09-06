@@ -19,6 +19,7 @@
 	import VerdictPanel from './VerdictPanel.svelte';
 	import { page } from '$app/state';
 	import { pushState } from '$app/navigation';
+	import { track } from '../../analytics.ts';
 
 	let {
 		photoEnabled,
@@ -105,6 +106,33 @@
 	 * container. Failure is silent: the event is already published, and a missing thumbnail is not
 	 * worth an error message about something the person did not ask for.
 	 */
+	/**
+	 * A verdict, reported once.
+	 *
+	 * Open submission is the thing this project is betting on, and until now nothing said whether
+	 * it worked: how many people try, which of the three ways in they use, and which of the five
+	 * checks turns them away. "Declined" outnumbering "approved" would be a product problem we
+	 * currently could not see.
+	 *
+	 * The method and the outcome, and nothing else. Not the title, not the venue, not the id —
+	 * what somebody tried to submit is theirs, and an event that was declined is one we agreed not
+	 * to keep (ADR 0012).
+	 *
+	 * Latched on the event id rather than on a boolean, because the effect re-runs whenever the
+	 * poster upload moves state and a second report would double every submission that carried a
+	 * picture.
+	 */
+	let reportedResult = $state<string | null>(null);
+
+	$effect(() => {
+		const result = submitEvent.result;
+		if (!result?.outcome) return;
+		const key = `${method}:${result.outcome}:${result.eventId ?? 'none'}`;
+		if (reportedResult === key) return;
+		reportedResult = key;
+		track('submit_result', { method, outcome: result.outcome });
+	});
+
 	let posterState = $state<'idle' | 'saving' | 'saved' | 'skipped'>('idle');
 
 	$effect(() => {

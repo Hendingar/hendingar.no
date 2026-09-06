@@ -19,6 +19,7 @@
 	import PageMeta from '../../../lib/components/PageMeta.svelte';
 	import { breadcrumbJsonLd, eventJsonLd, jsonLdScript } from '../../../lib/jsonld.ts';
 	import { plainText } from '@hendingar/core/text';
+	import { track } from '../../../lib/analytics.ts';
 
 	const id = eventIdFromParam(page.params.slug ?? '');
 	if (id === null) error(404, 'Fann ikkje hendinga');
@@ -56,6 +57,26 @@
 	$effect(() => {
 		if (!markSeen(event.id)) return;
 		void recordView(event.id).catch(() => {});
+	});
+
+	/**
+	 * The same opening, reported to the collector.
+	 *
+	 * Not a duplicate of the view counter next to it: that one is a public number on this page and
+	 * is counted once per browser ever, deliberately. This says which *kinds* of event get opened
+	 * and how far ahead people look — the URL alone carries neither — and it is what tells us
+	 * whether importing a source was worth the trouble.
+	 *
+	 * `days_ahead` rather than the date, because the question is "how far ahead do people plan",
+	 * and a date would be one more thing joinable back to a single reader.
+	 */
+	$effect(() => {
+		track('view_event', {
+			event_id: event.id,
+			category: event.category,
+			source: event.reportedBy[0]?.slug ?? 'innsendt',
+			days_ahead: Math.round((event.startsAt.getTime() - Date.now()) / 86_400_000)
+		});
 	});
 
 	/*
@@ -97,6 +118,22 @@
 		const space = cut.lastIndexOf(' ');
 		return `${(space > 100 ? cut.slice(0, space) : cut).trimEnd()}…`;
 	});
+
+	/**
+	 * A link leaving the site.
+	 *
+	 * The one measurement that answers whether this project works. We are an index, not a
+	 * destination (README.md) — an index nobody clicks through has failed at the only thing it set
+	 * out to do, and until now nothing told us either way.
+	 *
+	 * The host, not the full URL: which sources people actually go to is the useful shape, and the
+	 * path would be one more thing joinable back to a reader. Never blocks the navigation.
+	 */
+	function outbound(url: string | null, kind: 'cta' | 'source'): void {
+		const target = safeHttpUrl(url);
+		if (!target) return;
+		track('click', { link_domain: new URL(target).hostname, link_kind: kind, event_id: event.id });
+	}
 
 	const canonical = $derived(
 		event.duplicateOfId !== null && event.duplicateOfTitle !== null
@@ -307,14 +344,24 @@
 					phone — none of which a button that builds a blob can do.
 				-->
 				<p class="ev__ics">
-					<a class="btn" href="{eventPath(event.id, event.title)}/kalender.ics" download>
+					<a
+						class="btn"
+						href="{eventPath(event.id, event.title)}/kalender.ics"
+						download
+						onclick={() => track('add_to_calendar', { event_id: event.id })}
+					>
 						Legg i kalenderen
 					</a>
 				</p>
 
 				{#if event.ctaUrl}
 					<!-- Outbound. We never sell tickets — see the README non-goals. -->
-					<a class="btn btn--solid" href={event.ctaUrl} rel="noopener nofollow">Billettar</a>
+					<a
+						class="btn btn--solid"
+						href={event.ctaUrl}
+						rel="noopener nofollow"
+						onclick={() => outbound(event.ctaUrl, 'cta')}>Billettar</a
+					>
 				{/if}
 
 				{#if event.reportedBy.length > 0}
@@ -333,9 +380,17 @@
 								<li>
 									<SourceIcon src={src.iconUrl} name={src.name} size="1rem" />
 									{#if src.eventUrl}
-										<a href={src.eventUrl} rel="noopener">{src.attribution}</a>
+										<a
+											href={src.eventUrl}
+											rel="noopener"
+											onclick={() => outbound(src.eventUrl, 'source')}>{src.attribution}</a
+										>
 									{:else}
-										<a href={src.siteUrl} rel="noopener">{src.attribution}</a>
+										<a
+											href={src.siteUrl}
+											rel="noopener"
+											onclick={() => outbound(src.siteUrl, 'source')}>{src.attribution}</a
+										>
 									{/if}
 								</li>
 							{/each}
