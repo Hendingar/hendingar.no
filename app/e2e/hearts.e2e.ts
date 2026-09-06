@@ -86,11 +86,40 @@ test('un-hearting removes it everywhere, including the menu', async ({ page }) =
 });
 
 test('the count is public; the list of what you hearted is not', async ({ page, context }) => {
+	/*
+	 * Latency, injected — the same trick the un-hearting race below uses, and for the same reason.
+	 *
+	 * The count on the tapping browser moves optimistically, before the request is even sent
+	 * (HeartButton.svelte: `override` is set, then `toggleHeart` is awaited). So asserting it says
+	 * nothing about whether the server has counted anything, and the second browser below reads a
+	 * fresh server render. On a fast local round trip the write always happened to land first and
+	 * this passed; on CI it did not, and the test failed intermittently for reasons that had
+	 * nothing to do with what it was testing.
+	 *
+	 * Delaying the write makes that ordering deterministic instead of lucky: without the wait added
+	 * below, this now fails every single time rather than one run in twenty.
+	 */
+	await page.route('**/*', async (route) => {
+		if (route.request().method() === 'POST') await new Promise((r) => setTimeout(r, 400));
+		await route.continue();
+	});
+
 	await page.goto('/hendingar');
 	const target = tile(page, 3);
 	const before = await countOf(target);
+
+	/*
+	 * Wait for the write, not for the optimistic number.
+	 *
+	 * Matched on the last path segment because a remote function's URL carries a per-build hash
+	 * (`/_app/remote/<hash>/toggleHeart`) and the name is the only stable part of it.
+	 */
+	const counted = page.waitForResponse((response) =>
+		new URL(response.url()).pathname.endsWith('/toggleHeart')
+	);
 	await target.locator('button.heart').click();
 	await expect(target.locator('.heart__n')).toHaveText(String(before + 1));
+	await counted;
 
 	/*
 	 * A second browser sees the count and none of the hearts.
