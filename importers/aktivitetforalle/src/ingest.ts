@@ -73,13 +73,37 @@ async function venueIdFor(db: Db, mapped: MappedEvent, site: AfaSite) {
 		.values({
 			name: mapped.venueName,
 			slug: mapped.venueSlug,
+			/*
+			 * Still null, and the address does not change that.
+			 *
+			 * `location_city` is a post town — "Bremnes", "Finnås" — and a post town is not a
+			 * municipality: both of those are in Bømlo. It belongs to the postal address, which is
+			 * where it now goes, and writing it here would be wrong in a way nothing downstream
+			 * could detect. The same reasoning the TEC and allevents importers already record.
+			 */
 			municipality: null,
+			address: mapped.venueAddress.street,
+			postalCode: mapped.venueAddress.postalCode,
 			timezone: site.timezone,
-			// The portal carries a gps field and fills it on no event at all. Flagged rather than
-			// dropped, so an unplaceable venue is visible to the geocoder instead of vanishing.
+			// The portal carries a gps field and fills it on no event at all. Coordinates stay
+			// unresolved; the address above is what the event pages actually need.
 			geocodeStatus: 'pending'
 		})
-		.onConflictDoUpdate({ target: venues.slug, set: { name: mapped.venueName } })
+		.onConflictDoUpdate({
+			target: venues.slug,
+			set: {
+				name: mapped.venueName,
+				/*
+				 * Only ever filled in, never blanked.
+				 *
+				 * A later run where the portal happens to omit the address must not erase one we
+				 * already have — an event page that loses its address silently loses its rich
+				 * result, and nothing would say why.
+				 */
+				...(mapped.venueAddress.street ? { address: mapped.venueAddress.street } : {}),
+				...(mapped.venueAddress.postalCode ? { postalCode: mapped.venueAddress.postalCode } : {})
+			}
+		})
 		.returning({ id: venues.id });
 	return row?.id ?? null;
 }

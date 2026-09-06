@@ -87,12 +87,26 @@ async function venueIdFor(db: Db, mapped: MappedEvent, instance: TecInstance) {
 			 * not, and `pnpm consolidate` matches on the slug rather than on this.
 			 */
 			municipality: null,
+			address: mapped.venueAddress.street,
+			postalCode: mapped.venueAddress.postalCode,
 			timezone: instance.timezone,
-			// The venue block has an address but no coordinates. Flagged rather than half-filled, so
-			// an unplaceable venue is visible to the geocoder instead of vanishing.
+			// The venue block has an address but no coordinates. The address is written below;
+			// coordinates stay unresolved.
 			geocodeStatus: 'pending'
 		})
-		.onConflictDoUpdate({ target: venues.slug, set: { name: mapped.venueName } })
+		.onConflictDoUpdate({
+			target: venues.slug,
+			set: {
+				name: mapped.venueName,
+				/*
+				 * Only ever filled in, never blanked. A later run where the source omits the address
+				 * must not erase one we already have — the event page would silently lose its rich
+				 * result and nothing would say why.
+				 */
+				...(mapped.venueAddress.street ? { address: mapped.venueAddress.street } : {}),
+				...(mapped.venueAddress.postalCode ? { postalCode: mapped.venueAddress.postalCode } : {})
+			}
+		})
 		.returning({ id: venues.id });
 	return row?.id ?? null;
 }

@@ -21,6 +21,7 @@ const base: EventForJsonLd = {
 	organizerName: null,
 	venueName: 'Den Blå Time',
 	venueAddress: null,
+	venuePostalCode: null,
 	venueMunicipality: 'Stord',
 	venueLatitude: null,
 	venueLongitude: null,
@@ -92,6 +93,30 @@ describe('eventJsonLd', () => {
 		for (const url of ['javascript:alert(1)', 'mailto:a@b.no', 'not a url', '']) {
 			expect(eventJsonLd({ ...base, ctaUrl: url }, CANONICAL).offers, url).toBeUndefined();
 		}
+	});
+
+	it('writes a full postal address when the source gave us one', () => {
+		/*
+		 * The point of the whole address pass. `location.address` is required for Google's Event
+		 * rich result and no event had one — `venues.address` was empty for every row in the
+		 * database, because twelve importers received a street address and threw it away.
+		 */
+		expect(
+			eventJsonLd(
+				{ ...base, venueAddress: 'Kjøtteinsvegen 66', venuePostalCode: '5411' },
+				CANONICAL
+			)
+		).toMatchObject({
+			location: {
+				address: {
+					'@type': 'PostalAddress',
+					streetAddress: 'Kjøtteinsvegen 66',
+					postalCode: '5411',
+					addressLocality: 'Stord',
+					addressCountry: 'NO'
+				}
+			}
+		});
 	});
 
 	it('emits an address only when there is one to emit', () => {

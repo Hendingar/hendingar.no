@@ -929,6 +929,7 @@ export const getEvent = query(z.number().int().positive(), async (id) => {
 			verificationNotes: events.verificationNotes,
 			venueName: venues.name,
 			venueAddress: venues.address,
+			venuePostalCode: venues.postalCode,
 			venueMunicipality: venues.municipality,
 			venueLatitude: venues.latitude,
 			venueLongitude: venues.longitude,

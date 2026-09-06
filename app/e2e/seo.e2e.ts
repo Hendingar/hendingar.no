@@ -229,3 +229,55 @@ test('the front page says who we are, and a listing says it is a list', async ({
 	// only appeared in the browser would fail here — which is the point.
 	expect(Number(list!.numberOfItems)).toBeGreaterThan(0);
 });
+
+test('an event with a known venue publishes a real postal address', async ({ request }) => {
+	/*
+	 * `location.address` is REQUIRED for Google's Event rich result, and for a long time no event
+	 * had one: `venues.address` was empty for every row in the database while three importers were
+	 * being handed a street address in a payload we already fetched.
+	 *
+	 * The seed carries at least one venue with an address, so this asserts the whole chain —
+	 * importer to column to JSON-LD — rather than any one link of it. `streetAddress` is what
+	 * Google actually reads; a `Place` with only a name does not qualify.
+	 */
+	const listing = await (await request.get('/hendingar')).text();
+	const paths = [
+		...new Set([...listing.matchAll(/href="(\/hending\/\d+[^"]*)"/g)].map((m) => m[1]))
+	];
+
+	const addresses: Record<string, unknown>[] = [];
+	for (const path of paths.slice(0, 12)) {
+		const event = jsonLdBlocks(await (await request.get(path!)).text()).find(
+			(b) => b['@type'] === 'Event'
+		);
+		const location = event?.location;
+		if (location && typeof location === 'object' && 'address' in location) {
+			const address = (location as { address?: unknown }).address;
+			if (address && typeof address === 'object')
+				addresses.push(address as Record<string, unknown>);
+		}
+	}
+
+	/*
+	 * A street, specifically.
+	 *
+	 * An earlier version of this assertion accepted any one of streetAddress, postalCode or
+	 * addressLocality — and passed with the address emission deleted, because `addressLocality`
+	 * comes from `municipality` and predates all of this. `streetAddress` is the field that was
+	 * missing and the field Google reads, so it is the field asserted.
+	 */
+	expect(
+		addresses.filter((address) => address.streetAddress).length,
+		'at least one event should publish a streetAddress'
+	).toBeGreaterThan(0);
+
+	for (const address of addresses) {
+		expect(address['@type']).toBe('PostalAddress');
+		expect(address.addressCountry).toBe('NO');
+		// Never an empty PostalAddress: that asserts we know the address and that it is nothing.
+		expect(Boolean(address.streetAddress ?? address.postalCode ?? address.addressLocality)).toBe(
+			true
+		);
+		if (address.postalCode) expect(String(address.postalCode)).toMatch(/^\d{4}$/);
+	}
+});

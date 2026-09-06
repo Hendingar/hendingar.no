@@ -773,3 +773,22 @@ describe('mapEvent', () => {
 		expect(JSON.stringify(once)).toBe(JSON.stringify(twice));
 	});
 });
+
+describe('the venue address', () => {
+	it('is parsed out of the single street line, or left absent', () => {
+		/*
+		 * allevents.in writes the whole address on one line and inconsistently — sometimes the
+		 * street first, sometimes the venue's name first, sometimes a county and a country and no
+		 * address at all. Anything we cannot name is dropped rather than guessed.
+		 */
+		const all = jazz.events.map((e) => mapEvent(e, null, jazzOrganiser));
+		for (const m of all) {
+			if (isFailure(m)) continue;
+			if (m.venueAddress.street !== null) {
+				expect(m.venueAddress.street).toMatch(/\d/);
+				expect(m.venueAddress.street).not.toMatch(/Norway|Norge|Hordaland/);
+			}
+			if (m.venueAddress.postalCode) expect(m.venueAddress.postalCode).toMatch(/^\d{4}$/);
+		}
+	});
+});

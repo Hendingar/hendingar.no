@@ -2,6 +2,7 @@ import { zonedWallClockToInstant } from '@hendingar/core/datetime';
 import type { CategorySlug } from '@hendingar/core/taxonomy';
 import { orNull, type FilterVocabulary, type UpstreamEvent } from './api.ts';
 import { eventUrl, listingUrl, type AfaSite } from './sites.ts';
+import { fromParts, type ParsedAddress } from '@hendingar/core/address';
 
 /**
  * Pure mapping: one portal row → our shape. No I/O, no clock, no randomness.
@@ -101,6 +102,8 @@ export type MappedEvent = {
 	endsAt: Date | null;
 	venueName: string | null;
 	venueSlug: string | null;
+	/** Street, postnummer and town, where the portal gave us them. */
+	venueAddress: ParsedAddress;
 	description: string | null;
 	ctaUrl: string | null;
 	posterUrl: string | null;
@@ -187,6 +190,18 @@ export function mapEvent(
 		endsAt,
 		venueName,
 		venueSlug: venueName ? slugifyVenue(venueName) : null,
+		/*
+		 * The portal keeps street, postnummer and town in three fields, and this importer was
+		 * dropping all three. `location.address` is required for Google's Event rich result, and
+		 * this is the cleanest source of one we have: nothing is inferred, the fields are already
+		 * apart. `fromParts` still refuses anything without a house number, so a room name in the
+		 * street field does not become a street.
+		 */
+		venueAddress: fromParts(
+			orNull(input.event_location_address1),
+			orNull(input.event_location_zip),
+			orNull(input.event_location_city)
+		),
 		description: orNull(input.event_description) ?? orNull(input.event_summary),
 		ctaUrl: safeUrl(orNull(input.event_ticket_link)),
 		posterUrl: poster,

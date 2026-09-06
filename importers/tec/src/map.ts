@@ -2,6 +2,7 @@ import { zonedWallClockToInstant } from '@hendingar/core/datetime';
 import type { CategorySlug } from '@hendingar/core/taxonomy';
 import type { UpstreamCategory, UpstreamEvent, UpstreamImage } from './api.ts';
 import type { TecInstance } from './instances.ts';
+import { fromParts, type ParsedAddress } from '@hendingar/core/address';
 
 /**
  * Pure mapping: a tribe/events/v1 record → our shape. No I/O, no clock, no randomness.
@@ -336,6 +337,8 @@ export type MappedEvent = {
 	endsAt: Date | null;
 	venueName: string | null;
 	venueSlug: string | null;
+	/** Street, postnummer and town, where the instance filled them in. */
+	venueAddress: ParsedAddress;
 	description: string | null;
 	ctaUrl: string | null;
 	posterUrl: string | null;
@@ -415,6 +418,15 @@ export function mapEvent(input: UpstreamEvent, instance: TecInstance): MappedEve
 		endsAt,
 		venueName,
 		venueSlug: slugifyVenue(venueName),
+		/*
+		 * The Events Calendar keeps a venue's street, postnummer and town in three fields, and this
+		 * importer read only its name. `location.address` is required for Google's Event rich
+		 * result and this is the least inferred source of one there is.
+		 *
+		 * Not every instance fills them — the plugin's demo data ships American addresses — so
+		 * `fromParts` refusing anything without a house number matters here as much as anywhere.
+		 */
+		venueAddress: fromParts(venue?.address, venue?.zip, venue?.city),
 		description,
 		/*
 		 * `website` is the organiser's own outbound link — a ticket shop, usually — and empty on
