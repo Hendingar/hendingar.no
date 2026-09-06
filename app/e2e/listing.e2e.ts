@@ -131,10 +131,18 @@ test('a phone shows several events at once, not one card per screenful', async (
 
 	const tile = page.locator('article.tile').first();
 	const box = (await tile.boundingBox())!;
-	// The poster-on-top card was 315px tall here, so 2.7 events fitted on screen and finding next
-	// Friday meant scrolling past pictures. As a row it is under half that. Asserting a budget
-	// rather than an exact number: the point is density, not a specific design.
-	expect(box.height, 'an event row must fit several to a screen').toBeLessThan(200);
+	/*
+	 * The poster-on-top card was 315px tall here, so 2.7 events fitted on screen and finding next
+	 * Friday meant scrolling past pictures. As a row it is well under half that. Asserting a budget
+	 * rather than an exact number: the point is density, not a specific design.
+	 *
+	 * Tightened from 200 to 175 once the narrow rules actually applied: on the seed a row is 88px
+	 * with a one-line title and 107 with two. The budget is deliberately still generous — a long
+	 * title is allowed to wrap — so it does not stand in for the specific guard. That one is in
+	 * landing.e2e.ts, on the type size, because the failure this file could not see was the narrow
+	 * block being shadowed by the base rules below it, which cost 40px and broke no assertion.
+	 */
+	expect(box.height, 'an event row must fit several to a screen').toBeLessThan(175);
 
 	// Text left, thumbnail right — a row, not a stack. If the thumbnail is above the title the
 	// layout has fallen back to the card and the height assertion above is the only thing left

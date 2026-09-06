@@ -149,39 +149,61 @@
 			Not `aria-hidden`. "Pågår no" is the most useful thing on the tile for somebody deciding
 			whether to leave the house, and hiding it would keep the urgency for sighted readers only.
 		-->
-		{#if startsIn}
-			<p class="soon" class:soon--live={(event.minutesUntilStart ?? 1) <= 0}>{startsIn}</p>
-		{/if}
-
 		<!--
-			One tap from "that looks good" to it being in your week.
+			The badge and the calendar link, in one wrapper that only exists on a phone.
 
-			The `.ics` endpoint has existed per event since the detail page was built, but it was
-			reachable only by opening the event first — so the listing could interest a reader and
-			then ask them to navigate before they could act on it. Above the stretched link overlay,
-			like the repeat times, or the card would swallow the click.
-
-			Named for the event rather than "Legg i kalender": on a page of these, twelve links with
-			the same accessible name are twelve links a screen-reader user cannot tell apart.
+			`display: contents` everywhere else, so the wide layout is laid out exactly as it was:
+			`.soon` lifted onto the poster, `.tile__ics` a row of the body grid. Below 34rem the
+			wrapper turns into a flex row and the two sit side by side — they were two stacked
+			blocks of about 35px each, on ten cards of the leading day, which is 350px of chrome a
+			phone paid to say two short things.
 		-->
-		{#if featured}
-			<a
-				class="tile__ics"
-				href={`${eventPath(event.id, event.title)}/kalender.ics`}
-				aria-label={`Legg ${event.title} i kalenderen`}
-				onclick={() =>
-					track('add_to_calendar', {
-						content_type: 'event',
-						event_id: event.id,
-						list_name: surfaceOf(page.url.pathname)
-					})}
-			>
-				<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-					<rect x="3.5" y="5.5" width="17" height="15" />
-					<path d="M3.5 10h17M8 3.5v4M16 3.5v4M12 13v5M9.5 15.5h5" />
-				</svg>
-				<span aria-hidden="true">Legg i kalender</span>
-			</a>
+		{#if startsIn || featured}
+			<div class="tile__act">
+				{#if startsIn}
+					<p class="soon" class:soon--live={(event.minutesUntilStart ?? 1) <= 0}>{startsIn}</p>
+				{/if}
+
+				<!--
+					One tap from "that looks good" to it being in your week.
+
+					The `.ics` endpoint has existed per event since the detail page was built, but it
+					was reachable only by opening the event first — so the listing could interest a
+					reader and then ask them to navigate before they could act on it. Above the
+					stretched link overlay, like the repeat times, or the card would swallow the click.
+
+					Named for the event rather than "Legg i kalender": on a page of these, twelve links
+					with the same accessible name are twelve links a screen-reader user cannot tell
+					apart.
+				-->
+				{#if featured}
+					<a
+						class="tile__ics"
+						href={`${eventPath(event.id, event.title)}/kalender.ics`}
+						aria-label={`Legg ${event.title} i kalenderen`}
+						onclick={() =>
+							track('add_to_calendar', {
+								content_type: 'event',
+								event_id: event.id,
+								list_name: surfaceOf(page.url.pathname)
+							})}
+					>
+						<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+							<rect x="3.5" y="5.5" width="17" height="15" />
+							<path d="M3.5 10h17M8 3.5v4M16 3.5v4M12 13v5M9.5 15.5h5" />
+						</svg>
+						<!--
+							Two labels, one shown at a time, and neither of them is the accessible name —
+							`aria-label` above already says "Legg <tittel> i kalenderen" in both layouts.
+							At 390px the long label plus "Pågår no" is 236px of a 233px column, so the row
+							wrapped and the pair cost 58px instead of 30. Shortening the words is what
+							makes the single line fit, down to 320px.
+						-->
+						<span class="tile__icslong" aria-hidden="true">Legg i kalender</span>
+						<span class="tile__icsshort" aria-hidden="true">Kalender</span>
+					</a>
+				{/if}
+			</div>
 		{/if}
 
 		{#if repeats}
@@ -291,6 +313,18 @@
 	}
 
 	/*
+	 * No box of its own on a wide tile.
+	 *
+	 * The two children were direct rows of the body grid before this wrapper existed, and on a
+	 * wide tile they should stay that way — `.soon` is absolute anyway, and giving `.tile__ics` a
+	 * flex parent would change how `justify-self: start` behaves. The wrapper earns its keep only
+	 * in the narrow block below, where it becomes the row.
+	 */
+	.tile__act {
+		display: contents;
+	}
+
+	/*
 	 * Above the link's stretched ::after, like the repeat times, or the card swallows the click and
 	 * every calendar link opens the event instead.
 	 */
@@ -318,6 +352,10 @@
 	.tile__ics:hover {
 		color: var(--peach);
 		border-color: var(--peach);
+	}
+	/* The short label is the phone's; the narrow block below swaps which of the two is displayed. */
+	.tile__icsshort {
+		display: none;
 	}
 	.tile__ics svg {
 		inline-size: 0.85rem;
@@ -482,81 +520,6 @@
 	}
 	/* Everything above is decoration on top of a working card. Anyone who has asked their system
 	   for less movement gets the colour change and none of the motion. */
-	/*
-	 * Below the grid's first breakpoint the tile becomes a row: text left, a square thumbnail
-	 * right.
-	 *
-	 * Measured, not guessed. The poster-on-top card is 315px tall on a 390x844 phone, so 2.7
-	 * events fit on screen and finding next Friday means a lot of scrolling past pictures. As a
-	 * row it is about a third of that. The poster still earns its place at wider widths, where
-	 * there is room for it beside its neighbours.
-	 *
-	 * A media query rather than a container query, deliberately: the tile is FULL width on a phone
-	 * and NARROW in a desktop grid column, so its own width says nothing about which layout it is
-	 * in — a container query here fires on exactly the wrong one. 34rem matches where
-	 * EventsByDay's grid actually goes multi-column.
-	 */
-	@media (width < 34rem) {
-		.tile {
-			grid-template-columns: minmax(0, 1fr) 5.5rem;
-			grid-template-rows: auto;
-		}
-		.tile__body {
-			grid-column: 1;
-			grid-row: 1;
-			padding: 0.6rem 0.7rem 0.65rem;
-			gap: 0.1rem;
-			align-content: center;
-		}
-		/* EventThumb's root element carries .thumb, so this reaches past the scoping boundary the
-		   same way the hover rule above already does. */
-		.tile > :global(.thumb) {
-			grid-column: 2;
-			grid-row: 1;
-			inline-size: 5.5rem;
-			block-size: 100%;
-			aspect-ratio: auto;
-			/* The rule moves from under the poster to beside it, so the row still reads as one
-			   object rather than two glued together. */
-			border-block-end: none;
-			border-inline-start: var(--rule) solid var(--peach-line);
-		}
-		.tile__t {
-			font-size: 1.05rem;
-			line-height: 1.15;
-		}
-		.tile__top {
-			font-size: var(--step-micro);
-		}
-		.tile__meta {
-			font-size: 0.8125rem;
-		}
-		/* Over a photograph now rather than over our own navy, so it needs its own ground to stay
-		   legible — without it the mark disappears into a bright poster. */
-		.tile__src {
-			inset-block-end: 0.3rem;
-			inset-inline-end: 0.3rem;
-			padding: 0.15rem;
-			background: color-mix(in srgb, var(--navy-900) 78%, transparent);
-			opacity: 0.9;
-		}
-		/*
-		 * The poster is an 88px square here, and "Pågår no" does not fit on it — at 12px with the
-		 * mono tracking the words are wider than the picture. So the badge stops being an overlay
-		 * and becomes a line in the body, which is the row layout's own idiom anyway.
-		 */
-		.soon {
-			position: static;
-			justify-self: start;
-			margin-block-start: 0.3rem;
-			padding: 0.25em 0.45em;
-		}
-		/* A featured tile is full-width here like every other, so the larger cap has nothing to
-		   earn and would only cost the row its density. */
-		.tile--featured .tile__t {
-			font-size: 1.05rem;
-		}
-	}
 
 	@media (prefers-reduced-motion: reduce) {
 		.tile,
@@ -627,5 +590,124 @@
 		 * 3.1:1, never body", and this is small text at body weight.
 		 */
 		color: var(--peach-dim);
+	}
+	/*
+	 * The narrow layout is LAST in this stylesheet, and it has to stay last.
+	 *
+	 * `.tile__body` inside a media query and `.tile__body` outside it have the same specificity,
+	 * so source order decides — and with the base rules below it, half of this block was dead. The
+	 * phone was rendering desktop padding, a 21.6px title and a 0.4rem grid gap while the rules
+	 * meant to shrink all three sat above them doing nothing. Nothing about the CSS looked wrong;
+	 * the tile was simply 40px taller than the file said it was.
+	 */
+	/*
+	 * Below the grid's first breakpoint the tile becomes a row: text left, a square thumbnail
+	 * right.
+	 *
+	 * Measured, not guessed. The poster-on-top card is 315px tall on a 390x844 phone, so 2.7
+	 * events fit on screen and finding next Friday means a lot of scrolling past pictures. As a
+	 * row it is about a third of that. The poster still earns its place at wider widths, where
+	 * there is room for it beside its neighbours.
+	 *
+	 * A media query rather than a container query, deliberately: the tile is FULL width on a phone
+	 * and NARROW in a desktop grid column, so its own width says nothing about which layout it is
+	 * in — a container query here fires on exactly the wrong one. 34rem matches where
+	 * EventsByDay's grid actually goes multi-column.
+	 */
+	@media (width < 34rem) {
+		.tile {
+			grid-template-columns: minmax(0, 1fr) 5.5rem;
+			grid-template-rows: auto;
+		}
+		.tile__body {
+			grid-column: 1;
+			grid-row: 1;
+			padding: 0.6rem 0.7rem 0.65rem;
+			gap: 0.1rem;
+			align-content: center;
+		}
+		/* EventThumb's root element carries .thumb, so this reaches past the scoping boundary the
+		   same way the hover rule above already does. */
+		.tile > :global(.thumb) {
+			grid-column: 2;
+			grid-row: 1;
+			inline-size: 5.5rem;
+			block-size: 100%;
+			aspect-ratio: auto;
+			/* The rule moves from under the poster to beside it, so the row still reads as one
+			   object rather than two glued together. */
+			border-block-end: none;
+			border-inline-start: var(--rule) solid var(--peach-line);
+		}
+		.tile__t {
+			font-size: 1.05rem;
+			line-height: 1.15;
+		}
+		.tile__top {
+			font-size: var(--step-micro);
+		}
+		.tile__meta {
+			font-size: 0.8125rem;
+		}
+		/* Over a photograph now rather than over our own navy, so it needs its own ground to stay
+		   legible — without it the mark disappears into a bright poster. */
+		.tile__src {
+			inset-block-end: 0.3rem;
+			inset-inline-end: 0.3rem;
+			padding: 0.15rem;
+			background: color-mix(in srgb, var(--navy-900) 78%, transparent);
+			opacity: 0.9;
+		}
+		/*
+		 * The poster is an 88px square here, and "Pågår no" does not fit on it — at 12px with the
+		 * mono tracking the words are wider than the picture. So the badge stops being an overlay
+		 * and becomes a line in the body, which is the row layout's own idiom anyway.
+		 */
+		.soon {
+			position: static;
+			justify-self: start;
+			margin-block-start: 0;
+			padding: 0.25em 0.45em;
+			letter-spacing: 0.12em;
+		}
+		/*
+		 * One line, not two.
+		 *
+		 * "Pågår no" and "Legg i kalender" are both short, both quiet, and both about the same
+		 * decision — and stacked they cost every card of the leading day about 35px more than the
+		 * title and the venue together. Wrapping, so a long badge and the link still both fit at
+		 * 320px rather than one of them being clipped.
+		 */
+		.tile__act {
+			display: flex;
+			flex-wrap: wrap;
+			align-items: center;
+			gap: 0.3rem;
+			margin-block-start: 0.35rem;
+		}
+		/*
+		 * Tighter tracking, because every pixel here is a line break.
+		 *
+		 * Measured: the pair needs 187px, and the text column is 240px at 390 and 168px at 320 — so
+		 * the badge and the link share a line on a normal phone and wrap on the narrowest one. That
+		 * is the wrap doing its job, not a number to chase: fitting 320 too would mean an icon with
+		 * no words beside it, and a control nobody can read is not a saving.
+		 */
+		.tile__ics {
+			margin-block-start: 0;
+			padding: 0.4em 0.55em;
+			letter-spacing: 0.08em;
+		}
+		.tile__icslong {
+			display: none;
+		}
+		.tile__icsshort {
+			display: inline;
+		}
+		/* A featured tile is full-width here like every other, so the larger cap has nothing to
+		   earn and would only cost the row its density. */
+		.tile--featured .tile__t {
+			font-size: 1.05rem;
+		}
 	}
 </style>

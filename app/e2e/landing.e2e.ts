@@ -46,6 +46,48 @@ test('no horizontal overflow at 320px', async ({ page }) => {
 	}
 });
 
+test('a phone gets the compact row, not the desktop card at phone width', async ({ page }) => {
+	await page.setViewportSize({ width: 390, height: 844 });
+	await page.goto('/');
+
+	const tile = page.locator('article.tile--featured').first();
+	await expect(tile).toBeVisible();
+
+	/*
+	 * The narrow rules must actually win.
+	 *
+	 * They sat above the base rules in EventTile's stylesheet with identical specificity, so source
+	 * order silently handed the phone desktop padding and a 0.4rem grid gap while the block meant
+	 * to shrink both did nothing. Nothing about the CSS looked wrong, and no height budget caught
+	 * it — a card is as tall as its title, so a budget loose enough for a long one is loose enough
+	 * for 40px of stray padding.
+	 *
+	 * So this measures the two distances that do not depend on the text: the inset from the card's
+	 * edge to its first line (10.6px with the narrow block, 14.6 without) and the gap between the
+	 * time row and the title (1.6 against 6.4). Both are geometry, both were measured, and either
+	 * one regressing means the block has been shadowed again.
+	 */
+	const box = (await tile.boundingBox())!;
+	const top = (await tile.locator('.tile__top').boundingBox())!;
+	const title = (await tile.locator('.tile__t').boundingBox())!;
+	expect(top.y - box.y, 'the phone gets the narrow padding').toBeLessThan(13);
+	expect(title.y - (top.y + top.height), 'the phone gets the narrow row gap').toBeLessThan(4);
+
+	/*
+	 * "Pågår no" and the calendar link share one line. Stacked, they cost every card of the leading
+	 * day about 35px — 350px down a page whose whole argument is that the events come first.
+	 */
+	const soon = tile.locator('.soon');
+	if ((await soon.count()) > 0) {
+		const badge = (await soon.boundingBox())!;
+		const ics = (await tile.locator('.tile__ics').boundingBox())!;
+		expect(
+			Math.abs(badge.y - ics.y),
+			'the badge and the calendar link sit on one line'
+		).toBeLessThan(badge.height);
+	}
+});
+
 test('event titles are headings so a long list is navigable', async ({ page }) => {
 	await page.goto('/hendingar');
 	await expect(page.getByRole('heading', { level: 1, name: /alle hendingar/i })).toBeVisible();

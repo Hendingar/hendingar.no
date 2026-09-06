@@ -154,6 +154,59 @@
 		opacity: 1;
 	}
 
+	/*
+	 * Below the grid's breakpoint the card becomes a row: text left, a square thumbnail right.
+	 *
+	 * The same treatment `EventTile` gives itself at the same width, and for a stronger reason.
+	 * Poster-on-top, one of these is 400px tall on a 390×844 phone — so the four on the front page
+	 * were 1600px, four times what the four event rows above them cost, for the section that is
+	 * explicitly the afterthought of the page. Measured on the front page: 875px before, 430px
+	 * after, and all four places are now visible in one screen instead of two.
+	 *
+	 * A media query rather than a container query, for the reason EventTile records: the card is
+	 * FULL width on a phone and NARROW in a desktop grid column, so its own width cannot tell the
+	 * two apart. 34rem is where StandingGrid actually goes multi-column.
+	 */
+	@media (width < 34rem) {
+		.card {
+			grid-template-columns: minmax(0, 1fr) 5.5rem;
+			grid-template-rows: auto;
+		}
+		.card__body {
+			grid-column: 1;
+			grid-row: 1;
+			padding: 0.6rem 0.7rem 0.65rem;
+			gap: 0.35rem;
+			align-content: center;
+		}
+		/* EventThumb's root carries .thumb, so this reaches past the scoping boundary the same way
+		   the hover rule above already does. */
+		.card > :global(.thumb) {
+			grid-column: 2;
+			grid-row: 1;
+			inline-size: 5.5rem;
+			block-size: 100%;
+			aspect-ratio: auto;
+			/* The rule moves from under the picture to beside it, so the row still reads as one
+			   object rather than two glued together. */
+			border-block-end: none;
+			border-inline-start: var(--rule) solid var(--peach-line);
+		}
+		.card__t {
+			font-size: 1.05rem;
+			line-height: 1.15;
+		}
+		/* Over a photograph now rather than over our own navy, so the marks need their own ground
+		   to stay legible against a bright picture. */
+		.card__src {
+			inset-block-end: 0.3rem;
+			inset-inline-end: 0.3rem;
+			padding: 0.15rem;
+			background: color-mix(in srgb, var(--navy-900) 78%, transparent);
+			opacity: 0.9;
+		}
+	}
+
 	.card:has(.card__link:focus-visible) {
 		outline: 2px solid var(--peach);
 		outline-offset: 2px;
