@@ -58,13 +58,23 @@ export const LINKED_SOURCES: readonly LinkedSource[] = [
 		attribution: 'Bømlo Teater',
 		iconUrl: 'https://bomloteater.no/wp-content/uploads/2022/11/cropped-bt-favicon-192x192.png',
 		/*
-		 * Checked rather than assumed: the site runs WordPress with The Events Calendar installed,
-		 * and `/wp-json/tribe/events/v1/events` answers 200 with `total: 0`. The plugin is there and
-		 * nobody fills it in — the productions are hand-written pages with the dates in prose and
-		 * not a single `<time>` element between them. So there is a real local calendar here and
-		 * nothing machine-readable to import from it.
+		 * This row is the **productions pages**, and it stays a link even though the same site now
+		 * appears again as `tec-bomloteater`. Two rows, because bomloteater.no publishes two
+		 * different things and only one of them is readable.
+		 *
+		 * `/wp-json/tribe/events/v1/events` answers 200 with `total: 0`: The Events Calendar is
+		 * installed and empty, and `importers/tec` collects it daily — so the day the theatre puts
+		 * a performance in it, we have it. The current programme is somewhere else entirely, in the
+		 * `oppsetningar` and `produksjonar` post types, where the dates are prose in the page body
+		 * ("13.-15. november 2026") with no meta, no ACF and not a single `<time>` element. That
+		 * half is what this row is honest about, and it is not something a deterministic importer
+		 * can read (ADR 0004).
+		 *
+		 * Collapse the two into one the day the calendar is actually used — until then, saying only
+		 * "collected" would imply we have the programme, and saying only "not collected" would be
+		 * false about the calendar.
 		 */
-		note: 'Oppsetjingane til Bømlo Teater. Sida har ein tom hendingskalender, og datoane står som fritekst på kvar produksjonsside, så det er ikkje noko maskinlesbart å hente enno.'
+		note: 'Produksjonssidene til Bømlo Teater. Hendingskalenderen deira hentar vi — han er berre tom for tida — men datoane for oppsetjingane står som fritekst nedi kvar produksjonsside, så dei kan vi ikkje hente.'
 	}
 ];
 
@@ -128,6 +138,12 @@ export const SOURCE_PLATFORMS: readonly SourcePlatform[] = [
 		 * own line. Grouping them keeps "Riksteatret" one entry on /kjelder instead of one per town.
 		 */
 		note: 'Turnéteateret som spelar i kulturhus over heile landet. Vi hentar programmet for kvar spelestad for seg, så du ser kva som kjem til akkurat den salen.'
+	},
+	{
+		slug: 'tec',
+		name: 'The Events Calendar',
+		url: 'https://theeventscalendar.com',
+		note: 'Ein kalendermodul svært mange nettstader køyrer på WordPress. Vi hentar frå kvar stad for seg, rett frå deira eigen kalender, så hendinga høyrer heime hos den som arrangerer.'
 	}
 ];
 
