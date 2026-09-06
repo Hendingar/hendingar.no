@@ -24,11 +24,18 @@ export type LinkedSource = {
 };
 
 /*
- * Two entries have graduated out of this list: Kulleseidkanalen to importers/checkin, and Bømlo
+ * Three entries have graduated out of this list: Kulleseidkanalen to importers/checkin, Bømlo
  * kyrkjelege fellesråd to importers/kyrkja once it turned out its calendar was readable after all
- * — JSON-escaped inside a script tag rather than absent. Each importer upserts the same slug, so
- * the row changes kind in place, which is why `pnpm db:sources` skips any slug an importer has
- * taken over.
+ * — JSON-escaped inside a script tag rather than absent — and `riksteatret-bomlo` to
+ * importers/riksteatret, which reads the `datetime` attribute the venue page puts on every
+ * performance. Each importer upserts the same slug, so the row changes kind in place, which is why
+ * `pnpm db:sources` skips any slug an importer has taken over.
+ *
+ * Emptying the list is the goal; it is not, however, a state the app can be left in. /datasamling
+ * renders a link row differently from a collected one — "Ikkje henta", no run strip, an outbound
+ * link instead of a listing filter — and two e2e specs assert exactly that. With no entry here the
+ * CI database holds no link row and those specs test nothing. So a graduation is also a prompt to
+ * name the next calendar we know about and do not yet collect.
  */
 /**
  * The reserved slug for "sent in by a person".
@@ -44,13 +51,20 @@ export const SUBMITTED_SLUG = 'innsendt';
 
 export const LINKED_SOURCES: readonly LinkedSource[] = [
 	{
-		slug: 'riksteatret-bomlo',
-		name: 'Riksteatret på Bømlo',
-		url: 'https://www.riksteatret.no/spillested/bomlo/',
+		slug: 'bomlo-teater',
+		name: 'Bømlo Teater',
+		url: 'https://bomloteater.no/produksjonar/',
 		region: 'Sunnhordland',
-		attribution: 'Riksteatret',
-		iconUrl: 'https://www.riksteatret.no/apple-touch-icon-precomposed.png',
-		note: 'Framsyningane til Riksteatret i Bømlo kulturhus. Sida er lesbar og vi planlegg å hente herifrå.'
+		attribution: 'Bømlo Teater',
+		iconUrl: 'https://bomloteater.no/wp-content/uploads/2022/11/cropped-bt-favicon-192x192.png',
+		/*
+		 * Checked rather than assumed: the site runs WordPress with The Events Calendar installed,
+		 * and `/wp-json/tribe/events/v1/events` answers 200 with `total: 0`. The plugin is there and
+		 * nobody fills it in — the productions are hand-written pages with the dates in prose and
+		 * not a single `<time>` element between them. So there is a real local calendar here and
+		 * nothing machine-readable to import from it.
+		 */
+		note: 'Oppsetjingane til Bømlo Teater. Sida har ein tom hendingskalender, og datoane står som fritekst på kvar produksjonsside, så det er ikkje noko maskinlesbart å hente enno.'
 	}
 ];
 
@@ -101,6 +115,19 @@ export const SOURCE_PLATFORMS: readonly SourcePlatform[] = [
 		name: 'Den Norske Turistforening',
 		url: 'https://www.dnt.no',
 		note: 'Turlaga sine eigne aktivitetskalendrar, eitt lag om gongen.'
+	},
+	{
+		slug: 'riksteatret',
+		name: 'Riksteatret',
+		url: 'https://www.riksteatret.no',
+		/*
+		 * A platform in the sense this list means it — one upstream, many local rows — even though
+		 * it is one organisation rather than a product other organisers publish on. What it shares
+		 * with the others is the shape: the same repertoire tours ~79 halls, each hall has its own
+		 * page, and we collect one source per hall so a hall that stops reporting is visible on its
+		 * own line. Grouping them keeps "Riksteatret" one entry on /kjelder instead of one per town.
+		 */
+		note: 'Turnéteateret som spelar i kulturhus over heile landet. Vi hentar programmet for kvar spelestad for seg, så du ser kva som kjem til akkurat den salen.'
 	}
 ];
 
