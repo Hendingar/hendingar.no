@@ -13,8 +13,13 @@ const ev = (
 	sourceId: number | null,
 	title: string,
 	startsAt: string,
-	venueName: string | null = null
-): Candidate => ({ id, sourceId, title, startsAt: at(startsAt), venueName });
+	venueName: string | null = null,
+	/*
+	 * Left null unless the case is about what a particular calendar means by a venue name. Null is
+	 * the conservative value: no room name is resolved, which is how a human submission is compared.
+	 */
+	sourceSlug: string | null = null
+): Candidate => ({ id, sourceId, sourceSlug, title, startsAt: at(startsAt), venueName });
 
 describe('comparePair', () => {
 	it('matches the same show listed by two sources', () => {
@@ -48,6 +53,97 @@ describe('comparePair', () => {
 		const verdict = comparePair(a, b);
 		expect(verdict.same).toBe(false);
 		if (!verdict.same) expect(verdict.reason).toBe('different venues');
+	});
+
+	it.each([
+		['Nysæter kyrkje', 'Moster kyrkje'],
+		['Stord Kyrkje', 'Moster kyrkje'],
+		['Nysæter kyrkje', 'Bømlo kyrkje'],
+		['Stord Kyrkje', 'Bremnes kyrkje'],
+		['Huglo bedehuskapell', 'Lykling kyrkje'],
+		['Nysæter kyrkje', 'Kanalen'],
+		['Nysæter kyrkje', 'Salem Moster']
+	])('keeps a service at %s apart from one at %s', (left, right) => {
+		/*
+		 * Every one of these is a real pair from the live database: two parishes, identical title,
+		 * identical minute, genuinely different services. The first row is why this test is a table
+		 * rather than one case — `Nysæter kyrkje` / `Moster kyrkje` scored 0.60 on edit distance,
+		 * a hundredth over VENUE_MISMATCH_THRESHOLD, and merged three groups of Sunday and
+		 * Christmas services into one row each. Seven real services were hidden from the site by
+		 * it. See `venueSimilarity`.
+		 */
+		const a = ev(1, 10, 'Gudstjeneste', '2026-12-24T13:30:00Z', left, 'stord-kyrkja');
+		const b = ev(2, 20, 'Gudstjeneste', '2026-12-24T13:30:00Z', right, 'bomlo-kyrkja');
+		const verdict = comparePair(a, b);
+		expect(verdict.same).toBe(false);
+		if (!verdict.same) expect(verdict.reason).toBe('different venues');
+	});
+
+	it('matches a room against the building another source names', () => {
+		/*
+		 * The defect this rule was extended for, with the rows exactly as the live database held
+		 * them. "Riksteatret: Apestjernen" is two words, so it is not distinctive enough to be
+		 * believed on its own, and `Storsalen` shares not a letter with `Stord kulturhus`.
+		 */
+		const a = ev(
+			150,
+			10,
+			'Riksteatret: Apestjernen',
+			'2026-10-26T17:00:00Z',
+			'Stord kulturhus',
+			'detskjer-sunnhordland'
+		);
+		const b = ev(
+			520,
+			20,
+			'Riksteatret: Apestjernen',
+			'2026-10-26T17:00:00Z',
+			'Storsalen',
+			'stord-kulturhus'
+		);
+		expect(comparePair(a, b).same).toBe(true);
+	});
+
+	it('refuses the same room name when it is a different building', () => {
+		/*
+		 * The safety half of the same rule, and not hypothetical: Riksteatret tours one production
+		 * around 79 halls, and both of these calendars list it. If `Storsalen` meant Stord kulturhus
+		 * everywhere, the night the tour played both towns would lose one of the two performances.
+		 */
+		const a = ev(
+			520,
+			20,
+			'Riksteatret: Apestjernen',
+			'2026-10-26T17:00:00Z',
+			'Storsalen',
+			'stord-kulturhus'
+		);
+		const b = ev(
+			699,
+			30,
+			'Riksteatret: Apestjernen',
+			'2026-10-26T17:00:00Z',
+			'Storsalen',
+			'bomlo-aktivitetforalle'
+		);
+		const verdict = comparePair(a, b);
+		expect(verdict.same).toBe(false);
+		if (!verdict.same) expect(verdict.reason).toBe('different venues');
+	});
+
+	it('does not resolve a room name a person typed into the form', () => {
+		// A submission carries no source slug, so "Storsalen" stays "Storsalen" and fails to
+		// corroborate a generic title — which is the right way for an unanswerable question to fail.
+		const submitted = ev(-1, null, 'Riksteatret: Apestjernen', '2026-10-26T17:00:00Z', 'Storsalen');
+		const imported = ev(
+			150,
+			10,
+			'Riksteatret: Apestjernen',
+			'2026-10-26T17:00:00Z',
+			'Stord kulturhus',
+			'detskjer-sunnhordland'
+		);
+		expect(comparePair(submitted, imported).same).toBe(false);
 	});
 
 	it('still matches when the same place is written differently', () => {
@@ -144,6 +240,55 @@ describe('groupDuplicates', () => {
 			ev(1, 10, 'Offentleg symjing', '2026-09-03T09:00:00Z'),
 			ev(2, 10, 'Offentleg symjing', '2026-09-03T10:00:00Z'),
 			ev(3, 10, 'Offentleg symjing', '2026-09-03T15:00:00Z')
+		];
+		expect(groupDuplicates(rows)).toEqual([]);
+	});
+
+	it('puts a building and its room in one group across three sources', () => {
+		// The live rows, ids and all: two calendars name the house, its own programme names the hall.
+		const rows = [
+			ev(
+				164,
+				10,
+				'Riksteatret: Ubesvart anrop',
+				'2026-11-20T12:00:00Z',
+				'Stord kulturhus',
+				'detskjer-sunnhordland'
+			),
+			ev(
+				535,
+				20,
+				'Riksteatret: ubesvart anrop',
+				'2026-11-20T12:00:00Z',
+				'Storsalen',
+				'stord-kulturhus'
+			),
+			ev(
+				565,
+				30,
+				'Riksteatret: ubesvart anrop',
+				'2026-11-20T12:00:00Z',
+				'Stord kulturhus',
+				'fjordnorway-sunnhordland'
+			)
+		];
+		const groups = groupDuplicates(rows);
+		expect(groups).toHaveLength(1);
+		expect(groups[0]!.canonicalId).toBe(164);
+		expect(groups[0]!.duplicateIds).toEqual([535, 565]);
+	});
+
+	it('never chains two parishes together through one look-alike church name', () => {
+		/*
+		 * This exact trio was one row on the site. 218 and 219 are two services from the same
+		 * source and are never compared to each other, so the group existed only because 394 joined
+		 * both — `Nysæter kyrkje` scoring 0.60 against `Moster kyrkje` on edit distance. Union-find
+		 * then hid two more services behind the third. A false merge is not local.
+		 */
+		const rows = [
+			ev(218, 10, 'Gudstjeneste', '2026-09-13T09:00:00Z', 'Nysæter kyrkje', 'stord-kyrkja'),
+			ev(219, 10, 'Gudstjeneste', '2026-09-13T09:00:00Z', 'Stord Kyrkje', 'stord-kyrkja'),
+			ev(394, 20, 'Gudstjeneste', '2026-09-13T09:00:00Z', 'Moster kyrkje', 'bomlo-kyrkja')
 		];
 		expect(groupDuplicates(rows)).toEqual([]);
 	});

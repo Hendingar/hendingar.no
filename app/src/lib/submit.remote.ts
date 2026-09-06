@@ -1,7 +1,14 @@
 import { command, form, query } from '$app/server';
 import { z } from 'zod';
 import { and, asc, desc, eq, gte, inArray, isNull, lte, ne, or } from 'drizzle-orm';
-import { eventSeries, events, organizers, venues, verifications } from '@hendingar/core/schema';
+import {
+	eventSeries,
+	events,
+	organizers,
+	sources,
+	venues,
+	verifications
+} from '@hendingar/core/schema';
 import { eventFormSchema } from '@hendingar/core/validation';
 import { instantToZonedWallClock, zonedWallClockToInstant } from '@hendingar/core/datetime';
 import { DUPLICATE_WINDOW_MS, comparePair } from '@hendingar/core/consolidate';
@@ -66,6 +73,8 @@ export const findDuplicate = query(duplicateProbeSchema, async (probe) => {
 		.select({
 			id: events.id,
 			sourceId: events.sourceId,
+			// So a submission naming the building can still meet the row a venue filed under a room.
+			sourceSlug: sources.slug,
 			title: events.title,
 			startsAt: events.startsAt,
 			venueName: venues.name,
@@ -74,6 +83,7 @@ export const findDuplicate = query(duplicateProbeSchema, async (probe) => {
 		})
 		.from(events)
 		.leftJoin(venues, eq(events.venueId, venues.id))
+		.leftJoin(sources, eq(events.sourceId, sources.id))
 		.where(
 			and(
 				gte(events.startsAt, from),
@@ -88,6 +98,9 @@ export const findDuplicate = query(duplicateProbeSchema, async (probe) => {
 	const probeCandidate = {
 		id: -1,
 		sourceId: null,
+		// A person, not a calendar — so no room name is resolved on their behalf. See the same
+		// note on the probe in `submitEvent`.
+		sourceSlug: null,
 		title: probe.title,
 		startsAt,
 		venueName: probe.venueName
@@ -668,12 +681,15 @@ export const submitEvent = form(eventFormSchema, async (submission) => {
 		.select({
 			id: events.id,
 			sourceId: events.sourceId,
+			// So a submission naming the building can still meet the row a venue filed under a room.
+			sourceSlug: sources.slug,
 			title: events.title,
 			startsAt: events.startsAt,
 			venueName: venues.name
 		})
 		.from(events)
 		.leftJoin(venues, eq(events.venueId, venues.id))
+		.leftJoin(sources, eq(events.sourceId, sources.id))
 		.where(
 			and(
 				gte(events.startsAt, dayBefore),
@@ -706,6 +722,12 @@ export const submitEvent = form(eventFormSchema, async (submission) => {
 	const probe = {
 		id: -1,
 		sourceId: null,
+		/*
+		 * No slug, because a person is not a calendar. Somebody typing "Storsalen" has not said
+		 * which town's Storsalen they mean — two buildings in this database answer to it — and
+		 * resolving it on their behalf would merge their event into somebody else's.
+		 */
+		sourceSlug: null,
 		title: submission.title,
 		startsAt,
 		venueName: submission.venueName
