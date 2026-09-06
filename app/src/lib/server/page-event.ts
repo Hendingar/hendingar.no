@@ -1,4 +1,5 @@
 import { DEFAULT_TIME_ZONE, instantToZonedWallClock } from '@hendingar/core/datetime';
+import { isEventNode, jsonLdNodes } from '@hendingar/core/schemaorg';
 import type { ExtractedEvent } from '@hendingar/core/validation';
 
 /**
@@ -15,6 +16,10 @@ import type { ExtractedEvent } from '@hendingar/core/validation';
  * Deliberately hand-written rather than a DOM library. What is needed is four fields out of one
  * `<script>` tag or a handful of `itemprop` attributes; a parser dependency would be more code,
  * more supply chain, and no more correct for this.
+ *
+ * Finding and flattening the JSON-LD blocks is shared with `importers/allevents`, which reads the
+ * same markup for a different reason, so it lives in `@hendingar/core/schemaorg` rather than being
+ * written once per caller — including the suffix match that makes `MusicEvent` count as an event.
  */
 
 /** Nothing here is trusted to be well-formed. Every reader returns null rather than throwing. */
@@ -61,45 +66,6 @@ export function readSchemaDateTime(value: unknown): { date: string; time: string
 	if (Number.isNaN(instant.getTime())) return null;
 	const wall = instantToZonedWallClock(instant, DEFAULT_TIME_ZONE);
 	return { date: wall.date, time: wall.time };
-}
-
-/** Every JSON-LD payload in the document, flattened through `@graph` and top-level arrays. */
-function jsonLdNodes(html: string): Json[] {
-	const nodes: Json[] = [];
-	const pattern = /<script\b[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi;
-
-	for (const match of html.matchAll(pattern)) {
-		const raw = match[1];
-		if (!raw) continue;
-		let parsed: unknown;
-		try {
-			parsed = JSON.parse(raw);
-		} catch {
-			// One malformed block must not hide the valid ones further down the page.
-			continue;
-		}
-		const queue: unknown[] = [parsed];
-		while (queue.length > 0) {
-			const item = queue.pop();
-			if (Array.isArray(item)) {
-				queue.push(...item);
-			} else if (item && typeof item === 'object') {
-				const node = item as Json;
-				nodes.push(node);
-				if (Array.isArray(node['@graph'])) queue.push(...node['@graph']);
-			}
-		}
-	}
-	return nodes;
-}
-
-/** `@type` may be a string or a list; a node is an Event if any of them says so. */
-function isEventNode(node: Json): boolean {
-	const type = node['@type'];
-	const types = Array.isArray(type) ? type : [type];
-	return types.some(
-		(value) => typeof value === 'string' && /(^|\/)(Event|[A-Za-z]+Event)$/.test(value)
-	);
 }
 
 function decodeEntities(value: string): string {
