@@ -62,6 +62,28 @@ def test_oversized_page_text_is_refused_before_it_reaches_the_model():
     assert response.status_code == 413
 
 
+def test_oversized_crop_image_is_refused_before_it_reaches_the_model():
+    """The same cap as /extract, on the endpoint that gets the images nobody read.
+
+    Worth its own test: this one is called after an event is already published, where a request
+    that gets through and fails costs a model call for a thumbnail nobody is waiting for.
+    """
+    response = _client().post(
+        "/crop",
+        json={"image_base64": "A" * (MAX_IMAGE_BASE64_BYTES + 1), "media_type": "image/jpeg"},
+    )
+    assert response.status_code == 413
+
+
+def test_crop_asks_for_nothing_but_an_image():
+    """No `today`, and no fields — sending them must not be required to get a box.
+
+    The endpoint exists precisely because the extraction request is the wrong shape here.
+    """
+    response = _client().post("/crop", json={"image_base64": "A" * 200})
+    assert response.status_code == 422  # media_type is still required
+
+
 def test_page_extraction_requires_every_field():
     # url and today are context the prompt depends on for relative dates and for reading a slug;
     # accepting a request without them would silently degrade the answer rather than fail.

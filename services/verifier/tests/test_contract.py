@@ -31,6 +31,28 @@ def test_verdicts_match_core() -> None:
     assert _string_array("VERIFICATION_VERDICTS") == list(get_args(Verdict))
 
 
+def test_crop_box_fields_match_the_shared_schema():
+    """The crop endpoint's box is validated against `thumbnailCropSchema` in packages/core.
+
+    Zod strips what a schema does not name, so a box that gained a field here — a rotation, say —
+    would arrive in the browser with that field silently gone, and the crop would be applied as if
+    it had never been asked for. Same failure mode as the extraction fields below, one call newer.
+    """
+    from verifier.models import ThumbnailCrop
+
+    validation = (
+        Path(__file__).resolve().parents[3] / "packages" / "core" / "src" / "validation.ts"
+    ).read_text(encoding="utf-8")
+    schema = validation.split("export const thumbnailCropSchema", 1)[1].split("\n});", 1)[0]
+
+    missing = [
+        field
+        for field in ThumbnailCrop.model_fields
+        if not re.search(rf"^\s*{re.escape(field)}\s*:", schema, re.MULTILINE)
+    ]
+    assert not missing, f"named by the verifier but not by thumbnailCropSchema: {missing}"
+
+
 def test_extraction_fields_match_the_shared_schema():
     """Every field the service returns must be named in the app's schema, or it is dropped.
 

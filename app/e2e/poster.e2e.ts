@@ -25,6 +25,78 @@ test('the panel says what happens to the image, including when nothing does', as
 	expect(html).toMatch(/elles blir biletet ikkje lagra/);
 });
 
+/**
+ * A poster-shaped PNG, made in the page so the suite carries no binary fixture.
+ *
+ * Portrait with a block of colour in the upper third, which is what a real one looks like to the
+ * only code that cares here — the downscaler and the `<img>`.
+ */
+async function posterFile(page: import('@playwright/test').Page) {
+	const base64 = await page.evaluate(() => {
+		const canvas = document.createElement('canvas');
+		canvas.width = 600;
+		canvas.height = 900;
+		const ctx = canvas.getContext('2d')!;
+		ctx.fillStyle = '#16223b';
+		ctx.fillRect(0, 0, 600, 900);
+		ctx.fillStyle = '#f7a98a';
+		ctx.fillRect(60, 90, 480, 300);
+		return canvas.toDataURL('image/png').split(',')[1]!;
+	});
+	return { name: 'plakat.png', mimeType: 'image/png', buffer: Buffer.from(base64, 'base64') };
+}
+
+test('any submission can carry a picture, not only a photographed poster', async ({ page }) => {
+	/*
+	 * Before this, the only way an event got a real thumbnail was the photo shortcut, and only when
+	 * the model's read succeeded. Somebody typing their event in had no way to offer the picture on
+	 * their phone at all — so a submitted event that had one went out with a generated pattern.
+	 */
+	await page.goto('/send-inn');
+	await page.locator('label[for="mode-skjema"]').click();
+
+	const field = page.locator('.form__poster');
+	await expect(field.getByRole('button', { name: /legg ved eit bilete/i })).toBeVisible();
+
+	const uploads: string[] = [];
+	page.on('request', (r) => {
+		if (r.url().includes('/bilete')) uploads.push(r.url());
+	});
+
+	await field.locator('input[type="file"]').setInputFiles(await posterFile(page));
+	await expect(field.locator('img')).toBeVisible();
+
+	/*
+	 * Held in the browser, not sent. The `data:` URL is the assertion that matters: nothing leaves
+	 * until the event is approved, which is the promise the page makes and the reason there is
+	 * nothing to delete for a submission that is turned away.
+	 */
+	const src = await field.locator('img').getAttribute('src');
+	expect(src?.startsWith('data:image/jpeg')).toBe(true);
+	expect(uploads, 'nothing is uploaded while the form is being filled in').toEqual([]);
+
+	// And it can be taken back.
+	await field.getByRole('button', { name: /fjern biletet/i }).click();
+	await expect(field.locator('img')).toHaveCount(0);
+	await expect(field.getByRole('button', { name: /legg ved eit bilete/i })).toBeVisible();
+});
+
+test('a read that fails costs the draft, not the picture', async ({ page }) => {
+	/*
+	 * CI points VERIFIER_URL at a closed port, so every read here fails — which is exactly the case
+	 * this exists for. The image used to live inside the photo panel and was handed up only with a
+	 * successful draft, so somebody who had walked over to the noticeboard and photographed the
+	 * poster was told to fill in the form and quietly lost the photograph on the way.
+	 */
+	await page.goto('/send-inn?med=bilete');
+	await page.locator('.capture input[type="file"]').setInputFiles(await posterFile(page));
+
+	await expect(page.getByText(/Biletet er teke vare på/i)).toBeVisible();
+
+	await page.locator('label[for="mode-skjema"]').click();
+	await expect(page.locator('.form__poster img')).toBeVisible();
+});
+
 test('an upload for an event that is not yours is refused', async ({ request }) => {
 	const jpeg = Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10]);
 	const res = await request.post('/ko/1/bilete', {

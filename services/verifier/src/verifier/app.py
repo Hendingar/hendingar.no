@@ -6,10 +6,13 @@ from fastapi import FastAPI, HTTPException
 
 from .appeal import JURORS, QUORUM, judge_appeal, juror_by_id
 from .config import Config, load_config
+from .crop import suggest_crop
 from .extract import extract_page, extract_poster
 from .llm import LlmClientFactory
 from .models import (
     AppealRequest,
+    CropRequest,
+    CropSuggestion,
     ExtractedEvent,
     ExtractPageRequest,
     ExtractRequest,
@@ -53,6 +56,25 @@ def create_app(config: Config | None = None, factory: LlmClientFactory | None = 
         except Exception as exc:
             log.exception("extraction failed")
             raise HTTPException(status_code=502, detail=f"extraction failed: {exc}") from exc
+
+    @app.post("/crop", response_model=CropSuggestion)
+    async def crop(request: CropRequest) -> CropSuggestion:
+        """Where to cut a thumbnail out of an image nobody read.
+
+        The photo path never calls this — `/extract` already returns a box with the fields. This is
+        for a picture attached to a form somebody filled in themselves, and it is asked only after
+        that event has been approved.
+
+        A failure here is a 502 and the caller shrugs: it keeps the whole image and the card still
+        gets a real picture. That is why this endpoint is allowed to be the thin thing it is.
+        """
+        if len(request.image_base64) > MAX_IMAGE_BASE64_BYTES:
+            raise HTTPException(status_code=413, detail="image too large; downscale before sending")
+        try:
+            return await suggest_crop(factory, request)
+        except Exception as exc:
+            log.exception("crop suggestion failed")
+            raise HTTPException(status_code=502, detail=f"crop failed: {exc}") from exc
 
     @app.post("/extract-page", response_model=ExtractedEvent)
     async def extract_page_route(request: ExtractPageRequest) -> ExtractedEvent:

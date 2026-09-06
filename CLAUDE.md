@@ -87,6 +87,7 @@ app/src/lib/submit.remote.ts     the submission boundary — photo, form, verifi
 services/verifier/src/verifier/
   llm.py                   Entra token → AsyncOpenAI. Rebuilt per call; the credential is reused
   extract.py               the vision call. Nynorsk prompt, strict json_schema
+  crop.py                  the small vision call: where to cut a thumbnail, or nothing
   verify.py                the five checks. Rules and model calls deliberately mixed
   app.py                   FastAPI. create_app(config, factory) so tests inject a stub
   tests/test_contract.py   asserts the check names still match packages/core

@@ -1,10 +1,12 @@
 <script lang="ts">
 	import { extractFromPhoto } from '../../submit.remote';
+	import { downscaleForUpload, type CapturedImage } from '../../poster.ts';
 	import type { ExtractedEvent } from '@hendingar/core/validation';
 
 	let {
 		enabled = true,
-		onextract
+		onextract,
+		onimage
 	}: {
 		enabled?: boolean;
 		/**
@@ -15,6 +17,16 @@
 		 * exactly when they needed it to check the fields against. The parent keeps it instead.
 		 */
 		onextract: (draft: ExtractedEvent, imageDataUrl: string | null) => void;
+		/**
+		 * The picture itself, handed up the moment it exists — before the model has seen it.
+		 *
+		 * Reading a poster and keeping a poster are two different things, and only one of them can
+		 * fail. When the read failed, the person was told to fill in the form and their photograph
+		 * was silently dropped on the way: an event whose sender had literally photographed it for
+		 * us went out with a generated tile. The parent holds the image from here on, so a read
+		 * that goes nowhere costs the draft and not the picture.
+		 */
+		onimage: (image: CapturedImage) => void;
 	} = $props();
 
 	/**
@@ -82,33 +94,6 @@
 	let input = $state<HTMLInputElement | undefined>();
 	let panel: HTMLElement | undefined = $state();
 
-	/** Longest edge of the image we send. A poster is legible well below phone-camera resolution. */
-	const MAX_EDGE = 1600;
-	const JPEG_QUALITY = 0.82;
-
-	/**
-	 * Downscale in the browser before uploading.
-	 *
-	 * A modern phone photo is 4–12 MB. Sending that raw would be slow on the rural mobile
-	 * connections this is for, and would cost image tokens for detail no one needs to read a
-	 * poster. Re-encoding also strips EXIF — including the GPS coordinates of wherever the person
-	 * was standing, which we neither need nor want.
-	 */
-	async function downscale(file: File): Promise<{ base64: string; mediaType: 'image/jpeg' }> {
-		const bitmap = await createImageBitmap(file);
-		const scale = Math.min(1, MAX_EDGE / Math.max(bitmap.width, bitmap.height));
-		const canvas = document.createElement('canvas');
-		canvas.width = Math.round(bitmap.width * scale);
-		canvas.height = Math.round(bitmap.height * scale);
-		const ctx = canvas.getContext('2d');
-		if (!ctx) throw new Error('kunne ikkje behandle biletet');
-		ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
-		bitmap.close();
-
-		const dataUrl = canvas.toDataURL('image/jpeg', JPEG_QUALITY);
-		return { base64: dataUrl.split(',')[1] ?? '', mediaType: 'image/jpeg' };
-	}
-
 	/**
 	 * Paste is bound to the window, because a paste has no target unless something is focused —
 	 * and nobody focuses a drop zone before hitting ⌘V. The visibility check matters: this
@@ -144,8 +129,17 @@
 		message = '';
 		startTimer();
 		try {
-			const { base64, mediaType } = await downscale(file);
-			preview = `data:${mediaType};base64,${base64}`;
+			const image = await downscaleForUpload(file);
+			const { base64, mediaType, dataUrl } = image;
+			preview = dataUrl;
+			/*
+			 * Handed up before the model is called, not after it answers.
+			 *
+			 * Everything below this line can fail — the service, the content filter, an image that
+			 * turns out to be a cat — and none of it should cost somebody the picture they chose to
+			 * send. From here the form holds it, whether or not a draft ever arrives.
+			 */
+			onimage(image);
 			phase = 'reading';
 
 			// The photographer's local date, so "laurdag 14." resolves to the right year.
@@ -249,6 +243,21 @@
 				</div>
 			{:else if message}
 				<p class="capture__status" aria-live="polite">{message}</p>
+			{/if}
+
+			{#if phase === 'error' && preview}
+				<!--
+					A read that failed is not a picture that failed.
+
+					Before, this said "prøv skjemaet" and the photograph was dropped on the way there,
+					so somebody who had gone out and photographed the poster got a generated tile.
+					The image is now kept by the form; this says so, next to the error, because that
+					is where the person decides what to do next.
+				-->
+				<p class="capture__kept">
+					Biletet er teke vare på. Fyll inn skjemaet sjølv — blir hendinga publisert, brukar vi
+					biletet som miniatyrbilete på kortet.
+				</p>
 			{/if}
 
 			<ul class="capture__works">
@@ -386,6 +395,13 @@
 		min-block-size: 1.4em;
 		font-size: 0.875rem;
 		color: var(--peach-dim);
+	}
+	/* Beside the error, and brighter than it: this is the good half of the news. */
+	.capture__kept {
+		margin: 0.35rem 0 0;
+		max-inline-size: 52ch;
+		font-size: 0.875rem;
+		color: var(--peach-hi);
 	}
 	.prog {
 		display: grid;

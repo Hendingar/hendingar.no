@@ -10,13 +10,14 @@
 		type Weekday
 	} from '@hendingar/core/recurrence';
 	import type { ExtractedEvent } from '@hendingar/core/validation';
-	import { findDuplicate, submissionDraft, submitEvent } from '../../submit.remote';
+	import { cropSuggestion, findDuplicate, submissionDraft, submitEvent } from '../../submit.remote';
 	import { ensureClientId, existingClientId } from '../../client-id.ts';
 	import { claimTypedBeforeHydration } from '../../typed-before-hydration.ts';
-	import { cropToThumbnail } from '../../poster.ts';
+	import { cropToThumbnail, type CapturedImage } from '../../poster.ts';
 	import { SvelteSet } from 'svelte/reactivity';
 	import { photoFilledFields } from '../../provenance.ts';
 	import PhotoCapture from './PhotoCapture.svelte';
+	import PosterField from './PosterField.svelte';
 	import UrlCapture from './UrlCapture.svelte';
 	import VerdictPanel from './VerdictPanel.svelte';
 	import { page } from '$app/state';
@@ -94,6 +95,14 @@
 			})
 			.finally(() => (revisionLoaded = true));
 	});
+	/**
+	 * Where to cut the thumbnail, when we know.
+	 *
+	 * The model that reads a poster returns a box along with the fields, so the photo path gets one
+	 * for free. Every other way in has an image and no box, and asks for one at upload time — see
+	 * the effect below. Null means "no box": the whole picture, in a centred landscape band, which
+	 * is still a truer card than a generated pattern.
+	 */
 	let posterCrop = $state<{ x: number; y: number; width: number; height: number } | null>(null);
 
 	/**
@@ -145,6 +154,25 @@
 		posterState = 'saving';
 		void (async () => {
 			try {
+				/*
+				 * A box from the model, if we can get one — and the whole picture if we cannot.
+				 *
+				 * The photo path already has one: reading a poster returns the crop along with the
+				 * fields, at no extra cost. An image attached to the form has never been looked at,
+				 * so this asks for a box and nothing else, once, here — after the verdict, so an
+				 * event that was declined still never has its picture leave the browser.
+				 *
+				 * Everything about it is best effort. No verifier, a slow answer, a nonsensical box:
+				 * `cropToThumbnail` takes a centred landscape band of the whole image instead, which
+				 * is what the person sent us and a better card than a generated pattern.
+				 */
+				if (!posterCrop && posterBase64 && photoEnabled) {
+					posterCrop = await cropSuggestion({
+						imageBase64: posterBase64,
+						mediaType: 'image/jpeg'
+					}).catch(() => null);
+				}
+
 				const blob = await cropToThumbnail(poster!, posterCrop);
 				if (!blob) {
 					posterState = 'skipped';
@@ -192,13 +220,45 @@
 	let unreadable = $state<string[]>([]);
 
 	/**
-	 * The poster the fields were read from, kept for the whole submission.
+	 * The image this submission carries, kept for the whole submission.
 	 *
 	 * Extraction switches to the form panel, which hides the panel the image was pasted into — so
 	 * it used to vanish at the moment it became useful. Held here it stays beside the fields it
 	 * produced, and is still on screen with the verdict afterwards.
+	 *
+	 * No longer only a read poster. It is set the moment somebody chooses a picture — from the photo
+	 * shortcut, whether or not the read then succeeds, or from the field in the form — and it is
+	 * what becomes the thumbnail if the event is approved.
 	 */
 	let poster = $state<string | null>(null);
+	/**
+	 * The same bytes without the `data:` prefix, for the crop call.
+	 *
+	 * Kept beside the data URL rather than derived from it at the point of use: the two are produced
+	 * together by `downscaleForUpload`, and splitting a string on a comma to recover something we
+	 * already had is the kind of small cleverness that goes wrong on the one browser that formats
+	 * the URL differently.
+	 */
+	let posterBase64 = $state<string | null>(null);
+
+	/**
+	 * Somebody chose a picture — from either way in.
+	 *
+	 * The crop is cleared rather than kept: a new picture has nothing to do with the box the model
+	 * found in the last one, and applying it would cut a stranger's photograph to a shape chosen
+	 * for a poster nobody can see any more.
+	 */
+	function attachImage(image: CapturedImage) {
+		poster = image.dataUrl;
+		posterBase64 = image.base64;
+		posterCrop = null;
+	}
+
+	function clearImage() {
+		poster = null;
+		posterBase64 = null;
+		posterCrop = null;
+	}
 
 	/**
 	 * Which fields the image filled in.
@@ -352,9 +412,20 @@
 		/** Extra fields, written in the SAME `fields.set` call — see `prefillFromUrl`. */
 		extra: { sourceUrl?: string } = {}
 	) {
-		poster = imageDataUrl;
-		// Kept for the upload that happens *after* a verdict of `approved`, and only then.
-		posterCrop = draft.thumbnail ?? null;
+		/*
+		 * The image, and the box the model found in it — but only when this draft came FROM an
+		 * image.
+		 *
+		 * A draft read from a linked page has neither, and must not clear a picture the person
+		 * attached to the form before pasting the link. `onimage` has usually set `poster` already
+		 * by the time we get here; assigning it again keeps this the one place that has to be right
+		 * if that ever stops being true.
+		 */
+		if (imageDataUrl) {
+			poster = imageDataUrl;
+			// Kept for the upload that happens *after* a verdict of `approved`, and only then.
+			posterCrop = draft.thumbnail ?? null;
+		}
 		/*
 		 * A non-null field is one the model read. `unreadable` is the model's own admission and is
 		 * kept separate: "could not read" and "did not appear on the poster" look the same in the
@@ -651,7 +722,11 @@
 		</div>
 
 		<div class="panel panel--photo">
-			<PhotoCapture enabled={photoEnabled} onextract={prefill} />
+			<!--
+				`onimage` fires before the model is called, `onextract` only if it answers. The split
+				is the point: a read that fails must cost the draft and not the photograph.
+			-->
+			<PhotoCapture enabled={photoEnabled} onextract={prefill} onimage={attachImage} />
 		</div>
 		<div class="panel panel--link">
 			<UrlCapture onextract={prefillFromUrl} />
@@ -747,27 +822,28 @@
 			</aside>
 		{/if}
 
-		{#if poster}
-			<!--
-				The poster, beside the fields it produced.
+		<!--
+			The picture, beside the fields — offered to every submission, not only to a read poster.
 
-				It used to live in the photo panel, which extraction switches away from — so the
-				image someone had just pasted disappeared at the moment they needed to check the
-				fields against it. Checking a suggestion without being able to see what it was read
-				from is not checking.
+			It used to appear only when the model had read one, and only for as long as that read
+			succeeded. Two people lost their picture that way: the one whose poster could not be read,
+			who was sent to the form while the photograph was quietly dropped, and the one who simply
+			typed their event in and was never asked for an image at all. Both ended up with a
+			generated tile on a card they had a real picture for.
 
-				`<figure>` with a caption rather than a bare img: the relationship between the
-				picture and the marked fields is the information, and a caption is where you say so.
-			-->
-			<figure class="form__poster">
-				<img src={poster} alt="Biletet du sende inn" />
-				<figcaption>
-					Felta merkte <span aria-hidden="true">◧</span> <em>lese frå biletet</em> er lesne herifrå. Rett
-					det som er feil — det du endrar blir ditt. Blir hendinga publisert, blir eit utsnitt av biletet
-					miniatyrbilete på kortet.
-				</figcaption>
-			</figure>
-		{/if}
+			Still shown here rather than back in the photo panel: extraction switches away from that
+			panel, so the image someone had just pasted disappeared at the moment they needed to check
+			the fields against it. Checking a suggestion without being able to see what it was read
+			from is not checking.
+		-->
+		<div class="form__poster" class:form__poster--filled={poster}>
+			<PosterField
+				{poster}
+				readFromImage={method === 'photo' && fromPhoto.size > 0}
+				onpick={attachImage}
+				onclear={clearImage}
+			/>
+		</div>
 
 		<!--
 		How the event reached us. Not user-editable, but it must go through the fields API: remote
@@ -1220,65 +1296,78 @@
 	}
 
 	/*
-	 * Narrow: a strip that stays put, not a block that scrolls away.
+	 * `PosterField` owns the control; this owns where it sits.
 	 *
-	 * Below the query the poster was an 18rem block above the fields, so checking the last field
-	 * against the picture meant scrolling the picture off screen — exactly the comparison it is
-	 * there to make possible. As a 5rem sticky strip it is beside every field in turn. The caption
-	 * goes with it: the intro now states what the ◧ marks mean, so the strip does not have to.
+	 * The rules that reach inside it are `:global`, which is the price of that split — the same
+	 * arrangement `EventTile` has with `EventThumb`, and for the same reason: only the parent knows
+	 * whether the field is a strip at the top of a phone or a column beside a wide form.
+	 *
+	 * Everything below is keyed on `--filled`. Empty, the field is a small invitation and must
+	 * behave like any other block in the form; a 17rem sticky column reserved for a picture nobody
+	 * has attached would be a hole in the layout.
 	 */
-	.form__poster {
+	.form__poster--filled {
 		margin: 0 0 1.25rem;
-		border: var(--rule) solid var(--peach-line);
-		background: var(--navy-900);
 		position: sticky;
 		inset-block-start: 0;
 		z-index: 1;
+		background: var(--navy-900);
 	}
-	.form__poster figcaption {
+	/*
+	 * Narrow and filled: a strip that stays put, not a block that scrolls away.
+	 *
+	 * As an 18rem block above the fields, checking the last field against the picture meant
+	 * scrolling the picture off screen — exactly the comparison it is there to make possible. As a
+	 * strip it is beside every field in turn, so it keeps only the picture and the two buttons: the
+	 * label and the caption are what a sticky element cannot afford on a phone.
+	 */
+	.form__poster--filled :global(.poster) {
+		padding: 0.5rem;
+		gap: 0.5rem;
+	}
+	.form__poster--filled :global(.poster__label),
+	.form__poster--filled :global(.poster__fig figcaption) {
 		display: none;
 	}
-
-	@container (min-width: 46rem) {
-		.form:has(.form__poster) {
-			grid-template-columns: minmax(0, 1fr) minmax(0, 17rem);
-			column-gap: clamp(1rem, 3vw, 1.75rem);
-		}
-		.form:has(.form__poster) > :not(.form__poster) {
-			grid-column: 1;
-		}
-		.form__poster {
-			grid-column: 2;
-			grid-row: 1 / -1;
-			margin: 0;
-			position: sticky;
-			inset-block-start: 1rem;
-			align-self: start;
-		}
-		/* There is room for the whole picture here, and for the sentence about what it produced. */
-		.form__poster figcaption {
-			display: block;
-		}
-		.form__poster img {
-			max-block-size: 18rem;
-			object-fit: contain;
-		}
+	.form__poster--filled :global(.poster__fig) {
+		max-inline-size: none;
 	}
-	.form__poster img {
-		display: block;
-		inline-size: 100%;
-		block-size: auto;
+	.form__poster--filled :global(.poster__fig img) {
 		/* The strip crops rather than shrinks: a portrait phone photo letterboxed into 5rem is a
 		   sliver of image in a field of background, which is not a reference you can check against. */
 		max-block-size: 5rem;
 		object-fit: cover;
 		object-position: center top;
 	}
-	.form__poster figcaption {
-		padding: 0.6rem 0.75rem;
-		border-block-start: var(--rule) solid var(--peach-line);
-		font-size: var(--step-micro);
-		color: var(--peach-dim);
+
+	@container (min-width: 46rem) {
+		.form:has(.form__poster--filled) {
+			grid-template-columns: minmax(0, 1fr) minmax(0, 17rem);
+			column-gap: clamp(1rem, 3vw, 1.75rem);
+		}
+		.form:has(.form__poster--filled) > :not(.form__poster) {
+			grid-column: 1;
+		}
+		.form__poster--filled {
+			grid-column: 2;
+			grid-row: 1 / -1;
+			margin: 0;
+			inset-block-start: 1rem;
+			align-self: start;
+		}
+		/* There is room here for the whole picture, its label, and the sentence about what happens
+		   to it — which is the sentence somebody wants while they are still deciding to send it. */
+		.form__poster--filled :global(.poster) {
+			padding: 0.9rem 1rem 1rem;
+		}
+		.form__poster--filled :global(.poster__label),
+		.form__poster--filled :global(.poster__fig figcaption) {
+			display: block;
+		}
+		.form__poster--filled :global(.poster__fig img) {
+			max-block-size: 18rem;
+			object-fit: contain;
+		}
 	}
 
 	/*

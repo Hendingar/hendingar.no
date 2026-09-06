@@ -40,6 +40,19 @@ class ExtractRequest(BaseModel):
     today: str = Field(description="YYYY-MM-DD, local date where the poster was photographed")
 
 
+class CropRequest(BaseModel):
+    """An image that is going to be a card thumbnail, and nothing else to do with it.
+
+    Separate from `ExtractRequest` because the caller has a different question. Extraction is asked
+    once, while somebody waits, to fill in a form. This is asked after an event has been approved,
+    about a picture that was attached to a form somebody typed themselves — so there are no fields
+    to read and no date to resolve against, only "which part of this is worth keeping".
+    """
+
+    image_base64: str
+    media_type: Literal["image/jpeg", "image/png", "image/webp"]
+
+
 class ExtractPageRequest(BaseModel):
     """The readable text of a web page somebody linked to, plus where it came from.
 
@@ -93,6 +106,24 @@ class ThumbnailCrop(BaseModel):
     y: float = Field(ge=0, le=1)
     width: float = Field(gt=0, le=1)
     height: float = Field(gt=0, le=1)
+
+
+class CropSuggestion(BaseModel):
+    """Where to cut a thumbnail out of one image — or the model saying it does not know.
+
+    `thumbnail` is null when nothing in the picture reads as a subject, and that is a useful answer
+    rather than a failure: the caller falls back to a centred landscape band of the whole image,
+    which is what the person sent and better than a guess that cuts the face off.
+    """
+
+    thumbnail: ThumbnailCrop | None = Field(
+        default=None,
+        description="The part worth keeping, in fractions of the image. Empty if unsure.",
+    )
+    note: str = Field(
+        default="",
+        description="One short sentence, Nynorsk, on what was chosen. For logs, not for a reader.",
+    )
 
 
 class ExtractedEvent(BaseModel):
