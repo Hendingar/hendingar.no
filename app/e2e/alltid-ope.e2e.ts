@@ -93,6 +93,30 @@ test('the standing card carries no clock, because it has none', async ({ page })
 	await expect(card.locator('.card__kind')).toBeVisible();
 });
 
+test('a standing card is a row on a phone, not a screenful', async ({ page }) => {
+	await page.setViewportSize({ width: 390, height: 844 });
+	await page.goto('/alltid-ope');
+
+	const card = page.locator('article.card').first();
+	const box = (await card.boundingBox())!;
+	/*
+	 * Poster-on-top, one of these was 400px on a 390×844 phone — so the four on the front page cost
+	 * 1600px, four times what the four event rows above them cost, for the section that is
+	 * explicitly the afterthought of the page. The same row treatment `EventTile` gives itself at
+	 * the same width brings it to about 120.
+	 */
+	expect(box.height, 'a standing card must not take most of a phone screen').toBeLessThan(180);
+
+	// Text left, thumbnail right. If the picture is back on top, the height above is the only thing
+	// holding the layout — and it would not hold it for long.
+	const thumb = (await card.locator('.thumb').boundingBox())!;
+	const title = (await card.locator('.card__t').boundingBox())!;
+	expect(thumb.x, 'the thumbnail sits beside the text').toBeGreaterThan(title.x);
+	expect(Math.abs(thumb.y - title.y), 'the thumbnail is not stacked above the title').toBeLessThan(
+		box.height
+	);
+});
+
 test('a day page points at them in one line rather than repeating the cards', async ({ page }) => {
 	await page.goto('/denne-helga');
 	const also = page.getByRole('complementary', { name: 'Alltid ope' });
