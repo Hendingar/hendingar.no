@@ -76,24 +76,23 @@ jobs:
             --start-ip-address "$RUNNER_IP" --end-ip-address "$RUNNER_IP" >/dev/null
           echo "opened=true" >> "$GITHUB_OUTPUT"
 
-      - name: Ingest Det skjer Sunnhordland
-        env:
-          PGHOST: ${{ steps.pg.outputs.fqdn }}
-          INGEST_TRIGGER: ${{ github.event_name == 'schedule' && 'schedule' || 'manual' }}
-        run: |
-          DATABASE_URL=$(PW="${{ secrets.POSTGRES_ADMIN_PASSWORD }}" python3 -c \
-            'import os,urllib.parse as u; print("postgres://hendingar:%s@%s:5432/hendingar?sslmode=require" % (u.quote(os.environ["PW"], safe=""), os.environ["PGHOST"]))')
-          export DATABASE_URL
-          if [ "${{ inputs.dry_run }}" = "true" ]; then
-            pnpm --filter @hendingar/importer-detskjer ingest -- --dry-run | tee result.txt
-          else
-            pnpm --filter @hendingar/importer-detskjer ingest | tee result.txt
-          fi
-
-      # `always()`: these are independent sources that happen to share a runner. One site being
-      # down must not stop the others being collected, and each writes its own ingest_runs row,
-      # so /datasamling shows which one failed rather than going quiet across the board.
-      - name: Ingest Modern Events Calendar sites
+      # Every importer, in one step, discovered rather than listed.
+      #
+      # This was fifteen near-identical steps, each naming one package. Adding a source meant
+      # copying fifteen lines here and two more into package.json, and getting that wrong was easy
+      # and quiet — deriving a step with a regex has twice produced two interleaved broken steps in
+      # this repo. Now a package under importers/ IS the registration, and there is nothing here to
+      # keep in step with it.
+      #
+      # --workspace-concurrency=1 keeps them sequential, so the upstreams see one polite client and
+      # the log reads in order.
+      #
+      # --no-bail is the flag that matters. The chain was `a && b && c`, so the first failure
+      # stopped every importer after it: on 2026-09-06 allevents.in rate-limited us and six
+      # perfectly healthy sources simply did not run, with nothing on /kjelder to say why. Now each
+      # reports its own ingest_runs row and a failure costs only itself. pnpm still exits non-zero
+      # if any of them failed, so the job still goes red.
+      - name: Ingest every source
         if: always() && steps.fw.outputs.opened == 'true'
         env:
           PGHOST: ${{ steps.pg.outputs.fqdn }}
@@ -103,205 +102,9 @@ jobs:
             'import os,urllib.parse as u; print("postgres://hendingar:%s@%s:5432/hendingar?sslmode=require" % (u.quote(os.environ["PW"], safe=""), os.environ["PGHOST"]))')
           export DATABASE_URL
           if [ "${{ inputs.dry_run }}" = "true" ]; then
-            pnpm --filter @hendingar/importer-mec ingest -- --dry-run | tee -a result.txt
+            pnpm run ingest -- --dry-run | tee -a result.txt
           else
-            pnpm --filter @hendingar/importer-mec ingest | tee -a result.txt
-          fi
-
-      # `always()` for the same reason: independent sources sharing a runner.
-      - name: Ingest Checkin.no venues
-        if: always() && steps.fw.outputs.opened == 'true'
-        env:
-          PGHOST: ${{ steps.pg.outputs.fqdn }}
-          INGEST_TRIGGER: ${{ github.event_name == 'schedule' && 'schedule' || 'manual' }}
-        run: |
-          DATABASE_URL=$(PW="${{ secrets.POSTGRES_ADMIN_PASSWORD }}" python3 -c \
-            'import os,urllib.parse as u; print("postgres://hendingar:%s@%s:5432/hendingar?sslmode=require" % (u.quote(os.environ["PW"], safe=""), os.environ["PGHOST"]))')
-          export DATABASE_URL
-          if [ "${{ inputs.dry_run }}" = "true" ]; then
-            pnpm --filter @hendingar/importer-checkin ingest -- --dry-run | tee -a result.txt
-          else
-            pnpm --filter @hendingar/importer-checkin ingest | tee -a result.txt
-          fi
-
-      - name: Ingest kyrkja.no parish calendars
-        if: always() && steps.fw.outputs.opened == 'true'
-        env:
-          PGHOST: ${{ steps.pg.outputs.fqdn }}
-          INGEST_TRIGGER: ${{ github.event_name == 'schedule' && 'schedule' || 'manual' }}
-        run: |
-          DATABASE_URL=$(PW="${{ secrets.POSTGRES_ADMIN_PASSWORD }}" python3 -c \
-            'import os,urllib.parse as u; print("postgres://hendingar:%s@%s:5432/hendingar?sslmode=require" % (u.quote(os.environ["PW"], safe=""), os.environ["PGHOST"]))')
-          export DATABASE_URL
-          if [ "${{ inputs.dry_run }}" = "true" ]; then
-            pnpm --filter @hendingar/importer-kyrkja ingest -- --dry-run | tee -a result.txt
-          else
-            pnpm --filter @hendingar/importer-kyrkja ingest | tee -a result.txt
-          fi
-
-      - name: Ingest culture-house programmes
-        if: always() && steps.fw.outputs.opened == 'true'
-        env:
-          PGHOST: ${{ steps.pg.outputs.fqdn }}
-          INGEST_TRIGGER: ${{ github.event_name == 'schedule' && 'schedule' || 'manual' }}
-        run: |
-          DATABASE_URL=$(PW="${{ secrets.POSTGRES_ADMIN_PASSWORD }}" python3 -c \
-            'import os,urllib.parse as u; print("postgres://hendingar:%s@%s:5432/hendingar?sslmode=require" % (u.quote(os.environ["PW"], safe=""), os.environ["PGHOST"]))')
-          export DATABASE_URL
-          if [ "${{ inputs.dry_run }}" = "true" ]; then
-            pnpm --filter @hendingar/importer-kulturhus ingest -- --dry-run | tee -a result.txt
-          else
-            pnpm --filter @hendingar/importer-kulturhus ingest | tee -a result.txt
-          fi
-
-      - name: Ingest Fjord Norway regions
-        if: always() && steps.fw.outputs.opened == 'true'
-        env:
-          PGHOST: ${{ steps.pg.outputs.fqdn }}
-          INGEST_TRIGGER: ${{ github.event_name == 'schedule' && 'schedule' || 'manual' }}
-        run: |
-          DATABASE_URL=$(PW="${{ secrets.POSTGRES_ADMIN_PASSWORD }}" python3 -c \
-            'import os,urllib.parse as u; print("postgres://hendingar:%s@%s:5432/hendingar?sslmode=require" % (u.quote(os.environ["PW"], safe=""), os.environ["PGHOST"]))')
-          export DATABASE_URL
-          if [ "${{ inputs.dry_run }}" = "true" ]; then
-            pnpm --filter @hendingar/importer-fjordnorway ingest -- --dry-run | tee -a result.txt
-          else
-            pnpm --filter @hendingar/importer-fjordnorway ingest | tee -a result.txt
-          fi
-
-      - name: Ingest DNT turlag calendars
-        if: always() && steps.fw.outputs.opened == 'true'
-        env:
-          PGHOST: ${{ steps.pg.outputs.fqdn }}
-          INGEST_TRIGGER: ${{ github.event_name == 'schedule' && 'schedule' || 'manual' }}
-        run: |
-          DATABASE_URL=$(PW="${{ secrets.POSTGRES_ADMIN_PASSWORD }}" python3 -c \
-            'import os,urllib.parse as u; print("postgres://hendingar:%s@%s:5432/hendingar?sslmode=require" % (u.quote(os.environ["PW"], safe=""), os.environ["PGHOST"]))')
-          export DATABASE_URL
-          if [ "${{ inputs.dry_run }}" = "true" ]; then
-            pnpm --filter @hendingar/importer-dnt ingest -- --dry-run | tee -a result.txt
-          else
-            pnpm --filter @hendingar/importer-dnt ingest | tee -a result.txt
-          fi
-
-      - name: Ingest HVL campus calendars
-        if: always() && steps.fw.outputs.opened == 'true'
-        env:
-          PGHOST: ${{ steps.pg.outputs.fqdn }}
-          INGEST_TRIGGER: ${{ github.event_name == 'schedule' && 'schedule' || 'manual' }}
-        run: |
-          DATABASE_URL=$(PW="${{ secrets.POSTGRES_ADMIN_PASSWORD }}" python3 -c \
-            'import os,urllib.parse as u; print("postgres://hendingar:%s@%s:5432/hendingar?sslmode=require" % (u.quote(os.environ["PW"], safe=""), os.environ["PGHOST"]))')
-          export DATABASE_URL
-          if [ "${{ inputs.dry_run }}" = "true" ]; then
-            pnpm --filter @hendingar/importer-hvl ingest -- --dry-run | tee -a result.txt
-          else
-            pnpm --filter @hendingar/importer-hvl ingest | tee -a result.txt
-          fi
-
-      - name: Ingest Aktivitet for Alle portals
-        if: always() && steps.fw.outputs.opened == 'true'
-        env:
-          PGHOST: ${{ steps.pg.outputs.fqdn }}
-          INGEST_TRIGGER: ${{ github.event_name == 'schedule' && 'schedule' || 'manual' }}
-        run: |
-          DATABASE_URL=$(PW="${{ secrets.POSTGRES_ADMIN_PASSWORD }}" python3 -c \
-            'import os,urllib.parse as u; print("postgres://hendingar:%s@%s:5432/hendingar?sslmode=require" % (u.quote(os.environ["PW"], safe=""), os.environ["PGHOST"]))')
-          export DATABASE_URL
-          if [ "${{ inputs.dry_run }}" = "true" ]; then
-            pnpm --filter @hendingar/importer-aktivitetforalle ingest -- --dry-run | tee -a result.txt
-          else
-            pnpm --filter @hendingar/importer-aktivitetforalle ingest | tee -a result.txt
-          fi
-
-      - name: Ingest local football fixtures
-        if: always() && steps.fw.outputs.opened == 'true'
-        env:
-          PGHOST: ${{ steps.pg.outputs.fqdn }}
-          INGEST_TRIGGER: ${{ github.event_name == 'schedule' && 'schedule' || 'manual' }}
-        run: |
-          DATABASE_URL=$(PW="${{ secrets.POSTGRES_ADMIN_PASSWORD }}" python3 -c \
-            'import os,urllib.parse as u; print("postgres://hendingar:%s@%s:5432/hendingar?sslmode=require" % (u.quote(os.environ["PW"], safe=""), os.environ["PGHOST"]))')
-          export DATABASE_URL
-          if [ "${{ inputs.dry_run }}" = "true" ]; then
-            pnpm --filter @hendingar/importer-fotball ingest -- --dry-run | tee -a result.txt
-          else
-            pnpm --filter @hendingar/importer-fotball ingest | tee -a result.txt
-          fi
-
-      - name: Ingest Billetto organisers
-        if: always() && steps.fw.outputs.opened == 'true'
-        env:
-          PGHOST: ${{ steps.pg.outputs.fqdn }}
-          INGEST_TRIGGER: ${{ github.event_name == 'schedule' && 'schedule' || 'manual' }}
-        run: |
-          DATABASE_URL=$(PW="${{ secrets.POSTGRES_ADMIN_PASSWORD }}" python3 -c \
-            'import os,urllib.parse as u; print("postgres://hendingar:%s@%s:5432/hendingar?sslmode=require" % (u.quote(os.environ["PW"], safe=""), os.environ["PGHOST"]))')
-          export DATABASE_URL
-          if [ "${{ inputs.dry_run }}" = "true" ]; then
-            pnpm --filter @hendingar/importer-billetto ingest -- --dry-run | tee -a result.txt
-          else
-            pnpm --filter @hendingar/importer-billetto ingest | tee -a result.txt
-          fi
-
-      - name: Ingest Bakhagen hagelag activity pages
-        if: always() && steps.fw.outputs.opened == 'true'
-        env:
-          PGHOST: ${{ steps.pg.outputs.fqdn }}
-          INGEST_TRIGGER: ${{ github.event_name == 'schedule' && 'schedule' || 'manual' }}
-        run: |
-          DATABASE_URL=$(PW="${{ secrets.POSTGRES_ADMIN_PASSWORD }}" python3 -c \
-            'import os,urllib.parse as u; print("postgres://hendingar:%s@%s:5432/hendingar?sslmode=require" % (u.quote(os.environ["PW"], safe=""), os.environ["PGHOST"]))')
-          export DATABASE_URL
-          if [ "${{ inputs.dry_run }}" = "true" ]; then
-            pnpm --filter @hendingar/importer-bakhagen ingest -- --dry-run | tee -a result.txt
-          else
-            pnpm --filter @hendingar/importer-bakhagen ingest | tee -a result.txt
-          fi
-
-      - name: Ingest allevents.in organisers
-        if: always() && steps.fw.outputs.opened == 'true'
-        env:
-          PGHOST: ${{ steps.pg.outputs.fqdn }}
-          INGEST_TRIGGER: ${{ github.event_name == 'schedule' && 'schedule' || 'manual' }}
-        run: |
-          DATABASE_URL=$(PW="${{ secrets.POSTGRES_ADMIN_PASSWORD }}" python3 -c \
-            'import os,urllib.parse as u; print("postgres://hendingar:%s@%s:5432/hendingar?sslmode=require" % (u.quote(os.environ["PW"], safe=""), os.environ["PGHOST"]))')
-          export DATABASE_URL
-          if [ "${{ inputs.dry_run }}" = "true" ]; then
-            pnpm --filter @hendingar/importer-allevents ingest -- --dry-run | tee -a result.txt
-          else
-            pnpm --filter @hendingar/importer-allevents ingest | tee -a result.txt
-          fi
-
-      - name: Ingest Riksteatret venue programmes
-        if: always() && steps.fw.outputs.opened == 'true'
-        env:
-          PGHOST: ${{ steps.pg.outputs.fqdn }}
-          INGEST_TRIGGER: ${{ github.event_name == 'schedule' && 'schedule' || 'manual' }}
-        run: |
-          DATABASE_URL=$(PW="${{ secrets.POSTGRES_ADMIN_PASSWORD }}" python3 -c \
-            'import os,urllib.parse as u; print("postgres://hendingar:%s@%s:5432/hendingar?sslmode=require" % (u.quote(os.environ["PW"], safe=""), os.environ["PGHOST"]))')
-          export DATABASE_URL
-          if [ "${{ inputs.dry_run }}" = "true" ]; then
-            pnpm --filter @hendingar/importer-riksteatret ingest -- --dry-run | tee -a result.txt
-          else
-            pnpm --filter @hendingar/importer-riksteatret ingest | tee -a result.txt
-          fi
-
-      - name: Ingest The Events Calendar sites
-        if: always() && steps.fw.outputs.opened == 'true'
-        env:
-          PGHOST: ${{ steps.pg.outputs.fqdn }}
-          INGEST_TRIGGER: ${{ github.event_name == 'schedule' && 'schedule' || 'manual' }}
-        run: |
-          DATABASE_URL=$(PW="${{ secrets.POSTGRES_ADMIN_PASSWORD }}" python3 -c \
-            'import os,urllib.parse as u; print("postgres://hendingar:%s@%s:5432/hendingar?sslmode=require" % (u.quote(os.environ["PW"], safe=""), os.environ["PGHOST"]))')
-          export DATABASE_URL
-          if [ "${{ inputs.dry_run }}" = "true" ]; then
-            pnpm --filter @hendingar/importer-tec ingest -- --dry-run | tee -a result.txt
-          else
-            pnpm --filter @hendingar/importer-tec ingest | tee -a result.txt
+            pnpm run ingest | tee -a result.txt
           fi
 
       # Submissions nobody came back to fix. Runs on the same schedule because it needs a database
