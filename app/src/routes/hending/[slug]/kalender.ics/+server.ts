@@ -1,6 +1,7 @@
 import { error } from '@sveltejs/kit';
 import { and, eq } from 'drizzle-orm';
 import { buildIcal, icalFilename } from '@hendingar/core/ical';
+import { plainText } from '@hendingar/core/text';
 import { events, venues } from '@hendingar/core/schema';
 import { eventIdFromParam, eventPath } from '@hendingar/core/slug';
 import { canonicalUrl } from '../../../../lib/origin.ts';
@@ -51,7 +52,9 @@ export const GET: RequestHandler = async ({ params, url }) => {
 	const body = buildIcal({
 		id: row.id,
 		title: row.title,
-		description: row.description,
+		// Markup out, for the same reason the page and the JSON-LD strip it: a calendar client shows
+		// this to a person, and "&lt;strong&gt;" in somebody's diary is not a description.
+		description: plainText(row.description),
 		location: location || null,
 		startsAt: row.startsAt,
 		endsAt: row.endsAt,

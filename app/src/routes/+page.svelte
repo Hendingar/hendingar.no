@@ -6,7 +6,19 @@
 	import VerifyPipeline from '../lib/components/landing/VerifyPipeline.svelte';
 	import CallToAction from '../lib/components/landing/CallToAction.svelte';
 	import PageMeta from '../lib/components/PageMeta.svelte';
+	import { page } from '$app/state';
+	import { originFor } from '../lib/origin.ts';
+	import { jsonLdScript, siteJsonLd } from '../lib/jsonld.ts';
 </script>
+
+<svelte:head>
+	<!--
+		Who we are and what this site is, said once, on the page a crawler reaches first. Everywhere
+		else would be a second copy to keep in step.
+	-->
+	<!-- eslint-disable-next-line svelte/no-at-html-tags -- JSON.stringify output, escaped in jsonLdScript -->
+	{@html `<script type="application/ld+json">${jsonLdScript(siteJsonLd(originFor(page.url)))}</${'script'}>`}
+</svelte:head>
 
 <PageMeta
 	title="hendingar.no — kva skjer i Sunnhordland"

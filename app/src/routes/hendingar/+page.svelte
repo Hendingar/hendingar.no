@@ -4,6 +4,9 @@
 	import InfiniteList from '../../lib/components/InfiniteList.svelte';
 	import SourceIcon from '../../lib/components/SourceIcon.svelte';
 	import PageMeta from '../../lib/components/PageMeta.svelte';
+	import { eventPath } from '@hendingar/core/slug';
+	import { canonicalUrl } from '../../lib/origin.ts';
+	import { itemListJsonLd, jsonLdScript } from '../../lib/jsonld.ts';
 	import { listCategoryCounts, listEvents, listSourceCounts } from '../../lib/events.remote';
 	import { heartCounts } from '../../lib/hearts.remote';
 
@@ -94,6 +97,19 @@
 			)
 		)
 	);
+	/**
+	 * The first screenful, named as a list.
+	 *
+	 * Only what this page actually links to. The rest of the corpus is in the sitemap, and claiming
+	 * a hundred items in a list that renders twenty-four would describe a different page from the
+	 * one the crawler is reading.
+	 */
+	function listJsonLd(list: readonly { id: number; title: string }[]) {
+		return itemListJsonLd(
+			active ? `${categoryLabel(active)} i Sunnhordland` : 'Hendingar i Sunnhordland',
+			list.map((e) => canonicalUrl(page.url, eventPath(e.id, e.title)))
+		);
+	}
 </script>
 
 <PageMeta
@@ -175,6 +191,17 @@
 		</p>
 	{:else}
 		<!-- headingLevel 2 so each day nests under this page's h1. -->
+		<!--
+			In the body, not the head.
+			
+			`filtered` is a derived promise — it has to be, or clicking a category would never change
+			the list — and an `{#await}` inside `<svelte:head>` renders nothing at all on the server,
+			which is the same trap CLAUDE.md records for `.loading` and boundary snippets. JSON-LD is
+			valid anywhere in the document, and here it is inside the region SvelteKit suspends on,
+			so it reaches the server-rendered HTML.
+		-->
+		<!-- eslint-disable-next-line svelte/no-at-html-tags -- JSON.stringify output, escaped in jsonLdScript -->
+		{@html `<script type="application/ld+json">${jsonLdScript(listJsonLd(await filtered))}</${'script'}>`}
 		<InfiniteList
 			first={await filtered}
 			firstHearts={await hearts}

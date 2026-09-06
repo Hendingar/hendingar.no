@@ -18,7 +18,8 @@
 		"./consolidate": "./src/consolidate.ts",
 		"./similarity": "./src/similarity.ts",
 		"./submissions": "./src/submissions.ts",
-		"./directory": "./src/directory.ts"
+		"./directory": "./src/directory.ts",
+		"./text": "./src/text.ts"
 	},
 	"scripts": {
 		"typecheck": "tsc --noEmit",

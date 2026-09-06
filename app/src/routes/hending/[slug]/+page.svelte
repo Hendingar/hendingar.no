@@ -17,6 +17,8 @@
 	import { linkLabel, safeHttpUrl } from '../../../lib/source-link.ts';
 	import { canonicalUrl } from '../../../lib/origin.ts';
 	import PageMeta from '../../../lib/components/PageMeta.svelte';
+	import { breadcrumbJsonLd, eventJsonLd, jsonLdScript } from '../../../lib/jsonld.ts';
+	import { plainText } from '@hendingar/core/text';
 
 	const id = eventIdFromParam(page.params.slug ?? '');
 	if (id === null) error(404, 'Fann ikkje hendinga');
@@ -66,6 +68,17 @@
 	 * be the search result.
 	 */
 	/**
+	 * The description with any markup taken out.
+	 *
+	 * Sources hand us editor HTML and we store descriptions as text, but only one importer was
+	 * stripping it — so on the live site this page rendered the characters "&lt;strong&gt;" to a
+	 * reader and put the same string in its meta description and its JSON-LD. Stripping here fixes
+	 * every row already written; `plainText` is idempotent, so it costs nothing once the importers
+	 * stop writing markup in the first place.
+	 */
+	const prose = $derived(plainText(event.description));
+
+	/**
 	 * One string for the search snippet and the share card both.
 	 *
 	 * Cut at a word boundary rather than mid-syllable: a snippet ending "…konsert med Sig" reads as
@@ -73,7 +86,7 @@
 	 * description still has to say something to somebody deciding whether to open it.
 	 */
 	const summary = $derived.by(() => {
-		const text = event.description?.trim();
+		const text = prose;
 		if (!text) {
 			return `${categoryLabel(event.category)}${event.venueName ? ` på ${event.venueName}` : ''}${
 				event.venueMunicipality ? ` i ${event.venueMunicipality}` : ''
@@ -105,56 +118,21 @@
 	);
 
 	/**
-	 * schema.org/Event as JSON-LD.
+	 * What we tell machines this page is.
 	 *
-	 * We are an index, not a destination: being legible to search engines and calendar tools is the
-	 * job. `startDate` uses the stored offset rather than UTC so a consumer reads the same wall
-	 * clock a visitor does.
+	 * Built by `lib/jsonld.ts` rather than inline, so the claims are unit-tested. Two nodes: the
+	 * event itself, and the trail that gets Google to render "hendingar.no › Hendingar › …" under
+	 * the result instead of a bare URL.
 	 */
-	const jsonLd = $derived(
-		JSON.stringify({
-			'@context': 'https://schema.org',
-			'@type': 'Event',
-			name: event.title,
-			startDate: machineDateTime(event.startsAt),
-			...(event.endsAt ? { endDate: machineDateTime(event.endsAt) } : {}),
-			...(event.description ? { description: event.description } : {}),
-			...(event.posterUrl ? { image: event.posterUrl } : {}),
-			...(event.venueName
-				? {
-						location: {
-							'@type': 'Place',
-							name: event.venueName,
-							...(event.venueAddress || event.venueMunicipality
-								? {
-										address: {
-											'@type': 'PostalAddress',
-											...(event.venueAddress ? { streetAddress: event.venueAddress } : {}),
-											...(event.venueMunicipality
-												? { addressLocality: event.venueMunicipality }
-												: {}),
-											addressCountry: 'NO'
-										}
-									}
-								: {}),
-							...(event.venueLatitude !== null && event.venueLongitude !== null
-								? {
-										geo: {
-											'@type': 'GeoCoordinates',
-											latitude: event.venueLatitude,
-											longitude: event.venueLongitude
-										}
-									}
-								: {})
-						}
-					}
-				: {}),
-			...(event.organizerName
-				? { organizer: { '@type': 'Organization', name: event.organizerName } }
-				: {}),
-			...(event.ctaUrl ? { url: event.ctaUrl } : event.sourceUrl ? { url: event.sourceUrl } : {})
-		})
-	);
+	const canonicalHref = $derived(canonicalUrl(page.url, canonical));
+	const jsonLd = $derived([
+		eventJsonLd(event, canonicalHref),
+		breadcrumbJsonLd([
+			{ name: 'Framsida', url: canonicalUrl(page.url, '/') },
+			{ name: 'Hendingar', url: canonicalUrl(page.url, '/hendingar') },
+			{ name: event.title, url: canonicalHref }
+		])
+	]);
 </script>
 
 <PageMeta
@@ -177,8 +155,10 @@
 		href="{canonical}/kalender.ics"
 		title="{event.title} som kalenderfil"
 	/>
-	<!-- eslint-disable-next-line svelte/no-at-html-tags -- JSON.stringify output, not user markup -->
-	{@html `<script type="application/ld+json">${jsonLd}</${'script'}>`}
+	{#each jsonLd as node, i (i)}
+		<!-- eslint-disable-next-line svelte/no-at-html-tags -- JSON.stringify output, escaped in jsonLdScript -->
+		{@html `<script type="application/ld+json">${jsonLdScript(node)}</${'script'}>`}
+	{/each}
 </svelte:head>
 
 <article class="ev">
@@ -245,9 +225,9 @@
 					/>
 				{/if}
 
-				{#if event.description}
+				{#if prose}
 					<div class="ev__desc">
-						{#each event.description.split(/\n{2,}/) as paragraph (paragraph)}
+						{#each prose.split(/\n{2,}/) as paragraph (paragraph)}
 							<p>{paragraph}</p>
 						{/each}
 					</div>

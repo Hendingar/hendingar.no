@@ -41,6 +41,15 @@ export function canonicalUrl(
 	requestUrl: { hostname: string; origin: string },
 	path: string
 ): string {
-	const origin = LIVE_HOSTS.has(requestUrl.hostname) ? SITE_ORIGIN : requestUrl.origin;
-	return new URL(path, origin).href;
+	return new URL(path, originFor(requestUrl)).href;
+}
+
+/**
+ * Just the origin, with no trailing slash — what a schema.org `@id` is built from.
+ *
+ * `canonicalUrl(url, '/')` would give one with a slash, and `https://hendingar.no/#website` and
+ * `https://hendingar.no#website` are different identifiers to a consumer that compares strings.
+ */
+export function originFor(requestUrl: { hostname: string; origin: string }): string {
+	return LIVE_HOSTS.has(requestUrl.hostname) ? SITE_ORIGIN : requestUrl.origin;
 }

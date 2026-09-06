@@ -11,8 +11,8 @@ import {
 	type ReadListing
 } from '../src/api.ts';
 import { ASSOCIATIONS, associationBySlug, calendarUrl } from '../src/associations.ts';
+import { plainText } from '@hendingar/core/text';
 import {
-	htmlToText,
 	isFailure,
 	mapActivity,
 	mapCategory,
@@ -132,28 +132,11 @@ describe('mapCategory', () => {
 	});
 });
 
-describe('htmlToText', () => {
-	it('keeps paragraph structure instead of running the text together', () => {
-		const text = htmlToText('<p>Frå Fitjar Bedehus</p><p>Turen går på merka sti</p>');
-		expect(text).toBe('Frå Fitjar Bedehus\n\nTuren går på merka sti');
-	});
-
-	it('decodes the entities DNT actually emits', () => {
-		expect(htmlToText('<p>KOM DEG UT&nbsp;-dagen</p>')).toBe('KOM DEG UT -dagen');
-		expect(htmlToText('<p>&#229;pen &amp; fin</p>')).toBe('åpen & fin');
-	});
-
-	it('turns a line break into a line, not a space', () => {
-		expect(htmlToText('<p>søndag<br>kl. 11</p>')).toBe('søndag\nkl. 11');
-	});
-
-	it('returns null rather than an empty string for markup with no words', () => {
-		expect(htmlToText('<p></p>')).toBeNull();
-		expect(htmlToText(null)).toBeNull();
-	});
-
-	it('reads the real description on the committed detail response', () => {
-		const text = htmlToText(details617020?.description);
+describe('the description on a real DNT detail response', () => {
+	it('comes out as words, with no markup and no entities left', () => {
+		// `plainText` itself is covered in packages/core; what is asserted here is that DNT's actual
+		// payload goes through it cleanly, which only a committed response can show.
+		const text = plainText(details617020?.description);
 		expect(text).toContain('Barnas Turlag');
 		expect(text).not.toContain('<');
 		expect(text).not.toContain('&nbsp;');

@@ -1,4 +1,5 @@
 import type { CategorySlug } from '@hendingar/core/taxonomy';
+import { plainText } from '@hendingar/core/text';
 import { subTypeList, type UpstreamActivity, type UpstreamDetails } from './api.ts';
 import { calendarUrl, type DntAssociation } from './associations.ts';
 
@@ -76,65 +77,6 @@ export function slugifyVenue(name: string): string {
 		.replace(/[^a-z0-9]+/g, '-')
 		.replace(/^-+|-+$/g, '')
 		.slice(0, 120);
-}
-
-const NAMED_ENTITIES: Record<string, string> = {
-	nbsp: ' ',
-	amp: '&',
-	lt: '<',
-	gt: '>',
-	quot: '"',
-	apos: "'",
-	oslash: 'ø',
-	Oslash: 'Ø',
-	aring: 'å',
-	Aring: 'Å',
-	aelig: 'æ',
-	AElig: 'Æ',
-	hellip: '…',
-	ndash: '–',
-	mdash: '—',
-	rsquo: '’',
-	lsquo: '‘',
-	ldquo: '“',
-	rdquo: '”'
-};
-
-function decodeEntities(value: string): string {
-	return value.replace(/&(#x?[0-9a-fA-F]+|[a-zA-Z]+);/g, (match, body: string) => {
-		if (body.startsWith('#')) {
-			const code =
-				body[1] === 'x' || body[1] === 'X' ? parseInt(body.slice(2), 16) : Number(body.slice(1));
-			return Number.isFinite(code) && code > 0 ? String.fromCodePoint(code) : match;
-		}
-		return NAMED_ENTITIES[body] ?? match;
-	});
-}
-
-/**
- * DNT's rich-text description → plain text.
- *
- * The field is editor HTML — paragraphs, headings, `<br>`, bold, and the occasional link — and we
- * store descriptions as text. Block elements become blank lines rather than disappearing, because
- * these descriptions carry the practical detail ("Frå Fitjar Bedehus … klokka 10.00") and running
- * three paragraphs into one line is how that becomes unreadable.
- */
-export function htmlToText(html: string | null | undefined): string | null {
-	if (!html) return null;
-	const text = decodeEntities(
-		html
-			.replace(/<\s*(script|style)[^>]*>[\s\S]*?<\s*\/\s*\1\s*>/gi, '')
-			.replace(/<\s*br\s*\/?\s*>/gi, '\n')
-			.replace(/<\s*\/\s*(p|div|h[1-6]|li|tr|blockquote)\s*>/gi, '\n\n')
-			.replace(/<\s*li[^>]*>/gi, '• ')
-			.replace(/<[^>]+>/g, '')
-	)
-		// Collapse runs of spaces but keep the line structure the block tags just created.
-		.replace(/[^\S\n]+/g, ' ')
-		.replace(/ ?\n ?/g, '\n')
-		.replace(/\n{3,}/g, '\n\n')
-		.trim();
-	return text || null;
 }
 
 export type MappedEvent = {
@@ -218,7 +160,7 @@ export function mapActivity(
 		endsAt,
 		venueName,
 		venueSlug: venueName ? slugifyVenue(venueName) : null,
-		description: htmlToText(details?.description),
+		description: plainText(details?.description),
 		/*
 		 * The sign-up page, which is what DNT's own "Mer informasjon og påmelding" button opens.
 		 * We never sell or handle a booking ourselves — see the README non-goals.
