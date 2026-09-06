@@ -19,7 +19,8 @@
 		"./similarity": "./src/similarity.ts",
 		"./venue-aliases": "./src/venue-aliases.ts",
 		"./submissions": "./src/submissions.ts",
-		"./directory": "./src/directory.ts"
+		"./directory": "./src/directory.ts",
+		"./text": "./src/text.ts"
 	},
 	"scripts": {
 		"typecheck": "tsc --noEmit",

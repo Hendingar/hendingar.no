@@ -171,3 +171,61 @@ test('the site has a card of its own, and a missing event has none', async ({ re
 		expect((await request.get(path)).status(), path).toBe(404);
 	}
 });
+
+/**
+ * What the JSON-LD actually claims.
+ *
+ * The old block, live, said `"url": "https://sunnhordland.museum.no/…"` on a page whose canonical
+ * pointed at us — two contradictory answers to "where does this event live". Nothing in a browser
+ * shows that, and nothing but a spec notices it coming back.
+ */
+
+function jsonLdBlocks(html: string): Record<string, unknown>[] {
+	return [...html.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)].map((m) =>
+		JSON.parse(m[1]!.replace(/<\\\//g, '</'))
+	);
+}
+
+test('an event describes itself, and points at itself', async ({ request }) => {
+	const listing = await (await request.get('/hendingar')).text();
+	const href = /href="(\/hending\/\d+[^"]*)"/.exec(listing)?.[1];
+	expect(href).toBeTruthy();
+
+	const html = await (await request.get(href!)).text();
+	const canonical = /<link rel="canonical" href="([^"]+)"/.exec(html)?.[1];
+	const blocks = jsonLdBlocks(html);
+
+	const event = blocks.find((b) => b['@type'] === 'Event');
+	expect(event, 'the event page must carry an Event node').toBeTruthy();
+
+	// The fix. `url` and `@id` are us; an outbound link belongs in offers, a source page in sameAs.
+	expect(event!.url).toBe(canonical);
+	expect(event!['@id']).toBe(canonical);
+
+	// Google's required trio, plus the offset it asks for rather than a bare Z.
+	expect(event!.name).toBeTruthy();
+	expect(String(event!.startDate)).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}[+-]\d{2}:\d{2}$/);
+	expect(event!.location).toBeTruthy();
+
+	expect(event!.eventStatus).toBe('https://schema.org/EventScheduled');
+	expect(event!.inLanguage).toBe('nn');
+
+	// No markup anywhere in what we publish about it.
+	expect(JSON.stringify(event)).not.toMatch(/<\/?(p|strong|em|br|div|a)[ >]/);
+
+	const crumbs = blocks.find((b) => b['@type'] === 'BreadcrumbList');
+	expect(crumbs, 'the event page must carry a breadcrumb').toBeTruthy();
+});
+
+test('the front page says who we are, and a listing says it is a list', async ({ request }) => {
+	const front = jsonLdBlocks(await (await request.get('/')).text());
+	const graph = front.find((b) => Array.isArray(b['@graph']));
+	expect(graph, 'the front page must carry the site graph').toBeTruthy();
+
+	const listing = jsonLdBlocks(await (await request.get('/hendingar')).text());
+	const list = listing.find((b) => b['@type'] === 'ItemList');
+	expect(list, 'a listing must be described as a list').toBeTruthy();
+	// Server-rendered, not fetched after hydration: this whole file reads raw HTML, so a block that
+	// only appeared in the browser would fail here — which is the point.
+	expect(Number(list!.numberOfItems)).toBeGreaterThan(0);
+});

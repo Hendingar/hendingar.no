@@ -2,8 +2,11 @@
 	import { error } from '@sveltejs/kit';
 	import { page } from '$app/state';
 	import { formatCalendarDate, formatMonthName, isCalendarDate } from '@hendingar/core/datetime';
+	import { eventPath } from '@hendingar/core/slug';
 	import EventGrid from '../../../lib/components/EventGrid.svelte';
 	import PageMeta from '../../../lib/components/PageMeta.svelte';
+	import { canonicalUrl } from '../../../lib/origin.ts';
+	import { breadcrumbJsonLd, itemListJsonLd, jsonLdScript } from '../../../lib/jsonld.ts';
 	import { monthKeyOf } from '../../../lib/calendar.ts';
 	import { adjacentEventDays, listEventsOnDate } from '../../../lib/events.remote';
 	import { heartCounts } from '../../../lib/hearts.remote';
@@ -32,6 +35,24 @@
 	);
 	const neighbours = await adjacentEventDays(date);
 
+	/*
+	 * The day, said in machine terms: which events are on it, and where the day sits.
+	 *
+	 * Not for a rich result — Google grants the Event card only to single-event pages — but it is
+	 * how a crawler is told this is a list of events rather than prose that happens to have links.
+	 */
+	const jsonLd = $derived([
+		itemListJsonLd(
+			`Hendingar ${formatCalendarDate(date).toLowerCase()}`,
+			events.map((e) => canonicalUrl(page.url, eventPath(e.id, e.title)))
+		),
+		breadcrumbJsonLd([
+			{ name: 'Framsida', url: canonicalUrl(page.url, '/') },
+			{ name: 'Kalender', url: canonicalUrl(page.url, '/kalender') },
+			{ name: formatCalendarDate(date), url: canonicalUrl(page.url, `/kalender/${date}`) }
+		])
+	]);
+
 	const heading = formatCalendarDate(date);
 	const month = monthKeyOf(date);
 </script>
@@ -43,6 +64,13 @@
 		: `Ingen registrerte hendingar i Sunnhordland ${heading.toLowerCase()}.`}
 	path="/kalender/{date}"
 />
+
+<svelte:head>
+	{#each jsonLd as node, i (i)}
+		<!-- eslint-disable-next-line svelte/no-at-html-tags -- JSON.stringify output, escaped in jsonLdScript -->
+		{@html `<script type="application/ld+json">${jsonLdScript(node)}</${'script'}>`}
+	{/each}
+</svelte:head>
 
 <div class="shell day-page">
 	<p class="label">

@@ -3,6 +3,7 @@ import {
 	DATE_LOCALE,
 	DEFAULT_TIME_ZONE,
 	formatEventTime,
+	schemaDateTime,
 	formatTimeDigits,
 	formatCalendarDate,
 	formatDayLabel,
@@ -317,5 +318,44 @@ describe('ISO weeks', () => {
 		expect(addDays('2026-01-01', -1)).toBe('2025-12-31');
 		// A leap year, because February is where day arithmetic goes wrong.
 		expect(addDays('2028-02-28', 1)).toBe('2028-02-29');
+	});
+});
+
+describe('schemaDateTime', () => {
+	/*
+	 * Google's Event documentation asks for ISO-8601 with a timezone offset. `Z` technically
+	 * satisfies that and is what `machineDateTime` gives, but it hands every consumer the UTC wall
+	 * clock and trusts them to convert — and a 20:00 Oslo concert published as 18:00Z gets read
+	 * back as an 18:00 concert often enough to be worth avoiding.
+	 */
+	it('writes the venue’s wall clock and its offset', () => {
+		const instant = new Date('2026-09-12T18:00:00Z');
+		expect(schemaDateTime(instant, 'Europe/Oslo')).toBe('2026-09-12T20:00:00+02:00');
+		expect(schemaDateTime(instant, 'Europe/Helsinki')).toBe('2026-09-12T21:00:00+03:00');
+	});
+
+	it('follows daylight saving rather than assuming one offset', () => {
+		expect(schemaDateTime(new Date('2026-12-12T19:00:00Z'), 'Europe/Oslo')).toBe(
+			'2026-12-12T20:00:00+01:00'
+		);
+	});
+
+	it('writes a fractional offset correctly', () => {
+		// Not a zone we serve. It is here because an offset built by formatting hours alone silently
+		// produces "+05:00" for it, and that class of bug is invisible in Europe.
+		expect(schemaDateTime(new Date('2026-09-12T18:00:00Z'), 'Asia/Kathmandu')).toBe(
+			'2026-09-12T23:45:00+05:45'
+		);
+	});
+
+	it('falls back to Oslo when a venue has no zone', () => {
+		const instant = new Date('2026-09-12T18:00:00Z');
+		expect(schemaDateTime(instant, null)).toBe(schemaDateTime(instant, 'Europe/Oslo'));
+		expect(schemaDateTime(instant, '')).toBe(schemaDateTime(instant, 'Europe/Oslo'));
+	});
+
+	it('leaves machineDateTime as the instant, for <time> and iCal', () => {
+		const instant = new Date('2026-09-12T18:00:00Z');
+		expect(machineDateTime(instant)).toBe('2026-09-12T18:00:00.000Z');
 	});
 });

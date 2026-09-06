@@ -198,6 +198,32 @@ export function machineDateTime(instant: Date): string {
 	return instant.toISOString();
 }
 
+/**
+ * The same instant, written with the venue's offset: `2026-09-12T20:00:00+02:00`.
+ *
+ * For schema.org and nothing else. Google's Event documentation asks for ISO-8601 "with timezone
+ * offset", and while `Z` technically satisfies that, it hands every consumer the UTC wall clock
+ * and trusts them to convert. Enough of them do not — a 20:00 concert in Oslo published as `18:00Z`
+ * has been read back as an 18:00 concert often enough that writing the offset is the safer thing.
+ *
+ * `machineDateTime` deliberately stays as it is: `<time datetime>` and iCal both want the instant,
+ * and iCal's `Z` form is what `buildIcal` already emits.
+ */
+export function schemaDateTime(instant: Date, timeZone: string | null | undefined): string {
+	const zone = timeZone || DEFAULT_TIME_ZONE;
+	const { date, time } = instantToZonedWallClock(instant, zone);
+
+	const offset = zoneOffsetMs(instant, zone);
+	// Written from the offset in minutes rather than from a formatter's `longOffset`, which spells
+	// some zones as "GMT+2" and others as "GMT+05:45" and is not the same string across runtimes.
+	const sign = offset < 0 ? '-' : '+';
+	const total = Math.round(Math.abs(offset) / 60_000);
+	const hours = String(Math.floor(total / 60)).padStart(2, '0');
+	const minutes = String(total % 60).padStart(2, '0');
+
+	return `${date}T${time}:00${sign}${hours}:${minutes}`;
+}
+
 /** The zone's UTC offset, in ms, at a given instant. */
 function zoneOffsetMs(instant: Date, timeZone: string): number {
 	const parts = Object.fromEntries(
