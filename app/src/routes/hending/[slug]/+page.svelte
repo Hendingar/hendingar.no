@@ -15,6 +15,7 @@
 	import { recordView, viewCounts } from '../../../lib/views.remote';
 	import { markSeen } from '../../../lib/seen.ts';
 	import { linkLabel, safeHttpUrl } from '../../../lib/source-link.ts';
+	import { canonicalUrl } from '../../../lib/origin.ts';
 
 	const id = eventIdFromParam(page.params.slug ?? '');
 	if (id === null) error(404, 'Fann ikkje hendinga');
@@ -54,7 +55,20 @@
 		void recordView(event.id).catch(() => {});
 	});
 
-	const canonical = $derived(eventPath(event.id, event.title));
+	/*
+	 * The URL this page asks to be indexed under.
+	 *
+	 * Absolute and built from `canonicalUrl`, not from `page.url.origin`: three hostnames answer
+	 * for this site, and each self-canonicalising meant the same event competed with itself in
+	 * three places. A duplicate row points at the row it duplicates instead of at itself — the
+	 * page stays readable, because somebody is holding a link to it, but only one of them asks to
+	 * be the search result.
+	 */
+	const canonical = $derived(
+		event.duplicateOfId !== null && event.duplicateOfTitle !== null
+			? eventPath(event.duplicateOfId, event.duplicateOfTitle)
+			: eventPath(event.id, event.title)
+	);
 	/*
 	 * The page the sender said this came from — only for events nobody imported.
 	 *
@@ -129,7 +143,7 @@
 		content={event.description?.slice(0, 160) ??
 			`${categoryLabel(event.category)} ${event.venueName ? `på ${event.venueName}` : ''}`.trim()}
 	/>
-	<link rel="canonical" href={new URL(canonical, page.url.origin).href} />
+	<link rel="canonical" href={canonicalUrl(page.url, canonical)} />
 	<meta property="og:title" content={event.title} />
 	<meta property="og:type" content="article" />
 	{#if event.posterUrl}

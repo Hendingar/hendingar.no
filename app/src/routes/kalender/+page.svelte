@@ -14,6 +14,7 @@
 	import Hotspots from '../../lib/components/kalender/Hotspots.svelte';
 	import MonthGrid from '../../lib/components/kalender/MonthGrid.svelte';
 	import WeekGrid from '../../lib/components/kalender/WeekGrid.svelte';
+	import PageMeta from '../../lib/components/PageMeta.svelte';
 	import { isMonthKey, monthBounds, monthKeyOf, shiftMonth } from '../../lib/calendar.ts';
 	import {
 		calendarRange,
@@ -178,21 +179,15 @@
 	);
 </script>
 
-<svelte:head>
-	{#if activeWeek}
-		<title>{formatWeekName(activeWeek)} — kalender — hendingar.no</title>
-		<meta
-			name="description"
-			content="Hendingar i Sunnhordland {formatWeekRange(activeWeek).toLowerCase()}, time for time."
-		/>
-	{:else}
-		<title>{monthName} og framover — kalender — hendingar.no</title>
-		<meta
-			name="description"
-			content="Kalender over hendingar i Sunnhordland frå {monthName}. Tal på hendingar per dag, månad for månad — trykk på ein dag for å sjå kva som skjer."
-		/>
-	{/if}
-</svelte:head>
+<PageMeta
+	title={activeWeek
+		? `${formatWeekName(activeWeek)} — kalender — hendingar.no`
+		: `${monthName} og framover — kalender — hendingar.no`}
+	description={activeWeek
+		? `Hendingar i Sunnhordland ${formatWeekRange(activeWeek).toLowerCase()}, time for time.`
+		: `Kalender over hendingar i Sunnhordland frå ${monthName}. Tal på hendingar per dag, månad for månad — trykk på ein dag for å sjå kva som skjer.`}
+	path={activeWeek ? `/kalender?veke=${activeWeek}` : `/kalender?maanad=${month}`}
+/>
 
 <div class="shell cal-page">
 	<p class="label">Sunnhordland</p>

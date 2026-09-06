@@ -14,12 +14,12 @@
  * thing to get wrong in an environment file; the hostname cannot be misconfigured.
  */
 
+import { LIVE_HOSTS } from './origin.ts';
+
 const MEASUREMENT_ID = '05801cfd-cf47-4892-9a2a-b301f6b2c429';
 const COLLECTOR = `https://global.t.d8a.tech/${MEASUREMENT_ID}/d/c`;
 
-/** The hosts that are the live site. Anything else — localhost, a preview, CI — reports nothing. */
-const LIVE_HOSTS = new Set(['hendingar.no', 'www.hendingar.no']);
-
+/** Anything but the live site — localhost, a preview, CI — reports nothing. */
 export function shouldTrack(hostname: string): boolean {
 	return LIVE_HOSTS.has(hostname);
 }

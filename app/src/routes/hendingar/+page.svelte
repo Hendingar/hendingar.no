@@ -3,6 +3,7 @@
 	import { CATEGORY_SLUGS, categoryLabel, type CategorySlug } from '@hendingar/core/taxonomy';
 	import InfiniteList from '../../lib/components/InfiniteList.svelte';
 	import SourceIcon from '../../lib/components/SourceIcon.svelte';
+	import PageMeta from '../../lib/components/PageMeta.svelte';
 	import { listCategoryCounts, listEvents, listSourceCounts } from '../../lib/events.remote';
 	import { heartCounts } from '../../lib/hearts.remote';
 
@@ -95,15 +96,11 @@
 	);
 </script>
 
-<svelte:head>
-	<title>
-		{active ? `${categoryLabel(active)} — hendingar.no` : 'Alle hendingar — hendingar.no'}
-	</title>
-	<meta
-		name="description"
-		content="Alle komande hendingar i Sunnhordland, gruppert etter dag. Filtrer på kategori."
-	/>
-</svelte:head>
+<PageMeta
+	title={active ? `${categoryLabel(active)} — hendingar.no` : 'Alle hendingar — hendingar.no'}
+	description="Alle komande hendingar i Sunnhordland, gruppert etter dag. Filtrer på kategori."
+	path={active ? `/hendingar?kategori=${active}` : '/hendingar'}
+/>
 
 <div class="shell list">
 	<p class="label">Full liste</p>

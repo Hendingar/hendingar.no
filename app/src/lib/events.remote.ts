@@ -3,6 +3,7 @@ import { query } from '$app/server';
 import { z } from 'zod';
 import { and, asc, count, desc, eq, gte, isNull, lte, max, min, ne, or, sql } from 'drizzle-orm';
 import type { AnyColumn, SQL } from 'drizzle-orm';
+import { alias } from 'drizzle-orm/pg-core';
 import {
 	eventHearts,
 	eventViews,
@@ -906,6 +907,9 @@ export type PlaceCount = Awaited<ReturnType<typeof placeCounts>>[number];
  * The verification rows come along because the README promises the reasoning is auditable rather
  * than a black box, and the event's own page is the only place a reader would look for it.
  */
+/** The same table again, joined to itself so a duplicate can name the row it duplicates. */
+const canonicalEvent = alias(events, 'canonical_event');
+
 export const getEvent = query(z.number().int().positive(), async (id) => {
 	const database = db();
 
@@ -932,12 +936,25 @@ export const getEvent = query(z.number().int().positive(), async (id) => {
 			organizerName: organizers.name,
 			sourceName: sources.name,
 			sourceAttribution: sources.attribution,
-			sourceSiteUrl: sources.url
+			sourceSiteUrl: sources.url,
+			/*
+			 * The row this one duplicates, if any — id and title, which is everything `eventPath`
+			 * needs to build its URL.
+			 *
+			 * Unlike every listing query, this one does NOT filter duplicates out. A duplicate has
+			 * a page on purpose: somebody is reading a link to it, and hearts.remote.ts already
+			 * records why breaking such a link is the wrong trade. What it must not do is claim to
+			 * be the original — before this, a published duplicate pointed its canonical at itself
+			 * and asked to be indexed alongside the row it duplicates.
+			 */
+			duplicateOfId: events.duplicateOfId,
+			duplicateOfTitle: canonicalEvent.title
 		})
 		.from(events)
 		.leftJoin(venues, eq(events.venueId, venues.id))
 		.leftJoin(organizers, eq(events.organizerId, organizers.id))
 		.leftJoin(sources, eq(events.sourceId, sources.id))
+		.leftJoin(canonicalEvent, eq(events.duplicateOfId, canonicalEvent.id))
 		.where(and(eq(events.id, id), eq(events.status, 'published')))
 		.limit(1);
 

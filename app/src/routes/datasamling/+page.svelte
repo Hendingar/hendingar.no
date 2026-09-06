@@ -5,6 +5,7 @@
 	import PlatformGroup from '../../lib/components/collection/PlatformGroup.svelte';
 	import { SOURCE_PLATFORMS, platformOf } from '@hendingar/core/directory';
 	import SubmissionLog from '../../lib/components/collection/SubmissionLog.svelte';
+	import PageMeta from '../../lib/components/PageMeta.svelte';
 	import { listCollection } from '../../lib/collection.remote';
 
 	// Top-level await so the status board is in the server-rendered HTML (CLAUDE.md).
@@ -96,13 +97,11 @@
 	];
 </script>
 
-<svelte:head>
-	<title>Kjelder og status — hendingar.no</title>
-	<meta
-		name="description"
-		content="Kvar hendingane kjem frå, kor ofte vi hentar dei, kva som skjedde sist — og kva kalendrar vi ikkje klarer å hente."
-	/>
-</svelte:head>
+<PageMeta
+	title="Kjelder og status — hendingar.no"
+	description="Kvar hendingane kjem frå, kor ofte vi hentar dei, kva som skjedde sist — og kva kalendrar vi ikkje klarer å hente."
+	path="/datasamling"
+/>
 
 <div class="shell head">
 	<p class="label">Systemstatus</p>
