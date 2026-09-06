@@ -104,6 +104,16 @@ importers/<source>/      one deterministic importer per source, or per *platform
 `/datasamling` renders — the page can only say a source is collected because a run says so. If you
 add an importer, record its runs the same way or it will be invisible when it silently stops.
 
+**A package under `importers/` IS the registration.** `pnpm ingest` is
+`pnpm -r --filter "./importers/*" --no-bail ingest`, and the workflow runs that one command — so a
+new importer needs no entry in `package.json` and no step in `.github/workflows/ingest.yml`. It
+needs an `ingest` script, and `/kjelder` groups it automatically if its source slug carries a
+platform prefix (`platformOf` in `packages/core/src/directory.ts`).
+
+`--no-bail` is deliberate: the chain used to be `a && b && c`, so one rate-limited upstream stopped
+every importer after it and six healthy sources silently did not run. Each source now reports its
+own row and a failure costs only itself.
+
 A style rule used by more than one route belongs in `brand.css`, not in a route's `<style>`.
 Scoped in a component, the next agent cannot see it and writes a second one.
 
