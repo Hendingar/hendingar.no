@@ -482,6 +482,14 @@
 	});
 </script>
 
+<!--
+	The answer takes the page.
+
+	The verdict used to render ABOVE the ways in, with all fourteen fields still sitting below it —
+	so nothing in the layout said this was the answer to the thing you just did, and the most
+	common next move (read the checks) competed with a form you had already submitted. The panel
+	carries its own route forward: /kø, or the CTA on the receipt page.
+-->
 {#if submitEvent.result}
 	<VerdictPanel
 		status={submitEvent.result.status}
@@ -492,70 +500,105 @@
 		sourceUrl={submitEvent.result.sourceUrl}
 		{poster}
 	/>
+{:else}
+	<!--
+		The ways in are unconditional. Hiding the photo entry point when no verifier is configured
+		made half the page's purpose invisible with nothing to explain the absence — someone looking
+		for "upload a picture" simply could not find it. The panel now says why it is unavailable
+		instead of disappearing, which is the difference between a degraded feature and a missing one.
+	-->
+	<div class="modes">
+		<!-- The radios must be siblings of both the ways and the panels for the `:checked ~` rules
+		     to reach them, so they sit here rather than inside the block they visually belong to. -->
+		<input
+			class="visually-hidden"
+			type="radio"
+			id="mode-skjema"
+			name="submit-mode"
+			value="form"
+			bind:group={mode}
+		/>
+		<input
+			class="visually-hidden"
+			type="radio"
+			id="mode-bilete"
+			name="submit-mode"
+			value="photo"
+			bind:group={mode}
+		/>
+		<input
+			class="visually-hidden"
+			type="radio"
+			id="mode-lenkje"
+			name="submit-mode"
+			value="link"
+			bind:group={mode}
+		/>
+
+		<!--
+			Three ways in, ranked — not three tabs of equal weight.
+
+			The hero says "take a picture of the poster, or write it in yourself", and the tab bar
+			said the opposite: three identical tabs with the fourteen-field form first, so the
+			slowest path was the default and the shortcut the page is built around looked like an
+			afterthought. Same radios, same CSS panel switch, same server-rendered HTML — only the
+			rank changes, so all three still work with scripting off.
+		-->
+		<div class="ways">
+			<label class="way way--photo" class:way--off={!photoEnabled} for="mode-bilete">
+				<span class="way__label">Raskaste vegen</span>
+				<span class="way__h display display--md">Med bilete</span>
+				<span class="way__what">
+					{photoEnabled
+						? 'Ta bilete av plakaten, eller eit skjermbilete av ei Facebook-hending. Vi les det og gjev deg eit forslag du sjekkar før noko blir sendt.'
+						: 'Bilettolking er ikkje slått på i dette miljøet, så opplasting er mellombels av.'}
+				</span>
+				<!-- aria-hidden: the radio already carries the selected state for a screen reader,
+				     and three cards each announcing "vald" would say it three times. -->
+				<span class="way__open" aria-hidden="true">Vald</span>
+			</label>
+			<label class="way way--link" for="mode-lenkje">
+				<span class="way__label">Om hendinga har ei side alt</span>
+				<span class="way__h display display--sm">Med lenkje</span>
+				<span class="way__what">Lim inn adressa, så hentar vi sida éin gong og les ho.</span>
+				<span class="way__open" aria-hidden="true">Vald</span>
+			</label>
+			<label class="way way--form" for="mode-skjema">
+				<span class="way__label">Om du heller vil skrive</span>
+				<span class="way__h display display--sm">Med skjema</span>
+				<span class="way__what">Fjorten felt, fem av dei påkravde. Same veg, same kontrollar.</span>
+				<span class="way__open" aria-hidden="true">Vald</span>
+			</label>
+		</div>
+
+		<div class="panel panel--photo">
+			<PhotoCapture enabled={photoEnabled} onextract={prefill} />
+		</div>
+		<div class="panel panel--link">
+			<UrlCapture onextract={prefillFromUrl} />
+		</div>
+		<div class="panel panel--form">
+			{@render formPanel()}
+		</div>
+	</div>
 {/if}
 
 <!--
-	The tabs are unconditional. Hiding the photo entry point when no verifier is configured made
-	half the page's purpose invisible with nothing to explain the absence — someone looking for
-	"upload a picture" simply could not find it. The panel now says why it is unavailable instead
-	of disappearing, which is the difference between a degraded feature and a missing one.
--->
-<div class="modes">
-	<!-- The radios must be siblings of the panels for the `:checked ~ .panel` rules to reach
-	     them, so they sit here rather than inside the bar they visually belong to. -->
-	<input
-		class="visually-hidden"
-		type="radio"
-		id="mode-skjema"
-		name="submit-mode"
-		value="form"
-		bind:group={mode}
-	/>
-	<input
-		class="visually-hidden"
-		type="radio"
-		id="mode-bilete"
-		name="submit-mode"
-		value="photo"
-		bind:group={mode}
-	/>
-	<input
-		class="visually-hidden"
-		type="radio"
-		id="mode-lenkje"
-		name="submit-mode"
-		value="link"
-		bind:group={mode}
-	/>
+	One mark, used by every field that the image filled.
 
-	<div class="modes__bar">
-		<label class="mode" for="mode-skjema">Med skjema</label>
-		<label class="mode" for="mode-bilete">Med bilete</label>
-		<label class="mode" for="mode-lenkje">Med lenkje</label>
-	</div>
+	It used to spell out "lese frå biletet" on each of them. Ten fields each carrying the same
+	four words reads as ten problems rather than as one piece of context, and it pushed the labels
+	onto two lines. The words now appear once, in the intro, where the mark is explained; the field
+	keeps only the glyph.
 
-	<div class="panel panel--photo">
-		<PhotoCapture enabled={photoEnabled} onextract={prefill} />
-	</div>
-	<div class="panel panel--link">
-		<UrlCapture onextract={prefillFromUrl} />
-	</div>
-	<div class="panel panel--form">
-		{@render formPanel()}
-	</div>
-</div>
-
-<!--
-	One badge, used by every field that the image filled.
-
-	`aria-hidden` on the mark plus a visually-hidden sentence: a screen reader gets "lese frå
-	biletet" once as words, rather than a decorative glyph read out as punctuation on ten fields.
+	`aria-hidden` on the mark plus a visually-hidden phrase: a screen reader still gets words
+	rather than a decorative glyph read out as punctuation.
 -->
 {#snippet readFrom(name: string)}
 	{#if fromPhoto.has(name)}
 		<span class="field__from">
 			<span aria-hidden="true">◧</span>
-			<span class="visually-hidden">Lese frå biletet: </span>lese frå biletet
+			<span class="visually-hidden">lese frå biletet</span>
 		</span>
 	{/if}
 {/snippet}
@@ -575,6 +618,20 @@
 			<h2 class="display display--md">{INTRO_HEADING[method]}</h2>
 			{#if method !== 'form'}
 				<p class="form__read">{INTRO_LEDE[method]}</p>
+			{/if}
+			<!--
+				The provenance sentence, said once and here.
+
+				This is what the ◧ on the fields below means, and it is also the only place the
+				count is stated — "seven fields" is the thing that tells somebody how much checking
+				they are being asked to do, and no per-field badge can say it.
+			-->
+			{#if fromPhoto.size > 0}
+				<!-- "felt" is the same in singular and plural, so no count-dependent wording. -->
+				<p class="form__from">
+					Vi las {fromPhoto.size} felt frå {method === 'link' ? 'sida' : 'biletet'}. Dei er merkte
+					<span aria-hidden="true">◧</span> under — rett det som er feil, så blir det ditt.
+				</p>
 			{/if}
 			{#if unreadable.length > 0}
 				<p class="form__unread">Klarte ikkje lese: {unreadable.join(', ')}. Fyll inn sjølv.</p>
@@ -793,73 +850,81 @@
 						<span class="field__error">{issue.message}</span>
 					{/each}
 				</p>
-			</div>
-		</fieldset>
+				<!--
+					Recurrence is a question inside "Når", not a section of its own.
 
-		<fieldset class="group">
-			<legend class="group__legend">Gjentaking</legend>
-			<p class="group__hint">
-				Skjer det fleire gonger? Ein plakat som seier «torsdager» er ei gjentaking, ikkje ein dato.
-			</p>
-			<div class="grid">
-				<p class="field">
-					<label for="repeats">Skjer det fleire gonger?</label>
-					<select id="repeats" {...f.repeats.as('select')}>
-						<option value="nei">Nei, éin gong</option>
-						<option value="weekly">Kvar veke</option>
-						<option value="monthly">Kvar månad</option>
-						<option value="daily">Kvar dag</option>
-					</select>
-				</p>
-
-				{#if repeating && f.repeats.value() !== 'daily'}
-					<fieldset class="days field--wide">
-						<legend>Vekedagar</legend>
-						<div class="days__row">
-							{#each WEEKDAYS as day (day)}
-								<label class="day">
-									<input {...f.repeatWeekdays.as('checkbox', String(day))} />
-									<span>{WEEKDAY_NAMES[day].slice(0, 3)}</span>
-								</label>
-							{/each}
-						</div>
-						{#each f.repeatWeekdays.issues() ?? [] as issue (issue.message)}
-							<span class="field__error">{issue.message}</span>
-						{/each}
-					</fieldset>
-				{/if}
-
-				{#if f.repeats.value() === 'monthly'}
-					<p class="field">
-						<label for="repeatNth">Kva veke i månaden</label>
-						<select id="repeatNth" {...f.repeatNth.as('select')}>
-							<option value="1">Første</option>
-							<option value="2">Andre</option>
-							<option value="3">Tredje</option>
-							<option value="4">Fjerde</option>
-							<option value="-1">Siste</option>
-						</select>
+					It was one of five equally-weighted fieldsets, on screen for every submitter —
+					and almost every submission happens once, so most people scrolled past a
+					weekday grid, an nth-of-month select and an until-date that had nothing to do
+					with them. Folded in here it is one row until the answer is yes, which is also
+					where the question belongs: it is part of saying when something happens.
+				-->
+				<fieldset class="repeat field--wide">
+					<legend class="repeat__legend">Gjentaking</legend>
+					<p class="repeat__hint">
+						Ein plakat som seier «torsdagar» er ei gjentaking, ikkje ein dato.
 					</p>
-				{/if}
+					<div class="repeat__grid">
+						<p class="field">
+							<label for="repeats">Skjer det fleire gonger?</label>
+							<select id="repeats" {...f.repeats.as('select')}>
+								<option value="nei">Nei, éin gong</option>
+								<option value="weekly">Kvar veke</option>
+								<option value="monthly">Kvar månad</option>
+								<option value="daily">Kvar dag</option>
+							</select>
+						</p>
 
-				{#if repeating}
-					<p class="field">
-						<label for="repeatUntil">Til og med <span class="field__opt">valfritt</span></label>
-						<input id="repeatUntil" {...f.repeatUntil.as('date')} />
-						<span class="field__hint">
-							Står det ingen sluttdato, lagrar vi eit halvår framover.
-						</span>
-						{#each f.repeatUntil.issues() ?? [] as issue (issue.message)}
-							<span class="field__error">{issue.message}</span>
-						{/each}
-					</p>
-				{/if}
+						{#if repeating && f.repeats.value() !== 'daily'}
+							<fieldset class="days field--wide">
+								<legend>Vekedagar</legend>
+								<div class="days__row">
+									{#each WEEKDAYS as day (day)}
+										<label class="day">
+											<input {...f.repeatWeekdays.as('checkbox', String(day))} />
+											<span>{WEEKDAY_NAMES[day].slice(0, 3)}</span>
+										</label>
+									{/each}
+								</div>
+								{#each f.repeatWeekdays.issues() ?? [] as issue (issue.message)}
+									<span class="field__error">{issue.message}</span>
+								{/each}
+							</fieldset>
+						{/if}
 
-				{#if repeatSummary}
-					<p class="repeat__echo field--wide">
-						Blir lagra som: <strong>{repeatSummary}</strong>
-					</p>
-				{/if}
+						{#if f.repeats.value() === 'monthly'}
+							<p class="field">
+								<label for="repeatNth">Kva veke i månaden</label>
+								<select id="repeatNth" {...f.repeatNth.as('select')}>
+									<option value="1">Første</option>
+									<option value="2">Andre</option>
+									<option value="3">Tredje</option>
+									<option value="4">Fjerde</option>
+									<option value="-1">Siste</option>
+								</select>
+							</p>
+						{/if}
+
+						{#if repeating}
+							<p class="field">
+								<label for="repeatUntil">Til og med <span class="field__opt">valfritt</span></label>
+								<input id="repeatUntil" {...f.repeatUntil.as('date')} />
+								<span class="field__hint">
+									Står det ingen sluttdato, lagrar vi eit halvår framover.
+								</span>
+								{#each f.repeatUntil.issues() ?? [] as issue (issue.message)}
+									<span class="field__error">{issue.message}</span>
+								{/each}
+							</p>
+						{/if}
+
+						{#if repeatSummary}
+							<p class="repeat__echo field--wide">
+								Blir lagra som: <strong>{repeatSummary}</strong>
+							</p>
+						{/if}
+					</div>
+				</fieldset>
 			</div>
 		</fieldset>
 
@@ -938,14 +1003,25 @@
 			</div>
 		</fieldset>
 
-		<div class="form__foot">
+		<!--
+			The send bar follows the fields down.
+
+			A single button parked after fourteen fields is a long way from wherever the last doubt
+			was, and on a phone it is below three screens of form. Split in two so the sticky part
+			stays one line tall: the promise that has to be on screen at the moment of sending, and
+			the rest of it left in place underneath.
+		-->
+		<div class="form__send">
 			<button class="btn btn--solid" type="submit" disabled={submitEvent.pending > 0}>
 				{submitEvent.pending > 0 ? 'Kontrollerer…' : 'Send inn hendinga'}
 			</button>
+			<p class="form__send-note">Fem kontrollar går med ein gong — ingen kø, ingen som ventar.</p>
+		</div>
+		<div class="form__foot">
 			<p class="form__fine fineprint">
-				Fem kontrollar går med ein gong — ingen kø, ingen som ventar. Går alt gjennom, ligg hendinga
-				ute med det same. Gjer ho ikkje det, finn du henne i <a href="/ko">køen din</a> med grunnen, og
-				kan rette og sende inn på nytt. Rører du henne ikkje på 48 timar, blir ho sletta.
+				Går alt gjennom, ligg hendinga ute med det same. Gjer ho ikkje det, finn du henne i
+				<a href="/ko">køen din</a> med grunnen, og kan rette og sende inn på nytt. Rører du henne ikkje
+				på 48 timar, blir ho sletta.
 			</p>
 		</div>
 	</form>
@@ -1064,10 +1140,24 @@
 		color: var(--peach-hi);
 	}
 
+	/*
+	 * Narrow: a strip that stays put, not a block that scrolls away.
+	 *
+	 * Below the query the poster was an 18rem block above the fields, so checking the last field
+	 * against the picture meant scrolling the picture off screen — exactly the comparison it is
+	 * there to make possible. As a 5rem sticky strip it is beside every field in turn. The caption
+	 * goes with it: the intro now states what the ◧ marks mean, so the strip does not have to.
+	 */
 	.form__poster {
 		margin: 0 0 1.25rem;
 		border: var(--rule) solid var(--peach-line);
 		background: var(--navy-900);
+		position: sticky;
+		inset-block-start: 0;
+		z-index: 1;
+	}
+	.form__poster figcaption {
+		display: none;
 	}
 
 	@container (min-width: 46rem) {
@@ -1086,13 +1176,24 @@
 			inset-block-start: 1rem;
 			align-self: start;
 		}
+		/* There is room for the whole picture here, and for the sentence about what it produced. */
+		.form__poster figcaption {
+			display: block;
+		}
+		.form__poster img {
+			max-block-size: 18rem;
+			object-fit: contain;
+		}
 	}
 	.form__poster img {
 		display: block;
 		inline-size: 100%;
 		block-size: auto;
-		max-block-size: 18rem;
-		object-fit: contain;
+		/* The strip crops rather than shrinks: a portrait phone photo letterboxed into 5rem is a
+		   sliver of image in a field of background, which is not a reference you can check against. */
+		max-block-size: 5rem;
+		object-fit: cover;
+		object-position: center top;
 	}
 	.form__poster figcaption {
 		padding: 0.6rem 0.75rem;
@@ -1119,51 +1220,148 @@
 		color: var(--peach-dim);
 	}
 
+	/*
+	 * A query container for the ways, so their headings size against this column rather than the
+	 * viewport (docs/brand.md). It does NOT disturb the `@container (min-width: 46rem)` rules
+	 * further down: those sit inside `.panel`, which is a nearer container than this one.
+	 */
 	.modes {
 		display: grid;
+		container-type: inline-size;
 	}
-	.modes__bar {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 0;
-		margin-block-end: -1px; /* the active tab's edge meets the panel border */
+
+	.ways {
+		display: grid;
+		gap: 0.75rem;
+		margin-block-end: 0.75rem;
 	}
-	.mode {
+	/*
+	 * Two columns for the alternates, with the primary spanning both.
+	 *
+	 * Written as an explicit two-track grid inside a container query rather than `auto-fit`: with
+	 * `auto-fit` and a 16rem minimum, a 1300px column makes four tracks, so the two alternates end
+	 * up a quarter wide each with half the row empty. Below the query it is a plain single-column
+	 * stack, where `grid-column: 1 / -1` is a no-op rather than an invented second column.
+	 */
+	@container (min-width: 40rem) {
+		.ways {
+			grid-template-columns: repeat(2, minmax(0, 1fr));
+		}
+		.way--photo {
+			grid-column: 1 / -1;
+		}
+	}
+	.way {
+		display: grid;
+		gap: 0.35rem;
+		justify-items: start;
+		cursor: pointer;
+		padding: clamp(1rem, 2.5vw, 1.5rem);
+		background: var(--navy-900);
+		border: var(--rule) solid var(--peach-line);
+		/*
+		 * Always declared, transparent when closed. Marking the open way by *adding* a rule would
+		 * reflow the whole row by 3px every time somebody switches.
+		 */
+		border-inline-start: var(--rule-fat) solid transparent;
+	}
+	.way__label {
 		font-family: var(--font-mono);
 		font-size: var(--step-micro);
 		font-weight: 700;
-		letter-spacing: 0.18em;
+		letter-spacing: 0.28em;
 		text-transform: uppercase;
-		padding: 1em 1.5em;
-		cursor: pointer;
 		color: var(--peach-dim);
-		border: var(--rule) solid var(--peach-line);
-		border-block-end-color: transparent;
 	}
-	.mode + .mode {
-		border-inline-start: 0;
+	.way__h {
+		line-height: 0.85;
+		font-size: clamp(1.2rem, 3cqw, 1.75rem);
 	}
-	.mode:hover {
-		color: var(--peach-hi);
+	.way__what {
+		font-size: 0.875rem;
+		color: var(--peach-dim);
+		max-inline-size: 54ch;
+	}
+	.way__open {
+		display: none;
+		font-family: var(--font-mono);
+		font-size: var(--step-micro);
+		font-weight: 700;
+		letter-spacing: 0.22em;
+		text-transform: uppercase;
+	}
+
+	/* The primary: peach paper, navy ink — the same inverted band the manifesto uses. */
+	.way--photo {
+		background: var(--peach);
+		color: var(--navy-900);
+		border-color: var(--peach);
+		border-inline-start-color: transparent;
+	}
+	.way--photo .way__h {
+		font-size: clamp(1.6rem, 6cqw, 2.75rem);
+	}
+	.way--photo .way__label,
+	.way--photo .way__what {
+		color: var(--navy-dim);
+	}
+	/*
+	 * With no verifier configured the shortcut cannot work, so it stops being the loudest thing on
+	 * the page — but it stays, because vanishing is what made people conclude upload did not exist.
+	 * The panel behind it says why.
+	 */
+	.way--off {
+		background: var(--navy-900);
+		color: inherit;
+		border-color: var(--peach-line);
+	}
+	.way--off .way__label,
+	.way--off .way__what {
+		color: var(--peach-dim);
+	}
+	.way--off .way__h {
+		font-size: clamp(1.2rem, 3cqw, 1.75rem);
+	}
+
+	.way:hover {
+		border-block-color: var(--peach);
+		border-inline-end-color: var(--peach);
+	}
+	.way--photo:not(.way--off):hover {
+		background: var(--peach-hi);
+		border-block-color: var(--peach-hi);
+		border-inline-end-color: var(--peach-hi);
 	}
 
 	/*
-	 * CSS drives the switch, not JavaScript: both panels are in the server-rendered HTML and the
-	 * radios carry the state, so the tabs work with scripting off. The `bind:group` in the script
-	 * exists only so a finished extraction can flip to the form.
+	 * CSS drives the switch, not JavaScript: all three panels are in the server-rendered HTML and
+	 * the radios carry the state, so the ways work with scripting off. The `bind:group` in the
+	 * script exists only so a finished extraction can flip to the form.
 	 */
-	#mode-skjema:checked ~ .modes__bar .mode[for='mode-skjema'],
-	#mode-bilete:checked ~ .modes__bar .mode[for='mode-bilete'],
-	#mode-lenkje:checked ~ .modes__bar .mode[for='mode-lenkje'] {
-		color: var(--navy-900);
-		background: var(--peach);
-		border-color: var(--peach);
+	#mode-lenkje:checked ~ .ways .way--link,
+	#mode-skjema:checked ~ .ways .way--form,
+	#mode-bilete:checked ~ .ways .way--photo.way--off {
+		border-inline-start-color: var(--peach);
+		background: var(--navy-700);
 	}
-	#mode-skjema:focus-visible ~ .modes__bar .mode[for='mode-skjema'],
-	#mode-bilete:focus-visible ~ .modes__bar .mode[for='mode-bilete'],
-	#mode-lenkje:focus-visible ~ .modes__bar .mode[for='mode-lenkje'] {
-		outline: 2px solid var(--peach-hi);
-		outline-offset: 2px;
+	#mode-bilete:checked ~ .ways .way--photo {
+		border-inline-start-color: var(--navy-900);
+	}
+	#mode-bilete:checked ~ .ways .way--photo .way__open,
+	#mode-lenkje:checked ~ .ways .way--link .way__open,
+	#mode-skjema:checked ~ .ways .way--form .way__open {
+		display: block;
+	}
+	#mode-skjema:focus-visible ~ .ways .way--form,
+	#mode-lenkje:focus-visible ~ .ways .way--link,
+	#mode-bilete:focus-visible ~ .ways .way--photo.way--off {
+		outline: var(--rule-fat) solid var(--peach-hi);
+		outline-offset: 3px;
+	}
+	/* peach-hi on a peach ground is invisible; navy is the readable ring on the inverted card. */
+	#mode-bilete:focus-visible ~ .ways .way--photo {
+		outline: var(--rule-fat) solid var(--navy-900);
+		outline-offset: 3px;
 	}
 	/*
 	 * The query container for both panels.
@@ -1205,9 +1403,14 @@
 		border-block-end: var(--rule) solid var(--peach-line);
 	}
 	.form__read,
+	.form__from,
 	.form__unread {
 		margin: 0;
 		max-inline-size: 60ch;
+	}
+	.form__from {
+		font-size: 0.875rem;
+		color: var(--peach-dim);
 	}
 	.form__unread {
 		font-family: var(--font-mono);
@@ -1313,6 +1516,41 @@
 		border-color: var(--peach);
 		border-inline-start-width: var(--rule-fat);
 	}
+	/*
+	 * Recurrence, as one framed question inside "Når" rather than a fieldset of its own.
+	 *
+	 * A frame and not a bare row: it is a branch in the form, and everything that appears when the
+	 * answer is yes has to read as belonging to the question rather than as more "when" fields.
+	 */
+	.repeat {
+		border: var(--rule) solid var(--peach-line);
+		background: var(--navy-900);
+		margin: 0;
+		padding: 0.9rem 1rem 1.1rem;
+		min-inline-size: 0;
+	}
+	.repeat__legend {
+		font-family: var(--font-mono);
+		font-size: var(--step-micro);
+		font-weight: 700;
+		letter-spacing: 0.22em;
+		text-transform: uppercase;
+		color: var(--peach-dim);
+		padding: 0;
+	}
+	.repeat__hint {
+		margin: 0.15rem 0 0.8rem;
+		font-size: 0.8125rem;
+		color: var(--peach-dim);
+		max-inline-size: 60ch;
+	}
+	.repeat__grid {
+		display: grid;
+		/* Same auto-fit shape as `.grid`: a single-column track with `span 2` invents a second
+		   implicit column and doubles the page width at 320px. */
+		grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr));
+		gap: 1.1rem 1.5rem;
+	}
 	.days {
 		border: 0;
 		margin: 0;
@@ -1369,11 +1607,28 @@
 		font-size: 0.8125rem;
 		color: var(--peach-hi);
 	}
+	.form__send {
+		position: sticky;
+		inset-block-end: 0;
+		z-index: 1;
+		padding: clamp(0.85rem, 2.5vw, 1.25rem) clamp(1rem, 3vw, 1.75rem);
+		border-block-start: var(--rule) solid var(--peach-line);
+		/* Solid, not transparent: the fields scroll underneath it and the halftone would show
+		   straight through a see-through bar. */
+		background: var(--navy-900);
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 0.6rem 1.25rem;
+	}
+	.form__send-note {
+		margin: 0;
+		font-size: 0.8125rem;
+		color: var(--peach-dim);
+	}
 	.form__foot {
 		padding: clamp(1rem, 3vw, 1.75rem);
-		border-block-start: var(--rule) solid var(--peach-line);
 		display: grid;
-		gap: 0.75rem;
 		justify-items: start;
 	}
 	.form__fine {

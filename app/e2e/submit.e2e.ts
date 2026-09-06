@@ -24,15 +24,33 @@ test('the form is server-rendered, with every required field', async ({ request 
 	expect(html).toMatch(/href="\/ko"/);
 });
 
+/**
+ * The five checks are named on the way in, not only described afterwards.
+ *
+ * They used to be a paragraph saying "fem kontrollar" without naming one of them, so the thing
+ * that makes an open submission form trustworthy was the least legible thing on the page. The
+ * names come from `VERIFICATION_CHECK_LABELS`, which is also what the verdict prints back — this
+ * asserts the rail is actually rendered from that, rather than retyped and free to drift.
+ */
+test('the five checks are named before you submit, not just counted', async ({ request }) => {
+	const html = await (await request.get('/send-inn')).text();
+	for (const check of ['Truverd', 'Dublett', 'Normalisering', 'Kategori', 'Kjelde']) {
+		expect(html).toContain(check);
+	}
+	// The rail is numbered 01–05, which is what makes "kontroll 03 stoppa henne" mean something.
+	expect(html).toContain('>05<');
+});
+
 test('both submission modes are in the server-rendered HTML', async ({ request }) => {
 	const html = await (await request.get('/send-inn')).text();
-	// Unconditional, whatever the configuration. Gating the photo tab on VERIFIER_URL made the
+	// Unconditional, whatever the configuration. Gating the photo entry on VERIFIER_URL made the
 	// upload entry point vanish with nothing to explain it — the page looked like it had never
 	// offered upload at all.
 	expect(html).toContain('Med skjema');
 	expect(html).toContain('Med bilete');
-	// The tabs are a radio group switched by CSS, not JavaScript. Both panels must therefore be
-	// present and the form must be reachable with scripting off — fake tabs would hide it entirely.
+	expect(html).toContain('Med lenkje');
+	// The ways in are a radio group switched by CSS, not JavaScript. All three panels must
+	// therefore be present and the form reachable with scripting off — fake tabs would hide it.
 	expect(html).toMatch(/id="mode-skjema"[^>]*checked/);
 	expect(html).toContain('id="mode-bilete"');
 	expect(html).toContain('class="capture frame');
@@ -42,7 +60,28 @@ test('both submission modes are in the server-rendered HTML', async ({ request }
 	expect(html).toContain('Facebook-hending');
 });
 
-test('switching to the photo tab swaps which panel is visible', async ({ page }) => {
+/**
+ * The photo shortcut outranks the form, and that ranking is in the markup.
+ *
+ * Three tabs of equal weight put the fourteen-field form first and made the shortcut the page is
+ * built around look like an afterthought — while the hero directly above said the opposite. The
+ * classes are what carry the rank, so they are what this asserts.
+ */
+test('the photo entry is ranked first, and the alternates below it', async ({ page }) => {
+	await page.goto('/send-inn');
+	const ways = page.locator('.ways .way');
+	await expect(ways).toHaveCount(3);
+	// Document order is the ranking: photo, then link, then form.
+	await expect(ways.nth(0)).toHaveClass(/way--photo/);
+	await expect(ways.nth(1)).toHaveClass(/way--link/);
+	await expect(ways.nth(2)).toHaveClass(/way--form/);
+	// The primary is the widest thing in the block, not one third of a tab strip.
+	const photo = await ways.nth(0).boundingBox();
+	const link = await ways.nth(1).boundingBox();
+	expect(photo!.width).toBeGreaterThan(link!.width);
+});
+
+test('switching to the photo entry swaps which panel is visible', async ({ page }) => {
 	await page.goto('/send-inn');
 	const capture = page.locator('.capture');
 	const form = page.locator('form.form');
@@ -98,6 +137,57 @@ test('a complete submission returns a verdict with reasoning for every check', a
 	// It names the queue, not a person: there is no manual review any more, and the sender's route
 	// forward is /kø rather than waiting.
 	await expect(verdict.locator('.check__reasoning')).toContainText(/køen din/i);
+});
+
+/**
+ * The answer takes the page instead of sitting on top of the form.
+ *
+ * The verdict used to render above the ways in with all fourteen fields still below it, so the
+ * layout never said "this is the answer to what you just did" — and the form you had already
+ * submitted competed with the checks explaining why it was refused.
+ */
+test('the verdict replaces the form rather than stacking on top of it', async ({ page }) => {
+	await page.goto('/send-inn');
+	await expect(page.locator('form.form')).toBeVisible();
+	await page.locator('#title').fill('E2E svaret tek sida');
+	await page.locator('#category').selectOption('anna');
+	await page.locator('#date').fill('2027-04-02');
+	await page.locator('#startTime').fill('18:00');
+	await page.locator('#venueName').fill('Vinsen');
+	await page.getByRole('button', { name: /Send inn hendinga/ }).click();
+
+	await expect(page.locator('.verdict')).toBeVisible();
+	await expect(page.locator('form.form')).toHaveCount(0);
+	await expect(page.locator('.ways')).toHaveCount(0);
+});
+
+/**
+ * A check that did not pass is marked, not merely listed.
+ *
+ * All five stay in order — showing only the problems would teach people the system is a gate
+ * rather than five stated questions — but nothing distinguished them, so finding the reason meant
+ * reading every paragraph. The rule is the marker, so the computed border is what this asserts.
+ */
+test('a check that stopped the submission is marked out from the ones that passed', async ({
+	page
+}) => {
+	await page.goto('/send-inn');
+	await page.locator('#title').fill('E2E merkt kontroll');
+	await page.locator('#category').selectOption('anna');
+	await page.locator('#date').fill('2027-04-03');
+	await page.locator('#startTime').fill('18:00');
+	await page.locator('#venueName').fill('Vinsen');
+	await page.getByRole('button', { name: /Send inn hendinga/ }).click();
+
+	const check = page.locator('.check').first();
+	await expect(check).toBeVisible();
+	// With no verifier reachable this check cannot pass, which is the case worth marking.
+	await expect(check).not.toHaveAttribute('data-verdict', 'pass');
+	const border = await check.evaluate(
+		(el) => getComputedStyle(el).borderInlineStartColor || getComputedStyle(el).borderLeftColor
+	);
+	// --peach, #f7a98a. Not transparent, which is what every passing row keeps.
+	expect(border).toBe('rgb(247, 169, 138)');
 });
 
 test('the page is reachable from the site navigation', async ({ page }) => {

@@ -314,6 +314,20 @@
 		padding: clamp(0.85rem, 2.5vw, 1.25rem);
 		display: grid;
 		gap: 0.3rem;
+		/* Declared on every row so flagging one cannot shift the text of the other four. */
+		border-inline-start: var(--rule-fat) solid transparent;
+	}
+	/*
+	 * The checks that did not pass are the ones the eye should land on.
+	 *
+	 * All five stay listed, in order — showing only the problems would teach people the system is
+	 * a gate rather than five stated questions. But nothing marked them out, so finding the reason
+	 * a submission was refused meant reading five paragraphs to see which one was bad news.
+	 */
+	.check[data-verdict='fail'],
+	.check[data-verdict='uncertain'] {
+		border-inline-start-color: var(--peach);
+		background: var(--peach-ghost);
 	}
 	.check + .check {
 		border-block-start: var(--rule) solid var(--peach-line);
@@ -341,13 +355,18 @@
 		padding: 0.2em 0.6em;
 		border: var(--rule) solid var(--peach-line);
 	}
+	/*
+	 * Filled means "look at this", so it belongs on the checks that stopped the submission — it
+	 * used to be the other way round, which made five passes shout and the one refusal whisper.
+	 */
 	.check[data-verdict='pass'] .check__verdict {
+		color: var(--peach-dim);
+		border-color: var(--peach-line);
+	}
+	.check[data-verdict='fail'] .check__verdict,
+	.check[data-verdict='uncertain'] .check__verdict {
 		background: var(--peach);
 		color: var(--navy-900);
-		border-color: var(--peach);
-	}
-	.check[data-verdict='fail'] .check__verdict {
-		background: var(--peach-ghost);
 		border-color: var(--peach);
 	}
 	.check__question,
