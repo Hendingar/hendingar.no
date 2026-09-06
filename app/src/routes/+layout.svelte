@@ -12,8 +12,8 @@
 	import favicon from '#lib/assets/favicon.svg';
 	import SiteFooter from '../lib/components/SiteFooter.svelte';
 	import SiteMasthead from '../lib/components/SiteMasthead.svelte';
-	import { onNavigate } from '$app/navigation';
-	import { startAnalytics } from '../lib/analytics.ts';
+	import { afterNavigate, onNavigate } from '$app/navigation';
+	import { startAnalytics, track } from '../lib/analytics.ts';
 	import type { LayoutProps } from './$types';
 
 	// Typed, not bare $props() — an untyped destructure makes `children` implicitly any, which
@@ -29,6 +29,27 @@
 	 */
 	$effect(() => {
 		void startAnalytics(window.location.hostname);
+	});
+
+	/**
+	 * A page view for every navigation after the first.
+	 *
+	 * d8a's tracker does not follow client-side routing — its own documentation says so — and this
+	 * site is a single page application after first paint. So until now it counted the page a
+	 * reader landed on and nothing else: every category they filtered to, every day they opened,
+	 * every event they read was invisible. The numbers were not merely low, they were low by an
+	 * unknown factor that changed with how engaged people were, which is the worst shape a metric
+	 * can have.
+	 *
+	 * `type === 'enter'` is the first load, which `config` already reported. Counting it here as
+	 * well would double every entry page and nothing else — a bias that looks like a bounce rate.
+	 *
+	 * `document.title` is read after the navigation completes, so it is the new page's title rather
+	 * than the one being left.
+	 */
+	afterNavigate((navigation) => {
+		if (navigation.type === 'enter') return;
+		track('page_view', { page_location: location.href, page_title: document.title });
 	});
 
 	/**

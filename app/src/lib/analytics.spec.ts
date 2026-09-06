@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { shouldTrack } from './analytics.ts';
+import { shouldTrack, surfaceOf } from './analytics.ts';
 
 describe('shouldTrack', () => {
 	it('reports from the live site', () => {
@@ -26,5 +26,25 @@ describe('shouldTrack', () => {
 	it('is an exact host match, not a suffix one', () => {
 		// `endsWith('hendingar.no')` would happily report from an attacker's lookalike domain.
 		expect(shouldTrack('nothendingar.no')).toBe(false);
+	});
+});
+
+describe('surfaceOf', () => {
+	it('names the listing a tile was clicked from', () => {
+		expect(surfaceOf('/')).toBe('framsida');
+		expect(surfaceOf('/hendingar')).toBe('hendingar');
+		expect(surfaceOf('/poppis/vist')).toBe('poppis');
+	});
+
+	it('is coarse on purpose', () => {
+		// Which day somebody browsed is not a question we are asking, so the date does not travel.
+		expect(surfaceOf('/kalender/2026-09-12')).toBe('kalender');
+		expect(surfaceOf('/kalender')).toBe('kalender');
+	});
+
+	it('never invents a name for a page that is not a listing', () => {
+		expect(surfaceOf('/send-inn')).toBe('anna');
+		expect(surfaceOf('/hending/12-konsert')).toBe('anna');
+		expect(surfaceOf('')).toBe('anna');
 	});
 });
