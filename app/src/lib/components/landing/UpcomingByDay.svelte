@@ -18,11 +18,18 @@
 
 <section class="up" aria-labelledby="h-up">
 	<div class="shell">
+		<!--
+			"Dei neste dagane", not "Kva skjer".
+
+			This heading and the eyebrow above it were written when the list was the first thing on
+			the page and had to introduce itself. The page now opens with an h1 reading "Kva skjer i
+			Sunnhordland", so the old pair said the question twice within one screen and named the
+			region twice with it. What is left says what this section is — the next few days — which
+			is the one thing the h1 does not already say, and which the "Vis fleire" link beside it
+			completes.
+		-->
 		<div class="up__head">
-			<div>
-				<p class="label">Sunnhordland</p>
-				<h2 id="h-up" class="display up__h">Kva skjer</h2>
-			</div>
+			<h2 id="h-up" class="display up__h">Dei neste dagane</h2>
 			<a class="btn up__more" href="/hendingar">Vis fleire</a>
 		</div>
 
@@ -32,7 +39,14 @@
 				<a href="/datasamling">Sjå kva vi hentar inn →</a>
 			</p>
 		{:else}
-			<EventsByDay {events} headingLevel={3} {hearts} />
+			<!--
+				The first day leads: wider cards, and a calendar link on each.
+
+				What is on today is the question this page exists to answer, and rendering it in the
+				same 4-up grid as the rest of the fortnight made the most useful row on the site look
+				exactly like all the others.
+			-->
+			<EventsByDay {events} headingLevel={3} {hearts} featureFirstDay />
 
 			<p class="up__foot">
 				<a href="/hendingar">Alle hendingar →</a>
@@ -55,9 +69,15 @@
 		justify-content: space-between;
 		margin-block-end: clamp(1.25rem, 3vw, 2rem);
 	}
+	/*
+	 * A section heading now, not the page's opening statement — so it stops short of the display
+	 * sizes above it. 4rem here would compete with the h1 one screen up and flatten the hierarchy
+	 * the page was rearranged to create. "Dei neste dagane" is also three times the length of the
+	 * two words this used to hold, and needs the smaller step to stay on one line.
+	 */
 	.up__h {
-		font-size: clamp(1.6rem, 7cqw, 4rem);
-		margin-block: 0.2em 0;
+		font-size: clamp(1.35rem, 4cqw, 2.125rem);
+		margin-block: 0;
 	}
 	.up__more {
 		flex: none;

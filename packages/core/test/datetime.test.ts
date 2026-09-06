@@ -3,7 +3,9 @@ import {
 	DATE_LOCALE,
 	DEFAULT_TIME_ZONE,
 	formatEventTime,
+	formatStartsIn,
 	formatWeekendRange,
+	STARTS_IN_HORIZON_MINUTES,
 	weekendDates,
 	schemaDateTime,
 	formatTimeDigits,
@@ -426,5 +428,45 @@ describe('formatWeekendRange', () => {
 
 	it('says nothing rather than something broken', () => {
 		expect(formatWeekendRange([])).toBe('');
+	});
+});
+
+describe('formatStartsIn', () => {
+	it('says an event that has begun is on now, however long ago it began', () => {
+		// A multi-day exhibition is the case this exists for: it opened last week, and the useful
+		// thing to say about it is that you can walk in today.
+		expect(formatStartsIn(0)).toBe('Pågår no');
+		expect(formatStartsIn(-5)).toBe('Pågår no');
+		expect(formatStartsIn(-60 * 24 * 7)).toBe('Pågår no');
+	});
+
+	it('counts in minutes below the hour', () => {
+		expect(formatStartsIn(1)).toBe('Om 1 min');
+		expect(formatStartsIn(40)).toBe('Om 40 min');
+		expect(formatStartsIn(59)).toBe('Om 59 min');
+	});
+
+	it('floors to whole hours, never rounding the deadline later than it is', () => {
+		expect(formatStartsIn(60)).toBe('Om 1 t');
+		// 119 minutes is "om 1 t". Rounding up would tell a reader they have two hours when they
+		// have one and a half — the one direction that costs them the event.
+		expect(formatStartsIn(119)).toBe('Om 1 t');
+		expect(formatStartsIn(120)).toBe('Om 2 t');
+		expect(formatStartsIn(359)).toBe('Om 5 t');
+	});
+
+	it('says nothing at all beyond the horizon, so the badge stays a signal', () => {
+		expect(formatStartsIn(STARTS_IN_HORIZON_MINUTES)).toBeNull();
+		expect(formatStartsIn(60 * 24)).toBeNull();
+	});
+
+	it('is null rather than NaN for a row that carried no number', () => {
+		expect(formatStartsIn(Number.NaN)).toBeNull();
+	});
+
+	it('says nothing about an event the caller marked as over', () => {
+		// /hjarta keeps events that have already happened. Null is how a row says so, and without
+		// this branch a negative number would read as "Pågår no" for a concert from March.
+		expect(formatStartsIn(null)).toBeNull();
 	});
 });

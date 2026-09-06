@@ -1,10 +1,9 @@
 <script lang="ts">
+	import Ask from '../lib/components/landing/Ask.svelte';
+	import CategoryLinks from '../lib/components/landing/CategoryLinks.svelte';
 	import UpcomingByDay from '../lib/components/landing/UpcomingByDay.svelte';
 	import CoverageStatus from '../lib/components/landing/CoverageStatus.svelte';
-	import Hero from '../lib/components/landing/Hero.svelte';
-	import ManifestBand from '../lib/components/landing/ManifestBand.svelte';
-	import VerifyPipeline from '../lib/components/landing/VerifyPipeline.svelte';
-	import CallToAction from '../lib/components/landing/CallToAction.svelte';
+	import JoinStrip from '../lib/components/landing/JoinStrip.svelte';
 	import PageMeta from '../lib/components/PageMeta.svelte';
 	import { page } from '$app/state';
 	import { originFor } from '../lib/origin.ts';
@@ -27,24 +26,49 @@
 />
 
 <!--
-	Events, then what the list actually is, then everything about us.
+	The question, the ways in, the events. Nothing else.
 
-	The page used to run: events, hero, manifest, claims, pipeline, events AGAIN, call to action —
-	seven sections, five of them about us, with the event list appearing twice either side of the
-	manifesto. On a site whose job is answering "what is on", that ratio was inverted, and the
-	second list was the same query with a smaller limit.
+	The page used to run: events, coverage, hero, manifest, verification pipeline, call to action.
+	Four of those six sections were about us — a full-screen wordmark the masthead already carries,
+	three promises in display type, the five submission checks described to people who had not
+	submitted anything, and two links to GitHub. A visitor arrived asking what was on this evening
+	and got five screens about the project on the way past.
 
-	The claims split ("Samlar alt" / "Og kva vi ikkje er") is gone for the same reason. It restated
-	in two columns of prose what the page already demonstrates: every event carries its source, the
-	filter is a link, and the manifest band says the three things we promise. Declaring "vi er ein
-	indeks, ikkje ein erstatning" underneath a list that links every row to its source is the site
-	explaining itself instead of working. The non-goals are still binding — they live in
-	README.md#what-it-does-not-do, which is where they are load-bearing.
+	What replaced them answers the same questions with things a reader can act on. `Ask` states the
+	three facts that decide whether this list is worth trusting — how many events, how many sources,
+	how recently collected — read from the data rather than written as copy, so they cannot drift
+	the way "vi samlar alt" can. `WaysIn` inside it is the primary control, and every one of its
+	four is a real link to a page that already exists rather than a filter holding client state:
+	`/kalender/<dato>` twice, `/neste-helg`, `/hendingar`. #81 recorded exactly why when it built
+	the weekend as a route — a filter has to be a URL to be shareable, and a URL that answers a
+	different question every Monday is a page, not a filter.
 
-	`CoverageStatus` sits directly under the list rather than on /datasamling alone, because "is
-	this everything?" is the first question the list provokes and the honest answer was two clicks
-	away on a page most visitors never open.
+	The promises are not gone, they are in the footer, on every page instead of one. The five checks
+	are on `/send-inn`, stated before you submit, which is where they change what somebody does.
+
+	`CoverageStatus` still sits directly under the list: "is this everything?" is the first question
+	the list provokes, and the honest answer was two clicks away on a page most visitors never open.
 -->
+<svelte:boundary>
+	<Ask />
+	{#snippet failed()}
+		<!-- The counts are context for the list below, not the content. A heading with no numbers is
+		     better than an error where a fact should be — and the events still render. -->
+		<header class="shell ask-fallback">
+			<p class="label">Sunnhordland</p>
+			<h1 class="display">Kva skjer</h1>
+		</header>
+	{/snippet}
+</svelte:boundary>
+
+<svelte:boundary>
+	<CategoryLinks />
+	{#snippet failed()}
+		<!-- A navigation row that cannot load is simply absent. Every category is still reachable
+		     from /hendingar, which is one of the four ways in above. -->
+	{/snippet}
+</svelte:boundary>
+
 <svelte:boundary>
 	<UpcomingByDay />
 	{#snippet failed()}
@@ -62,7 +86,15 @@
 	{/snippet}
 </svelte:boundary>
 
-<Hero />
-<ManifestBand />
-<VerifyPipeline />
-<CallToAction />
+<JoinStrip />
+
+<style>
+	.ask-fallback {
+		padding-block: clamp(1.75rem, 4vw, 2.75rem) clamp(1.5rem, 3vw, 2.25rem);
+		container-type: inline-size;
+	}
+	.ask-fallback .display {
+		font-size: clamp(2.25rem, 13cqw, 6rem);
+		margin-block-start: 0.22em;
+	}
+</style>

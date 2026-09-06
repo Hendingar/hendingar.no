@@ -16,7 +16,8 @@
 	let {
 		events,
 		headingLevel = 3,
-		hearts = {}
+		hearts = {},
+		featureFirstDay = false
 	}: {
 		events: UpcomingEvent[];
 		headingLevel?: 2 | 3;
@@ -27,6 +28,17 @@
 		 * each would be two dozen round trips for a number nobody scrolled to yet.
 		 */
 		hearts?: Record<number, number>;
+		/**
+		 * Give the FIRST day's tiles the leading treatment — wider cells and a calendar link.
+		 *
+		 * Only the front page sets it. What is on today (or, late in the evening, tomorrow) is the
+		 * question that page exists to answer, and answering it in the same 4-up grid as the rest
+		 * of the fortnight makes the most useful row on the site look like all the others.
+		 *
+		 * The first day, not "today": on a quiet Tuesday night the list opens on tomorrow, and the
+		 * day a reader is looking at first is the one worth leading with either way.
+		 */
+		featureFirstDay?: boolean;
 	} = $props();
 
 	type Day = { date: string; label: string; events: UpcomingEvent[] };
@@ -57,7 +69,7 @@
 	const days = $derived(byDay(events));
 </script>
 
-{#each days as day (day.date)}
+{#each days as day, dayIndex (day.date)}
 	<!-- Each day is its own labelled region, so the date is part of the document structure rather
 	     than a visual grouping a screen reader cannot perceive. -->
 	<section class="day" aria-labelledby={`day-${day.date}`}>
@@ -74,7 +86,7 @@
 		{/if}
 		<!-- The grid itself lives in EventGrid, because /kalender/<dato> needs it without a day
 		     heading of its own. -->
-		<EventGrid events={day.events} {hearts} />
+		<EventGrid events={day.events} {hearts} featured={featureFirstDay && dayIndex === 0} />
 	</section>
 {/each}
 
