@@ -210,6 +210,70 @@ test('the submission log lists what people sent and what was decided', async ({ 
 	}
 });
 
+test('a submission that went out can be opened from the log', async ({ page }) => {
+	await page.goto('/datasamling');
+
+	/*
+	 * Nothing that is not published is a link.
+	 *
+	 * `getEvent` filters on `status = 'published'`, so a link on a pending or rejected row would be
+	 * a 404 we offered ourselves — and for a rejected one it would be a 404 pointing at withheld
+	 * text, which is worse.
+	 */
+	for (const other of await page.locator('.entry:not([data-status="published"])').all()) {
+		expect(await other.locator('a').count(), 'only a published row has somewhere to go').toBe(0);
+	}
+
+	/*
+	 * The log holds the five most recent submissions and the submission specs run alongside this
+	 * file, so the seed's published row can legitimately be outside the window — the same race the
+	 * spec above documents. When it is there, it must work.
+	 */
+	const published = page.locator('.entry[data-status="published"]').first();
+	if ((await published.count()) === 0) return;
+
+	const link = published.locator('a.entry__link');
+	await expect(link).toHaveAttribute('href', /^\/hending\/\d+-/);
+
+	/*
+	 * The whole row is the target, not the four words of the title.
+	 *
+	 * Clicked at the far left — the timestamp, which is not inside the link — so this passes only
+	 * if the stretched overlay actually covers the row. That is the difference between a link a
+	 * thumb can hit on a phone and one it cannot.
+	 */
+	// Scrolled into view first: a bounding box is viewport coordinates, and clicking the page
+	// coordinates of a row that is below the fold lands on whatever happens to be there instead.
+	await published.scrollIntoViewIfNeeded();
+	const row = (await published.boundingBox())!;
+	await page.mouse.click(row.x + 8, row.y + row.height / 2);
+	await expect(page).toHaveURL(/\/hending\/\d+-/);
+	await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+});
+
+test('the submission section leads to the submissions that are live', async ({ page }) => {
+	await page.goto('/datasamling');
+
+	/*
+	 * The page talked about submissions all the way down and then pointed at nothing. The listing
+	 * has treated them as a source of their own since they gained a reserved slug — they have no
+	 * `sources` row, so the join cannot see them — but there was no way in from here.
+	 */
+	const link = page.getByRole('link', { name: /innsende hending/i });
+	await expect(link).toHaveAttribute('href', '/hendingar?kjelde=innsendt');
+	await link.click();
+	await expect(page).toHaveURL(/\/hendingar\?kjelde=innsendt$/);
+
+	/*
+	 * And the filter holds something. An unknown or empty `kjelde` is dropped rather than refused,
+	 * so a link offered when nothing is behind it would quietly show the whole listing — which is
+	 * the one failure a reader could not tell from working correctly. The count in the link's own
+	 * text is what decides whether it is rendered at all.
+	 */
+	await expect(page.locator('article.tile').first()).toBeVisible();
+	await expect(page.getByRole('link', { name: /Bygdekino/i }).first()).toBeVisible();
+});
+
 test('a rejected submission never has its text republished', async ({ page }) => {
 	await page.goto('/datasamling');
 	// The mapping rule itself is unit-tested in packages/core (publicSubmissionTitle) because

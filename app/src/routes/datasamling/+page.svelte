@@ -157,6 +157,29 @@
 		rette og prøve igjen, og ho blir sletta om ingen gjer det innan 48 timar.
 	</p>
 	<SubmissionLog submissions={data.submissions} />
+
+	{#if data.submittedLiveCount > 0}
+		<!--
+			The log is the last five, decisions and all. This is where the ones that went out live.
+
+			`/hendingar?kjelde=innsendt` is not a new page: the listing already treats submissions as
+			a source of their own, because they have no `sources` row and the join could not see
+			them. It simply had no way in from here — the page that talks about submissions all the
+			way down and then pointed at nothing.
+
+			Rendered only when the filter has something in it. An unknown or empty `kjelde` is
+			dropped rather than refused, so a link to nothing would quietly show the whole listing,
+			which is the one outcome a reader could not tell from a bug.
+		-->
+		<p class="block__more">
+			<a href="/hendingar?kjelde=innsendt">
+				<!-- "alle 1" is not a sentence. One is a different word here, as it is on /alltid-ope. -->
+				{data.submittedLiveCount === 1
+					? 'Sjå den eine innsende hendinga som ligg ute'
+					: `Sjå alle dei ${data.submittedLiveCount} innsende hendingane som ligg ute`} →
+			</a>
+		</p>
+	{/if}
 </section>
 
 <section class="shell block" aria-labelledby="h-sources">
@@ -302,6 +325,14 @@
 		margin: 0 0 1.75rem;
 		max-inline-size: 62ch;
 		color: var(--peach-dim);
+	}
+	/* Under the list it belongs to, in the same mono the log's own timestamps use. */
+	.block__more {
+		margin: 1.25rem 0 0;
+		font-family: var(--font-mono);
+		font-size: var(--step-micro);
+		letter-spacing: 0.14em;
+		text-transform: uppercase;
 	}
 	.rows {
 		border-block-start: var(--rule) solid var(--peach-line);
