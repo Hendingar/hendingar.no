@@ -108,13 +108,27 @@ async function venueIdFor(db: Db, mapped: MappedEvent, organiser: AlleventsOrgan
 			 * detect, so it is left null for the geocoder to fill properly.
 			 */
 			municipality: null,
+			address: mapped.venueAddress.street,
+			postalCode: mapped.venueAddress.postalCode,
 			timezone: organiser.timezone,
 			// allevents.in does publish coordinates, and they look right. Geocoding is a separate
 			// concern with its own status column, and no importer here writes them — flagged rather
 			// than half-filled, the same call `importers/billetto` made.
 			geocodeStatus: 'pending'
 		})
-		.onConflictDoUpdate({ target: venues.slug, set: { name: mapped.venueName } })
+		.onConflictDoUpdate({
+			target: venues.slug,
+			set: {
+				name: mapped.venueName,
+				/*
+				 * Only ever filled in, never blanked. A later run where the source omits the address
+				 * must not erase one we already have — the event page would silently lose its rich
+				 * result and nothing would say why.
+				 */
+				...(mapped.venueAddress.street ? { address: mapped.venueAddress.street } : {}),
+				...(mapped.venueAddress.postalCode ? { postalCode: mapped.venueAddress.postalCode } : {})
+			}
+		})
 		.returning({ id: venues.id });
 	return row?.id ?? null;
 }

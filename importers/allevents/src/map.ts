@@ -2,6 +2,7 @@ import { zonedWallClockToInstant } from '@hendingar/core/datetime';
 import type { CategorySlug } from '@hendingar/core/taxonomy';
 import type { UpstreamDetail, UpstreamEvent } from './api.ts';
 import { organiserUrl, type AlleventsOrganiser } from './organisers.ts';
+import { fromLine, type ParsedAddress } from '@hendingar/core/address';
 
 /**
  * Pure mapping: one allevents.in record → our shape. No I/O, no clock, no randomness.
@@ -414,6 +415,8 @@ export type MappedEvent = {
 	endsAt: Date | null;
 	venueName: string;
 	venueSlug: string;
+	/** Parsed out of the single `street` line, when it holds an address at all. */
+	venueAddress: ParsedAddress;
 	description: string | null;
 	ctaUrl: string | null;
 	posterUrl: string | null;
@@ -503,6 +506,14 @@ export function mapEvent(
 		endsAt,
 		venueName,
 		venueSlug: slugifyVenue(venueName),
+		/*
+		 * allevents.in writes the whole address on one line, and inconsistently: sometimes
+		 * "Sagvågsbrekko 7, 5410 Sagvåg, Norge", sometimes with the venue's name in front of it.
+		 * `fromLine` scans for the segment that looks like a street rather than trusting the first,
+		 * and returns nothing at all when none of them does — which is the common case, and is why
+		 * `venueNameFrom` above still exists.
+		 */
+		venueAddress: fromLine(input.venue?.street),
 		/*
 		 * From the event's own page, when we could read it. It is the one field `get_events` does not
 		 * return, and a detail fetch that fails costs a description rather than the event.

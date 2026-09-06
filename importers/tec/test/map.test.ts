@@ -494,3 +494,18 @@ describe('mapEvent failures', () => {
 		expect(mapped(raw, bomloteater).endsAt).toBeNull();
 	});
 });
+
+describe('the venue address', () => {
+	it('is read off the venue block, when the instance filled it in', () => {
+		// The archive page is where the venue block is filled in; the upcoming page omits it.
+		const withAddress = archive.events
+			.map((e) => mapped(e, bomloteater))
+			.filter((m) => m.venueAddress.street !== null);
+
+		expect(withAddress.length, 'the fixture should carry at least one address').toBeGreaterThan(0);
+		for (const m of withAddress) {
+			expect(m.venueAddress.street).toMatch(/\d/);
+			if (m.venueAddress.postalCode) expect(m.venueAddress.postalCode).toMatch(/^\d{4}$/);
+		}
+	});
+});

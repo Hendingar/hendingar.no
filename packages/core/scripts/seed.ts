@@ -64,13 +64,27 @@ const [venue] = await db
 		name: 'Den Blå Time',
 		slug: 'den-bla-time',
 		municipality: 'Stord',
+		/*
+		 * A street and a postnummer, because `location.address` is what Google's Event rich result
+		 * requires and a seed without one cannot show whether we emit it. The same reason the seed
+		 * carries posters and several days: a feature that is not observable in the seed is a
+		 * feature the end-to-end suite cannot assert.
+		 *
+		 * Deliberately only on this venue. Kulttuuritalo below has none, so the "no address, and
+		 * therefore no empty PostalAddress" branch is exercised too.
+		 */
+		address: 'Borggata 2',
+		postalCode: '5417',
 		latitude: 59.7789,
 		longitude: 5.4986,
 		timezone: 'Europe/Oslo',
 		geocodeStatus: 'resolved',
 		geocodedAt: new Date()
 	})
-	.onConflictDoUpdate({ target: venues.slug, set: { municipality: 'Stord' } })
+	.onConflictDoUpdate({
+		target: venues.slug,
+		set: { municipality: 'Stord', address: 'Borggata 2', postalCode: '5417' }
+	})
 	.returning();
 
 // A second venue outside CET, so the timezone handling is exercised by the seed rather than

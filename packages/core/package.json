@@ -20,7 +20,8 @@
 		"./venue-aliases": "./src/venue-aliases.ts",
 		"./submissions": "./src/submissions.ts",
 		"./directory": "./src/directory.ts",
-		"./text": "./src/text.ts"
+		"./text": "./src/text.ts",
+		"./address": "./src/address.ts"
 	},
 	"scripts": {
 		"typecheck": "tsc --noEmit",

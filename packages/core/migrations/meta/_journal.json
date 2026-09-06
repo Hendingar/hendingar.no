@@ -127,6 +127,13 @@
       "when": 1788599428191,
       "tag": "0017_broken_maestro",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1788686693107,
+      "tag": "0018_overrated_omega_sentinel",
+      "breakpoints": true
     }
   ]
 }

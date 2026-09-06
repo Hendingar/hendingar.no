@@ -258,3 +258,35 @@ describe('slugifyVenue', () => {
 		expect(slugifyVenue('Bømlo kulturhus, Svortland')).toBe('boemlo-kulturhus-svortland');
 	});
 });
+
+describe('the venue address', () => {
+	/*
+	 * `location.address` is required for Google's Event rich result, and no event had one — this
+	 * portal has been handing us a street, a postnummer and a town in three fields all along and
+	 * the importer dropped all three.
+	 */
+	it('is read off the location the portal points at', () => {
+		const withAddress = publishable
+			.map((raw) => mapEvent(raw, site, vocabulary, locations))
+			.filter((m) => !isFailure(m) && m.venueAddress.street !== null);
+
+		expect(withAddress.length, 'the fixture should contain at least one address').toBeGreaterThan(
+			0
+		);
+		for (const m of withAddress) {
+			if (isFailure(m)) continue;
+			expect(m.venueAddress.street).toMatch(/\d/);
+			if (m.venueAddress.postalCode) expect(m.venueAddress.postalCode).toMatch(/^\d{4}$/);
+		}
+	});
+
+	it('is absent rather than invented where the portal gave none', () => {
+		for (const raw of publishable) {
+			const m = mapEvent(raw, site, vocabulary, locations);
+			if (isFailure(m)) continue;
+			// Never an empty string: `null` and `""` mean different things to the upsert, and one of
+			// them would write a blank address over a real one.
+			expect(m.venueAddress.street === null || m.venueAddress.street.length > 0).toBe(true);
+		}
+	});
+});

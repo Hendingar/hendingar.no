@@ -187,6 +187,18 @@ export const venues = pgTable(
 		name: text('name').notNull(),
 		slug: text('slug').notNull().unique(),
 		address: text('address'),
+		/**
+		 * Norwegian postnummer, four digits, as text.
+		 *
+		 * `PostalAddress.postalCode` in the JSON-LD, and text rather than an integer because a
+		 * postnummer is an identifier that happens to be digits — `0150` is Oslo and `150` is
+		 * nothing.
+		 *
+		 * Additive and nullable, per ADR 0010: the column arrives before anything reads it, and no
+		 * venue is required to have one. Several sources hand us a postnummer beside the street
+		 * ("Kjøtteinsvegen 66, 5411 Leirvik"), and until now it was parsed and dropped.
+		 */
+		postalCode: text('postal_code'),
 		municipality: text('municipality'),
 		latitude: doublePrecision('latitude'),
 		longitude: doublePrecision('longitude'),

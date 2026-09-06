@@ -36,6 +36,7 @@ export type EventForJsonLd = {
 	organizerName: string | null;
 	venueName: string | null;
 	venueAddress: string | null;
+	venuePostalCode: string | null;
 	venueMunicipality: string | null;
 	venueLatitude: number | null;
 	venueLongitude: number | null;
@@ -103,22 +104,25 @@ export function eventJsonLd(event: EventForJsonLd, canonical: string): JsonLd {
 }
 
 function placeNode(event: EventForJsonLd): JsonLd {
-	const hasAddress = Boolean(event.venueAddress || event.venueMunicipality);
+	const hasAddress = Boolean(
+		event.venueAddress || event.venuePostalCode || event.venueMunicipality
+	);
 
 	return {
 		'@type': 'Place',
 		name: event.venueName,
 		/*
-		 * `location.address` is REQUIRED for Google's Event rich result, and today almost no venue
-		 * has one — `venues.address` is empty for every row because nothing geocodes them yet. The
-		 * shape is here and correct so that filling the column is all that is left to do; until
-		 * then Google reports "Missing field location.address" and that is the honest state.
+		 * `location.address` is REQUIRED for Google's Event rich result. The three sources that
+		 * hand us a street address now write one (`packages/core/src/address.ts`); everything else
+		 * still has none, and an empty PostalAddress would be worse than an absent one — it asserts
+		 * we know the address and that it is nothing.
 		 */
 		...(hasAddress
 			? {
 					address: {
 						'@type': 'PostalAddress',
 						...(event.venueAddress ? { streetAddress: event.venueAddress } : {}),
+						...(event.venuePostalCode ? { postalCode: event.venuePostalCode } : {}),
 						...(event.venueMunicipality ? { addressLocality: event.venueMunicipality } : {}),
 						addressCountry: 'NO'
 					}
