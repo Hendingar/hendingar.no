@@ -27,7 +27,8 @@ import {
 	isoWeekDates,
 	isoWeekKey,
 	isoWeekStart,
-	shiftWeek
+	shiftWeek,
+	weekendAhead
 } from '@hendingar/core/datetime';
 // The rail covers exactly as far ahead as a repeating event is worked out. Imported rather than
 // spelled 26 here, so the page cannot promise a horizon the data does not have (ADR 0009).
@@ -628,6 +629,81 @@ export const listEventsOnDate = query(calendarDateSchema, async (date) => {
 		.filter((row) => localDayKey(row.startsAt, row.venueTimeZone) === date)
 		.map((row) => ({ ...row, localDate: date, todayLocalDate }));
 });
+
+/**
+ * Everything on this weekend, Friday to Sunday, in the shape the listing already renders.
+ *
+ * Three day pages at once, which is what makes it worth a tab of its own: "what is on this
+ * weekend" is the question a local events site is asked most often, and answering it previously
+ * meant opening `/kalender`, working out which dates were the weekend, and visiting three of them.
+ *
+ * Addressed by a date range rather than by "upcoming", so an event that has already finished today
+ * is still listed — exactly like `/kalender/<dato>`, and for the same reason: a page about
+ * specific dates should say what is on those dates. `/hendingar` is the page that answers "what is
+ * still to come".
+ *
+ * Takes no argument. Which weekend it is is a fact about today rather than about the request, and
+ * a `?helg=` parameter would be a second way to address the same day pages that already exist.
+ */
+export const weekendEvents = query(async () => {
+	const now = new Date();
+	const dates = weekendAhead(localDayKey(now, DEFAULT_TIME_ZONE));
+	const first = dates[0] ?? '';
+	const last = dates[dates.length - 1] ?? '';
+	const { from, to } = instantWindowForDays(first, last);
+
+	const rows = await db()
+		.select({
+			id: events.id,
+			title: events.title,
+			category: events.category,
+			startsAt: events.startsAt,
+			endsAt: events.endsAt,
+			venueName: venues.name,
+			venueTimeZone: venues.timezone,
+			municipality: venues.municipality,
+			posterUrl: events.posterUrl,
+			posterSrcset: events.posterSrcset,
+			sourceMarks: sourceMarksFor(events.id).as('source_marks')
+		})
+		.from(events)
+		.leftJoin(venues, eq(events.venueId, venues.id))
+		.where(
+			and(
+				eq(events.status, 'published'),
+				isNull(events.duplicateOfId),
+				gte(events.startsAt, from),
+				lte(events.startsAt, to),
+				/*
+				 * And not already over — the same rule /hendingar and the front page use.
+				 *
+				 * This is where this page parts company with `/kalender/<dato>`, which is a record
+				 * of a date and lists everything on it. A tab called "neste helg" is a plan, and a
+				 * concert that finished an hour ago is not part of one.
+				 */
+				or(gte(events.startsAt, now), gte(events.endsAt, now))
+			)
+		)
+		.orderBy(asc(events.startsAt));
+
+	const todayLocalDate = localDayKey(now, DEFAULT_TIME_ZONE);
+
+	/*
+	 * The window is built from instants, so it is wider than the three days at the edges — a venue
+	 * in Helsinki turns Friday 00:30 local into Thursday 22:30 in Oslo. Re-deriving each row's day
+	 * at its own venue and dropping what falls outside is the same guard `listEventsOnDate` uses,
+	 * and it is why the grouping below can be trusted.
+	 */
+	return rows
+		.map((row) => ({
+			...row,
+			localDate: localDayKey(row.startsAt, row.venueTimeZone),
+			todayLocalDate
+		}))
+		.filter((row) => dates.includes(row.localDate));
+});
+
+export type WeekendEvent = Awaited<ReturnType<typeof weekendEvents>>[number];
 
 /**
  * The nearest day either side that has anything on it, so a day page can be stepped through.
