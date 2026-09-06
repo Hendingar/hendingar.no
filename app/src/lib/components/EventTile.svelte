@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { categoryLabel } from '@hendingar/core/taxonomy';
 	import { eventPath } from '@hendingar/core/slug';
-	import { formatEventClock, machineDateTime } from '@hendingar/core/datetime';
+	import { formatEventClock, formatStartsIn, machineDateTime } from '@hendingar/core/datetime';
 	import EventThumb from './EventThumb.svelte';
 	import SourceIcon from './SourceIcon.svelte';
 	import HeartButton from './HeartButton.svelte';
@@ -21,7 +21,8 @@
 		event,
 		occurrences = [],
 		hearts = 0,
-		views = null
+		views = null,
+		featured = false
 	}: {
 		event: UpcomingEvent;
 		occurrences?: Occurrence[];
@@ -35,10 +36,29 @@
 		 * /poppis/vist is explicitly about the number, so there it earns its place.
 		 */
 		views?: number | null;
+		/**
+		 * The tile is one of the leading day's, so it gets the room to carry an extra action.
+		 *
+		 * Only the front page sets it, and only for the first day it shows. The calendar link is
+		 * the strongest thing a listing can offer — one tap and the event is in your week — but on
+		 * every tile of a hundred-row list it is a second button competing with the title on each
+		 * one. On the handful of cards a reader sees first it is an offer; everywhere else it would
+		 * be furniture.
+		 */
+		featured?: boolean;
 	} = $props();
 
 	// More than one time to show. A single occurrence keeps the plain clock it always had.
 	const repeats = $derived(occurrences.length > 1);
+
+	/*
+	 * "Pågår no" / "Om 40 min", or nothing at all.
+	 *
+	 * The number is computed on the server and carried on the row (see lib/starts-in.ts), never
+	 * from a clock in this component — a tile that read `Date.now()` would render one answer into
+	 * the server HTML and a different one at hydration, and every near-term card would flip.
+	 */
+	const startsIn = $derived(formatStartsIn(event.minutesUntilStart));
 
 	/*
 	 * Three marks fit the corner; a fourth starts crowding the venue line on a narrow tile.
@@ -57,7 +77,7 @@
 	);
 </script>
 
-<article class="tile frame">
+<article class="tile frame" class:tile--featured={featured}>
 	<EventThumb
 		id={event.id}
 		posterUrl={event.posterUrl}
@@ -112,6 +132,56 @@
 
 		{#if event.venueName}
 			<p class="tile__meta"><span class="visually-hidden">Stad: </span>{event.venueName}</p>
+		{/if}
+
+		<!--
+			How near it is — the one thing a list ordered by time cannot say about itself.
+
+			Every row already states WHEN it is; none of them says which is nearly here, and that is
+			the fact that turns a reader into an attender. Rendered only inside the horizon
+			`formatStartsIn` sets, so it stays a signal rather than a decoration on every card.
+
+			Inside the body rather than beside it, deliberately: on a wide tile it is lifted out of
+			flow onto the corner of the poster, and below 34rem — where the poster shrinks to an 88px
+			square that "Pågår no" cannot fit on — it simply stays in the body and reads as a line.
+			One element, both layouts, no second copy to keep in step.
+
+			Not `aria-hidden`. "Pågår no" is the most useful thing on the tile for somebody deciding
+			whether to leave the house, and hiding it would keep the urgency for sighted readers only.
+		-->
+		{#if startsIn}
+			<p class="soon" class:soon--live={(event.minutesUntilStart ?? 1) <= 0}>{startsIn}</p>
+		{/if}
+
+		<!--
+			One tap from "that looks good" to it being in your week.
+
+			The `.ics` endpoint has existed per event since the detail page was built, but it was
+			reachable only by opening the event first — so the listing could interest a reader and
+			then ask them to navigate before they could act on it. Above the stretched link overlay,
+			like the repeat times, or the card would swallow the click.
+
+			Named for the event rather than "Legg i kalender": on a page of these, twelve links with
+			the same accessible name are twelve links a screen-reader user cannot tell apart.
+		-->
+		{#if featured}
+			<a
+				class="tile__ics"
+				href={`${eventPath(event.id, event.title)}/kalender.ics`}
+				aria-label={`Legg ${event.title} i kalenderen`}
+				onclick={() =>
+					track('add_to_calendar', {
+						content_type: 'event',
+						event_id: event.id,
+						list_name: surfaceOf(page.url.pathname)
+					})}
+			>
+				<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+					<rect x="3.5" y="5.5" width="17" height="15" />
+					<path d="M3.5 10h17M8 3.5v4M16 3.5v4M12 13v5M9.5 15.5h5" />
+				</svg>
+				<span aria-hidden="true">Legg i kalender</span>
+			</a>
 		{/if}
 
 		{#if repeats}
@@ -186,6 +256,89 @@
 </article>
 
 <style>
+	/*
+	 * Lifted out of the body onto the corner of the poster, where nothing else is.
+	 *
+	 * Absolute against `.tile` (the body is not positioned), so it costs the body no row and cannot
+	 * push the title down. Below 34rem the rule is dropped and it falls back into the body's flow —
+	 * see the narrow-tile block further down.
+	 */
+	.soon {
+		position: absolute;
+		inset-block-start: 0.55rem;
+		inset-inline-start: 0.55rem;
+		z-index: 2;
+		margin: 0;
+		font-family: var(--font-mono);
+		font-size: var(--step-micro);
+		font-weight: 700;
+		letter-spacing: 0.18em;
+		text-transform: uppercase;
+		background: var(--peach);
+		color: var(--navy-900);
+		padding: 0.3em 0.55em;
+	}
+	/*
+	 * On now reads as the inverse of about to start: outlined rather than filled.
+	 *
+	 * The two say different things — one is a deadline, the other an open door — and a reader
+	 * scanning a grid should be able to tell them apart without reading either.
+	 */
+	.soon--live {
+		background: var(--navy-900);
+		color: var(--peach);
+		box-shadow: inset 0 0 0 var(--rule) var(--peach);
+	}
+
+	/*
+	 * Above the link's stretched ::after, like the repeat times, or the card swallows the click and
+	 * every calendar link opens the event instead.
+	 */
+	.tile__ics {
+		position: relative;
+		z-index: 1;
+		justify-self: start;
+		margin-block-start: 0.15rem;
+		display: inline-flex;
+		align-items: center;
+		gap: 0.4rem;
+		border: var(--rule) solid var(--peach-line);
+		color: var(--peach-dim);
+		font-family: var(--font-mono);
+		font-size: var(--step-micro);
+		font-weight: 700;
+		letter-spacing: 0.14em;
+		text-transform: uppercase;
+		text-decoration: none;
+		padding: 0.5em 0.75em;
+		transition:
+			color var(--dur-fast) ease,
+			border-color var(--dur-fast) ease;
+	}
+	.tile__ics:hover {
+		color: var(--peach);
+		border-color: var(--peach);
+	}
+	.tile__ics svg {
+		inline-size: 0.85rem;
+		block-size: 0.85rem;
+		fill: none;
+		stroke: currentColor;
+		stroke-width: 1.8;
+		stroke-linecap: round;
+	}
+
+	/*
+	 * A featured tile is wider, so its title may go one step larger.
+	 *
+	 * A cap, not a size: the `cqw` term still does the work, so the type tracks the column exactly
+	 * as it does everywhere else and only stops climbing later. Sized against the tile's own
+	 * container, never the viewport — docs/brand.md.
+	 */
+	.tile--featured .tile__t {
+		font-size: clamp(1rem, 6.4cqw, 1.75rem);
+	}
+
 	.tile__count {
 		font-family: var(--font-mono);
 		font-size: var(--step-micro);
@@ -386,6 +539,22 @@
 			padding: 0.15rem;
 			background: color-mix(in srgb, var(--navy-900) 78%, transparent);
 			opacity: 0.9;
+		}
+		/*
+		 * The poster is an 88px square here, and "Pågår no" does not fit on it — at 12px with the
+		 * mono tracking the words are wider than the picture. So the badge stops being an overlay
+		 * and becomes a line in the body, which is the row layout's own idiom anyway.
+		 */
+		.soon {
+			position: static;
+			justify-self: start;
+			margin-block-start: 0.3rem;
+			padding: 0.25em 0.45em;
+		}
+		/* A featured tile is full-width here like every other, so the larger cap has nothing to
+		   earn and would only cost the row its density. */
+		.tile--featured .tile__t {
+			font-size: 1.05rem;
 		}
 	}
 

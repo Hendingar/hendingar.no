@@ -14,11 +14,18 @@ test('events are in the server-rendered HTML, not fetched by the client', async 
 	expect(html).toMatch(/<article class="tile/);
 });
 
-test('the page has one h1, named for the product', async ({ page }) => {
+test('the page has one h1, and it reads as one sentence', async ({ page }) => {
 	await page.goto('/');
-	// Accessible name, not text content: two block-level spans stack the word visually and used to
-	// make this announce as "HEND INGAR".
-	await expect(page.getByRole('heading', { level: 1 })).toHaveAccessibleName(/hendingar/i);
+	/*
+	 * Accessible name, not text content. The heading stacks its second line as a block-level span,
+	 * and accessible-name computation inserts a space between block children — which is what once
+	 * made the old stacked wordmark announce as "HEND INGAR". Here the space is wanted, so this
+	 * asserts the whole sentence rather than one word: if the parts ever stop composing, the name
+	 * stops matching.
+	 */
+	const h1 = page.getByRole('heading', { level: 1 });
+	await expect(h1).toHaveCount(1);
+	await expect(h1).toHaveAccessibleName(/kva skjer\s+i\s+sunnhordland/i);
 });
 
 test('main landmark and a working skip link', async ({ page }) => {
@@ -77,17 +84,23 @@ test('the front page does not advertise features that do not exist', async ({ re
 	// this guard was never about the section, it was about the claim, so it now reads everything
 	// the page says about *us* rather than one list inside it.
 	//
-	// Sliced from the hero, which is where the event content ends. An imported event may quite
-	// legitimately be a "Kart og kompass-kurs" — DNT runs them — and that is a fact about
-	// Sunnhordland, not a promise about this software. Matching the whole document would fail the
-	// day someone in the region schedules one.
-	const heroAt = html.search(/<header[^>]*class="hero/);
-	expect(heroAt, 'the page must still introduce itself after the events').toBeGreaterThan(-1);
+	/*
+	 * Sliced from the join strip, which is where the event content ends and the only remaining
+	 * section about US begins. It used to be sliced from the hero; the hero is gone, along with the
+	 * manifest band and the pipeline, but the guard was never about a section — it is about the
+	 * claim, so it follows the copy to wherever the copy now lives.
+	 *
+	 * An imported event may quite legitimately be a "Kart og kompass-kurs" — DNT runs them — and
+	 * that is a fact about Sunnhordland, not a promise about this software. Matching the whole
+	 * document would fail the day somebody in the region schedules one.
+	 */
+	const aboutAt = html.search(/<section[^>]*class="join/);
+	expect(aboutAt, 'the page must still say how to send something in').toBeGreaterThan(-1);
 
 	// Read the words, not the markup. Matching raw HTML fails on `label--vertical`, which contains
 	// "ical" — the assertion is about what the page *says*, so strip everything that is not said.
 	const about = html
-		.slice(heroAt)
+		.slice(aboutAt)
 		.replace(/<(script|style|svg)[\s\S]*?<\/\1>/gi, '')
 		.replace(/<[^>]+>/g, ' ');
 

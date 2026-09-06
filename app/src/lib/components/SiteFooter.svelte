@@ -1,6 +1,7 @@
 <script lang="ts">
 	// Page chrome belongs to the layout, so both routes get the same footer. Previously the footer
 	// lived inside the landing page and /hendingar simply had none.
+	import { MANIFEST } from '../content/landing.ts';
 </script>
 
 <footer class="shell foot">
@@ -15,6 +16,15 @@
 			<a href="/hendingar">Alle hendingar</a> ·
 			<a href="/send-inn">Send inn</a>
 		</p>
+		<!--
+			The three promises, moved down here from a full-screen band on the front page.
+
+			They are still the things this project rests on — they are just not what somebody
+			arrives asking, and they were taking a screen to say what a line can say. Fine print is
+			not a demotion: it is where a reader looks for exactly this, on every page rather than
+			on one.
+		-->
+		<p class="label">{MANIFEST.join(' · ')}</p>
 		<p class="label">AGPL-3.0 · Tidleg utvikling</p>
 		<p class="label">Utviklingsinfrastruktur sponsa av Nordlo</p>
 	</div>

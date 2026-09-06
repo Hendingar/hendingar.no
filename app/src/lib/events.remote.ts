@@ -42,6 +42,7 @@ import {
 	shiftMonth
 } from './calendar.ts';
 import { db } from './server/db';
+import { withStartsIn } from './starts-in.ts';
 
 /**
  * The client↔server boundary, typed end to end.
@@ -91,94 +92,97 @@ export const listEvents = query(
 	eventQuerySchema,
 	async ({ from, to, category, source, municipality, limit, offset }) => {
 		const since = from ? new Date(from) : new Date();
+		// Its own instant, not `since`: a caller can ask for a window starting next month, and
+		// "starts in" is always measured from now rather than from the edge of the window.
+		const now = new Date();
 
-		return (
-			db()
-				.select({
-					id: events.id,
-					title: events.title,
-					category: events.category,
-					startsAt: events.startsAt,
-					endsAt: events.endsAt,
-					venueName: venues.name,
-					// The zone is what makes startsAt renderable as a wall clock. Always select it.
-					venueTimeZone: venues.timezone,
-					municipality: venues.municipality,
-					posterUrl: events.posterUrl,
-					posterSrcset: events.posterSrcset,
-					/*
-					 * The source, so a tile can show whose calendar an event came from. We are an index, not a
-					 * replacement — a tile that shows no origin quietly claims the event as ours. Null for human
-					 * submissions, which have no source row.
-					 */
-					sourceMarks: sourceMarksFor(events.id).as('source_marks'),
-					// Same day-grouping columns as listUpcoming, so one component renders both listings
-					// instead of /hendingar having a second, plainer list that drifts from the front page.
-					localDate: sql<string>`
+		const rows = await db()
+			.select({
+				id: events.id,
+				title: events.title,
+				category: events.category,
+				startsAt: events.startsAt,
+				endsAt: events.endsAt,
+				venueName: venues.name,
+				// The zone is what makes startsAt renderable as a wall clock. Always select it.
+				venueTimeZone: venues.timezone,
+				municipality: venues.municipality,
+				posterUrl: events.posterUrl,
+				posterSrcset: events.posterSrcset,
+				/*
+				 * The source, so a tile can show whose calendar an event came from. We are an index, not a
+				 * replacement — a tile that shows no origin quietly claims the event as ours. Null for human
+				 * submissions, which have no source row.
+				 */
+				sourceMarks: sourceMarksFor(events.id).as('source_marks'),
+				// Same day-grouping columns as listUpcoming, so one component renders both listings
+				// instead of /hendingar having a second, plainer list that drifts from the front page.
+				localDate: sql<string>`
 					to_char(
 						greatest(${events.startsAt}, now())
 							at time zone coalesce(${venues.timezone}, 'Europe/Oslo'),
 						'YYYY-MM-DD'
 					)
 				`.as('local_date'),
-					todayLocalDate: sql<string>`
+				todayLocalDate: sql<string>`
 					to_char(now() at time zone coalesce(${venues.timezone}, 'Europe/Oslo'), 'YYYY-MM-DD')
 				`.as('today_local_date')
-				})
-				.from(events)
-				.leftJoin(venues, eq(events.venueId, venues.id))
-				.leftJoin(sources, eq(events.sourceId, sources.id))
-				.where(
-					and(
-						eq(events.status, 'published'),
-						/*
-						 * Only canonical rows.
-						 *
-						 * Several sources report the same concert; `pnpm consolidate` picks one row per
-						 * event and points the others at it. Without this the listing shows the same
-						 * evening twice under two spellings.
-						 */
-						isNull(events.duplicateOfId),
-						// An event that has started but not ended is still happening, and must stay
-						// visible. Filtering on startsAt alone hid a three-hour concert for its whole
-						// duration, and a weekend festival for the entire weekend.
-						or(gte(events.startsAt, since), gte(events.endsAt, since)),
-						to ? lte(events.startsAt, new Date(to)) : undefined,
-						category ? eq(events.category, category) : undefined,
-						/*
-						 * Match the whole group, not just the row that won.
-						 *
-						 * Filtering on the canonical's own source alone would hide an event from the
-						 * venue that actually runs it whenever a newspaper's copy happened to have the
-						 * lower id — "Stord kulturhus" would stop listing its own concerts. So a
-						 * canonical matches if IT or any row pointing at it comes from that source.
-						 */
-						/*
-						 * `innsendt` is not a row in `sources`, so it cannot be found by the join.
-						 *
-						 * It selects the events that have no source at all and did not arrive by
-						 * import — which is exactly "somebody sent this in". Checked before the
-						 * general branch because that one would search `sources.slug` for a slug
-						 * that is deliberately not there and quietly return nothing.
-						 */
-						source === SUBMITTED_SLUG
-							? and(isNull(events.sourceId), ne(events.submissionMethod, 'import'))
-							: source
-								? sql`exists (
+			})
+			.from(events)
+			.leftJoin(venues, eq(events.venueId, venues.id))
+			.leftJoin(sources, eq(events.sourceId, sources.id))
+			.where(
+				and(
+					eq(events.status, 'published'),
+					/*
+					 * Only canonical rows.
+					 *
+					 * Several sources report the same concert; `pnpm consolidate` picks one row per
+					 * event and points the others at it. Without this the listing shows the same
+					 * evening twice under two spellings.
+					 */
+					isNull(events.duplicateOfId),
+					// An event that has started but not ended is still happening, and must stay
+					// visible. Filtering on startsAt alone hid a three-hour concert for its whole
+					// duration, and a weekend festival for the entire weekend.
+					or(gte(events.startsAt, since), gte(events.endsAt, since)),
+					to ? lte(events.startsAt, new Date(to)) : undefined,
+					category ? eq(events.category, category) : undefined,
+					/*
+					 * Match the whole group, not just the row that won.
+					 *
+					 * Filtering on the canonical's own source alone would hide an event from the
+					 * venue that actually runs it whenever a newspaper's copy happened to have the
+					 * lower id — "Stord kulturhus" would stop listing its own concerts. So a
+					 * canonical matches if IT or any row pointing at it comes from that source.
+					 */
+					/*
+					 * `innsendt` is not a row in `sources`, so it cannot be found by the join.
+					 *
+					 * It selects the events that have no source at all and did not arrive by
+					 * import — which is exactly "somebody sent this in". Checked before the
+					 * general branch because that one would search `sources.slug` for a slug
+					 * that is deliberately not there and quietly return nothing.
+					 */
+					source === SUBMITTED_SLUG
+						? and(isNull(events.sourceId), ne(events.submissionMethod, 'import'))
+						: source
+							? sql`exists (
 									select 1 from ${events} as m
 									join ${sources} as ms on ms.id = m.source_id
 									where (m.id = ${events.id} or m.duplicate_of_id = ${events.id})
 										and ms.slug = ${source}
 								)`
-								: undefined,
-						municipality ? eq(venues.municipality, municipality) : undefined
-					)
+							: undefined,
+					municipality ? eq(venues.municipality, municipality) : undefined
 				)
-				// Ordered by the same effective instant the grouping uses, so day groups stay contiguous.
-				.orderBy(sql`greatest(${events.startsAt}, now())`, asc(events.startsAt))
-				.limit(limit)
-				.offset(offset)
-		);
+			)
+			// Ordered by the same effective instant the grouping uses, so day groups stay contiguous.
+			.orderBy(sql`greatest(${events.startsAt}, now())`, asc(events.startsAt))
+			.limit(limit)
+			.offset(offset);
+
+		return withStartsIn(rows, now);
 	}
 );
 
@@ -319,6 +323,76 @@ export const listCategoryCounts = query(async () => {
 		.sort((a, b) => b.total - a.total || a.label.localeCompare(b.label, 'nb-NO'));
 });
 
+/**
+ * How much is on today, tomorrow, this weekend, and altogether — the counts behind the front
+ * page's four ways in.
+ *
+ * The count IS the invitation. "I dag" is a label; "I dag — 6 hendingar" is a reason to press it,
+ * and a reader who presses it lands on a page that has something on it. The same argument
+ * `listCategoryCounts` records for the filter chips, applied to the entry points a visitor meets
+ * first.
+ *
+ * Every one of the four leads to a page that already exists — `/kalender/<dato>` twice,
+ * `/neste-helg`, `/hendingar` — so this returns the DATES as well as the numbers and the caller
+ * builds real links. That is deliberate, and it is the reasoning recorded in #81: a filter has to
+ * be a URL to be shareable, and a URL that answers a different question every Monday is not a
+ * filter but a page. Four buttons swapping a list in place would have been exactly that mistake,
+ * one screen earlier.
+ *
+ * One grouped query rather than four counts. It is the same row set `siteStatus.upcomingCount`
+ * measures, with the same predicate, so the total here and the total in the coverage strip below
+ * the list cannot disagree — they are two readings of one number.
+ */
+export const waysInCounts = query(async () => {
+	const now = new Date();
+
+	/*
+	 * Grouped by the calendar day AT THE VENUE, exactly as the listing groups it — including the
+	 * `greatest(starts_at, now())` that files a still-running exhibition under today. A count that
+	 * used a different rule from the list it leads to would promise six and deliver five.
+	 */
+	const localDate = sql<string>`
+		to_char(
+			greatest(${events.startsAt}, now())
+				at time zone coalesce(${venues.timezone}, 'Europe/Oslo'),
+			'YYYY-MM-DD'
+		)
+	`;
+
+	const rows = await db()
+		.select({ localDate: localDate.as('local_date'), total: count() })
+		.from(events)
+		.leftJoin(venues, eq(events.venueId, venues.id))
+		.where(
+			and(
+				eq(events.status, 'published'),
+				isNull(events.duplicateOfId),
+				or(gte(events.startsAt, now), gte(events.endsAt, now))
+			)
+		)
+		.groupBy(localDate);
+
+	const byDate = new Map(rows.map((row) => [row.localDate, row.total]));
+	const today = localDayKey(now, DEFAULT_TIME_ZONE);
+	const tomorrow = addDays(today, 1);
+	const weekend = weekendAhead(today);
+
+	return {
+		today,
+		tomorrow,
+		todayCount: byDate.get(today) ?? 0,
+		tomorrowCount: byDate.get(tomorrow) ?? 0,
+		/*
+		 * The same days `/neste-helg` will actually show — `weekendAhead`, not `weekendDates`, so
+		 * the number counts what is left of the weekend rather than what was on it. On a Sunday
+		 * afternoon those are very different, and the larger one would be a promise the page
+		 * cannot keep.
+		 */
+		weekendCount: weekend.reduce((n, date) => n + (byDate.get(date) ?? 0), 0),
+		upcomingCount: rows.reduce((n, row) => n + row.total, 0)
+	};
+});
+
 /** The row shape callers get, derived from the query rather than hand-written. */
 export type EventSummary = Awaited<ReturnType<typeof listEvents>>[number];
 
@@ -327,6 +401,7 @@ export type EventSummary = Awaited<ReturnType<typeof listEvents>>[number];
  * at its own venue so the page can group by date.
  */
 export const listUpcoming = query(z.number().int().min(1).max(60).default(24), async (limit) => {
+	const now = new Date();
 	const rows = await db()
 		.select({
 			id: events.id,
@@ -376,7 +451,7 @@ export const listUpcoming = query(z.number().int().min(1).max(60).default(24), a
 		.orderBy(sql`greatest(${events.startsAt}, now())`, asc(events.startsAt))
 		.limit(limit);
 
-	return rows;
+	return withStartsIn(rows, now);
 });
 
 export type UpcomingEvent = Awaited<ReturnType<typeof listUpcoming>>[number];
@@ -417,52 +492,52 @@ export const listPopular = query(
 		`;
 		const score = by === 'hearts' ? hearts : views;
 
-		return (
-			db()
-				.select({
-					id: events.id,
-					title: events.title,
-					category: events.category,
-					startsAt: events.startsAt,
-					endsAt: events.endsAt,
-					venueName: venues.name,
-					venueTimeZone: venues.timezone,
-					municipality: venues.municipality,
-					posterUrl: events.posterUrl,
-					posterSrcset: events.posterSrcset,
-					sourceMarks: sourceMarksFor(events.id).as('source_marks'),
-					hearts: hearts.mapWith(Number).as('hearts'),
-					views: views.mapWith(Number).as('views'),
-					localDate: sql<string>`
+		const rows = await db()
+			.select({
+				id: events.id,
+				title: events.title,
+				category: events.category,
+				startsAt: events.startsAt,
+				endsAt: events.endsAt,
+				venueName: venues.name,
+				venueTimeZone: venues.timezone,
+				municipality: venues.municipality,
+				posterUrl: events.posterUrl,
+				posterSrcset: events.posterSrcset,
+				sourceMarks: sourceMarksFor(events.id).as('source_marks'),
+				hearts: hearts.mapWith(Number).as('hearts'),
+				views: views.mapWith(Number).as('views'),
+				localDate: sql<string>`
 					to_char(
 						greatest(${events.startsAt}, now())
 							at time zone coalesce(${venues.timezone}, 'Europe/Oslo'),
 						'YYYY-MM-DD'
 					)
 				`.as('local_date'),
-					todayLocalDate: sql<string>`
+				todayLocalDate: sql<string>`
 					to_char(now() at time zone coalesce(${venues.timezone}, 'Europe/Oslo'), 'YYYY-MM-DD')
 				`.as('today_local_date')
-				})
-				.from(events)
-				.leftJoin(venues, eq(events.venueId, venues.id))
-				.where(
-					and(
-						eq(events.status, 'published'),
-						isNull(events.duplicateOfId),
-						or(gte(events.startsAt, now), gte(events.endsAt, now))
-					)
+			})
+			.from(events)
+			.leftJoin(venues, eq(events.venueId, venues.id))
+			.where(
+				and(
+					eq(events.status, 'published'),
+					isNull(events.duplicateOfId),
+					or(gte(events.startsAt, now), gte(events.endsAt, now))
 				)
-				/*
-				 * Soonest first among equals.
-				 *
-				 * Most events score zero, so without a second key the tail of the page would be in
-				 * whatever order Postgres happened to return — different on every reload, which reads
-				 * as a broken page rather than as a tie.
-				 */
-				.orderBy(desc(score), asc(events.startsAt))
-				.limit(limit)
-		);
+			)
+			/*
+			 * Soonest first among equals.
+			 *
+			 * Most events score zero, so without a second key the tail of the page would be in
+			 * whatever order Postgres happened to return — different on every reload, which reads
+			 * as a broken page rather than as a tie.
+			 */
+			.orderBy(desc(score), asc(events.startsAt))
+			.limit(limit);
+
+		return withStartsIn(rows, now);
 	}
 );
 
@@ -623,11 +698,15 @@ export const listEventsOnDate = query(calendarDateSchema, async (date) => {
 		)
 		.orderBy(asc(events.startsAt));
 
-	const todayLocalDate = localDayKey(new Date(), DEFAULT_TIME_ZONE);
+	const now = new Date();
+	const todayLocalDate = localDayKey(now, DEFAULT_TIME_ZONE);
 
-	return rows
-		.filter((row) => localDayKey(row.startsAt, row.venueTimeZone) === date)
-		.map((row) => ({ ...row, localDate: date, todayLocalDate }));
+	return withStartsIn(
+		rows
+			.filter((row) => localDayKey(row.startsAt, row.venueTimeZone) === date)
+			.map((row) => ({ ...row, localDate: date, todayLocalDate })),
+		now
+	);
 });
 
 /**
@@ -694,13 +773,16 @@ export const weekendEvents = query(async () => {
 	 * at its own venue and dropping what falls outside is the same guard `listEventsOnDate` uses,
 	 * and it is why the grouping below can be trusted.
 	 */
-	return rows
-		.map((row) => ({
-			...row,
-			localDate: localDayKey(row.startsAt, row.venueTimeZone),
-			todayLocalDate
-		}))
-		.filter((row) => dates.includes(row.localDate));
+	return withStartsIn(
+		rows
+			.map((row) => ({
+				...row,
+				localDate: localDayKey(row.startsAt, row.venueTimeZone),
+				todayLocalDate
+			}))
+			.filter((row) => dates.includes(row.localDate)),
+		now
+	);
 });
 
 export type WeekendEvent = Awaited<ReturnType<typeof weekendEvents>>[number];

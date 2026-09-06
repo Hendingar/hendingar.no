@@ -17,7 +17,8 @@
 	let {
 		events,
 		hearts = {},
-		views = null
+		views = null,
+		featured = false
 	}: {
 		events: UpcomingEvent[];
 		/** Heart counts by event id, fetched in bulk by the page rather than per tile. */
@@ -30,10 +31,19 @@
 		 * head, and push every quiet event down for no reason.
 		 */
 		views?: Record<number, number> | null;
+		/**
+		 * Render this day's tiles as the leading ones: wider cells, a larger title cap, and the
+		 * calendar link.
+		 *
+		 * Only the front page asks for it, and only for the first day it shows. It is a property of
+		 * WHERE the grid sits on the page, not of the events in it — the same rows are ordinary
+		 * tiles on /hendingar an hour later.
+		 */
+		featured?: boolean;
 	} = $props();
 </script>
 
-<ul class="grid">
+<ul class="grid" class:grid--featured={featured}>
 	<!--
 		Repeats of the same event share a card. Public swimming runs four times a day; four
 		identical posters spend a screenful saying one thing. Each time is still its own event
@@ -46,6 +56,7 @@
 				occurrences={stack.occurrences}
 				hearts={hearts[stack.lead.id] ?? 0}
 				views={views ? (views[stack.lead.id] ?? 0) : null}
+				{featured}
 			/>
 		</li>
 	{/each}
@@ -79,6 +90,25 @@
 	@media (width >= 80rem) {
 		.grid {
 			grid-template-columns: repeat(4, 1fr);
+		}
+	}
+
+	/*
+	 * The leading day gets one column fewer at every step, so its cards are wider.
+	 *
+	 * A size difference, not a different layout: same tiles, same gaps, same breakpoints, so the
+	 * page still reads as one list with its first day nearer the front rather than as two
+	 * components stacked. Below 34rem it is left alone — a single column cannot be made wider, and
+	 * that is exactly the width where density matters most.
+	 */
+	@media (width >= 60rem) {
+		.grid--featured {
+			grid-template-columns: repeat(2, 1fr);
+		}
+	}
+	@media (width >= 80rem) {
+		.grid--featured {
+			grid-template-columns: repeat(3, 1fr);
 		}
 	}
 </style>

@@ -2,16 +2,49 @@ import { expect, test } from '@playwright/test';
 
 /** The front-page grid and the status board — both must be real without JavaScript. */
 
-test('the listing is server-rendered above the brand hero', async ({ request }) => {
+test('the listing is server-rendered above everything the page says about us', async ({
+	request
+}) => {
 	const html = await (await request.get('/')).text();
 	expect(html).not.toContain('Lastar…');
 	expect(html.match(/<article class="tile/g)?.length).toBeGreaterThan(0);
-	// It comes before the hero in document order — that is the whole point of the change.
+	/*
+	 * Events before the pitch, in document order — that is the whole point.
+	 *
+	 * The anchor used to be the hero. The hero is gone, and so are the manifest band and the
+	 * pipeline; the single remaining section about us is the send-in strip, so the guard now
+	 * measures against that. What it asserts has not changed: a visitor scrolls into events, not
+	 * past us.
+	 */
 	const grid = html.indexOf('h-up');
-	const hero = html.indexOf('hero__word');
+	const about = html.search(/<section[^>]*class="join/);
 	expect(grid).toBeGreaterThan(-1);
-	expect(hero).toBeGreaterThan(-1);
-	expect(grid).toBeLessThan(hero);
+	expect(about).toBeGreaterThan(-1);
+	expect(grid).toBeLessThan(about);
+});
+
+test('the four ways in are real links, server-rendered, with counts', async ({ request }) => {
+	/*
+	 * The front page's primary control. Requested without a browser, because this is the row meant
+	 * to move a visitor onward: if it needed JavaScript, a crawler would find no path from the
+	 * front page to the day, weekend and listing pages, and a no-JS reader would find no way in.
+	 *
+	 * Anchors, not buttons — see #81. A filter has to be a URL to be shareable.
+	 */
+	const html = await (await request.get('/')).text();
+	// `class="ways[^"]*"`, not `class="ways"` — Svelte appends its scoping hash to the attribute,
+	// so an exact match finds nothing and the assertion below would never have been reached.
+	const nav = html.match(/<nav class="ways[^"]*"[\s\S]*?<\/nav>/)?.[0];
+	expect(nav, 'the ways-in row must be server-rendered').toBeTruthy();
+
+	expect(nav).toMatch(/href="\/kalender\/\d{4}-\d{2}-\d{2}"/);
+	expect(nav).toMatch(/href="\/neste-helg"/);
+	expect(nav).toMatch(/href="\/hendingar"/);
+	// Four destinations, and no <button> pretending to be one of them.
+	expect(nav!.match(/<a /g)?.length).toBe(4);
+	expect(nav).not.toContain('<button');
+	// The count is what makes a way in worth pressing, so it has to be in the HTML too.
+	expect(nav).toMatch(/\d+\s*hending(ar)?/);
 });
 
 test('events are grouped under day headings, today first', async ({ page }) => {

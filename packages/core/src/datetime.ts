@@ -520,3 +520,35 @@ export function formatWeekRange(weekKey: string): string {
 	if (fm !== lm) return `${fd}. ${fromMonth} – ${ld}. ${toMonth} ${ly}`;
 	return `${fd}.–${ld}. ${toMonth} ${ly}`;
 }
+
+/**
+ * How near an event is, in words — "Pågår no", "Om 40 min", "Om 3 t" — or null when it is far off.
+ *
+ * A list ordered by time already says *when* everything is; what it cannot say is which of those
+ * is nearly here. That is the one fact that turns a reader into an attender, and it is exactly the
+ * fact a date and a clock leave out.
+ *
+ * Takes minutes rather than a Date on purpose. The number is computed once in SQL, against the
+ * database's clock, and travels on the row — so the server and the client render the same words
+ * from the same input, and a hydration pass cannot disagree with the HTML a crawler was served.
+ *
+ * Zero or below means it has started and, since every listing filters on `endsAt`, is still on.
+ * A multi-day exhibition that opened last week is therefore "Pågår no", which is the useful thing
+ * to say about it.
+ *
+ * Beyond SIX HOURS this returns null and the caller shows nothing. "Om 9 t" is not urgency, it is
+ * a clock read out loud — and a badge on every row is a badge on none.
+ */
+export const STARTS_IN_HORIZON_MINUTES = 360;
+
+export function formatStartsIn(minutesUntilStart: number | null): string | null {
+	// Null is the caller saying "this one is over" — see withStartsIn in the app.
+	if (minutesUntilStart === null || !Number.isFinite(minutesUntilStart)) return null;
+	if (minutesUntilStart <= 0) return 'Pågår no';
+	if (minutesUntilStart >= STARTS_IN_HORIZON_MINUTES) return null;
+	// Floor, not round: an event 119 minutes away is "om 1 t". Rounding it up to two would put the
+	// reader's own deadline later than it really is, which is the one direction that costs them
+	// the event.
+	if (minutesUntilStart < 60) return `Om ${minutesUntilStart} min`;
+	return `Om ${Math.floor(minutesUntilStart / 60)} t`;
+}

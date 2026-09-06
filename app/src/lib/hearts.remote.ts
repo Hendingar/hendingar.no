@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { and, count, eq, inArray, sql } from 'drizzle-orm';
 import { eventHearts, events, sources, venues } from '@hendingar/core/schema';
 import { db } from './server/db';
+import { withStartsIn } from './starts-in.ts';
 
 /**
  * Hearts: the count, and the toggle.
@@ -103,21 +104,21 @@ export const listHearted = query(
 	z.array(z.number().int().positive()).max(200),
 	async (eventIds) => {
 		if (eventIds.length === 0) return [];
-		return (
-			db()
-				.select({
-					id: events.id,
-					title: events.title,
-					category: events.category,
-					startsAt: events.startsAt,
-					endsAt: events.endsAt,
-					venueName: venues.name,
-					// The zone is what makes startsAt renderable as a wall clock. Always select it.
-					venueTimeZone: venues.timezone,
-					municipality: venues.municipality,
-					posterUrl: events.posterUrl,
-					posterSrcset: events.posterSrcset,
-					sourceMarks: sql<{ name: string; iconUrl: string | null }[]>`
+		const now = new Date();
+		const rows = await db()
+			.select({
+				id: events.id,
+				title: events.title,
+				category: events.category,
+				startsAt: events.startsAt,
+				endsAt: events.endsAt,
+				venueName: venues.name,
+				// The zone is what makes startsAt renderable as a wall clock. Always select it.
+				venueTimeZone: venues.timezone,
+				municipality: venues.municipality,
+				posterUrl: events.posterUrl,
+				posterSrcset: events.posterSrcset,
+				sourceMarks: sql<{ name: string; iconUrl: string | null }[]>`
 					coalesce((
 						select json_agg(m order by m.name)
 						from (
@@ -128,33 +129,39 @@ export const listHearted = query(
 						) m
 					), '[]'::json)
 				`.as('source_marks'),
-					localDate: sql<string>`
+				localDate: sql<string>`
 					to_char(
 						greatest(${events.startsAt}, now())
 							at time zone coalesce(${venues.timezone}, 'Europe/Oslo'),
 						'YYYY-MM-DD'
 					)
 				`.as('local_date'),
-					todayLocalDate: sql<string>`
+				todayLocalDate: sql<string>`
 					to_char(now() at time zone coalesce(${venues.timezone}, 'Europe/Oslo'), 'YYYY-MM-DD')
 				`.as('today_local_date')
-				})
-				.from(events)
-				.leftJoin(venues, eq(events.venueId, venues.id))
-				/*
-				 * Two filters this listing deliberately does NOT have.
-				 *
-				 * No date filter: every other listing hides what has already happened, but this is the
-				 * reader's own list, and an event vanishing from it the morning after would look like
-				 * data loss rather than housekeeping. The page groups them instead.
-				 *
-				 * No `duplicateOfId` filter either: they hearted this row, from whichever source they
-				 * were reading. Silently swapping it for the canonical one, or dropping it because
-				 * consolidation later picked a different winner, would take away the thing they saved.
-				 */
-				.where(and(inArray(events.id, eventIds), eq(events.status, 'published')))
-				.orderBy(events.startsAt)
-		);
+			})
+			.from(events)
+			.leftJoin(venues, eq(events.venueId, venues.id))
+			/*
+			 * Two filters this listing deliberately does NOT have.
+			 *
+			 * No date filter: every other listing hides what has already happened, but this is the
+			 * reader's own list, and an event vanishing from it the morning after would look like
+			 * data loss rather than housekeeping. The page groups them instead.
+			 *
+			 * No `duplicateOfId` filter either: they hearted this row, from whichever source they
+			 * were reading. Silently swapping it for the canonical one, or dropping it because
+			 * consolidation later picked a different winner, would take away the thing they saved.
+			 */
+			.where(and(inArray(events.id, eventIds), eq(events.status, 'published')))
+			.orderBy(events.startsAt);
+
+		/*
+		 * This listing keeps events that have already happened, so many rows here are far in the
+		 * past. `formatStartsIn` answers null for anything beyond the horizon and "Pågår no" only
+		 * while an event is genuinely still running, so a saved concert from March stays silent.
+		 */
+		return withStartsIn(rows, now);
 	}
 );
 
