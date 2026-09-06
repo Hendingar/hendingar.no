@@ -1,6 +1,11 @@
 import { VERIFIER_URL } from '$app/env/private';
 import type { CategorySlug } from '@hendingar/core/taxonomy';
-import { extractedEventSchema, type ExtractedEvent } from '@hendingar/core/validation';
+import {
+	cropSuggestionSchema,
+	extractedEventSchema,
+	type ExtractedEvent,
+	type ThumbnailCrop
+} from '@hendingar/core/validation';
 import type { VerificationCheck, VerificationVerdict } from '@hendingar/core/verification';
 
 /**
@@ -36,6 +41,8 @@ export function verifierEnabled(): boolean {
 const EXTRACT_TIMEOUT_MS = 45_000;
 /** Verification happens on submit; the person is waiting on a confirmation. */
 const VERIFY_TIMEOUT_MS = 30_000;
+/** A crop is four numbers about one image, asked after the verdict. Nobody is watching it. */
+const CROP_TIMEOUT_MS = 20_000;
 
 async function post<T>(path: string, body: unknown, timeoutMs: number): Promise<T> {
 	if (!VERIFIER_URL) throw new Error('verifier is not configured');
@@ -68,6 +75,35 @@ export async function extractPoster(
 		EXTRACT_TIMEOUT_MS
 	);
 	return toExtractedEvent(raw);
+}
+
+/**
+ * Where to cut a thumbnail out of an image nobody read.
+ *
+ * Never throws, and never blocks anything. It is asked once, after an event has been approved, for
+ * a picture that came in with a form somebody typed themselves — the photo path already has a box
+ * from the read and never calls this. A null answer, a timeout, an unset service: the browser keeps
+ * the whole image, which is what the person sent us and a better card than a generated pattern.
+ *
+ * Short budget for the same reason. Nobody is waiting on this, but nothing is waiting for it
+ * either, and a request that hangs for 45 seconds after a receipt has been shown is just a socket.
+ */
+export async function suggestCrop(
+	imageBase64: string,
+	mediaType: 'image/jpeg' | 'image/png' | 'image/webp'
+): Promise<ThumbnailCrop | null> {
+	if (!VERIFIER_URL) return null;
+	try {
+		const raw = await post<Record<string, unknown>>(
+			'/crop',
+			{ image_base64: imageBase64, media_type: mediaType },
+			CROP_TIMEOUT_MS
+		);
+		return cropSuggestionSchema.parse(raw).thumbnail;
+	} catch (error) {
+		console.warn(`[verifier] crop unavailable: ${error instanceof Error ? error.message : error}`);
+		return null;
+	}
 }
 
 /** The two extraction endpoints answer with the same shape; only the input differs. */

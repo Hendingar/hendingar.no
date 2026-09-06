@@ -1,15 +1,62 @@
 /**
- * Cropping a poster to a card thumbnail, in the browser.
+ * The image somebody sends in, on its way to becoming a card thumbnail — all of it in the browser.
  *
- * The crop box comes from the model that read the poster — it has already looked at the image and
- * knows where the picture is and where the small print is. Applying it here rather than on the
- * server means no image library in the app, no image processing on a 0.25 vCPU container, and no
- * copy of the photograph on our side for an event that turns out not to be published.
+ * Two steps live here. `downscaleForUpload` shrinks and re-encodes what came off the phone;
+ * `cropToThumbnail` cuts the part worth keeping once the event has been approved.
  *
- * Best effort throughout. A missing, malformed or absurd box means no crop, never a broken image.
+ * The crop box comes from the model that looked at the image — it knows where the picture is and
+ * where the small print is. Applying it here rather than on the server means no image library in
+ * the app, no image processing on a 0.25 vCPU container, and no copy of the photograph on our side
+ * for an event that turns out not to be published.
+ *
+ * Best effort throughout. A missing, malformed or absurd box means no crop, never a broken image —
+ * and no box at all still produces a thumbnail, because the picture somebody chose to send is a
+ * better card than a generated tile even uncropped.
  */
 
 export type Crop = { x: number; y: number; width: number; height: number };
+
+/** Longest edge of the image we send. A poster is legible well below phone-camera resolution. */
+export const CAPTURE_MAX_EDGE = 1600;
+
+export const CAPTURE_QUALITY = 0.82;
+
+/** What the browser holds after `downscaleForUpload`: the bytes to send, and something to show. */
+export type CapturedImage = {
+	/** JPEG bytes, base64, no data-URL prefix — what the verifier and the crop call want. */
+	base64: string;
+	mediaType: 'image/jpeg';
+	/** The same bytes as a `data:` URL, for an `<img src>` and for `cropToThumbnail`. */
+	dataUrl: string;
+};
+
+/**
+ * Downscale in the browser before anything is uploaded.
+ *
+ * A modern phone photo is 4–12 MB. Sending that raw would be slow on the rural mobile connections
+ * this is for, and would cost image tokens for detail no one needs to read a poster. Re-encoding
+ * also strips EXIF — including the GPS coordinates of wherever the person was standing, which we
+ * neither need nor want.
+ *
+ * Here rather than in the capture component because two places now take an image: the photo
+ * shortcut, which sends it to be read, and the form, where somebody attaches a picture to an event
+ * they are typing in themselves. Both must strip the metadata, and a second copy of that is how
+ * one of them ends up not doing it.
+ */
+export async function downscaleForUpload(file: File): Promise<CapturedImage> {
+	const bitmap = await createImageBitmap(file);
+	const scale = Math.min(1, CAPTURE_MAX_EDGE / Math.max(bitmap.width, bitmap.height));
+	const canvas = document.createElement('canvas');
+	canvas.width = Math.round(bitmap.width * scale);
+	canvas.height = Math.round(bitmap.height * scale);
+	const context = canvas.getContext('2d');
+	if (!context) throw new Error('kunne ikkje behandle biletet');
+	context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+	bitmap.close();
+
+	const dataUrl = canvas.toDataURL('image/jpeg', CAPTURE_QUALITY);
+	return { base64: dataUrl.split(',')[1] ?? '', mediaType: 'image/jpeg', dataUrl };
+}
 
 /** Wider than tall, because an event card is. Matches the aspect the tiles reserve. */
 export const THUMB_ASPECT = 16 / 10;

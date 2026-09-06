@@ -23,7 +23,13 @@ import {
 	type Weekday
 } from '@hendingar/core/recurrence';
 import { db } from './server/db';
-import { extractPage, extractPoster, verifierEnabled, verifyEvent } from './server/verifier';
+import {
+	extractPage,
+	extractPoster,
+	suggestCrop,
+	verifierEnabled,
+	verifyEvent
+} from './server/verifier';
 import { fetchPublicPage, type SafeFetchFailure } from './server/safe-fetch';
 import { extractEventFromPage } from './server/page-event';
 
@@ -535,6 +541,27 @@ export const extractFromPhoto = command(photoSchema, async ({ imageBase64, media
 		};
 	}
 });
+
+/**
+ * Where to cut the thumbnail out of an image that was never read.
+ *
+ * Asked by the browser after an event has been approved, and only for a picture that arrived
+ * without a box: one attached to a form somebody filled in themselves, or one whose read failed.
+ * The photo path already has a box — reading a poster returns it beside the fields — and asking
+ * again would be a second model call for something we have.
+ *
+ * `null` is a perfectly good answer and the common one to plan for. The browser then takes a
+ * centred landscape band of the whole image, so a submitted event gets the sender's own picture on
+ * its card either way; the box only decides how well it is framed.
+ */
+export const cropSuggestion = command(
+	photoSchema.omit({ today: true }),
+	async ({ imageBase64, mediaType }) => {
+		// Never throws — see the note on `suggestCrop`. A thumbnail is not worth an error path in a
+		// flow whose event is already published.
+		return await suggestCrop(imageBase64, mediaType);
+	}
+);
 
 /**
  * Read an event out of a page somebody pasted a link to.

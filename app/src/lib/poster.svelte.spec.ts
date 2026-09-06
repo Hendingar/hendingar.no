@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { THUMB_ASPECT, cropToThumbnail } from './poster.ts';
+import { CAPTURE_MAX_EDGE, THUMB_ASPECT, cropToThumbnail, downscaleForUpload } from './poster.ts';
 
 /**
  * The canvas path, in a real browser.
@@ -84,5 +84,47 @@ describe('cropToThumbnail', () => {
 
 	it('returns null rather than throwing on something that is not an image', async () => {
 		expect(await cropToThumbnail('data:image/png;base64,bm90YW5pbWFnZQ==', null)).toBeNull();
+	});
+});
+
+describe('downscaleForUpload', () => {
+	/** A PNG far larger than anything a card needs, as a File the way an <input> hands one over. */
+	async function hugePng(width: number, height: number): Promise<File> {
+		const canvas = document.createElement('canvas');
+		canvas.width = width;
+		canvas.height = height;
+		const ctx = canvas.getContext('2d')!;
+		ctx.fillStyle = '#f7a98a';
+		ctx.fillRect(0, 0, width, height);
+		const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/png'));
+		return new File([blob!], 'plakat.png', { type: 'image/png' });
+	}
+
+	it('caps the long edge and keeps the proportions', async () => {
+		const image = await downscaleForUpload(await hugePng(4000, 3000));
+		const bitmap = await createImageBitmap(await (await fetch(image.dataUrl)).blob());
+		expect(Math.max(bitmap.width, bitmap.height)).toBe(CAPTURE_MAX_EDGE);
+		expect(bitmap.width / bitmap.height).toBeCloseTo(4 / 3, 2);
+	});
+
+	it('re-encodes as JPEG whatever came in', async () => {
+		/*
+		 * The re-encode is what strips the EXIF — including where the photograph was taken, which
+		 * we neither need nor want. A path that passed the original bytes through would keep it,
+		 * and nothing about the resulting upload would look wrong.
+		 */
+		const image = await downscaleForUpload(await hugePng(800, 600));
+		expect(image.mediaType).toBe('image/jpeg');
+		expect(image.dataUrl.startsWith('data:image/jpeg;base64,')).toBe(true);
+		// The base64 the verifier gets is the same bytes, without the prefix.
+		expect(image.base64.length).toBeGreaterThan(100);
+		expect(image.dataUrl.endsWith(image.base64)).toBe(true);
+	});
+
+	it('leaves a small image at its own size rather than blowing it up', async () => {
+		const image = await downscaleForUpload(await hugePng(300, 200));
+		const bitmap = await createImageBitmap(await (await fetch(image.dataUrl)).blob());
+		expect(bitmap.width).toBe(300);
+		expect(bitmap.height).toBe(200);
 	});
 });

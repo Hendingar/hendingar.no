@@ -226,6 +226,23 @@ export const extractedRecurrenceSchema = z.object({
 
 export type ExtractedRecurrence = z.infer<typeof extractedRecurrenceSchema>;
 
+/**
+ * A rectangle in an image, in fractions of it, with x/y at the top left.
+ *
+ * Named rather than written inline because two answers carry one now: a poster read returns it
+ * beside the fields it found, and the crop endpoint returns it on its own for an image nobody read.
+ * Fractions, not pixels — the browser downscales before sending, so the model never sees the size
+ * the box will be applied at.
+ */
+export const thumbnailCropSchema = z.object({
+	x: z.number(),
+	y: z.number(),
+	width: z.number(),
+	height: z.number()
+});
+
+export type ThumbnailCrop = z.infer<typeof thumbnailCropSchema>;
+
 export const extractedEventSchema = z.object({
 	title: z.string().nullable(),
 	description: z.string().nullable(),
@@ -271,18 +288,19 @@ export const extractedEventSchema = z.object({
 	 * checks the box is sane before applying it, because a bad crop is worse than none. See
 	 * `app/src/lib/poster.ts`.
 	 */
-	thumbnail: z
-		.object({
-			x: z.number(),
-			y: z.number(),
-			width: z.number(),
-			height: z.number()
-		})
-		.nullable()
-		.optional()
+	thumbnail: thumbnailCropSchema.nullable().optional()
 });
 
 export type ExtractedEvent = z.infer<typeof extractedEventSchema>;
+
+/** What the crop endpoint answers with: a box, or an admission that it could not tell. */
+export const cropSuggestionSchema = z.object({
+	thumbnail: thumbnailCropSchema.nullable().default(null),
+	/** One sentence for the log, in Nynorsk. Never shown to anybody. */
+	note: z.string().default('')
+});
+
+export type CropSuggestion = z.infer<typeof cropSuggestionSchema>;
 
 /** The verification pipeline's per-check output. */
 export const verificationResultSchema = z.object({

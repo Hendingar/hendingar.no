@@ -115,15 +115,19 @@
 	/*
 	 * The captions differ because what happens to the image differs.
 	 *
-	 * Only an approved event keeps one, and only as a cropped thumbnail. For every other outcome
-	 * the picture never left the browser a second time — so the caption says that, rather than
-	 * leaving somebody to wonder what we did with their photograph.
+	 * Only an approved event keeps one. For every other outcome the picture never left the browser
+	 * a second time — so the caption says that, rather than leaving somebody to wonder what we did
+	 * with their photograph.
+	 *
+	 * "Biletet du sende inn", not "biletet vi las": an image is no longer necessarily one the model
+	 * read. It can be one attached to a form somebody typed themselves, or one whose read failed,
+	 * and telling either of those people we read it would be a small lie in the receipt.
 	 */
 	const posterCaption: Record<Outcome, string> = {
-		approved: 'Dette er biletet hendinga blei lesen frå. Eit utsnitt av det blir miniatyrbilete.',
-		duplicate: 'Dette er biletet vi las. Det blei ikkje lagra.',
-		shady: 'Dette er biletet vi las. Det blei ikkje lagra.',
-		declined: 'Dette er biletet vi las. Det blei ikkje lagra.'
+		approved: 'Dette er biletet du sende inn. Det blir miniatyrbilete på kortet.',
+		duplicate: 'Dette er biletet du sende inn. Det blei ikkje lagra.',
+		shady: 'Dette er biletet du sende inn. Det blei ikkje lagra.',
+		declined: 'Dette er biletet du sende inn. Det blei ikkje lagra.'
 	};
 </script>
 

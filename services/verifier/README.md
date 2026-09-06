@@ -28,6 +28,12 @@ and anything uncertain is reported to the person who sent it in so they can corr
 | `GET`  | `/health`  | Reachability. Deliberately does not call the model    |
 | `POST` | `/extract` | Photographed poster → structured draft event          |
 | `POST` | `/verify`  | Submitted event → per-check verdicts + recommendation |
+| `POST` | `/crop`    | Image → where to cut a card thumbnail, or nothing     |
+
+`/crop` is the small one, and it is small on purpose: an image that reached us with a form somebody
+typed in themselves has never been looked at, so there is no crop box beside its fields the way
+there is for a read poster. It is asked once, after the event is approved, and answering "I cannot
+tell" is a valid outcome — the browser then keeps the whole picture.
 
 ## The mix of rules and judgement
 

@@ -218,6 +218,18 @@ body {
 	border-color: var(--navy-900);
 }
 
+/*
+ * A secondary action inside a form or a panel.
+ *
+ * Same primitive, less room: at full size a button reads as the thing to press, and "Legg ved eit
+ * bilete" beside a fourteen-field form is not that. A hairline border for the same reason.
+ */
+.btn--sm {
+	padding: 0.65em 1em;
+	letter-spacing: 0.16em;
+	border-width: var(--rule);
+}
+
 /* navy-900 on peach-hi = 9.6:1 */
 .btn:hover {
 	background: var(--peach-hi);
