@@ -46,6 +46,7 @@ test('every indexable page declares one canonical URL', async ({ request, baseUR
 	const paths = [
 		'/',
 		'/hendingar',
+		'/denne-helga',
 		'/neste-helg',
 		'/hendingar?kategori=musikk',
 		'/kalender',
@@ -107,7 +108,15 @@ function meta(html: string, key: string): string | undefined {
 }
 
 test('every indexable page carries a full share card', async ({ request }) => {
-	for (const path of ['/', '/hendingar', '/neste-helg', '/kalender', '/datasamling', '/send-inn']) {
+	for (const path of [
+		'/',
+		'/hendingar',
+		'/denne-helga',
+		'/neste-helg',
+		'/kalender',
+		'/datasamling',
+		'/send-inn'
+	]) {
 		const html = await (await request.get(path)).text();
 
 		for (const key of OG_REQUIRED) {

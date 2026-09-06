@@ -17,7 +17,8 @@ import {
 	calendarDateSchema,
 	calendarSpanSchema,
 	calendarWeekSchema,
-	eventQuerySchema
+	eventQuerySchema,
+	weekendSchema
 } from '@hendingar/core/validation';
 import { SUBMITTED_SLUG } from '@hendingar/core/directory';
 import { categoryLabel } from '@hendingar/core/taxonomy';
@@ -28,6 +29,7 @@ import {
 	isoWeekKey,
 	isoWeekStart,
 	shiftWeek,
+	nextWeekendDates,
 	weekendAhead
 } from '@hendingar/core/datetime';
 // The rail covers exactly as far ahead as a repeating event is worked out. Imported rather than
@@ -376,6 +378,7 @@ export const waysInCounts = query(async () => {
 	const today = localDayKey(now, DEFAULT_TIME_ZONE);
 	const tomorrow = addDays(today, 1);
 	const weekend = weekendAhead(today);
+	const nextWeekend = nextWeekendDates(today);
 
 	return {
 		today,
@@ -383,12 +386,21 @@ export const waysInCounts = query(async () => {
 		todayCount: byDate.get(today) ?? 0,
 		tomorrowCount: byDate.get(tomorrow) ?? 0,
 		/*
-		 * The same days `/neste-helg` will actually show — `weekendAhead`, not `weekendDates`, so
-		 * the number counts what is left of the weekend rather than what was on it. On a Sunday
+		 * The same days `/denne-helga` will actually show — `weekendAhead`, not `weekendDates`, so
+		 * the number counts what is LEFT of the weekend rather than what was on it. On a Sunday
 		 * afternoon those are very different, and the larger one would be a promise the page
 		 * cannot keep.
 		 */
 		weekendCount: weekend.reduce((n, date) => n + (byDate.get(date) ?? 0), 0),
+		/*
+		 * And the weekend after that, which `/neste-helg` shows in full — a week out, none of its
+		 * three days has gone, so there is nothing to drop.
+		 *
+		 * Counted from the same grouped rows as everything else here, which is what stops the two
+		 * weekend tabs from ever claiming the same event: `weekendAhead` and `nextWeekendDates`
+		 * cannot overlap, and a unit test walks a year asserting exactly that.
+		 */
+		nextWeekendCount: nextWeekend.reduce((n, date) => n + (byDate.get(date) ?? 0), 0),
 		upcomingCount: rows.reduce((n, row) => n + row.total, 0)
 	};
 });
@@ -721,12 +733,24 @@ export const listEventsOnDate = query(calendarDateSchema, async (date) => {
  * specific dates should say what is on those dates. `/hendingar` is the page that answers "what is
  * still to come".
  *
- * Takes no argument. Which weekend it is is a fact about today rather than about the request, and
- * a `?helg=` parameter would be a second way to address the same day pages that already exist.
+ * Two weekends, one query. `denne` is the weekend you are standing in or walking into; `neste` is
+ * the one after it. Everything except which three dates the window covers is identical, and a
+ * second copy of a sixty-line select is how two pages drift apart — the reasoning `listPopular`
+ * already records for its two orderings.
+ *
+ * A named weekend, NOT a date. `?helg=2026-09-18` would be a second way to address day pages that
+ * already exist, which is the argument this query was written with; `denne` and `neste` are facts
+ * about today, so each still answers a different question every Monday — and each still lives at
+ * its own URL, which is what makes it shareable.
  */
-export const weekendEvents = query(async () => {
+export const weekendEvents = query(weekendSchema, async (which) => {
 	const now = new Date();
-	const dates = weekendAhead(localDayKey(now, DEFAULT_TIME_ZONE));
+	const today = localDayKey(now, DEFAULT_TIME_ZONE);
+	/*
+	 * "Denne helga" drops the days that have gone; "neste helg" is a week out, so all three of its
+	 * days are always still ahead and there is nothing to filter.
+	 */
+	const dates = which === 'neste' ? nextWeekendDates(today) : weekendAhead(today);
 	const first = dates[0] ?? '';
 	const last = dates[dates.length - 1] ?? '';
 	const { from, to } = instantWindowForDays(first, last);

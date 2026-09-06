@@ -23,7 +23,7 @@ test('the listing is server-rendered above everything the page says about us', a
 	expect(grid).toBeLessThan(about);
 });
 
-test('the four ways in are real links, server-rendered, with counts', async ({ request }) => {
+test('the five ways in are real links, server-rendered, with counts', async ({ request }) => {
 	/*
 	 * The front page's primary control. Requested without a browser, because this is the row meant
 	 * to move a visitor onward: if it needed JavaScript, a crawler would find no path from the
@@ -38,10 +38,11 @@ test('the four ways in are real links, server-rendered, with counts', async ({ r
 	expect(nav, 'the ways-in row must be server-rendered').toBeTruthy();
 
 	expect(nav).toMatch(/href="\/kalender\/\d{4}-\d{2}-\d{2}"/);
+	expect(nav).toMatch(/href="\/denne-helga"/);
 	expect(nav).toMatch(/href="\/neste-helg"/);
 	expect(nav).toMatch(/href="\/hendingar"/);
-	// Four destinations, and no <button> pretending to be one of them.
-	expect(nav!.match(/<a /g)?.length).toBe(4);
+	// Five destinations — two of them the two weekends — and no <button> pretending to be one.
+	expect(nav!.match(/<a /g)?.length).toBe(5);
 	expect(nav).not.toContain('<button');
 	// The count is what makes a way in worth pressing, so it has to be in the HTML too.
 	expect(nav).toMatch(/\d+\s*hending(ar)?/);

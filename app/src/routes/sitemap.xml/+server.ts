@@ -65,8 +65,11 @@ export const GET: RequestHandler = async ({ url }) => {
 	const paths = [
 		'/',
 		'/hendingar',
-		// Its content changes every week, which is a reason to list it rather than not: a crawler
-		// that returns finds a different page, which is exactly what a listing should look like.
+		// Their content changes every week, which is a reason to list them rather than not: a
+		// crawler that returns finds a different page, which is exactly what a listing should look
+		// like. Both weekends, because they are two pages answering two questions — what is on now
+		// and what is coming — and neither ever holds the other's events.
+		'/denne-helga',
 		'/neste-helg',
 		'/kalender',
 		'/datasamling',
