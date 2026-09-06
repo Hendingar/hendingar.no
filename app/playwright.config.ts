@@ -29,18 +29,22 @@ export default defineConfig({
 	/*
 	 * A bigger budget per assertion on CI, and deliberately NOT retries.
 	 *
-	 * Four different specs flaked on 2026-09-05 — queue:88, submit:193, submit:166 and ical:18 —
-	 * each passing on rerun and each passing locally on repeat. Nothing they assert is wrong; the
-	 * five-second default is simply not enough on a shared runner under load, and the specs that
-	 * hit it are the ones that wait on a round trip rather than on something already rendered.
+	 * Read the history here, because it is the whole argument for rule 6. A run of specs kept
+	 * timing out waiting for `.verdict` — queue:88, submit:193, submit:166, ical:18, and later
+	 * four more — always that shape and never the same spec twice. This budget was raised from
+	 * five seconds to fifteen to absorb it, on the theory that a shared runner under load was
+	 * simply slow. It came back, because that theory was wrong: the submissions were not slow,
+	 * they were never made. Hydration was erasing the fields the spec had just typed, the browser
+	 * refused to submit an empty required title, and no request was ever sent — so no timeout,
+	 * however long, could have gone green. See `src/lib/typed-before-hydration.ts`, which fixes it.
 	 *
-	 * Retries would have made all four green too, and that is exactly why they are not the fix: a
-	 * retry turns an intermittent failure into a silent pass, which is how a real intermittent bug
-	 * gets shipped. A longer timeout does not make a broken assertion pass — it only stops a slow
-	 * machine being reported as a broken one. CLAUDE.md rule 6 is that a flaky test is worse than
-	 * no test, because ambiguous failure breaks the whole loop this repo is built around.
+	 * Retries would have made every one of them green too, and that is exactly why they are not
+	 * the fix: a retry turns an intermittent failure into a silent pass, which is how a real
+	 * intermittent bug — this one, in the submission form people actually use — gets shipped.
 	 *
-	 * Local runs keep the short default, where a hanging assertion should fail fast.
+	 * The budget stays where it is: a loaded runner is genuinely slower (the suite takes twice as
+	 * long at two workers as at five), and nothing here now depends on it to pass. Local runs keep
+	 * the short default, where a hanging assertion should fail fast.
 	 */
 	expect: { timeout: process.env.CI ? 15_000 : 5_000 },
 	reporter: process.env.CI ? [['github'], ['html', { open: 'never' }]] : 'list',

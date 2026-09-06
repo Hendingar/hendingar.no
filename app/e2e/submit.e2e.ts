@@ -113,6 +113,68 @@ test('an incomplete submission is rejected in the browser, not by the server', a
 	await expect(page.locator('#title')).toBeFocused();
 });
 
+/**
+ * Typing before the JavaScript arrives is not thrown away.
+ *
+ * The form is real HTML and submits without scripting, so it is usable the moment the markup
+ * lands — seconds before hydration on a phone. Hydration then spreads the form's field state back
+ * over every input, and that state knows nothing about what is already in the boxes, so it used to
+ * erase all of it. Silently: an empty required field and a submit the browser then refuses to send.
+ *
+ * That is the bug four e2e specs kept reporting as a flake. Playwright types the instant `goto`
+ * resolves — the `load` event, which is strictly before hydration — so under load the fills landed
+ * in the gap, the click hit an empty `#title`, and the spec waited out its timeout for a verdict
+ * that nothing had ever asked for. Raising the timeout could not have helped: no request was made.
+ *
+ * Held here rather than raced: the entry chunks are blocked until the form is filled in, which is
+ * the same window every visitor has and the only way to test it without depending on machine load.
+ */
+test('what was typed before hydration survives it', async ({ page }) => {
+	let arrive = () => {};
+	const held = new Promise<void>((resolve) => (arrive = resolve));
+	await page.route('**/_app/immutable/entry/*.js', async (route) => {
+		await held;
+		await route.continue();
+	});
+
+	// `domcontentloaded`, because `load` waits for the scripts this test is deliberately holding.
+	await page.goto('/send-inn', { waitUntil: 'domcontentloaded' });
+	await page.locator('#title').fill('E2E skrive før skripta kom');
+	await page.locator('#category').selectOption('musikk');
+	await page.locator('#date').fill('2027-04-08');
+	await page.locator('#startTime').fill('18:00');
+	await page.locator('#venueName').fill('Vinsen');
+
+	arrive();
+
+	/*
+	 * Wait for the page to actually be alive before believing anything it shows.
+	 *
+	 * The weekday grid is rendered by the client and by nothing else, so it appearing is proof
+	 * that hydration has run — and hydration is the only thing that was erasing the fields.
+	 */
+	await page.locator('#repeats').selectOption('weekly');
+	await expect(page.locator('.days')).toBeVisible();
+	await page.locator('#repeats').selectOption('nei');
+
+	await expect(page.locator('#title')).toHaveValue('E2E skrive før skripta kom');
+	await expect(page.locator('#category')).toHaveValue('musikk');
+	await expect(page.locator('#date')).toHaveValue('2027-04-08');
+	await expect(page.locator('#startTime')).toHaveValue('18:00');
+	await expect(page.locator('#venueName')).toHaveValue('Vinsen');
+
+	/*
+	 * And it is a submission, not just a filled-in screen.
+	 *
+	 * The browser id is minted by the first keystroke, and that keystroke reached no listener —
+	 * so without adopting it too, the event is stored with no sender and disappears from /kø.
+	 */
+	await page.getByRole('button', { name: /Send inn hendinga/ }).click();
+	await expect(page.locator('.verdict')).toBeVisible();
+	await page.goto('/ko');
+	await expect(page.locator('.card').first()).toContainText('E2E skrive før skripta kom');
+});
+
 test('a complete submission returns a verdict with reasoning for every check', async ({ page }) => {
 	await page.goto('/send-inn');
 	await page.locator('#title').fill('Testkonsert i Leirvik');

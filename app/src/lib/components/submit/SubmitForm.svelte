@@ -2,6 +2,7 @@
 	import { CATEGORIES } from '@hendingar/core/taxonomy';
 	import { DEFAULT_TIME_ZONE, formatEventTime, formatTimeDigits } from '@hendingar/core/datetime';
 	import {
+		RECURRENCE_FREQUENCIES,
 		WEEKDAY_NAMES,
 		WEEKDAYS,
 		describeRecurrence,
@@ -11,6 +12,7 @@
 	import type { ExtractedEvent } from '@hendingar/core/validation';
 	import { findDuplicate, submissionDraft, submitEvent } from '../../submit.remote';
 	import { ensureClientId, existingClientId } from '../../client-id.ts';
+	import { claimTypedBeforeHydration } from '../../typed-before-hydration.ts';
 	import { cropToThumbnail } from '../../poster.ts';
 	import { SvelteSet } from 'svelte/reactivity';
 	import { photoFilledFields } from '../../provenance.ts';
@@ -467,6 +469,9 @@
 
 	const NTH_VALUES = ['1', '2', '3', '4', '5', '-1'] as const;
 
+	/** What the repeat select can hold. From core, so a new frequency needs no second edit here. */
+	const REPEAT_VALUES = ['nei', ...RECURRENCE_FREQUENCIES] as const;
+
 	/**
 	 * The extra dates currently in the form, so the list and the posted values cannot disagree.
 	 *
@@ -508,6 +513,52 @@
 			until: (f.repeatUntil.value() as string) || null
 		});
 	});
+
+	/*
+	 * Keep what somebody had already typed when the JavaScript arrived.
+	 *
+	 * This form is submittable without JavaScript, so it is usable the moment the HTML lands —
+	 * which is before hydration, always, and by a long way on a slow phone. Hydration then writes
+	 * the (empty) field state over every input and the typing is gone, with nothing said about it.
+	 * `claimTypedBeforeHydration` holds the values as the server rendered them; this puts them back
+	 * before the template is hydrated, so the boxes keep what is in them. See the module for the
+	 * measurements, and for the four e2e specs this was failing.
+	 */
+	const typedBefore = claimTypedBeforeHydration();
+	if (typedBefore.size > 0) {
+		const typed = (id: string) => typedBefore.get(id);
+		f.set({
+			title: typed('title'),
+			description: typed('description'),
+			// Narrowed against the canonical list rather than trusted: the state is typed, and a
+			// slug that is not a category has no business reaching it (CLAUDE.md rule 1).
+			category: CATEGORIES.find((c) => c.slug === typed('category'))?.slug,
+			date: typed('date'),
+			startTime: typed('startTime'),
+			endTime: typed('endTime'),
+			venueName: typed('venueName'),
+			municipality: typed('municipality'),
+			organizerName: typed('organizerName'),
+			sourceUrl: typed('sourceUrl'),
+			ctaUrl: typed('ctaUrl'),
+			repeats: REPEAT_VALUES.find((v) => v === typed('repeats')),
+			repeatNth: NTH_VALUES.find((v) => v === typed('repeatNth')),
+			repeatUntil: typed('repeatUntil')
+		});
+		/*
+		 * And mint the browser id, which the first keystroke was supposed to do.
+		 *
+		 * That keystroke reached no listener, so without this a submission typed before hydration
+		 * is stored with no sender — invisible in /kø, and impossible to revise afterwards.
+		 *
+		 * What this cannot reach is somebody who *sends* before hydration too: the browser then
+		 * posts the form itself, carrying the empty id it was rendered with, and the submission
+		 * lands without a sender. That is the documented no-JavaScript outcome — it goes through,
+		 * it simply cannot be revised — and fixing it would mean putting the id somewhere the
+		 * server can read, which is a decision about identity, not about hydration.
+		 */
+		claimIdentity();
+	}
 </script>
 
 <!--
