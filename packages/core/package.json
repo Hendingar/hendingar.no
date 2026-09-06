@@ -5,6 +5,7 @@
 	"type": "module",
 	"exports": {
 		"./schema": "./src/schema.ts",
+		"./schemaorg": "./src/schemaorg.ts",
 		"./taxonomy": "./src/taxonomy.ts",
 		"./validation": "./src/validation.ts",
 		"./db": "./src/db.ts",
