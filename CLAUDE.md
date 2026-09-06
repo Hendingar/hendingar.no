@@ -216,6 +216,23 @@ and ship zero data, which on an event-discovery site means crawlers and no-JS vi
 waits for it. Put a boundary with only a `failed` snippet around the component if you need an
 error path.
 
+### A server-rendered form is live before it is hydrated
+
+A remote form is real HTML and submits without JavaScript, so people can type into it from the
+moment the markup lands. Hydration then spreads the form's field state back over every input —
+`{...f.title.as('text')}` carries a `value` — and that state knows nothing about what is already in
+the boxes, so it **erases everything typed in the gap**, silently.
+
+The gap is unavoidable: SvelteKit hydrates from a dynamic `import()`, which runs after `load`.
+Measured at 20ms idle and 320ms with the machine busy. It cost four e2e specs a week of ambiguous
+failures — Playwright types the instant `page.goto` resolves, which is `load`, which is before
+hydration — and it costs a real visitor on a slow phone their first sentence.
+
+`app/src/lib/typed-before-hydration.ts` is the fix: read what the rendered form holds from the
+component's `<script>`, which runs before that component's template is hydrated, and put it back.
+**Any new remote form needs the same treatment**, and the same goes for anything else that reads a
+value out of state on mount and writes it to an input.
+
 ### Never call `toLocaleString` directly
 
 Use `formatEventTime` from `@hendingar/core/datetime`. Two reasons, both measured:
