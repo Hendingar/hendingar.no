@@ -1,0 +1,26 @@
+{
+    "data": {
+        "allEventRegistrations": {
+            "records": 1,
+            "data": [
+                {
+                    "id": 228580,
+                    "name": "Bunadskurs 2: Vest til Sunnhordlandsbunad",
+                    "imageUrl": "/static/16148/event_228580/image700.jpg",
+                    "sellingDescription": "",
+                    "description": "<p><span>B\u00f8mlo Husflidslag arrangerer Bunadkurs. P\u00e5 dette kurset l\u00e6rer du \u00e5 sy Bunadvest til Sunnhordlandsbunad. Kursholder: Reidun Habbestad</span></p><p><span>Du kan f\u00e5 kj\u00f8pt alt av materiell til Bunaden av kursholder Reidun Habbestad.</span></p><p><span>Kurset g\u00e5r over over 3 dagar, totalt 9 timar.</span></p><p><span>Onsdag: 9. september kl. 18-21&nbsp;</span></p><p><span>Onsdag: 16. september kl. 18-21&nbsp;</span></p><p><span>Onsdag: 23.september kl. 18-21</span></p><p><span>Dersom du har sp\u00f8rsm\u00e5l vedr\u00f8rende dette kurset, ta kontakt med Anita Bergheim p\u00e5 tlf. 41553736</span></p><p><span>B\u00f8mlo Husflidslag tar forbehold om tilstrekkelig antall p\u00e5meldte for at kurset blir gjennomf\u00f8rt. Minimium 4 deltakere, maks 6.</span></p>",
+                    "startsAt": "2026-09-09T18:00:00+02:00",
+                    "endsAt": "2026-09-23T21:00:00+02:00",
+                    "priceFrom": "900.00",
+                    "priceTo": "1300.00",
+                    "currency": "NOK",
+                    "topicEvent": [],
+                    "geoLocation": {
+                        "geoDescription": "Skuleplassvegen 3, Finn\u00e5s, Norge",
+                        "description": "Husflidsstovo p\u00e5 Sakseid- Skuleplass vegen 3"
+                    }
+                }
+            ]
+        }
+    }
+}

@@ -23,6 +23,16 @@ const instance = instanceBySlug('kulleseidkanalen')!;
 const parsed = responseSchema.parse(fixture);
 const upstream = parsed.data.allEventRegistrations.data;
 
+/**
+ * The second customer, and the one that found the filter bug: a husflidslag course published
+ * through husflid.no's proxy in front of this same API.
+ */
+const husflidFixture = JSON.parse(
+	readFileSync(fileURLToPath(new URL('./fixtures/bomlo-husflidslag.json', import.meta.url)), 'utf8')
+);
+const husflid = instanceBySlug('husflid-bomlo')!;
+const husflidUpstream = responseSchema.parse(husflidFixture).data.allEventRegistrations.data;
+
 describe('responseSchema', () => {
 	it('accepts the real response', () => {
 		expect(upstream.length).toBeGreaterThan(0);
@@ -39,11 +49,16 @@ describe('responseSchema', () => {
 });
 
 describe('buildBody', () => {
-	it('filters on registration still being open, not on start time', () => {
-		// Filtering on EVENT_STARTS_AT would drop an event that has begun but is still running.
+	it('filters on the event not being over, not on registration or start time', () => {
+		/*
+		 * EVENT_STARTS_AT would drop an event that has begun but is still running. So, it turns out,
+		 * did EVENT_REGISTRATION_CLOSES_AT, which is what this used to assert: Checkin treats
+		 * registration for a started event as closed, so on 7 September Bømlo Husflidslag's
+		 * 9–23 September course came back under EVENT_ENDS_AT and not at all under the old field.
+		 */
 		const body = buildBody(instance, new Date('2026-09-03T08:00:00Z'));
 		const condition = body.variables.reportFilters[0]!.conditions[0]!;
-		expect(condition.field).toBe('EVENT_REGISTRATION_CLOSES_AT');
+		expect(condition.field).toBe('EVENT_ENDS_AT');
 		expect(condition.operator).toBe('GREATER_THAN_OR_EQUAL');
 		// Unix seconds, as the API expects — milliseconds silently match nothing.
 		expect(condition.value).toBe('1788422400');
@@ -218,5 +233,71 @@ describe('instances', () => {
 		// packages/core/src/directory.ts lists this same slug as a linked source. If they diverge,
 		// the importer creates a second row and /datasamling shows the venue twice.
 		expect(instanceBySlug('kulleseidkanalen')).toBeTruthy();
+	});
+});
+
+describe('the husflidslag course', () => {
+	const mapped = husflidUpstream.map((e) => mapEvent(e, husflid));
+
+	it('maps without failures', () => {
+		expect(mapped.filter(isFailure)).toEqual([]);
+		expect(mapped.length).toBeGreaterThan(0);
+	});
+
+	it('takes the full description, which is the only one this customer writes', () => {
+		/*
+		 * The reason `description` is requested at all. `sellingDescription` is empty here, so
+		 * mapping the teaser alone imported this course with nothing to read — and the field that
+		 * does carry it is editor HTML, which has to be stripped rather than stored.
+		 */
+		const [first] = mapped;
+		if (!first || isFailure(first)) throw new Error('should have mapped');
+		expect(husflidUpstream[0]!.sellingDescription).toBe('');
+		expect(first.description).toBeTruthy();
+		expect(first.description).toContain('Bømlo Husflidslag arrangerer Bunadkurs');
+		expect(first.description).not.toMatch(/<[a-z]/i);
+	});
+
+	it('prefers the full text over the teaser when both exist', () => {
+		const m = mapEvent({ ...husflidUpstream[0]!, sellingDescription: 'Kort teaser' }, husflid);
+		if (isFailure(m)) throw new Error('should have mapped');
+		expect(m.description).toContain('Bunadkurs');
+		expect(m.description).not.toBe('Kort teaser');
+	});
+
+	it('falls back to the teaser when there is no full text', () => {
+		const m = mapEvent(
+			{ ...husflidUpstream[0]!, description: null, sellingDescription: 'Kort teaser' },
+			husflid
+		);
+		if (isFailure(m)) throw new Error('should have mapped');
+		expect(m.description).toBe('Kort teaser');
+	});
+
+	it('keeps a course that spans weeks as the span the lag stated', () => {
+		// Three Wednesday sessions, published as one registration running 9-23 September. The end is
+		// two weeks after the start and is not upstream noise.
+		const [first] = mapped;
+		if (!first || isFailure(first)) throw new Error('should have mapped');
+		expect(first.startsAt.toISOString()).toBe('2026-09-09T16:00:00.000Z');
+		expect(first.endsAt?.toISOString()).toBe('2026-09-23T19:00:00.000Z');
+	});
+
+	it('claims no rights over the lag’s pictures', () => {
+		// Kulleseidkanalen has agreed; a husflidslag has not been asked. Asserted per instance so the
+		// two cannot drift into sharing one default.
+		expect(husflid.posterRightsCleared).toBe(false);
+		const [first] = mapped;
+		if (!first || isFailure(first)) throw new Error('should have mapped');
+		expect(first.posterRightsVerified).toBe(false);
+	});
+
+	it('files a course with no topic as anna rather than guessing from its title', () => {
+		// "Bunadskurs" is obviously a kurs, and the payload says nothing, so `anna` is the honest
+		// answer — reading the title would be exactly what ADR 0004 keeps out of the import path.
+		expect(husflidUpstream[0]!.topicEvent).toEqual([]);
+		const [first] = mapped;
+		if (!first || isFailure(first)) throw new Error('should have mapped');
+		expect(first.category).toBe('anna');
 	});
 });

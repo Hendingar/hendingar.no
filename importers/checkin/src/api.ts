@@ -63,6 +63,47 @@ export const INSTANCES: readonly CheckinInstance[] = [
 		scheduleCron: '0 5 * * *',
 		trusted: true,
 		posterRightsCleared: true
+	},
+	/*
+	 * Bømlo Husflidslag, whose courses are published through husflid.no.
+	 *
+	 * Norges Husflidslag's site renders its own course list from
+	 * `husflid.no/wp-admin/admin-ajax.php?action=proxy_checkin_request` — a WordPress proxy in front
+	 * of this very GraphQL API, passing the lag's `customerId`. We read the API directly rather than
+	 * the proxy: the proxy adds nothing but a hop we do not control, and `api.checkin.no` answers
+	 * this customer without any credential.
+	 *
+	 * **Finding the customerId is the awkward part, and it is not on the page.** Neither
+	 * `husflid.no/lag/hordaland-husflidslag/bomlo-husflidslag/` nor Stord's equivalent contains its
+	 * own id anywhere in the served HTML — grep the page for it and you get nothing — and the
+	 * runtime endpoint the theme uses (`nhic_public_runtime`) returns only a nonce and a clock. The
+	 * id comes out of the network tab: open the lag's course list, watch for
+	 * `proxy_checkin_request`, and read `customerId` off the GraphQL body. Adding the next
+	 * husflidslag is one entry here plus that one capture.
+	 *
+	 * `posterRightsCleared` is false: the lag has agreed nothing, and an unstated right is not a
+	 * granted one (issue #3). Kulleseidkanalen above has agreed, which is why it differs.
+	 */
+	{
+		slug: 'husflid-bomlo',
+		name: 'Bømlo Husflidslag',
+		url: 'https://husflid.no/lag/hordaland-husflidslag/bomlo-husflidslag/',
+		customerId: 16148,
+		region: 'Sunnhordland',
+		attribution: 'Bømlo Husflidslag',
+		timezone: 'Europe/Oslo',
+		/*
+		 * Only a fallback, and it has not been needed: the course states
+		 * "Husflidsstovo på Sakseid- Skuleplass vegen 3", a hall name with its address glued on
+		 * after a hyphen. That is taken as the venue name as-is rather than split on a guess about
+		 * where a name ends — `packages/core/src/venue-aliases.ts` is where a tidier name belongs,
+		 * once a second source names the same hall.
+		 */
+		venueFallback: 'Bømlo Husflidslag',
+		iconUrl: null,
+		scheduleCron: '0 5 * * *',
+		trusted: true,
+		posterRightsCleared: false
 	}
 ];
 
@@ -79,6 +120,15 @@ const eventSchema = z.object({
 	name: z.string(),
 	imageUrl: z.string().nullish(),
 	sellingDescription: z.string().nullish(),
+	/**
+	 * The organiser's full text, as editor HTML — and the field that actually carries the event.
+	 *
+	 * `sellingDescription` is a short plain-text teaser and is not always written: it is 150 and 62
+	 * characters on Kulleseidkanalen's two concerts and **empty** on Bømlo Husflidslag's course,
+	 * where this field holds all 736 characters. Mapping only the teaser imported the husflidslag
+	 * event with no description at all, and gave the concerts a tenth of what the venue wrote.
+	 */
+	description: z.string().nullish(),
 	startsAt: z.string(),
 	endsAt: z.string().nullish(),
 	priceFrom: z.string().nullish(),
@@ -110,15 +160,27 @@ export type UpstreamEvent = z.infer<typeof eventSchema>;
 const QUERY = `query allEventRegistrations($customerId: Int!, $offset: Int, $length: Int, $reportFilters: [EventRegistrationReportFilterInput!], $includeSubunitCustomers: Boolean, $customerIds: [Int!]) {
   allEventRegistrations(customerId: $customerId, offset: $offset, length: $length, reportFilters: $reportFilters, includeSubunitCustomers: $includeSubunitCustomers, customerIds: $customerIds) {
     records
-    data { id name imageUrl sellingDescription startsAt endsAt priceFrom priceTo currency topicEvent { topic { name } } geoLocation { geoDescription description } }
+    data { id name imageUrl sellingDescription description startsAt endsAt priceFrom priceTo currency topicEvent { topic { name } } geoLocation { geoDescription description } }
   }
 }`;
 
 /**
  * The filter the widget uses: registration still open.
  *
- * Not `EVENT_STARTS_AT >= now`, deliberately — that is the filter you would reach for, and it drops
- * an event that has begun but is still running. This mirrors what the venue itself publishes.
+ * Not `EVENT_STARTS_AT >= now`: that is the filter you would reach for, and it drops an event that
+ * has begun but is still running.
+ *
+ * It was `EVENT_REGISTRATION_CLOSES_AT >= now`, chosen for the same reason and **not achieving it**.
+ * Bømlo Husflidslag's Bunadkurs runs 9–23 September, three Wednesday sessions; on 7 September, with
+ * the course under way, that filter returned zero records for the customer and `EVENT_ENDS_AT`
+ * returned the course. Checkin treats registration for an event that has started as closed, so the
+ * filter picked to keep in-progress events was the one excluding them.
+ *
+ * Kulleseidkanalen is unaffected — verified live, both filters return the same two concerts — which
+ * is exactly why this went unnoticed: it only shows on a customer that has something running today.
+ *
+ * `EVENT_ENDS_AT` also says what we mean without going through registration semantics at all: an
+ * event is worth listing until it is over.
  */
 export function buildBody(instance: CheckinInstance, now: Date, length = 100) {
 	return {
@@ -135,7 +197,7 @@ export function buildBody(instance: CheckinInstance, now: Date, length = 100) {
 					conditions: [
 						{
 							rule: 'AND',
-							field: 'EVENT_REGISTRATION_CLOSES_AT',
+							field: 'EVENT_ENDS_AT',
 							operator: 'GREATER_THAN_OR_EQUAL',
 							value: String(Math.floor(now.getTime() / 1000))
 						}
