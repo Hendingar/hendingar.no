@@ -40,6 +40,51 @@ export const VERIFICATION_CHECK_QUESTIONS: Record<VerificationCheck, string> = {
 	corroboration: 'Kan hendinga stadfestast mot ei kjelde?'
 };
 
+/**
+ * What would actually fix each check, addressed to the one person who can.
+ *
+ * The questions above say what a check asks; these say what to do when it says no. That is a
+ * different sentence and it belongs to the sender, not to the check: a queue that only reports
+ * failures is a wall with a sign on it.
+ *
+ * Here rather than in the page that first needed them (CLAUDE.md rule 1). `/ko` had them inline,
+ * and the submission form now needs the same words next to the fields they are about — two copies
+ * of remedial copy drift, and the version somebody reads while correcting their event is the one
+ * that has to be right.
+ */
+export const VERIFICATION_CHECK_HINTS: Record<VerificationCheck, string> = {
+	plausibility:
+		'Legg til ei lenkje til arrangøren og fyll ut skildringa, så har kontrollen noko å gå på.',
+	duplicate: 'Sjekk om det er ei anna hending enn den vi alt har.',
+	normalisation: 'Sjekk dato, klokkeslett og stad.',
+	categorisation: 'Prøv ein annan kategori.',
+	corroboration:
+		'Ei lenkje til arrangøren eller Facebook-hendinga gjer denne sterkare — men ho stoppar deg ikkje.'
+};
+
+/**
+ * Which fields on the submission form each check actually reads.
+ *
+ * So a form opened to correct a submission can put the failing check *at the field*, rather than
+ * printing five verdicts at the top and leaving somebody to work out which box to touch. "Kategori:
+ * usikker" above a form of eleven inputs is a diagnosis; the same words beside the category select
+ * are an instruction.
+ *
+ * Domain knowledge, not presentation: which field a check reads is a fact about the check, and the
+ * verifier is what makes it true. Kept next to the checks themselves so a sixth one cannot be added
+ * without deciding what a sender would change — the compiler asks.
+ *
+ * `duplicate` names the fields that decide whether two events are the same one (see
+ * `similarity.ts`), which is what a sender would have to change to say "no, a different night".
+ */
+export const VERIFICATION_CHECK_FIELDS: Record<VerificationCheck, readonly string[]> = {
+	plausibility: ['title', 'description', 'sourceUrl'],
+	duplicate: ['title', 'date', 'startTime', 'venueName'],
+	normalisation: ['date', 'startTime', 'endTime', 'venueName', 'municipality'],
+	categorisation: ['category'],
+	corroboration: ['sourceUrl']
+};
+
 export const VERIFICATION_VERDICT_LABELS: Record<VerificationVerdict, string> = {
 	pass: 'Godkjend',
 	uncertain: 'Usikker',
