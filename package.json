@@ -22,6 +22,7 @@
 		"consolidate": "pnpm --filter @hendingar/core consolidate",
 		"expire": "pnpm --filter @hendingar/core expire",
 		"db:sources": "pnpm --filter @hendingar/core db:sources",
+		"db:pull": "./scripts/db-pull.sh",
 		"db:up": "./scripts/db.sh up",
 		"db:down": "./scripts/db.sh down",
 		"db:logs": "./scripts/db.sh logs",
