@@ -29,6 +29,20 @@ export function isExpiredSubmission(
 	// sets no outcome, and its rows are the site's content rather than somebody's draft.
 	if (submission.status === 'published') return false;
 	if (submission.submissionOutcome === null) return false;
+	/*
+	 * A contribution is not a draft either, and this exemption is load-bearing.
+	 *
+	 * It carries no `status` of its own worth keeping — it is `rejected`, like every row that is
+	 * not a listing — but it is the *provenance* of values now sitting on a published event: which
+	 * browser supplied the poster, and what to set back to null if it turns out to be wrong.
+	 * `event_contributions.submission_id` cascades on delete, so sweeping this row after two days
+	 * would take the credit off the event page and make the contribution unrevertable, while the
+	 * poster it supplied stayed exactly where it was. See ADR 0014.
+	 *
+	 * Nothing is waiting on anybody here, which is the whole test the window is for: the sender has
+	 * acted, and the event has changed. There is nothing left to abandon.
+	 */
+	if (submission.submissionOutcome === 'contributed') return false;
 	return now.getTime() - submission.updatedAt.getTime() > SUBMISSION_TTL_MS;
 }
 

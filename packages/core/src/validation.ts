@@ -415,12 +415,52 @@ export const eventFormSchema = z
 			.regex(/^\d+$/, 'må vere ein id')
 			.optional()
 			.or(z.literal('').transform(() => undefined)),
+		/**
+		 * Set when the sender has said "this is the same event as the one you already have".
+		 *
+		 * The id of the published event to improve. It turns the submission from a would-be listing
+		 * into a contribution: gaps on that row are filled from these fields, nothing existing is
+		 * replaced, and no second event appears anywhere. See `contribution.ts`.
+		 *
+		 * The id names a row and authorises nothing — `submitEvent` re-checks that it is published,
+		 * canonical, and genuinely a plausible match, because a value posted by a browser is a
+		 * request and not a fact.
+		 */
+		contributeTo: z
+			.string()
+			.regex(/^\d+$/, 'må vere ein id')
+			.optional()
+			.or(z.literal('').transform(() => undefined)),
 		/** IANA zone the wall-clock time is in. Defaults to the pilot region. */
 		timeZone: z.string().default('Europe/Oslo')
 	})
 	.refine((v) => !v.endTime || v.endTime > v.startTime, {
 		message: 'sluttid må vere etter starttid',
 		path: ['endTime']
+	})
+	/*
+	 * A contribution improves one existing event, so it cannot also be a series.
+	 *
+	 * "Every Thursday" plus "and it is the same event as this one" does not describe anything: the
+	 * repetition would have to expand into rows, and a contribution deliberately creates no rows to
+	 * expand into. Refused here rather than silently ignored, because dropping the recurrence would
+	 * lose whatever the sender meant by it.
+	 */
+	.refine((v) => !v.contributeTo || (v.repeats === 'nei' && (v.extraDates?.length ?? 0) === 0), {
+		message: 'eit bidrag til ei hending som finst kan ikkje gjentakast',
+		path: ['repeats']
+	})
+	/*
+	 * A row cannot contribute to itself.
+	 *
+	 * `?rett=854&bidra=769` is the route out of a declined near-duplicate — the draft is loaded,
+	 * consumed, and becomes a contribution to 769 — so both fields set is the normal case, not a
+	 * conflict. The same id in both is the one incoherent combination: it would delete the row and
+	 * then try to fill its gaps.
+	 */
+	.refine((v) => !v.contributeTo || v.contributeTo !== v.revisionOf, {
+		message: 'ei hending kan ikkje bidra til seg sjølv',
+		path: ['contributeTo']
 	})
 	.refine((v) => v.repeats !== 'weekly' || (v.repeatWeekdays?.length ?? 0) > 0, {
 		message: 'vel minst éin vekedag',

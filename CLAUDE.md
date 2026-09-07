@@ -92,7 +92,11 @@ app/src/lib/
 app/e2e/                 Playwright specs
 
 app/src/lib/components/submit/   single-use sections owned by `/send-inn`
-app/src/lib/submit.remote.ts     the submission boundary — photo, form, verification
+app/src/lib/submit.remote.ts     the submission boundary — photo, form, verification, and the
+                                 contribution path: a submission that matches an event we already
+                                 have fills that row's gaps instead of being refused (ADR 0014).
+                                 The rule for what counts as a gap is pure, in
+                                 packages/core/src/contribution.ts — never inline a second copy
 
 app/src/lib/components/hendingar/  single-use sections owned by `/hendingar`
 app/src/lib/listing-url.ts         filters ↔ URL. The page, the tokens and the suggestions all

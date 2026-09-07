@@ -23,7 +23,8 @@
 		"./text": "./src/text.ts",
 		"./address": "./src/address.ts",
 		"./standing": "./src/standing.ts",
-		"./search": "./src/search.ts"
+		"./search": "./src/search.ts",
+		"./contribution": "./src/contribution.ts"
 	},
 	"scripts": {
 		"typecheck": "tsc --noEmit",

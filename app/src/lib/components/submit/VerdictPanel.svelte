@@ -8,6 +8,10 @@
 	} from '@hendingar/core/verification';
 	import { formatEventTime } from '@hendingar/core/datetime';
 	import { SUBMISSION_TTL_HOURS } from '@hendingar/core/submissions';
+	import {
+		CONTRIBUTABLE_FIELD_LABELS,
+		type ContributableField
+	} from '@hendingar/core/contribution';
 	import { linkLabel, safeHttpUrl } from '../../source-link.ts';
 
 	type Check = {
@@ -19,7 +23,7 @@
 		model: string | null;
 	};
 
-	type Outcome = 'approved' | 'duplicate' | 'shady' | 'declined';
+	type Outcome = 'approved' | 'duplicate' | 'shady' | 'declined' | 'contributed';
 
 	let {
 		status,
@@ -28,7 +32,8 @@
 		summary,
 		checks,
 		poster = null,
-		sourceUrl = null
+		sourceUrl = null,
+		contributed = []
 	}: {
 		status: 'published' | 'pending' | 'rejected';
 		/** What we concluded, which is the part the sender actually needs told. */
@@ -60,6 +65,14 @@
 		 * meant to paste.
 		 */
 		sourceUrl?: string | null;
+		/**
+		 * The fields this submission filled on the event named in `duplicateOf`.
+		 *
+		 * Listed rather than summarised, because it is the only receipt a contributor gets. They
+		 * gave up their own listing to improve someone else's row, and "takk for bidraget" without
+		 * saying what landed is indistinguishable from a polite refusal.
+		 */
+		contributed?: readonly ContributableField[];
 	} = $props();
 
 	/* Re-checked at the href rather than trusted: see source-link.ts. */
@@ -75,18 +88,24 @@
 	});
 
 	/*
-	 * Four outcomes, four different things to say.
+	 * Five outcomes, five different things to say.
 	 *
 	 * There used to be three statuses, one of which meant "a person will look at it" — and with
 	 * nobody in the queue that was a slower no that nobody was told about. "No, this is spam",
 	 * "no, we already have it" and "no, we could not read the date" are three different messages,
 	 * and only the last two deserve an apology.
+	 *
+	 * `contributed` is the only one of the five that is not about whether a listing was created.
+	 * The sender chose to improve an event we already had, so the headline is about what they did
+	 * rather than about what we decided — anything shaped like "ikkje publisert" would report their
+	 * contribution as a refusal.
 	 */
 	const headline: Record<Outcome, string> = {
 		approved: 'Publisert',
 		duplicate: 'Vi har henne alt',
 		shady: 'Ikkje publisert',
-		declined: 'Ikkje publisert'
+		declined: 'Ikkje publisert',
+		contributed: 'Takk — hendinga blei betre'
 	};
 
 	/*
@@ -109,7 +128,16 @@
 		 * because a person wrongly caught here deserves to know the door is not locked.
 		 */
 		shady: `Dette ser ikkje ut som ei ekte lokal hending, så vi la henne ikkje ut. Ho ligg i køen din i ${SUBMISSION_TTL_HOURS} timar om du vil rette henne.`,
-		declined: `Noko kom ikkje gjennom kontrollane, så vi la henne ikkje ut. Sjå kva som feila under, rett det og send inn på nytt — du finn henne i køen din. Rører du henne ikkje på ${SUBMISSION_TTL_HOURS} timar, blir ho sletta.`
+		declined: `Noko kom ikkje gjennom kontrollane, så vi la henne ikkje ut. Sjå kva som feila under, rett det og send inn på nytt — du finn henne i køen din. Rører du henne ikkje på ${SUBMISSION_TTL_HOURS} timar, blir ho sletta.`,
+		/*
+		 * No apology and no "but", because nothing went wrong.
+		 *
+		 * A contribution creates no listing on purpose — there was already one — so the sentence
+		 * has to make clear that is the *point* and not a consolation. What it fills is named
+		 * below, since a thank-you that does not say what landed reads exactly like a polite no.
+		 */
+		contributed:
+			'Du sa det var same hending som ei vi har, så innsendinga di gjorde den betre i staden for å bli lagt ut på nytt. Ingenting som stod der frå før blei endra.'
 	};
 
 	/*
@@ -127,7 +155,16 @@
 		approved: 'Dette er biletet du sende inn. Det blir miniatyrbilete på kortet.',
 		duplicate: 'Dette er biletet du sende inn. Det blei ikkje lagra.',
 		shady: 'Dette er biletet du sende inn. Det blei ikkje lagra.',
-		declined: 'Dette er biletet du sende inn. Det blei ikkje lagra.'
+		declined: 'Dette er biletet du sende inn. Det blei ikkje lagra.',
+		/*
+		 * The one non-approved outcome that can keep a picture, and only into a gap.
+		 *
+		 * Hedged on purpose: the upload is a second request that has not necessarily finished when
+		 * this renders, and it lands only while the event still has no poster. Promising it outright
+		 * would be a claim this panel is not in a position to make.
+		 */
+		contributed:
+			'Dette er biletet du sende inn. Manglar hendinga eit bilete, er det ditt som blir brukt.'
 	};
 </script>
 
@@ -148,16 +185,22 @@
 		{/if}
 	</div>
 
-	{#if outcome === 'duplicate' && duplicateOf}
+	{#if (outcome === 'duplicate' || outcome === 'contributed') && duplicateOf}
 		<!--
 			Name the event, do not merely allege it.
 
 			Being told your submission was a copy of something, without being told of what, is
 			indistinguishable from being told no for no reason — and it removes the one thing the
 			sender could do about it, which is look and see whether we are right.
+
+			The same block serves a contribution, because it is the same fact — the canonical row this
+			submission is about. Only the sentence under it differs: for a duplicate it invites a
+			correction, and for a contribution it reports what landed.
 		-->
 		<aside class="dupe">
-			<p class="label">Hendinga vi har frå før</p>
+			<p class="label">
+				{outcome === 'contributed' ? 'Hendinga du gjorde betre' : 'Hendinga vi har frå før'}
+			</p>
 			<a class="dupe__link" href={duplicateOf.path}>{duplicateOf.title}</a>
 			<p class="dupe__meta">
 				<!-- Separator inside the expression: a bare "·" between an {#if} and its text gets
@@ -169,9 +212,30 @@
 					duplicateOf.venueTimeZone
 				) + (duplicateOf.venueName ? ` · ${duplicateOf.venueName}` : '')}
 			</p>
-			<p class="dupe__note">
-				Er dette ei anna hending? Sei frå, så ser vi på det — vi har teke vare på innsendinga di.
-			</p>
+			{#if outcome === 'contributed'}
+				{#if contributed.length > 0}
+					<!--
+						The receipt. Field by field, because this is all a contributor gets: they gave up
+						their own listing to fill somebody else's nulls, and a summary would leave them
+						unable to tell whether it worked.
+					-->
+					<ul class="dupe__gave">
+						{#each contributed as field (field)}
+							<li>{CONTRIBUTABLE_FIELD_LABELS[field]}</li>
+						{/each}
+					</ul>
+					<p class="dupe__note">Dette kom frå deg. Resten stod der frå før.</p>
+				{:else}
+					<p class="dupe__note">
+						Alt du sende stod der frå før, så ingenting blei endra — men vi har notert at du
+						stadfesta henne uavhengig.
+					</p>
+				{/if}
+			{:else}
+				<p class="dupe__note">
+					Er dette ei anna hending? Sei frå, så ser vi på det — vi har teke vare på innsendinga di.
+				</p>
+			{/if}
 		</aside>
 	{/if}
 
@@ -252,6 +316,29 @@
 		font-family: var(--font-mono);
 		font-size: var(--step-micro);
 		color: var(--peach-dim);
+	}
+	/*
+	 * The fields a contribution filled, as a row of marks rather than a bulleted list.
+	 *
+	 * There are at most six and each is one word, so a stacked list would be six lines of mostly
+	 * whitespace where a reader wants to see the whole answer at a glance.
+	 */
+	.dupe__gave {
+		list-style: none;
+		margin: 0.35rem 0 0;
+		padding: 0;
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.3rem 0.4rem;
+	}
+	.dupe__gave li {
+		font-family: var(--font-mono);
+		font-size: var(--step-micro);
+		letter-spacing: 0.12em;
+		text-transform: uppercase;
+		padding: 0.2em 0.6em;
+		background: var(--peach);
+		color: var(--navy-900);
 	}
 	.dupe__note {
 		margin: 0.3rem 0 0;

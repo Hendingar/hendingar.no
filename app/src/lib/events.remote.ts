@@ -20,6 +20,7 @@ import {
 import type { AnyColumn, SQL } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/pg-core';
 import {
+	eventContributions,
 	eventHearts,
 	eventViews,
 	events,
@@ -28,6 +29,7 @@ import {
 	venues,
 	verifications
 } from '@hendingar/core/schema';
+import { isContributableField } from '@hendingar/core/contribution';
 import {
 	calendarDateSchema,
 	calendarSpanSchema,
@@ -1451,7 +1453,35 @@ export const getEvent = query(z.number().int().positive(), async (id) => {
 		.where(eq(verifications.eventId, id))
 		.orderBy(asc(verifications.id));
 
-	return { ...row, checks, reportedBy };
+	/*
+	 * What a reader added to this event, and which fields it was.
+	 *
+	 * `reportedBy` above cannot carry this and should not try: it joins `sources` with an INNER
+	 * join, so a human submission — which has no `source_id` — was never in it. That is why the
+	 * verdict panel's promise to credit a duplicate "kjelda under" was one the event page could not
+	 * keep for the only kind of contributor that has no calendar behind them.
+	 *
+	 * Named as a count of contributions and a list of fields, never as a person: a `client_id` is a
+	 * random value a browser keeps in localStorage, and turning it into a byline would be inventing
+	 * an identity out of something deliberately built not to be one. Distinct browsers are counted
+	 * so "frå to lesarar" is honest, which is as far as the data can honestly go.
+	 */
+	const contributed = await database
+		.select({
+			field: eventContributions.field,
+			clientId: eventContributions.clientId
+		})
+		.from(eventContributions)
+		.where(and(eq(eventContributions.eventId, id), eq(eventContributions.applied, true)))
+		.orderBy(asc(eventContributions.id));
+
+	const contributions = {
+		fields: [...new Set(contributed.map((c) => c.field))].filter(isContributableField),
+		/* Null client ids are one anonymous contributor each — they cannot be told apart. */
+		contributors: new Set(contributed.map((c, index) => c.clientId ?? `anon-${index}`)).size
+	};
+
+	return { ...row, checks, reportedBy, contributions };
 });
 
 export type EventDetail = Awaited<ReturnType<typeof getEvent>>;
