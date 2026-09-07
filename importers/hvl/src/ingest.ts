@@ -47,6 +47,7 @@ async function upsertSource(db: Db, campus: HvlCampus) {
 		name: campus.name,
 		url: calendarUrl(campus),
 		endpoint: `https://www.hvl.no/service/calendar/month/nn-NO/{year}/{month}/0/${campus.locationId}`,
+		note: 'JSON per månad frå kalendertenesta til hvl.no. Kalenderen er nasjonal, så vi filtrerer ned til denne campusen og hentar plakaten frå sida til kvar hending.',
 		kind: 'json-api' as const,
 		active: true,
 		scheduleCron: campus.scheduleCron,

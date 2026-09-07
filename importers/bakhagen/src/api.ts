@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import type { BakhagenInstance } from './instances.ts';
+import { decodeEntities } from '@hendingar/core/text';
 
 /**
  * Reading a Bakhagen (Corepublish) hagelag activity page.
@@ -77,46 +78,6 @@ export type ParsedListing = {
 	 */
 	recognised: boolean;
 };
-
-const NAMED_ENTITIES: Record<string, string> = {
-	nbsp: ' ',
-	amp: '&',
-	lt: '<',
-	gt: '>',
-	quot: '"',
-	apos: "'",
-	oslash: 'ø',
-	Oslash: 'Ø',
-	aring: 'å',
-	Aring: 'Å',
-	aelig: 'æ',
-	AElig: 'Æ',
-	ndash: '–',
-	mdash: '—'
-};
-
-/**
- * Entities in the rendered markup.
- *
- * Numeric references are handled generically rather than by a list of literals: Corepublish emits
- * whatever the hagelag typed into its editor, and the next lag will type a character this one
- * never did. `importers/kyrkja` learned that the expensive way — twenty-eight events published
- * with `B&#248;mlo` in the title.
- */
-function decodeEntities(value: string): string {
-	return value.replace(/&(#x?[0-9a-fA-F]+|[a-zA-Z]+);/g, (match, body: string) => {
-		if (body.startsWith('#')) {
-			const code =
-				body[1] === 'x' || body[1] === 'X'
-					? Number.parseInt(body.slice(2), 16)
-					: Number.parseInt(body.slice(1), 10);
-			return Number.isFinite(code) && code > 0 && code <= 0x10ffff
-				? String.fromCodePoint(code)
-				: match;
-		}
-		return NAMED_ENTITIES[body] ?? match;
-	});
-}
 
 const clean = (value: string) =>
 	decodeEntities(value.replace(/<[^>]+>/g, ' '))

@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { isEventNode, jsonLdNodes } from '@hendingar/core/schemaorg';
 import type { AlleventsOrganiser } from './organisers.ts';
+import { decodeEntities } from '@hendingar/core/text';
 
 /**
  * Reading an allevents.in organiser's programme.
@@ -274,46 +275,6 @@ export async function fetchAll(
 }
 
 /* ------------------------------------------------------------------ the event's own page ----- */
-
-const NAMED_ENTITIES: Record<string, string> = {
-	nbsp: ' ',
-	amp: '&',
-	lt: '<',
-	gt: '>',
-	quot: '"',
-	apos: "'",
-	oslash: 'ø',
-	Oslash: 'Ø',
-	aring: 'å',
-	Aring: 'Å',
-	aelig: 'æ',
-	AElig: 'Æ',
-	ndash: '–',
-	mdash: '—'
-};
-
-/**
- * Entities in the rendered markup.
- *
- * Numeric references are handled generically rather than by a list of literals: the text is whatever
- * the organiser typed into Facebook, and the next one will type a character this one did not.
- * `importers/kyrkja` learned that the expensive way — twenty-eight events published with
- * `B&#248;mlo` in the title.
- */
-function decodeEntities(value: string): string {
-	return value.replace(/&(#x?[0-9a-fA-F]+|[a-zA-Z]+);/g, (match, body: string) => {
-		if (body.startsWith('#')) {
-			const code =
-				body[1] === 'x' || body[1] === 'X'
-					? Number.parseInt(body.slice(2), 16)
-					: Number.parseInt(body.slice(1), 10);
-			return Number.isFinite(code) && code > 0 && code <= 0x10ffff
-				? String.fromCodePoint(code)
-				: match;
-		}
-		return NAMED_ENTITIES[body] ?? match;
-	});
-}
 
 const DESCRIPTION_BLOCK =
 	/<div\b[^>]*\bclass=["']event-description-html["'][^>]*>([\s\S]*?)<\/div>/i;

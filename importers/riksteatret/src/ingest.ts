@@ -5,8 +5,10 @@ import {
 	createPacer,
 	parseVenuePage,
 	readVenuePage,
+	wait,
 	type Pace,
-	type ReadVenuePage
+	type ReadVenuePage,
+	type Wait
 } from './api.ts';
 import { INSTANCES, type RiksteatretInstance } from './instances.ts';
 import { isFailure, mapPerformance, type MappedEvent } from './map.ts';
@@ -34,6 +36,8 @@ export type IngestResult = {
 
 export type IngestOptions = {
 	read?: ReadVenuePage;
+	/** Injected so the tests are hermetic *and* fast — they wait for nothing (CLAUDE.md rule 6). */
+	wait?: Wait;
 	pace?: Pace;
 	trigger?: string;
 	revision?: string | null;
@@ -106,7 +110,8 @@ export async function ingestInstance(
 ): Promise<IngestResult> {
 	const {
 		read = readVenuePage,
-		pace = createPacer(),
+		wait: waitFor = wait,
+		pace = createPacer(waitFor),
 		trigger = 'manual',
 		revision = null,
 		dryRun = false,
@@ -218,7 +223,8 @@ export async function ingestInstance(
 					ctaUrl: events.ctaUrl,
 					posterUrl: events.posterUrl,
 					posterRightsVerified: events.posterRightsVerified,
-					status: events.status
+					status: events.status,
+					sourceUrl: events.sourceUrl
 				})
 				.from(events)
 				.where(and(eq(events.sourceId, source.id), eq(events.externalId, mapped.externalId)))
@@ -240,7 +246,8 @@ export async function ingestInstance(
 				existing.ctaUrl === values.ctaUrl &&
 				existing.posterUrl === values.posterUrl &&
 				existing.posterRightsVerified === values.posterRightsVerified &&
-				existing.status === values.status;
+				existing.status === values.status &&
+				existing.sourceUrl === values.sourceUrl;
 
 			if (same) {
 				unchanged += 1;
@@ -323,7 +330,7 @@ export async function ingestAll(
 	connectionString: string,
 	options: IngestOptions = {}
 ): Promise<IngestResult[]> {
-	const pace = options.pace ?? createPacer();
+	const pace = options.pace ?? createPacer(options.wait ?? wait);
 	const results: IngestResult[] = [];
 	for (const instance of INSTANCES) {
 		try {

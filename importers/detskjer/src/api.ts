@@ -78,8 +78,12 @@ export const SOURCE = {
 	posterRightsCleared: true
 } as const;
 
-const USER_AGENT =
-	'hendingar.no-importer/0.1 (+https://github.com/Hendingar/hendingar.no; open-source event index)';
+/*
+ * The same string the other fourteen importers send. This one was different — a `/0.1` version and a
+ * GitHub URL — for no reason anybody recorded, which meant an upstream reading its logs saw us as
+ * two different crawlers and a rate-limit conversation would only have covered half our traffic.
+ */
+const USER_AGENT = 'hendingar.no importer (+https://hendingar.no)';
 
 export type FetchPage = (page: number) => Promise<unknown>;
 
@@ -87,7 +91,11 @@ export type FetchPage = (page: number) => Promise<unknown>;
 export const fetchPage: FetchPage = async (page) => {
 	const url = page <= 1 ? SOURCE.endpoint : `${SOURCE.endpoint}?page=${page}`;
 	const res = await fetch(url, {
-		headers: { accept: 'application/json', 'user-agent': USER_AGENT }
+		headers: { accept: 'application/json', 'user-agent': USER_AGENT },
+		// The only importer that had no timeout at all. A hung upstream would have held the whole
+		// scheduled job open until the runner's own limit killed it, and `--no-bail` cannot rescue a
+		// step that never returns — every source after this one in the run would simply not happen.
+		signal: AbortSignal.timeout(30_000)
 	});
 	if (!res.ok) throw new Error(`${url} responded ${res.status} ${res.statusText}`);
 	return res.json();

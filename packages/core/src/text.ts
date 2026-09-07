@@ -50,12 +50,34 @@ const NAMED_ENTITIES: Record<string, string> = {
 	raquo: '»'
 };
 
-function decodeEntities(value: string): string {
+/**
+ * Entities in someone else's markup, decoded.
+ *
+ * Exported because five importers had their own copy of this function and their own
+ * `NAMED_ENTITIES` table, and the tables had drifted: **none of the five carried `laquo`/`raquo`**,
+ * which is how a Moster Amfi concert reached the live site as `…Humor &laquo;Frå Vestlandet…&raquo;`.
+ * One table, one decoder — the same argument `plainText` records above, and CLAUDE.md rule 1.
+ *
+ * The numeric branch is generic; the named one is a list, so a gap in it fails silently and reads as
+ * the source's own text. That is the failure mode to keep in mind when adding a source.
+ *
+ * `code <= 0x10ffff` is not defensive noise: `String.fromCodePoint` **throws a RangeError** above it,
+ * and `plainText` runs at render time (`app/src/lib/jsonld.ts`, the `.ics` route, the event page), so
+ * without the bound a description containing `&#1114112;` is an SSR crash reachable from text a
+ * stranger typed into someone's calendar. The importers' local copies all had this bound; this one
+ * did not. Rejecting the impossible rather than throwing: an out-of-range reference is a broken page,
+ * and leaving the text as written is more honest than emitting U+FFFD.
+ */
+export function decodeEntities(value: string): string {
 	return value.replace(/&(#x?[0-9a-fA-F]+|[a-zA-Z]+);/g, (match, body: string) => {
 		if (body.startsWith('#')) {
 			const code =
-				body[1] === 'x' || body[1] === 'X' ? parseInt(body.slice(2), 16) : Number(body.slice(1));
-			return Number.isFinite(code) && code > 0 ? String.fromCodePoint(code) : match;
+				body[1] === 'x' || body[1] === 'X'
+					? Number.parseInt(body.slice(2), 16)
+					: Number.parseInt(body.slice(1), 10);
+			return Number.isFinite(code) && code > 0 && code <= 0x10ffff
+				? String.fromCodePoint(code)
+				: match;
 		}
 		return NAMED_ENTITIES[body] ?? match;
 	});

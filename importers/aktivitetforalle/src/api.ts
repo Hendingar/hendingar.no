@@ -128,6 +128,13 @@ const HEADERS = {
 };
 
 async function getJson(url: string): Promise<unknown> {
+	/*
+	 * Sixty seconds, where every other importer uses thirty.
+	 *
+	 * Kept, and now said out loud: this endpoint returns the whole activity list for a municipality
+	 * in one response rather than paging, and the slowest observed run was well past thirty. Halving
+	 * it would turn a slow-but-working source into a failed run.
+	 */
 	const response = await fetch(url, { headers: HEADERS, signal: AbortSignal.timeout(60_000) });
 	if (!response.ok) throw new Error(`${url} responded ${response.status}`);
 	return response.json();

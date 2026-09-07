@@ -307,6 +307,22 @@ describe('mapPerformance', () => {
 		expect(mapped.filter(isFailure)).toEqual([]);
 	});
 
+	it('leaves no HTML entity in a title, on either site', () => {
+		/*
+		 * The class of bug, not one instance of it. This importer had its own `NAMED_ENTITIES` table
+		 * and it was missing `laquo`/`raquo` — Norwegian's own quotation marks — which is how a
+		 * Moster Amfi concert reached the live site as `…Humor &laquo;Frå Vestlandet…&raquo;`. The
+		 * table now comes from `@hendingar/core/text`, so this asserts the property rather than the
+		 * one entity: any named entity the shared decoder lacks survives verbatim and reads as the
+		 * source's own text.
+		 */
+		const ALL_MAPPED = mapped;
+		for (const m of ALL_MAPPED) {
+			if (isFailure(m)) continue;
+			expect(m.title, m.title).not.toMatch(/&(#x?[0-9a-fA-F]+|[a-zA-Z]+);/);
+		}
+	});
+
 	it('files everything as teater, from the shared taxonomy', () => {
 		expect(CATEGORY_SLUGS).toContain(CATEGORY);
 		expect(CATEGORY).toBe('teater');
