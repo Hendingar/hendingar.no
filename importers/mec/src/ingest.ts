@@ -1,9 +1,9 @@
-import { and, eq } from 'drizzle-orm';
+import { and, eq, inArray } from 'drizzle-orm';
 import { createDb, type Db } from '@hendingar/core/db';
 import { events, ingestRuns, sources, venues } from '@hendingar/core/schema';
-import { fetchListing, parseListing, postIdFor, type FetchListing } from './api.ts';
+import { fetchListing, parseListing, type FetchListing } from './api.ts';
 import { INSTANCES, type MecInstance } from './instances.ts';
-import { isFailure, mapEvent, type MappedEvent } from './map.ts';
+import { isFailure, isSupersededOccurrenceId, mapEvent, type MappedEvent } from './map.ts';
 
 /**
  * Deterministic: fetch → parse → validate → upsert. No language model touches this path.
@@ -85,6 +85,36 @@ async function venueIdFor(db: Db, mapped: MappedEvent, instance: MecInstance) {
 	return row?.id ?? null;
 }
 
+/**
+ * The identity `occurrenceId` used before it keyed on the day: `<post id>@<ISO instant>`.
+ *
+ * See `occurrenceId` for why it changed. This is here because a code deploy ships no data
+ * (CLAUDE.md), so every row already written under the old key is still in the database — published,
+ * two hours late, and unreachable by any run under the new key, because a corrected occurrence now
+ * inserts alongside it instead of updating it. Nothing else prunes: this importer only ever reads
+ * the first page of a listing, so "delete what the page no longer shows" would delete the future.
+ *
+ * Matching on the shape of the key is what makes this safe to run every day. It can only match ids
+ * this importer wrote itself, and once the last of them is gone it matches nothing for the rest of
+ * time — so it can be deleted at leisure rather than urgently. Deliberately not written as a
+ * migration: this is data, and `packages/core/migrations` is schema.
+ */
+async function dropSupersededOccurrences(db: Db, sourceId: number): Promise<number> {
+	const rows = await db
+		.select({ id: events.id, externalId: events.externalId })
+		.from(events)
+		.where(eq(events.sourceId, sourceId));
+
+	const stale = rows
+		.filter((row) => row.externalId !== null && isSupersededOccurrenceId(row.externalId))
+		.map((row) => row.id);
+	if (stale.length === 0) return 0;
+
+	// Hearts and views cascade from `events`, so the abandoned row takes its own counters with it.
+	await db.delete(events).where(inArray(events.id, stale));
+	return stale.length;
+}
+
 export async function ingestInstance(
 	connectionString: string,
 	instance: MecInstance,
@@ -128,6 +158,16 @@ export async function ingestInstance(
 	const problems: string[] = [];
 
 	try {
+		/*
+		 * Before anything is written, and not on a dry run, which promises to write nothing.
+		 * Reported in the run message rather than counted as an import: /datasamling's columns are
+		 * about what a source published, and this is about what we had wrong.
+		 */
+		if (!dryRun) {
+			const dropped = await dropSupersededOccurrences(db, source.id);
+			if (dropped > 0) problems.push(`dropped ${dropped} occurrence(s) under the superseded id`);
+		}
+
 		const listing = parseListing(await read(instance));
 		for (const problem of listing.rejected) {
 			rejected += 1;
@@ -141,9 +181,9 @@ export async function ingestInstance(
 		 */
 		const seen = new Set<string>();
 
-		for (const raw of listing.events) {
+		for (const occurrence of listing.occurrences) {
 			fetched += 1;
-			const mapped = mapEvent(raw, postIdFor(listing, raw.url), instance);
+			const mapped = mapEvent(occurrence.event, occurrence.postId, occurrence.card, instance);
 			if (isFailure(mapped)) {
 				rejected += 1;
 				if (problems.length < 10)

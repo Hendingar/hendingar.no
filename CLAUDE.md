@@ -244,6 +244,26 @@ Use `formatEventTime` from `@hendingar/core/datetime`. Two reasons, both measure
 - **A `timestamptz` is an instant, not a wall clock.** Always format with the venue's `timezone`.
   Assuming Oslo renders a 20:00 Helsinki concert as 19:00.
 
+### A source's stated offset is not evidence
+
+`2026-09-07T18:00:00+02:00` looks like a fact and is a claim. Modern Events Calendar adds the
+site's offset to the wall clock and then also writes the offset it just added, so Bømlo
+folkebibliotek's 16:00 Pokémontreff published as an 18:00 event — on the page, in the JSON-LD, and
+in the `.ics` people put in their calendars. Nothing was malformed and nothing failed; the number
+was simply two hours out, for months. `importers/allevents` found the same class of bug in an
+"epoch" that was really a wall clock.
+
+So when an importer reads a time, **cross-check it against something the source shows a human** —
+the clock rendered on the card, a `time_display` string, the event's own page — and prefer that
+where they disagree. Then resolve the wall clock against the venue's IANA zone with
+`zonedWallClockToInstant`, never against the offset in the string: an offset is a fact about one
+moment, a zone is a fact about a place, and only the second is still true after the clocks change.
+
+**And never key an importer's `external_id` on the start instant.** Correcting a time then changes
+the key, which inserts a second row and abandons the first — still published, still wrong, and
+beyond the reach of every later run. Key on the day (`<upstream id>@2026-09-07`) so a re-timed
+event updates in place. `importers/mec` carries the full story in `src/map.ts`.
+
 ### A component rule on a bare element beats brand.css
 
 Svelte rewrites `input { … }` to `input.svelte-hash { … }` — specificity (0,1,1), which outranks a
