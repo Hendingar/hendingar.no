@@ -15,6 +15,9 @@ import type { KulturhusInstance, UpstreamEvent, UpstreamTicket } from './api.ts'
  */
 const CATEGORY_BY_NAME: Record<string, CategorySlug> = {
 	konsert: 'musikk',
+	// Bømlo writes its categories in the plural and Stord in the singular. Nineteen of Bømlo's
+	// twenty-four productions were landing in `anna` on that difference alone.
+	konserter: 'musikk',
 	musikk: 'musikk',
 	standup: 'stand-up',
 	'stand-up': 'stand-up',
@@ -22,6 +25,9 @@ const CATEGORY_BY_NAME: Record<string, CategorySlug> = {
 	teater: 'teater',
 	// A musical is staged drama with songs; `teater` is closer than `show` or `musikk`.
 	musikal: 'teater',
+	// Riksteatret tours and a local premiere. Both halves are staged drama, so `teater` rather
+	// than the `show` that bare `revy` maps to.
+	'teater/revy': 'teater',
 	show: 'show',
 	scenemønstring: 'show',
 	revy: 'show',
@@ -29,7 +35,22 @@ const CATEGORY_BY_NAME: Record<string, CategorySlug> = {
 	// A talk is a gathering people attend, which is what our `mote` covers.
 	føredrag: 'mote',
 	foredrag: 'mote',
+	/*
+	 * A compound name, resolved to the half that describes most of what is under it.
+	 *
+	 * Bømlo files eight productions here: five Senioruniversitetet lectures, a Verdensdagen talk,
+	 * and two actual conferences. `konferanse` would mislabel six of the eight; `mote` is
+	 * under-specific for two, and a conference is a gathering people attend. It also matches
+	 * `føredrag` above, which is the same word in the singular.
+	 */
+	'foredrag/konferanser': 'mote',
 	møte: 'mote',
+	/*
+	 * A pub quiz at the culture-house café. `mote` for the same reason public swimming is `sport`:
+	 * it is something you turn up and take part in, not a performance you watch, so `show` would
+	 * be the wrong shelf.
+	 */
+	quiz: 'mote',
 	kurs: 'kurs',
 	konferanse: 'konferanse',
 	utstilling: 'utstilling',
@@ -206,6 +227,26 @@ export function mapTicket(
 		};
 	}
 
+	/*
+	 * An end, on the sites that state one, resolved the same way and only if it is after the start.
+	 *
+	 * Stord's payload has no `end` at all and Bømlo's has one on every showing, which is why this
+	 * is conditional rather than required. Nothing is invented for the sites that stay quiet: a
+	 * guessed duration in a reader's calendar is a time we made up, and an `ends_at` that is not
+	 * after `starts_at` would make `buildIcal` emit a DTEND saying the event is over as it begins.
+	 */
+	let endsAt: Date | null = null;
+	const endParts = ticket.end ? splitLocalDateTime(ticket.end) : null;
+	if (endParts) {
+		try {
+			const candidate = zonedWallClockToInstant(endParts[0], endParts[1], instance.timezone);
+			if (candidate.getTime() > startsAt.getTime()) endsAt = candidate;
+		} catch {
+			// An unreadable end is dropped, never fatal — the start is what decides whether you
+			// can go, and the showing is still worth importing without it.
+		}
+	}
+
 	const venueName = ticket.location?.trim() || instance.venueFallback;
 	const poster = posterFrom(parent.image);
 
@@ -214,8 +255,7 @@ export function mapTicket(
 		title,
 		category: mapCategory(parent.category),
 		startsAt,
-		// The payload states a start and never an end. A guessed duration is invented data.
-		endsAt: null,
+		endsAt,
 		venueName,
 		venueSlug: slugifyVenue(venueName),
 		description: parent.description?.trim() || null,

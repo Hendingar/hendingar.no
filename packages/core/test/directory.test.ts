@@ -10,7 +10,19 @@ describe('platformOf', () => {
 	});
 
 	it('leaves a source that stands on its own alone', () => {
-		for (const slug of ['stord-kulturhus', 'bomlobibliotek', 'sunnhordland-museum', 'innsendt']) {
+		/*
+		 * `bomlo-kulturhus` is the near-miss worth naming: `bomlo-teater` *is* a platform, so the
+		 * two share the letters `bomlo-` and only the requirement that the whole prefix be
+		 * followed by a hyphen keeps the culture house out of the theatre's group. The test below
+		 * states that rule; this one is the live slug it protects.
+		 */
+		for (const slug of [
+			'stord-kulturhus',
+			'bomlo-kulturhus',
+			'bomlobibliotek',
+			'sunnhordland-museum',
+			'innsendt'
+		]) {
 			expect(platformOf(slug), slug).toBeNull();
 		}
 	});
