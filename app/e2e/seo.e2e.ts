@@ -258,15 +258,23 @@ test('an event with a known venue publishes a real postal address', async ({ req
 	];
 
 	const addresses: Record<string, unknown>[] = [];
+	/*
+	 * A `Place` that carries no `address` at all — which is the state Search Console reported and
+	 * which should now be unreachable. Counted rather than asserted per page so a failure says how
+	 * widespread it is. An event with no venue emits no `Place` and is not this.
+	 */
+	let placesWithoutAddress = 0;
 	for (const path of paths.slice(0, 12)) {
 		const event = jsonLdBlocks(await (await request.get(path!)).text()).find(
 			(b) => b['@type'] === 'Event'
 		);
 		const location = event?.location;
-		if (location && typeof location === 'object' && 'address' in location) {
-			const address = (location as { address?: unknown }).address;
-			if (address && typeof address === 'object')
-				addresses.push(address as Record<string, unknown>);
+		if (!location || typeof location !== 'object') continue;
+		const address = (location as { address?: unknown }).address;
+		if (address && typeof address === 'object') {
+			addresses.push(address as Record<string, unknown>);
+		} else {
+			placesWithoutAddress += 1;
 		}
 	}
 
@@ -283,13 +291,23 @@ test('an event with a known venue publishes a real postal address', async ({ req
 		'at least one event should publish a streetAddress'
 	).toBeGreaterThan(0);
 
+	/*
+	 * Every event now carries an address, down to the country alone.
+	 *
+	 * This replaces an assertion that no `PostalAddress` may hold only a country, on the grounds
+	 * that an empty one claims we know the address and that it is nothing. Search Console reported
+	 * `Missing field "address"` on 11 items — venues nothing has geocoded — and a country is a fact
+	 * about every row here, so it is written rather than the field being dropped. `addressCountry`
+	 * being the *only* key is therefore expected, not a defect; what would be a defect is a key
+	 * present with nothing behind it.
+	 */
+	expect(placesWithoutAddress, 'a Place is emitted only with an address under it').toBe(0);
 	for (const address of addresses) {
 		expect(address['@type']).toBe('PostalAddress');
 		expect(address.addressCountry).toBe('NO');
-		// Never an empty PostalAddress: that asserts we know the address and that it is nothing.
-		expect(Boolean(address.streetAddress ?? address.postalCode ?? address.addressLocality)).toBe(
-			true
-		);
+		for (const field of ['streetAddress', 'postalCode', 'addressLocality']) {
+			if (field in address) expect(String(address[field]).trim()).not.toBe('');
+		}
 		if (address.postalCode) expect(String(address.postalCode)).toMatch(/^\d{4}$/);
 	}
 });

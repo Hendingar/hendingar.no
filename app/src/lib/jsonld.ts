@@ -70,7 +70,18 @@ export function eventJsonLd(event: EventForJsonLd, canonical: string): JsonLd {
 		'@type': 'Event',
 		'@id': canonical,
 		url: canonical,
-		name: event.title,
+		/*
+		 * Decoded, for the same reason `description` is and with the same net-under-the-importers
+		 * argument `@hendingar/core/text` records: a source that hands us an entity-encoded title
+		 * puts it into every machine-readable surface at once. Moster Amfi's `Viser, Historie og
+		 * Humor &laquo;…&raquo;` was live in this field — `importers/mec` did no decoding at all,
+		 * and the `plainText` pass every description gets was never applied to the name.
+		 *
+		 * Falling back to the raw title rather than dropping the field: `plainText` returns null
+		 * for a string that is entirely markup, and an `Event` with no `name` is worse than an
+		 * `Event` with an ugly one.
+		 */
+		name: plainText(event.title) ?? event.title,
 		/*
 		 * The venue's offset, not UTC. Google asks for an offset, and a consumer that ignores one
 		 * still reads the right wall clock — which `18:00Z` for a 20:00 Oslo concert does not give
@@ -104,30 +115,34 @@ export function eventJsonLd(event: EventForJsonLd, canonical: string): JsonLd {
 }
 
 function placeNode(event: EventForJsonLd): JsonLd {
-	const hasAddress = Boolean(
-		event.venueAddress || event.venuePostalCode || event.venueMunicipality
-	);
-
 	return {
 		'@type': 'Place',
 		name: event.venueName,
 		/*
-		 * `location.address` is REQUIRED for Google's Event rich result. The three sources that
-		 * hand us a street address now write one (`packages/core/src/address.ts`); everything else
-		 * still has none, and an empty PostalAddress would be worse than an absent one — it asserts
-		 * we know the address and that it is nothing.
+		 * `location.address` is REQUIRED for Google's Event rich result, and it is now always
+		 * written — which is a deliberate change from "only when we know a street or a
+		 * municipality".
+		 *
+		 * The reasoning it replaces was that an empty PostalAddress asserts we know the address and
+		 * that it is nothing. That objection stands, and this is not that: `addressCountry: 'NO'` is
+		 * the one part of the address we know for every row in the database, because every source
+		 * here is a Norwegian local calendar. A true partial address is not an empty one.
+		 *
+		 * It is still thin, and worth being honest about what it buys: Search Console stops
+		 * reporting `Missing field "address"` on 11 items, but a country is not what helps somebody
+		 * find the hall. The fix that does is a real `addressLocality` — which is a data problem,
+		 * not a markup one. `venues.geocode_status` is `pending` for essentially every row, and the
+		 * importers that could guess a municipality deliberately do not: allevents.in files a hall
+		 * in Sagvåg under "Ølen", and a postal town ("5430 Svortland") is not a municipality
+		 * (Bømlo). Geocoding those rows properly is what turns this field from valid into useful.
 		 */
-		...(hasAddress
-			? {
-					address: {
-						'@type': 'PostalAddress',
-						...(event.venueAddress ? { streetAddress: event.venueAddress } : {}),
-						...(event.venuePostalCode ? { postalCode: event.venuePostalCode } : {}),
-						...(event.venueMunicipality ? { addressLocality: event.venueMunicipality } : {}),
-						addressCountry: 'NO'
-					}
-				}
-			: {}),
+		address: {
+			'@type': 'PostalAddress',
+			...(event.venueAddress ? { streetAddress: event.venueAddress } : {}),
+			...(event.venuePostalCode ? { postalCode: event.venuePostalCode } : {}),
+			...(event.venueMunicipality ? { addressLocality: event.venueMunicipality } : {}),
+			addressCountry: 'NO'
+		},
 		...(event.venueLatitude !== null && event.venueLongitude !== null
 			? {
 					geo: {

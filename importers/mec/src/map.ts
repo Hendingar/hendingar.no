@@ -4,6 +4,7 @@ import {
 	zonedWallClockToInstant
 } from '@hendingar/core/datetime';
 import type { CategorySlug } from '@hendingar/core/taxonomy';
+import { plainText } from '@hendingar/core/text';
 import type { CardTimes, UpstreamEvent } from './api.ts';
 import type { MecInstance } from './instances.ts';
 
@@ -207,7 +208,21 @@ export function mapEvent(
 	card: CardTimes | null,
 	instance: MecInstance
 ): MappedEvent | MapFailure {
-	const title = input.name.trim();
+	/*
+	 * Decoded, not merely trimmed.
+	 *
+	 * `input.name` comes out of the page's JSON-LD, where the site's own text is entity-encoded, and
+	 * this importer did no decoding at all — so Moster Amfi's concert was stored, displayed and
+	 * published as `Viser, Historie og Humor &laquo;Frå Vestlandet til Amerika i 200 år&raquo;`.
+	 * `importers/kyrkja` shipped the same class of bug on twenty-eight events with `B&#248;mlo`,
+	 * and `importers/tec` already runs its titles through the same pass.
+	 *
+	 * The identity below keys on the post id and the day, never the title (see `occurrenceId`), so
+	 * correcting a title updates the row in place instead of abandoning it — and the slug is
+	 * decoration over an authoritative id (`packages/core/src/slug.ts`), so the URL changing costs
+	 * no redirect.
+	 */
+	const title = plainText(input.name) ?? '';
 	const start = readStamp(input.startDate);
 
 	if (!start) {

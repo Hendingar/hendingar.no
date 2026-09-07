@@ -35,7 +35,19 @@ const NAMED_ENTITIES: Record<string, string> = {
 	rsquo: '’',
 	lsquo: '‘',
 	ldquo: '“',
-	rdquo: '”'
+	rdquo: '”',
+	/*
+	 * The guillemets, which are **Norwegian's own quotation marks** — not an exotic character the
+	 * way the rest of an HTML entity table is.
+	 *
+	 * Their absence published a Moster Amfi concert as `Viser, Historie og Humor &laquo;Frå
+	 * Vestlandet til Amerika i 200 år&raquo;`, in the JSON-LD `name`, in the `<h1>`, and in the
+	 * slug, which read `…-laquo-fraa-vestlandet-…`. Any named entity this table does not carry
+	 * survives verbatim — the numeric branch below is generic, the named one is a list — so the
+	 * failure mode is silent and looks like the source's own text.
+	 */
+	laquo: '«',
+	raquo: '»'
 };
 
 function decodeEntities(value: string): string {

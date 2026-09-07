@@ -119,7 +119,7 @@ describe('eventJsonLd', () => {
 		});
 	});
 
-	it('emits an address only when there is one to emit', () => {
+	it('emits an address for every event, down to the country we always know', () => {
 		expect(eventJsonLd(base, CANONICAL)).toMatchObject({
 			location: {
 				'@type': 'Place',
@@ -129,16 +129,50 @@ describe('eventJsonLd', () => {
 		});
 
 		/*
-		 * Google requires `location.address`, and today essentially no venue has one — nothing
-		 * geocodes them. An empty PostalAddress would be worse than none: it asserts we know the
-		 * address and that it is nothing.
+		 * The case Search Console reported on 11 items: a venue nothing has geocoded, so there is no
+		 * street, no postcode and no municipality. `location.address` is required for the Event rich
+		 * result, and the country is a fact about every row here — every source is a Norwegian local
+		 * calendar — so it is written rather than the whole field being dropped.
+		 *
+		 * This deliberately replaces the earlier rule that an absent address beats a thin one. That
+		 * argument was about an *empty* PostalAddress asserting we know the address and that it is
+		 * nothing; a country-only address asserts only what is true.
 		 */
 		expect(eventJsonLd({ ...base, venueMunicipality: null }, CANONICAL)).toMatchObject({
-			location: { '@type': 'Place', name: 'Den Blå Time' }
+			location: {
+				'@type': 'Place',
+				name: 'Den Blå Time',
+				address: { '@type': 'PostalAddress', addressCountry: 'NO' }
+			}
 		});
-		expect(
-			Object.keys(eventJsonLd({ ...base, venueMunicipality: null }, CANONICAL).location ?? {})
-		).not.toContain('address');
+		// And no key claiming a value we do not have.
+		const address = (
+			eventJsonLd({ ...base, venueMunicipality: null }, CANONICAL).location as {
+				address: Record<string, unknown>;
+			}
+		).address;
+		expect(Object.keys(address)).toEqual(['@type', 'addressCountry']);
+	});
+
+	it('decodes an entity-encoded title rather than publishing the markup', () => {
+		/*
+		 * Live on the site: `importers/mec` did no entity decoding, so a Moster Amfi concert reached
+		 * this field as `…Humor &laquo;Frå Vestlandet til Amerika i 200 år&raquo;`. The importer is
+		 * fixed too; this is the net under it, for the rows written before that fix — the same
+		 * argument `plainText` records for descriptions.
+		 */
+		const node = eventJsonLd(
+			{ ...base, title: 'Viser, Historie og Humor &laquo;Frå Vestlandet til Amerika&raquo;' },
+			CANONICAL
+		);
+		expect(node.name).toBe('Viser, Historie og Humor «Frå Vestlandet til Amerika»');
+	});
+
+	it('keeps a name rather than dropping the field when the title is only markup', () => {
+		// `plainText` returns null for a string that reduces to nothing. An Event with an ugly name
+		// beats an Event with no name at all.
+		const node = eventJsonLd({ ...base, title: '<p></p>' }, CANONICAL);
+		expect(node.name).toBe('<p></p>');
 	});
 });
 
@@ -199,14 +233,25 @@ describe('itemListJsonLd', () => {
 describe('jsonLdScript', () => {
 	it('cannot close the script tag it sits in', () => {
 		/*
-		 * The one genuinely dangerous thing about embedding JSON in a document. A description
-		 * quoting "</p>" would end the element early and spill the rest of the JSON into the page.
+		 * The one genuinely dangerous thing about embedding JSON in a document: a value quoting
+		 * "</script>" ends the element early and spills the rest of the JSON into the page.
+		 *
+		 * Asserted against the escaper directly, on a hand-built node. This used to go through
+		 * `eventJsonLd`'s `name`, on the stated grounds that the title was the one field reaching
+		 * the document exactly as a source wrote it — which is no longer true now that the name is
+		 * passed through `plainText` too. Routing the check through a field that launders its input
+		 * would leave `jsonLdScript` asserted by nothing.
 		 */
-		// Asserted on the title, not the description: `plainText` already removes markup from the
-		// latter, so the title is the field that reaches the document exactly as a source wrote it.
-		const out = jsonLdScript(eventJsonLd({ ...base, title: 'Slutt </script> her' }, CANONICAL));
+		const out = jsonLdScript({ '@type': 'Event', name: 'Slutt </script> her' });
 		expect(out).not.toContain('</script>');
 		expect(out).toContain('<\\/script>');
 		expect(JSON.parse(out.replace(/<\\\//g, '</')).name).toBe('Slutt </script> her');
+	});
+
+	it('has no raw markup left to escape by the time a title reaches it', () => {
+		// Not a replacement for the guard above — belt to its braces. `plainText` strips the tag,
+		// so the dangerous substring never reaches the document even before escaping.
+		const node = eventJsonLd({ ...base, title: 'Slutt </script> her' }, CANONICAL);
+		expect(node.name).toBe('Slutt her');
 	});
 });
