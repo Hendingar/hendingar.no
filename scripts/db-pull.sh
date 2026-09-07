@@ -85,26 +85,61 @@ az account show >/dev/null 2>&1 || die "not signed in to Azure. Run: az login"
 container ls --format json 2>/dev/null | grep -q "\"$NAME\"" ||
   die "the local database is not running. Run: pnpm db:up"
 
-# The one secret this needs, and the one thing that cannot be derived.
+# ------------------------------------------------------------------------------------ the secret
+
+# Key Vault first, the environment as an override.
 #
-# It is a GitHub Actions secret (infra/BOOTSTRAP.md) and secrets there are write-only, so there is
-# nothing to fetch — whoever deployed the server has it. Entra ID auth would remove the need for it
-# entirely and is the better answer, but `activeDirectoryAuth` is Disabled on the server today, so
-# the admin password is the only way in. Read from the environment or .env; never a prompt that
-# ends up in shell history, and never written anywhere by this script.
-if [ -z "${POSTGRES_ADMIN_PASSWORD:-}" ]; then
-  cat >&2 <<'EOF'
-error: POSTGRES_ADMIN_PASSWORD is not set.
+# The vault is where the deploy already writes this password (see the note beside it in
+# infra/main.bicep), so `az login` — which this script needs anyway for the firewall — is normally
+# the whole of the access story, and nothing has to sit in a .env on a laptop.
+#
+# An explicitly set POSTGRES_ADMIN_PASSWORD still wins. Same precedence as everything else here:
+# the environment is authoritative, and it is what you reach for when testing a password that has
+# been rotated but not yet redeployed. Entra ID auth on Postgres itself would remove the password
+# from this story altogether, but `activeDirectoryAuth` is Disabled on the server today.
+if [ -n "${POSTGRES_ADMIN_PASSWORD:-}" ]; then
+  echo "using POSTGRES_ADMIN_PASSWORD from the environment"
+else
+  step "Reading the password from Key Vault"
+  KV=$(az keyvault list --resource-group "$RG" --query "[0].name" -o tsv 2>/dev/null || true)
+  if [ -n "$KV" ]; then
+    # `|| true` then a check, rather than letting `set -e` kill it: a missing role assignment is
+    # the expected first-run failure and deserves the explanation below, not a bare az stack trace.
+    POSTGRES_ADMIN_PASSWORD=$(
+      az keyvault secret show --vault-name "$KV" --name postgres-admin-password \
+        --query value -o tsv 2>/dev/null || true
+    )
+  fi
 
-It is the Postgres admin password for the deployed server — the same value held as the
-POSTGRES_ADMIN_PASSWORD GitHub Actions secret. Actions secrets cannot be read back, so it has to
-come from whoever deployed the server.
+  if [ -n "${POSTGRES_ADMIN_PASSWORD:-}" ]; then
+    echo "  read postgres-admin-password from $KV"
+  else
+    cat >&2 <<EOF
+error: could not get the Postgres admin password.
 
-Put it in .env (which is gitignored) or export it for one run:
+Key Vault is the intended source and the deploy writes it there on every run.
+$(
+      if [ -z "${KV:-}" ]; then
+        echo "There is no Key Vault in $RG yet — it arrives with the next deploy of infra/main.bicep."
+      else
+        echo "Found the vault ($KV) but could not read the secret, which is almost certainly the"
+        echo "data-plane role rather than the secret being absent. Reading needs Key Vault Secrets"
+        echo "User on the vault; the deploy can write it with Contributor but cannot grant that."
+        echo ""
+        echo "  az role assignment create --assignee \"\$(az ad signed-in-user show --query id -o tsv)\" \\"
+        echo "    --role 'Key Vault Secrets User' \\"
+        echo "    --scope \"\$(az keyvault show -n $KV --query id -o tsv)\""
+        echo ""
+        echo "See infra/BOOTSTRAP.md. It needs someone with User Access Administrator to run it."
+      fi
+    )
+
+Either way, you can supply it directly for one run:
 
   POSTGRES_ADMIN_PASSWORD='…' pnpm db:pull
 EOF
-  exit 1
+    exit 1
+  fi
 fi
 
 # ------------------------------------------------------------------------------------ the server

@@ -37,8 +37,10 @@ make the browser specs depend on a third party's uptime.
 
 **Reach for `pnpm db:pull` before `pnpm db:bootstrap`.** Both end with a realistic database;
 bootstrap gets there by asking fifteen third parties for rows that already exist in a database we
-own. The pull needs `az login` and the `POSTGRES_ADMIN_PASSWORD`, rewrites the two browser bearer
-tokens on the way in rather than copying them, and applies any migration newer than the deployment.
+own. The pull needs `az login` and one `Key Vault Secrets User` grant (infra/BOOTSTRAP.md) — the
+password comes from the vault the deploy writes, not from a `.env`. It rewrites the two browser
+bearer tokens on the way in rather than copying them, and applies any migration newer than the
+deployment.
 The e2e specs are the exception and still need the seed state — `.claude/skills/local-data/SKILL.md`
 is the whole decision.
 

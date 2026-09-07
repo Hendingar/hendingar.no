@@ -35,10 +35,16 @@ own. A pull is read-only against the deployment, touches no upstream, and can be
 - `az login` — the server's firewall allows Azure services only, so the script opens a rule for
   your public IP and removes it again on exit. It also sweeps any `db-pull-*` rule a killed run
   left behind, because a trap does not survive `kill -9` and home IP addresses get recycled.
-- `POSTGRES_ADMIN_PASSWORD` — in `.env` (gitignored) or exported for one run. It is the
-  `POSTGRES_ADMIN_PASSWORD` GitHub Actions secret, and Actions secrets cannot be read back, so it
-  has to come from whoever deployed the server. Entra ID auth would remove the need for it, but
-  `activeDirectoryAuth` is `Disabled` on the server today.
+- **the `Key Vault Secrets User` role**, once. The password comes from Key Vault, where every
+  deploy writes it, so there is normally nothing to configure and nothing in `.env` — `az login`
+  is the whole of it. Reading a secret is a data-plane action the deploy cannot grant itself
+  (Contributor can write `vaults/secrets` but not role assignments), so the grant is a one-off
+  documented in `infra/BOOTSTRAP.md`. `db:pull` prints that exact command if the read fails,
+  because an authorization error looks identical to a missing secret.
+
+  An explicitly set `POSTGRES_ADMIN_PASSWORD` overrides the vault — reach for it when a password
+  has been rotated but not yet redeployed. Entra ID auth on Postgres itself would remove the
+  password from this story altogether, but `activeDirectoryAuth` is `Disabled` on the server.
 
 **Two browser bearer tokens are rewritten on the way in**, not copied.
 `events.submitter_client_id` is described in `packages/core/src/schema.ts` as "a 122-bit random
