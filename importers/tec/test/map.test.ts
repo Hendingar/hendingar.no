@@ -5,7 +5,6 @@ import { CATEGORY_SLUGS } from '@hendingar/core/taxonomy';
 import { fetchAll, MAX_PAGES, pageUrl, parseCollection, type UpstreamEvent } from '../src/api.ts';
 import { INSTANCES, instanceBySlug, type TecInstance } from '../src/instances.ts';
 import {
-	decodeEntities,
 	isAllDay,
 	isFailure,
 	mapCategory,
@@ -295,6 +294,22 @@ describe('mapEvent, against the mislabelled site', () => {
 	it('maps all four without a single failure', () => {
 		expect(archive.events.map((e) => mapEvent(e, bomloteater)).filter(isFailure)).toEqual([]);
 	});
+
+	it('leaves no HTML entity in a title, on either site', () => {
+		/*
+		 * The class of bug, not one instance of it. This importer had its own `NAMED_ENTITIES` table
+		 * and it was missing `laquo`/`raquo` — Norwegian's own quotation marks — which is how a
+		 * Moster Amfi concert reached the live site as `…Humor &laquo;Frå Vestlandet…&raquo;`. The
+		 * table now comes from `@hendingar/core/text`, so this asserts the property rather than the
+		 * one entity: any named entity the shared decoder lacks survives verbatim and reads as the
+		 * source's own text.
+		 */
+		const ALL_MAPPED = archive.events.map((e) => mapEvent(e, bomloteater));
+		for (const m of ALL_MAPPED) {
+			if (isFailure(m)) continue;
+			expect(m.title, m.title).not.toMatch(/&(#x?[0-9a-fA-F]+|[a-zA-Z]+);/);
+		}
+	});
 });
 
 describe('mapEvent, against the correctly configured site', () => {
@@ -460,14 +475,6 @@ describe('posterSrcsetFrom', () => {
 });
 
 describe('text and slugs', () => {
-	it('decodes numeric and named entities alike', () => {
-		expect(decodeEntities('B&#248;mlo &amp; Stord &#8211; &#x2019;25')).toBe('Bømlo & Stord – ’25');
-	});
-
-	it('leaves something that is not an entity alone', () => {
-		expect(decodeEntities('5 & 10 < 20')).toBe('5 & 10 < 20');
-	});
-
 	it('slugs Norwegian letters the way the rest of the importers do', () => {
 		expect(slugifyVenue('Bømlo Kulturhus')).toBe('boemlo-kulturhus');
 		expect(slugifyVenue('Moster Amfi')).toBe('moster-amfi');

@@ -1,4 +1,5 @@
 import type { RiksteatretInstance } from './instances.ts';
+import { decodeEntities } from '@hendingar/core/text';
 
 /**
  * Reading a Riksteatret venue page (`/spillested/<stad>/`).
@@ -87,46 +88,6 @@ export type ParsedPage = {
 	 */
 	recognised: boolean;
 };
-
-const NAMED_ENTITIES: Record<string, string> = {
-	nbsp: ' ',
-	amp: '&',
-	lt: '<',
-	gt: '>',
-	quot: '"',
-	apos: "'",
-	oslash: 'ø',
-	Oslash: 'Ø',
-	aring: 'å',
-	Aring: 'Å',
-	aelig: 'æ',
-	AElig: 'Æ',
-	ndash: '–',
-	mdash: '—'
-};
-
-/**
- * Entities in the rendered markup.
- *
- * Riksteatret's template escapes every non-ASCII character as a numeric reference — the Bømlo page
- * says `B&#xF8;mlo` in the heading and in every venue name — so this is not optional decoration.
- * Numeric references are handled generically rather than by a list of literals, which is the
- * lesson `importers/kyrkja` paid for with twenty-eight events published as `B&#248;mlo`.
- */
-function decodeEntities(value: string): string {
-	return value.replace(/&(#x?[0-9a-fA-F]+|[a-zA-Z]+);/g, (match, body: string) => {
-		if (body.startsWith('#')) {
-			const code =
-				body[1] === 'x' || body[1] === 'X'
-					? Number.parseInt(body.slice(2), 16)
-					: Number.parseInt(body.slice(1), 10);
-			return Number.isFinite(code) && code > 0 && code <= 0x10ffff
-				? String.fromCodePoint(code)
-				: match;
-		}
-		return NAMED_ENTITIES[body] ?? match;
-	});
-}
 
 /** Tags out, entities decoded, whitespace collapsed. */
 function clean(value: string): string {

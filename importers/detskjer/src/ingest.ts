@@ -33,36 +33,52 @@ export type IngestOptions = {
 };
 
 async function upsertSource(db: Db) {
+	/*
+	 * One object, spread into both halves — the shape the other fourteen importers use.
+	 *
+	 * This was written out twice by hand, and the comment in the update half already knew why that
+	 * is dangerous: "a field written only on insert can never be corrected on a row that already
+	 * exists". Writing the list twice is what lets the two halves drift, and they had: `active` and
+	 * `note` were missing from *both*, so this source could publish events while being excluded from
+	 * every count that means "places this list comes from", and carried whatever note it was
+	 * registered with as a `link` row.
+	 *
+	 * `slug`, `region` and `attribution` stay insert-only, as everywhere else: they are the identity
+	 * and the credit, not settings to converge on.
+	 */
+	const shared = {
+		name: SOURCE.name,
+		url: SOURCE.url,
+		endpoint: SOURCE.endpoint,
+		note:
+			'Innocode sin «bestevent»-plattform, kvitmerkt som Det skjer for Polaris-avisene. ' +
+			'Sida renderer frå eit JSON-API, og det er det vi les — sideveksling går per veke, ikkje per rad.',
+		kind: 'json-api' as const,
+		/*
+		 * Explicitly active.
+		 *
+		 * A source can arrive here already existing as a `link` row, which the directory registers
+		 * with `active: false` because nothing was collecting it. Graduating it without flipping this
+		 * back leaves a source that publishes events while being excluded from every count that
+		 * means "places this list comes from" — visible on the page, invisible in the numbers.
+		 */
+		active: true,
+		// A literal rather than config: this importer reads one source, so there is no instance to
+		// carry it. It matches the cron in .github/workflows/ingest.yml.
+		scheduleCron: '0 5 * * *',
+		iconUrl: SOURCE.iconUrl,
+		// Editorially moderated upstream — see the column comment in schema.ts.
+		trusted: true
+	};
 	const [row] = await db
 		.insert(sources)
 		.values({
 			slug: SOURCE.slug,
-			name: SOURCE.name,
-			url: SOURCE.url,
-			endpoint: SOURCE.endpoint,
 			region: SOURCE.region,
 			attribution: SOURCE.attribution,
-			kind: 'json-api',
-			scheduleCron: '0 5 * * *',
-			iconUrl: SOURCE.iconUrl,
-			// Editorially moderated upstream — see the column comment in schema.ts.
-			trusted: true
+			...shared
 		})
-		.onConflictDoUpdate({
-			target: sources.slug,
-			set: {
-				name: SOURCE.name,
-				url: SOURCE.url,
-				endpoint: SOURCE.endpoint,
-				kind: 'json-api',
-				scheduleCron: '0 5 * * *',
-				// In the update as well as the insert. A field written only on insert can never be
-				// corrected on a row that already exists — the same trap that left
-				// `posterRightsVerified` stuck until the change-detection fix.
-				iconUrl: SOURCE.iconUrl,
-				trusted: true
-			}
-		})
+		.onConflictDoUpdate({ target: sources.slug, set: shared })
 		.returning();
 	if (!row) throw new Error('could not register the source');
 	return row;
@@ -141,7 +157,7 @@ export async function ingest(
 		const { pages, rejected: pageProblems } = await collectPages(read);
 		for (const p of pageProblems) {
 			rejected += 1;
-			problems.push(`page ${p.page}: ${p.problem}`);
+			if (problems.length < 10) problems.push(`page ${p.page}: ${p.problem}`);
 		}
 
 		// The same event appears in more than one weekly window when it spans weeks; last write
@@ -203,7 +219,8 @@ export async function ingest(
 						posterUrl: events.posterUrl,
 						posterSrcset: events.posterSrcset,
 						posterRightsVerified: events.posterRightsVerified,
-						status: events.status
+						status: events.status,
+						sourceUrl: events.sourceUrl
 					})
 					.from(events)
 					.where(and(eq(events.sourceId, source.id), eq(events.externalId, mapped.externalId)))
@@ -226,7 +243,8 @@ export async function ingest(
 					existing.posterUrl === values.posterUrl &&
 					existing.posterSrcset === values.posterSrcset &&
 					existing.posterRightsVerified === values.posterRightsVerified &&
-					existing.status === values.status;
+					existing.status === values.status &&
+					existing.sourceUrl === values.sourceUrl;
 
 				if (same) {
 					unchanged += 1;

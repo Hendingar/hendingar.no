@@ -3,6 +3,7 @@ import type { CategorySlug } from '@hendingar/core/taxonomy';
 import type { UpstreamCategory, UpstreamEvent, UpstreamImage } from './api.ts';
 import type { TecInstance } from './instances.ts';
 import { fromParts, type ParsedAddress } from '@hendingar/core/address';
+import { decodeEntities } from '@hendingar/core/text';
 
 /**
  * Pure mapping: a tribe/events/v1 record → our shape. No I/O, no clock, no randomness.
@@ -11,44 +12,6 @@ import { fromParts, type ParsedAddress } from '@hendingar/core/address';
 /* -------------------------------------------------------------------------------------------- */
 /* Text                                                                                           */
 /* -------------------------------------------------------------------------------------------- */
-
-/**
- * The named entities WordPress actually emits. Numeric references are handled generically below.
- *
- * The plugin returns `wp_kses`-escaped titles, so `&#8211;`, `&#8217;` and `&#038;` arrive in the
- * JSON as literal text rather than as characters — the fixture has all three. `importers/kyrkja`
- * learned what skipping this costs: twenty-eight events published with `B&#248;mlo` in the title.
- */
-const NAMED_ENTITIES: Record<string, string> = {
-	amp: '&',
-	lt: '<',
-	gt: '>',
-	quot: '"',
-	apos: "'",
-	nbsp: ' ',
-	hellip: '…',
-	ndash: '–',
-	mdash: '—',
-	lsquo: '‘',
-	rsquo: '’',
-	ldquo: '“',
-	rdquo: '”'
-};
-
-export function decodeEntities(value: string): string {
-	return value.replace(/&(#x?[0-9a-fA-F]+|[a-zA-Z]+);/g, (match, body: string) => {
-		if (body.startsWith('#')) {
-			const code =
-				body[1] === 'x' || body[1] === 'X'
-					? Number.parseInt(body.slice(2), 16)
-					: Number.parseInt(body.slice(1), 10);
-			return Number.isFinite(code) && code > 0 && code <= 0x10ffff
-				? String.fromCodePoint(code)
-				: match;
-		}
-		return NAMED_ENTITIES[body] ?? match;
-	});
-}
 
 /**
  * Markup out, entities decoded, whitespace collapsed.

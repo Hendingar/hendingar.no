@@ -78,7 +78,20 @@ async function venueIdFor(db: Db, mapped: MappedEvent, organiser: BillettoOrgani
 		})
 		.onConflictDoUpdate({
 			target: venues.slug,
-			set: { name: mapped.venueName, municipality: mapped.municipality }
+			set: {
+				name: mapped.venueName,
+				/*
+				 * Only ever filled in, never blanked — the rule the three address-writing importers
+				 * state explicitly and this one did not follow.
+				 *
+				 * `municipality` was written unconditionally, so a later hit where Billetto omits it
+				 * overwrote a municipality we already held with `null`. That is worse than never
+				 * having read one: the geocoder treats a null as "not yet done", so the value would
+				 * come back and be erased again on the next run, and nothing anywhere would say why
+				 * a venue kept losing its place.
+				 */
+				...(mapped.municipality ? { municipality: mapped.municipality } : {})
+			}
 		})
 		.returning({ id: venues.id });
 	return row?.id ?? null;

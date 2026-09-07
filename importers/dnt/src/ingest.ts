@@ -47,6 +47,7 @@ async function upsertSource(db: Db, association: DntAssociation) {
 		name: association.name,
 		url: calendarUrl(association),
 		endpoint: `https://www.dnt.no/api/activities?associations=${association.associationId}`,
+		note: 'Vi les `/api/activities`, det same kallet aktivitetskalenderen deira sjølv gjer, og hentar omtalen frå `/api/search/activitydetails` — turlaget si eiga side opnar berre eit vindauge og har ingen fungerande lenke per tur.',
 		kind: 'json-api' as const,
 		active: true,
 		scheduleCron: association.scheduleCron,

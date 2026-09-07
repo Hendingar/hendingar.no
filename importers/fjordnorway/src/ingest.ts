@@ -200,7 +200,8 @@ export async function ingestInstance(
 					posterUrl: events.posterUrl,
 					posterSrcset: events.posterSrcset,
 					posterRightsVerified: events.posterRightsVerified,
-					status: events.status
+					status: events.status,
+					sourceUrl: events.sourceUrl
 				})
 				.from(events)
 				.where(and(eq(events.sourceId, source.id), eq(events.externalId, mapped.externalId)))
@@ -223,7 +224,8 @@ export async function ingestInstance(
 				existing.posterUrl === values.posterUrl &&
 				existing.posterSrcset === values.posterSrcset &&
 				existing.posterRightsVerified === values.posterRightsVerified &&
-				existing.status === values.status;
+				existing.status === values.status &&
+				existing.sourceUrl === values.sourceUrl;
 
 			if (same) {
 				unchanged += 1;

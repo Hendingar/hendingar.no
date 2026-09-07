@@ -39,6 +39,7 @@ async function upsertSource(db: Db, team: FotballTeam) {
 		name: team.name,
 		url: teamUrl(team),
 		endpoint: feedUrl(team),
+		note: 'iCal-abonnementet til laget på fotball.no. Vi les heile kampprogrammet og tek berre heimekampane.',
 		/*
 		 * `feed`, not `json-api`. The first use of that enum value, and it is the honest one: this
 		 * is an iCal subscription, and /datasamling says so publicly.
