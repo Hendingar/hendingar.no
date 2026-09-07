@@ -3,6 +3,7 @@ import { isCalendarDate, isIsoWeek } from './datetime.ts';
 import { CATEGORY_SLUGS } from './taxonomy.ts';
 import { VERIFICATION_VERDICTS } from './verification.ts';
 import { RECURRENCE_FREQUENCIES, WEEKDAYS } from './recurrence.ts';
+import { searchTermSchema } from './search.ts';
 
 /**
  * Validation lives here so ONE schema serves every boundary: remote-function arguments, importer
@@ -116,6 +117,22 @@ export const eventQuerySchema = z.object({
 		.regex(/^[a-z0-9-]+$/, 'must be a source slug')
 		.optional(),
 	municipality: z.string().trim().max(100).optional(),
+	/**
+	 * Free text: title, description, venue and organiser, all four at once.
+	 *
+	 * Every word must appear somewhere in the row, but not in the same field — see
+	 * `searchTokens`. Normalised by the shared schema so the URL, the listing and the suggestion
+	 * query cannot disagree about what "  jazz   stord " means.
+	 */
+	q: searchTermSchema.optional(),
+	/**
+	 * One venue, by name.
+	 *
+	 * By name rather than by id because that is what the URL should carry — `?stad=Stord+kyrkje`
+	 * is legible and survives a re-import that renumbers rows, and venue names are what the
+	 * suggestions offer. Matched exactly, so it is a filter rather than a second search.
+	 */
+	venue: z.string().trim().max(200).optional(),
 	limit: z.number().int().min(1).max(100).default(50),
 	/**
 	 * How many rows to skip, for paging a long listing.

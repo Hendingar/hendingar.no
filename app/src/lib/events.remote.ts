@@ -1,7 +1,22 @@
 import { error } from '@sveltejs/kit';
 import { query } from '$app/server';
 import { z } from 'zod';
-import { and, asc, count, desc, eq, gte, isNull, lte, max, min, ne, or, sql } from 'drizzle-orm';
+import {
+	and,
+	asc,
+	count,
+	desc,
+	eq,
+	gte,
+	ilike,
+	isNull,
+	lte,
+	max,
+	min,
+	ne,
+	or,
+	sql
+} from 'drizzle-orm';
 import type { AnyColumn, SQL } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/pg-core';
 import {
@@ -21,6 +36,7 @@ import {
 	weekendSchema
 } from '@hendingar/core/validation';
 import { SUBMITTED_SLUG } from '@hendingar/core/directory';
+import { hasSearch, likePattern, searchTermSchema, searchTokens } from '@hendingar/core/search';
 import { categoryLabel } from '@hendingar/core/taxonomy';
 import {
 	DEFAULT_TIME_ZONE,
@@ -105,9 +121,37 @@ function sourceMarksFor(eventId: SQL | AnyColumn) {
 	`;
 }
 
+/**
+ * The free-text half of the listing filter.
+ *
+ * Every token must appear somewhere in the row — title, description, venue or organiser — but not
+ * in the same field, which is what makes "jazz stord" find the jazz club's concert on Stord. See
+ * `packages/core/src/search.ts` for why this is `ilike` and not full-text search, and for the
+ * measurement that decided it.
+ *
+ * Returns `undefined` for an empty query so it can be dropped straight into an `and(...)` beside
+ * the other optional filters, exactly like `category` and `source`.
+ */
+function matchesSearch(term: string | undefined): SQL | undefined {
+	if (!hasSearch(term)) return undefined;
+	const tokens = searchTokens(term);
+	if (tokens.length === 0) return undefined;
+	return and(
+		...tokens.map((token) => {
+			const pattern = likePattern(token);
+			return or(
+				ilike(events.title, pattern),
+				ilike(events.description, pattern),
+				ilike(venues.name, pattern),
+				ilike(organizers.name, pattern)
+			);
+		})
+	);
+}
+
 export const listEvents = query(
 	eventQuerySchema,
-	async ({ from, to, category, source, municipality, limit, offset }) => {
+	async ({ from, to, category, source, municipality, q, venue, limit, offset }) => {
 		const since = from ? new Date(from) : new Date();
 		// Its own instant, not `since`: a caller can ask for a window starting next month, and
 		// "starts in" is always measured from now rather than from the edge of the window.
@@ -148,6 +192,14 @@ export const listEvents = query(
 			.from(events)
 			.leftJoin(venues, eq(events.venueId, venues.id))
 			.leftJoin(sources, eq(events.sourceId, sources.id))
+			/*
+			 * Joined for the search, not for the select.
+			 *
+			 * The organiser is one of the four fields a query matches against — "bømlo turlag" is
+			 * how somebody looks for the turlag's walks — and a left join cannot change which rows
+			 * come back, only what can be asked about them.
+			 */
+			.leftJoin(organizers, eq(events.organizerId, organizers.id))
 			.where(
 				and(
 					eq(events.status, 'published'),
@@ -192,7 +244,16 @@ export const listEvents = query(
 										and ms.slug = ${source}
 								)`
 							: undefined,
-					municipality ? eq(venues.municipality, municipality) : undefined
+					municipality ? eq(venues.municipality, municipality) : undefined,
+					/*
+					 * One venue, matched exactly on its name.
+					 *
+					 * The suggestions offer venue names and the URL carries one, so this is a
+					 * filter rather than a second search: `?stad=Stord kyrkje` means that place,
+					 * not every place with "stord" in the name.
+					 */
+					venue ? eq(venues.name, venue) : undefined,
+					matchesSearch(q)
 				)
 			)
 			// Ordered by the same effective instant the grouping uses, so day groups stay contiguous.
@@ -347,6 +408,124 @@ export const siteStatus = query(async () => {
  * to an empty page is a worse control than five that all go somewhere. The count also tells you
  * whether a filter is worth pressing before you press it.
  */
+/**
+ * What the one field can offer you, for what you have typed so far.
+ *
+ * The listing's whole filter is a single input (ADR-less by design note: see the canvas that
+ * settled it), so this is the only place a reader is shown what the corpus contains. It answers in
+ * four kinds at once — a place, a kind of thing, a calendar, and a specific event — because a
+ * person typing "bremnes" may mean any of them and the field cannot know which.
+ *
+ * **An empty query is not an empty answer.** Focusing the field with nothing typed returns the
+ * biggest categories and the busiest venues, which is what the chip rows used to say out loud.
+ * Without that, the cost of collapsing forty chips into one field is that nothing is discoverable
+ * until you already know what to ask for — the tradeoff the sketch named, paid off here.
+ *
+ * Every count is upcoming, published, canonical and dated, exactly like the listing itself: a
+ * suggestion that leads to an empty page is worse than no suggestion.
+ */
+export const searchSuggestions = query(searchTermSchema, async (term) => {
+	const database = db();
+	const now = new Date();
+	const live = () =>
+		and(
+			eq(events.status, 'published'),
+			isNull(events.duplicateOfId),
+			datedOnly,
+			or(gte(events.startsAt, now), gte(events.endsAt, now))
+		);
+
+	const tokens = searchTokens(term);
+	const searching = tokens.length > 0;
+	/*
+	 * The name suggestions match on the FIRST token only.
+	 *
+	 * "bremnes kyrkje jul" should still offer the venue Bremnes kyrkje — the later words are the
+	 * reader narrowing what they want there, not part of its name. The free-text row below is what
+	 * carries the whole query, and it is always offered.
+	 */
+	const head = searching ? likePattern(tokens[0]!) : null;
+
+	const [venueRows, categoryRows, sourceRows, eventRows, totalRow] = await Promise.all([
+		database
+			.select({ name: venues.name, total: count() })
+			.from(events)
+			.innerJoin(venues, eq(events.venueId, venues.id))
+			.where(and(live(), head ? ilike(venues.name, head) : undefined))
+			.groupBy(venues.name)
+			.orderBy(desc(count()))
+			.limit(4),
+
+		database
+			.select({ category: events.category, total: count() })
+			.from(events)
+			.where(live())
+			.groupBy(events.category),
+
+		database
+			.select({ slug: sources.slug, name: sources.name, total: count() })
+			.from(events)
+			.innerJoin(sources, eq(events.sourceId, sources.id))
+			.where(and(live(), head ? ilike(sources.name, head) : undefined))
+			.groupBy(sources.slug, sources.name)
+			.orderBy(desc(count()))
+			.limit(3),
+
+		// Named events only when something is typed: a list of four arbitrary titles teaches nobody
+		// anything about a corpus of six hundred.
+		searching
+			? database
+					.select({
+						id: events.id,
+						title: events.title,
+						startsAt: events.startsAt,
+						venueName: venues.name,
+						venueTimeZone: venues.timezone
+					})
+					.from(events)
+					.leftJoin(venues, eq(events.venueId, venues.id))
+					.leftJoin(organizers, eq(events.organizerId, organizers.id))
+					.where(and(live(), matchesSearch(term)))
+					.orderBy(sql`greatest(${events.startsAt}, now())`)
+					.limit(4)
+			: Promise.resolve([]),
+
+		database
+			.select({ total: count() })
+			.from(events)
+			.leftJoin(venues, eq(events.venueId, venues.id))
+			.leftJoin(organizers, eq(events.organizerId, organizers.id))
+			.where(and(live(), matchesSearch(term)))
+	]);
+
+	/*
+	 * Categories are matched in code, against their LABELS.
+	 *
+	 * The slug is `mat-og-drikke` and the label is "Mat og drikke"; a reader types the second. The
+	 * labels live in the taxonomy rather than the database (rule 1), so this is the one axis where
+	 * the filtering cannot be a `where` clause — and with sixteen of them, it does not want to be.
+	 */
+	const categories = categoryRows
+		.map((row) => ({ slug: row.category, label: categoryLabel(row.category), total: row.total }))
+		.filter((row) => !searching || row.label.toLowerCase().includes(tokens[0]!.toLowerCase()))
+		.sort((a, b) => b.total - a.total || a.label.localeCompare(b.label, 'nb-NO'))
+		.slice(0, searching ? 3 : 5);
+
+	return {
+		venues: venueRows,
+		categories,
+		// A calendar is provenance, and provenance is never the first thing offered — only ever in
+		// answer to somebody typing its name.
+		sources: searching ? sourceRows : [],
+		events: eventRows,
+		/** How many events the free text alone would find. Zero is a useful answer here. */
+		total: totalRow[0]?.total ?? 0,
+		searching
+	};
+});
+
+export type SearchSuggestions = Awaited<ReturnType<typeof searchSuggestions>>;
+
 export const listCategoryCounts = query(async () => {
 	const now = new Date();
 	const rows = await db()

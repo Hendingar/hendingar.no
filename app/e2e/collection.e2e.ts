@@ -171,10 +171,9 @@ test('a source row opens its own events in the main listing', async ({ page }) =
 	 * name legitimately appears twice, and dies of a strict-mode violation instead of retrying.
 	 */
 	await expect(page.locator('.list__scope')).toContainText(name);
-	// Its chip is the active one too, marked structurally rather than by colour.
-	await expect(
-		page.getByRole('navigation', { name: 'Filtrer på kjelde' }).locator('[aria-current="page"]')
-	).toContainText(name);
+	// And the filter says so in the field itself: a token naming the calendar, with a link that
+	// takes it back off again. That token IS the listing's filter UI since the chip rows went.
+	await expect(page.locator('.token').filter({ hasText: name })).toHaveCount(1);
 	// And there really are events under it, which is what the row promised by offering a link.
 	expect(await page.locator('article.tile').count()).toBeGreaterThan(0);
 });
