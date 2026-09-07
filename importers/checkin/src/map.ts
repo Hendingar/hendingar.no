@@ -1,4 +1,5 @@
 import type { CategorySlug } from '@hendingar/core/taxonomy';
+import { plainText } from '@hendingar/core/text';
 import { MEDIA_BASE, eventUrl, type CheckinInstance, type UpstreamEvent } from './api.ts';
 
 /**
@@ -180,7 +181,15 @@ export function mapEvent(
 		endsAt,
 		venueName,
 		venueSlug: slugifyVenue(venueName),
-		description: input.sellingDescription?.trim() || null,
+		/*
+		 * The full text first, the teaser as a fallback.
+		 *
+		 * `description` is editor HTML and needs stripping; `sellingDescription` is already plain.
+		 * Preferring the full one is what gives Bømlo Husflidslag a description at all — its teaser
+		 * is empty — and gives Kulleseidkanalen's concerts the 1950 characters the venue wrote
+		 * instead of the 150-character trailer.
+		 */
+		description: plainText(input.description) ?? plainText(input.sellingDescription),
 		// Checkin IS the ticket seller, so the event page is the ticket link.
 		ctaUrl: eventUrl(input.id),
 		posterUrl: poster.url,
