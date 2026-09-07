@@ -21,8 +21,13 @@ test('a category filter narrows the list in the server-rendered HTML', async ({ 
 	const count = (html: string) => html.match(/<article/g)?.length ?? 0;
 	expect(count(filtered)).toBeGreaterThan(0);
 	expect(count(filtered)).toBeLessThan(count(all));
-	// Filtering must work with no JavaScript at all, which component state would not.
-	expect(filtered).toMatch(/aria-current="page"[^>]*>\s*Teater|Teater[^<]*<span[^>]*>\d+/);
+	/*
+	 * Filtering must work with no JavaScript at all, which component state would not — and the page
+	 * has to SAY what it is filtered to in that same HTML. That is the token, server-rendered
+	 * inside the field, with the link that takes it off again.
+	 */
+	expect(filtered).toMatch(/class="token[\s\S]{0,400}Teater/);
+	expect(filtered).toMatch(/class="token__x[^"]*"\s+href="\/hendingar"/);
 });
 
 test('an unknown category shows everything rather than erroring', async ({ request }) => {
@@ -33,36 +38,60 @@ test('an unknown category shows everything rather than erroring', async ({ reque
 	expect(html.match(/<article/g)?.length).toBeGreaterThan(10);
 });
 
-test('clicking a filter updates the URL, the heading and the list', async ({ page }) => {
+test('choosing a kind from the field filters the list and says so', async ({ page }) => {
 	await page.goto('/hendingar');
 	const before = await page.locator('article.tile').count();
 
-	const filters = page.getByRole('navigation', { name: 'Filtrer på kategori' });
-	await filters.getByRole('link', { name: /^Teater/ }).click();
+	/*
+	 * The forty chips are gone; this is the control that replaced them.
+	 *
+	 * Focusing with nothing typed is what makes a category discoverable at all now, so the spec
+	 * exercises exactly that path: open the list, take the offered kind, and check the page changed
+	 * in the three ways a filter has to — the address, the heading, and the events.
+	 */
+	await page.locator('#hendingar-sok').click();
+	await expect(page.locator('.sugg__row').first()).toBeVisible();
+	const teater = page.locator('.sugg__row').filter({ hasText: /^Kategori\s+Teater/ });
+	// Not every corpus has teater in the top five, so type enough to ask for it by name.
+	await page.locator('#hendingar-sok').fill('teater');
+	await expect(teater).toBeVisible();
+	await teater.locator('a').click();
+
 	await page.waitForURL(/kategori=teater/);
-
 	await expect(page.locator('h1')).toHaveText(/teater/i);
-	const after = await page.locator('article.tile').count();
-	expect(after).toBeGreaterThan(0);
-	expect(after).toBeLessThan(before);
+	/*
+	 * Polled, not counted once.
+	 *
+	 * `waitForURL` returns the moment the router swaps the address, which on a client-side
+	 * navigation is before the awaited listing has replaced the old DOM — so a single count here
+	 * reads the previous page's tiles and the assertion fails on a page that is perfectly correct
+	 * a tick later. The same trap the source-row spec in collection.e2e.ts records.
+	 */
+	await expect.poll(() => page.locator('article.tile').count()).toBeLessThan(before);
+	expect(await page.locator('article.tile').count()).toBeGreaterThan(0);
 
-	// The active chip is marked structurally, not by colour alone.
-	await expect(filters.getByRole('link', { name: /^Teater/ })).toHaveAttribute(
-		'aria-current',
-		'page'
-	);
+	/*
+	 * The chosen filter is a token, and the word that produced it is consumed.
+	 *
+	 * Leaving "teater" in the box beside a Teater token would filter twice on the same word and
+	 * show the reader two copies of one decision.
+	 */
+	await expect(page.locator('.token')).toHaveText(/Teater/);
+	await expect(page.locator('#hendingar-sok')).toHaveValue('');
 });
 
-test('the filter only offers categories that have events', async ({ page }) => {
+test('the field only offers categories that have events', async ({ page }) => {
 	await page.goto('/hendingar');
-	const chips = page.locator('nav[aria-label="Filtrer på kategori"] a');
-	const labels = await chips.allInnerTexts();
-	expect(labels.length).toBeGreaterThan(1);
-	// Every chip carries a count, and no count is zero — sixteen chips where eleven lead nowhere
-	// is a worse control than five that all go somewhere.
-	for (const label of labels.slice(1)) {
-		const n = Number(label.trim().split(/\s+/).at(-1));
-		expect(n).toBeGreaterThan(0);
+	await page.locator('#hendingar-sok').click();
+	await expect(page.locator('.sugg__row').first()).toBeVisible();
+
+	const kinds = page.locator('.sugg__row').filter({ hasText: /^Kategori/ });
+	expect(await kinds.count()).toBeGreaterThan(0);
+	// Every suggestion carries its count, and no count is zero: a row that leads to an empty page
+	// is a worse control than one that tells you what it holds before you press it.
+	for (const row of await kinds.all()) {
+		const hint = await row.locator('.sugg__hint').innerText();
+		expect(Number(hint.trim())).toBeGreaterThan(0);
 	}
 });
 
@@ -84,8 +113,9 @@ test('a source filter narrows the list in the server-rendered HTML', async ({ re
 	const count = (html: string) => html.match(/<article/g)?.length ?? 0;
 	expect(count(filtered)).toBeGreaterThan(0);
 	expect(count(filtered)).toBeLessThan(count(all));
-	// Server-rendered, like the category filter — it has to work with no JavaScript at all.
-	expect(filtered).toMatch(/aria-current="page"/);
+	// Server-rendered, like the category filter — it has to work with no JavaScript at all, and it
+	// names the calendar rather than just quietly showing fewer events.
+	expect(filtered).toMatch(/class="token[\s\S]{0,400}Bømlo folkebibliotek/);
 });
 
 test('an unknown source shows everything rather than erroring', async ({ request }) => {
@@ -97,26 +127,46 @@ test('an unknown source shows everything rather than erroring', async ({ request
 	expect(html.match(/<article/g)?.length ?? 0).toBeGreaterThan(10);
 });
 
-test('the two filters compose instead of replacing each other', async ({ page }) => {
+test('two filters compose, and taking one off keeps the other', async ({ page }) => {
+	/*
+	 * The invariant the two chip rows were built for, now carried by the tokens: pressing one
+	 * filter must not silently drop another. Dropping it changes the list in two ways at once and
+	 * nothing on screen explains why.
+	 */
 	await page.goto('/hendingar?kategori=musikk');
 
-	const sources = page.getByRole('navigation', { name: 'Filtrer på kjelde' });
-	await expect(sources).toBeVisible();
-	// Pressing a source must keep the category. Dropping it would change the list in two ways at
-	// once, and neither chip would explain why.
-	const firstSource = sources.getByRole('link').nth(1);
-	const href = await firstSource.getAttribute('href');
-	expect(href, 'a source chip must carry the active category forward').toContain('kategori=musikk');
+	// Focus first, so the assertions below are about the suggestions rather than about whether the
+	// bundle beat Playwright to the keyboard — the field is usable before it is hydrated.
+	await page.locator('#hendingar-sok').click();
+	await expect(page.locator('.sugg__row').first()).toBeVisible();
+	await page.locator('#hendingar-sok').fill('bibliotek');
+	const source = page
+		.locator('.sugg__row')
+		.filter({ hasText: /^Kjelde/ })
+		.first();
+	await expect(source).toBeVisible();
+	const href = await source.locator('a').getAttribute('href');
+	expect(href, 'a source suggestion must carry the active category forward').toContain(
+		'kategori=musikk'
+	);
 	expect(href).toContain('kjelde=');
 
-	await firstSource.click();
+	await source.locator('a').click();
 	await page.waitForURL(/kategori=musikk/);
 	await expect(page).toHaveURL(/kjelde=/);
-	// Both chips read as active, so the page says what it is showing.
-	await expect(
-		page.getByRole('navigation', { name: 'Filtrer på kategori' }).locator('[aria-current="page"]')
-	).toHaveText(/musikk/i);
-	await expect(sources.locator('[aria-current="page"]')).toHaveCount(1);
+	// Both are on screen as tokens, so the page says what it is showing.
+	await expect(page.locator('.token')).toHaveCount(2);
+
+	// Removing the category is a link — it works with no JavaScript — and it keeps the source.
+	const remove = page
+		.locator('.token')
+		.filter({ hasText: /Musikk/ })
+		.locator('.token__x');
+	await expect(remove).toHaveAttribute('href', /kjelde=/);
+	await remove.click();
+	await page.waitForURL(/kjelde=/);
+	await expect(page).not.toHaveURL(/kategori=/);
+	await expect(page.locator('.token')).toHaveCount(1);
 });
 
 test('the source filter names which calendar the list is from', async ({ page }) => {
@@ -155,26 +205,25 @@ test('a phone shows several events at once, not one card per screenful', async (
 	);
 });
 
-test('the category filters do not eat the screen on a phone', async ({ page }) => {
+test('the filter does not eat the screen on a phone', async ({ page }) => {
 	await page.setViewportSize({ width: 390, height: 844 });
 	await page.goto('/hendingar');
 
-	const filters = page.getByRole('navigation', { name: 'Filtrer på kategori' });
-	const box = (await filters.boundingBox())!;
-	// Wrapped, sixteen chips were 271px — a third of the viewport spent on a control before a
-	// single event was visible. One scrollable row is about 40px.
-	expect(box.height, 'filters must not wrap into a block').toBeLessThan(80);
+	/*
+	 * This is the number the whole change was for.
+	 *
+	 * Sixteen category chips plus twenty-three source chips wrapped to roughly 480px on a 390×844
+	 * screen — well over half the viewport spent on a control before one event was visible. One
+	 * field is under 70.
+	 */
+	const box = (await page.locator('.finder').boundingBox())!;
+	expect(box.height, 'the whole filter is one field tall').toBeLessThan(90);
 
-	// It scrolls sideways rather than shrinking the chips into unreadable slivers...
-	const scrollable = await filters.evaluate(
-		(el) => el.scrollWidth > el.clientWidth && getComputedStyle(el).overflowX === 'auto'
-	);
-	expect(scrollable, 'the chip row scrolls instead of wrapping').toBe(true);
-	// ...and the page itself still does not scroll sideways, which is the trap here.
+	// And the page still does not scroll sideways, which is the trap when a control holds tokens.
 	const overflow = await page.evaluate(
 		() => document.documentElement.scrollWidth - document.documentElement.clientWidth
 	);
-	expect(overflow, 'a sideways-scrolling child must not drag the page with it').toBe(0);
+	expect(overflow, 'a token row must not drag the page sideways').toBe(0);
 });
 
 test('the day heading stays visible while its events scroll past', async ({ page }) => {

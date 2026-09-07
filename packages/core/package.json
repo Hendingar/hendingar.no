@@ -22,7 +22,8 @@
 		"./directory": "./src/directory.ts",
 		"./text": "./src/text.ts",
 		"./address": "./src/address.ts",
-		"./standing": "./src/standing.ts"
+		"./standing": "./src/standing.ts",
+		"./search": "./src/search.ts"
 	},
 	"scripts": {
 		"typecheck": "tsc --noEmit",

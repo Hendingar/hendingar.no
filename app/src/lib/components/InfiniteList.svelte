@@ -21,6 +21,8 @@
 		pageSize,
 		category,
 		source,
+		venue,
+		q,
 		headingLevel = 2
 	}: {
 		first: UpcomingEvent[];
@@ -28,6 +30,9 @@
 		pageSize: number;
 		category?: CategorySlug;
 		source?: string;
+		/** The listing's other two axes, carried so page two is filtered like page one. */
+		venue?: string;
+		q?: string;
 		headingLevel?: 2 | 3;
 	} = $props();
 
@@ -48,7 +53,9 @@
 	 */
 	let appliedFilter = $state('');
 	$effect(() => {
-		const key = `${category ?? ''}|${source ?? ''}`;
+		// Every axis, or switching from a search to a category leaves the search's appended pages
+		// sitting under the new first page.
+		const key = `${category ?? ''}|${source ?? ''}|${venue ?? ''}|${q ?? ''}`;
 		if (key === appliedFilter) return;
 		appliedFilter = key;
 		extra = [];
@@ -78,7 +85,9 @@
 				limit: pageSize,
 				offset: events.length,
 				category,
-				source
+				source,
+				venue,
+				q
 			});
 			if (next.length < pageSize) reachedEnd = true;
 			if (next.length > 0) {

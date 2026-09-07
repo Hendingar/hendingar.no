@@ -84,6 +84,10 @@ app/e2e/                 Playwright specs
 app/src/lib/components/submit/   single-use sections owned by `/send-inn`
 app/src/lib/submit.remote.ts     the submission boundary — photo, form, verification
 
+app/src/lib/components/hendingar/  single-use sections owned by `/hendingar`
+app/src/lib/listing-url.ts         filters ↔ URL. The page, the tokens and the suggestions all
+                                   compose addresses through it, so they cannot disagree
+
 services/verifier/src/verifier/
   llm.py                   Entra token → AsyncOpenAI. Rebuilt per call; the credential is reused
   extract.py               the vision call. Nynorsk prompt, strict json_schema
