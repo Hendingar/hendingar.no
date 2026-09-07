@@ -154,7 +154,10 @@ def check_duplicate(request: VerifyRequest) -> CheckResult:
             check="duplicate",
             verdict="fail",
             confidence=90,
-            reasoning=f"Ser ut til å vere same arrangement som «{best.title}» på same stad.",
+            reasoning=(
+                f"Ser ut til å vere same arrangement som «{best.title}» på same stad. "
+                "Er det det, kan du gjere den betre med det du sende i staden."
+            ),
             deterministic=True,
         )
     if score >= 0.5:
@@ -162,7 +165,10 @@ def check_duplicate(request: VerifyRequest) -> CheckResult:
             check="duplicate",
             verdict="uncertain",
             confidence=70,
-            reasoning=f"Liknar på «{best.title}» i same tidsrom. Sjekk om det er den same.",
+            reasoning=(
+                f"Liknar på «{best.title}» i same tidsrom. Er det den same, kan du gjere den "
+                "betre med det du sende i staden for å sende henne inn på nytt."
+            ),
             deterministic=True,
         )
     return CheckResult(

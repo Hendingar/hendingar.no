@@ -32,6 +32,17 @@ const deleted = await db
 			// Never something that is on the site.
 			ne(events.status, 'published'),
 			eq(events.status, 'rejected'),
+			/*
+			 * Never a contribution.
+			 *
+			 * It is `rejected` like every non-listing row, but it is not somebody's abandoned draft:
+			 * it is the provenance of values now on a published event, and
+			 * `event_contributions.submission_id` cascades — so deleting it would strip the credit
+			 * from the event page and leave the poster it supplied there with nothing pointing at
+			 * where it came from. Mirrors `isExpiredSubmission`, which the reader-facing filter uses,
+			 * so the sweep and the page cannot disagree about what has expired. See ADR 0014.
+			 */
+			ne(events.submissionOutcome, 'contributed'),
 			// Untouched for longer than the window. Revising sets `updatedAt`, so a person who is
 			// still working on it keeps it alive.
 			lt(events.updatedAt, cutoff)

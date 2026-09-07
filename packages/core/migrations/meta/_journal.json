@@ -141,6 +141,13 @@
       "when": 1788709412936,
       "tag": "0019_tired_amazoness",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1788799901730,
+      "tag": "0020_aspiring_tarantula",
+      "breakpoints": true
     }
   ]
 }

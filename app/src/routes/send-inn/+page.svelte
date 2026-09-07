@@ -9,12 +9,22 @@
 	// rendered HTML, or someone with JavaScript off can neither read nor submit. See CLAUDE.md.
 	const capabilities = await submissionCapabilities();
 
-	/** Null unless `?rett=` names a positive integer — anything else is ignored, not an error. */
-	const revising = $derived.by(() => {
-		const raw = page.url.searchParams.get('rett');
+	/** Null unless the parameter names a positive integer — anything else is ignored, not an error. */
+	function idParam(name: string): number | null {
+		const raw = page.url.searchParams.get(name);
 		const id = Number(raw);
 		return raw && Number.isSafeInteger(id) && id > 0 ? id : null;
-	});
+	}
+
+	const revising = $derived(idParam('rett'));
+	/**
+	 * `?bidra=<id>` opens the form as a contribution to an event we already have.
+	 *
+	 * Often alongside `?rett=` — that pair is the route out of a submission the duplicate check
+	 * held back: the draft is loaded, and sending it improves the existing row instead of leaving
+	 * a refusal in the queue to expire.
+	 */
+	const contributing = $derived(idParam('bidra'));
 </script>
 
 <PageMeta
@@ -50,8 +60,11 @@
 
 		The id is only a hint about which row to replace; the server checks that the row belongs to
 		this browser and is not already published before touching anything.
+
+		`?bidra=<id>` is the same kind of hint about which published event to improve — re-checked
+		server-side for being published, canonical and the same evening before a single column moves.
 	-->
-	<SubmitForm photoEnabled={capabilities.photo} revisionOf={revising} />
+	<SubmitForm photoEnabled={capabilities.photo} revisionOf={revising} contributeTo={contributing} />
 </section>
 
 <!--

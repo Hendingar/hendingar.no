@@ -35,6 +35,21 @@ describe('submission expiry', () => {
 		expect(isExpiredSubmission({ ...old, updatedAt: hoursAgo(1) }, NOW)).toBe(false);
 	});
 
+	it('never expires a contribution, however old', () => {
+		/*
+		 * It is `rejected` like every non-listing row, and it is not a draft: it is the provenance
+		 * of values now on a published event. `event_contributions.submission_id` cascades, so
+		 * sweeping it would take the credit off the event page and make the poster it supplied
+		 * unrevertable — while the poster stayed exactly where it was. See ADR 0014.
+		 */
+		expect(
+			isExpiredSubmission(
+				submission({ submissionOutcome: 'contributed', updatedAt: hoursAgo(10_000) }),
+				NOW
+			)
+		).toBe(false);
+	});
+
 	it('never expires a published event, however old', () => {
 		// It is the site's content by then, not somebody's draft.
 		expect(

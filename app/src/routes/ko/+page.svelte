@@ -5,6 +5,7 @@
 		VERIFICATION_VERDICT_LABELS
 	} from '@hendingar/core/verification';
 	import { formatEventTime } from '@hendingar/core/datetime';
+	import { describeFields } from '@hendingar/core/contribution';
 	import { SUBMISSION_TTL_HOURS } from '@hendingar/core/submissions';
 	import { categoryLabel } from '@hendingar/core/taxonomy';
 	import { existingClientId } from '../../lib/client-id.ts';
@@ -37,14 +38,26 @@
 			.finally(() => (loaded = true));
 	});
 
-	const waiting = $derived(rows.filter((r) => r.outcome !== 'approved'));
+	/*
+	 * Three buckets, not two.
+	 *
+	 * `waiting` used to be "everything that is not approved", which quietly swept in a
+	 * contribution — a submission that is finished, that changed a live event, and that has
+	 * nothing waiting on anybody. Under "Ventar på deg" it would have read as a refusal, with an
+	 * appeal panel offering to argue a case nobody made against it.
+	 */
+	const waiting = $derived(
+		rows.filter((r) => r.outcome !== 'approved' && r.outcome !== 'contributed')
+	);
+	const contributions = $derived(rows.filter((r) => r.outcome === 'contributed'));
 	const live = $derived(rows.filter((r) => r.outcome === 'approved'));
 
 	const OUTCOME_LABEL: Record<string, string> = {
 		approved: 'Ute',
 		duplicate: 'Finst frå før',
 		shady: 'Stoppa',
-		declined: 'Manglar noko'
+		declined: 'Manglar noko',
+		contributed: 'Bidrag'
 	};
 
 	/**
@@ -62,6 +75,18 @@
 		shady:
 			'Denne kom ikkje gjennom truverd-kontrollen. Er det ei ekte lokal hending, legg til ei lenkje til arrangøren og fyll ut skildringa.'
 	};
+
+	/**
+	 * Did the duplicate check hold this one back?
+	 *
+	 * The one case with a route forward that is not "correct a field": the submission is about an
+	 * event we already have, and it can improve that row instead of expiring. Both verdicts count —
+	 * `fail` is an outright duplicate, and `uncertain` is the near-miss that used to become
+	 * `declined` with nothing anybody could do about it.
+	 */
+	function nearDuplicate(checks: readonly { check: string; verdict: string }[]): boolean {
+		return checks.some((c) => c.check === 'duplicate' && c.verdict !== 'pass');
+	}
 </script>
 
 <svelte:head>
@@ -159,6 +184,23 @@
 						</p>
 
 						<!--
+							The other way forward, where there is one.
+
+							Linked rather than inlined: naming the candidate events means matching this
+							submission against the database, and doing that per card would be a query
+							per row on a page that renders up to fifty. The receipt is already
+							per-submission and already does it — this says the route exists, which is
+							the part /kø is in a position to say.
+						-->
+						{#if nearDuplicate(row.checks)}
+							<p class="card__contribute">
+								Er det same hending som ei vi har frå før? Då kan innsendinga di gjere den betre i
+								staden for å bli sletta —
+								<a href="/send-inn/kvittering/{row.id}">sjå kva du kan bidra med</a>.
+							</p>
+						{/if}
+
+						<!--
 							Two different remedies, and they are not the same thing.
 
 							Revising is for something that is wrong — a date, a category, a missing
@@ -172,6 +214,46 @@
 						{:else}
 							<p class="card__appealed">
 								Du har lagt fram saka di for panelet. Kvar innsending får éin sjanse.
+							</p>
+						{/if}
+					</li>
+				{/each}
+			</ul>
+		{/if}
+
+		{#if contributions.length > 0}
+			<!--
+				Contributions get their own section, and it is not a list of refusals.
+
+				None of these created a listing, which is the point rather than a shortfall: each one
+				filled gaps on an event that was already here. Naming the fields is the whole receipt
+				— it is the only place somebody can see that photographing a poster for an event
+				somebody else submitted actually did something.
+			-->
+			<h2 class="display display--md queue__section">Bidrag frå deg</h2>
+			<ul class="cards">
+				{#each contributions as row (row.id)}
+					<li class="card frame" data-outcome="contributed">
+						<div class="card__top">
+							<span class="pill pill--on">{OUTCOME_LABEL.contributed}</span>
+							<span class="card__when">
+								{formatEventTime(new Date(row.startsAt), row.venueTimeZone)}
+							</span>
+						</div>
+						<h3 class="display display--sm card__h">
+							{#if row.duplicateOf}
+								<a href={row.duplicateOf.path}>{row.duplicateOf.title}</a>
+							{:else}
+								{row.title}
+							{/if}
+						</h3>
+						{#if row.contributed.length > 0}
+							<p class="card__meta">
+								Du la til: {describeFields([...row.contributed])}.
+							</p>
+						{:else}
+							<p class="card__meta">
+								Hendinga hadde alt det du sende. Vi noterte at du stadfesta henne.
 							</p>
 						{/if}
 					</li>
@@ -218,6 +300,19 @@
 	}
 	.queue__section {
 		margin-block: 2.5rem 1rem;
+	}
+	/*
+	 * The other route forward, set apart from the one above it.
+	 *
+	 * "Rett og send inn på nytt" is the answer when something is wrong. This is the answer when
+	 * nothing is — the event exists and the submission can improve it — so it reads as a separate
+	 * offer rather than as a footnote to the correction.
+	 */
+	.card__contribute {
+		margin: 0.6rem 0 0;
+		font-size: 0.875rem;
+		color: var(--peach-dim);
+		max-inline-size: 60ch;
 	}
 	.cards {
 		list-style: none;

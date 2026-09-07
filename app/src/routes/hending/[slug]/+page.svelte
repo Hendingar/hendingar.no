@@ -14,6 +14,7 @@
 	import HeartButton from '../../../lib/components/HeartButton.svelte';
 	import { recordView, viewCounts } from '../../../lib/views.remote';
 	import { markSeen } from '../../../lib/seen.ts';
+	import { describeFields } from '@hendingar/core/contribution';
 	import { linkLabel, safeHttpUrl } from '../../../lib/source-link.ts';
 	import { canonicalUrl } from '../../../lib/origin.ts';
 	import PageMeta from '../../../lib/components/PageMeta.svelte';
@@ -420,6 +421,32 @@
 						{/if}
 					</p>
 				{/if}
+
+				{#if event.contributions.fields.length > 0}
+					<!--
+						What a reader added to this event, credited beside the calendars that reported it.
+
+						`reportedBy` above cannot carry this: it joins `sources`, and a human
+						submission has no source row — which is why the promise to credit a duplicate
+						"kjelda under" was one this page could not keep for the only contributors who
+						have no calendar behind them. An imported row with no poster and one citation
+						is the common case, and somebody walking past the poster is holding both.
+
+						A count of browsers and a list of fields, never a name. A `client_id` is a
+						random value a browser keeps in localStorage and is deliberately not an
+						identity; turning it into a byline would be inventing one. This is as far as
+						the data honestly goes, and it is enough to say the work was not ours.
+					-->
+					<p class="ev__contrib">
+						<span class="muted">
+							{event.contributions.contributors > 1
+								? `${event.contributions.contributors} lesarar har gjort denne betre:`
+								: 'Ein lesar har gjort denne betre:'}
+						</span>
+						{describeFields(event.contributions.fields)} kom frå
+						<a href="/send-inn">nokon som sende det inn</a>.
+					</p>
+				{/if}
 			</aside>
 		</div>
 	</div>
@@ -428,6 +455,17 @@
 <style>
 	.ev__sources {
 		margin-block-start: 1.1rem;
+	}
+	/*
+	 * Credit for a reader's contribution, set at the same weight as the source list above it.
+	 *
+	 * Not a badge and not a boast: it belongs in the provenance column, because that is what it is
+	 * — one more answer to "where did this page's contents come from".
+	 */
+	.ev__contrib {
+		margin-block-start: 0.9rem;
+		font-size: 0.875rem;
+		max-inline-size: 46ch;
 	}
 	.sources {
 		list-style: none;

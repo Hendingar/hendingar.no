@@ -1,21 +1,30 @@
 import { error, json } from '@sveltejs/kit';
 import { and, eq, isNull } from 'drizzle-orm';
-import { events } from '@hendingar/core/schema';
+import { eventContributions, events } from '@hendingar/core/schema';
 import { db } from '../../../../lib/server/db';
 import {
 	MAX_POSTER_BYTES,
 	posterStorageEnabled,
+	removePoster,
 	storePoster
 } from '../../../../lib/server/posters';
 import type { RequestHandler } from './$types';
 
 /**
- * Keep the poster for an event that was approved.
+ * Keep the picture a submission was sent with — on its own event, or on the one it improved.
  *
- * A second request, sent only after the verdict — which is the whole design. The image is not
- * attached to the submission, so an event that turns out to be `declined`, `shady` or a duplicate
- * never has its picture leave the browser at all. Nothing to delete afterwards, because nothing
- * was ever received.
+ * A second request, sent only after the verdict, which is the whole design. The image is not
+ * attached to the submission, so an event that turns out to be `declined`, `shady` or a plain
+ * duplicate never has its picture leave the browser at all. Nothing to delete afterwards, because
+ * nothing was ever received.
+ *
+ * `[id]` is always the **submission**, and the row it writes to depends on what we concluded:
+ *
+ * - `approved` — the submission is the event. Its own `poster_url` is filled.
+ * - `contributed` — the sender confirmed this is an event we already have, and that event has no
+ *   poster. Their photograph fills that gap, and `event_contributions` records where it came from.
+ *   This is the whole reason the outcome exists: an importer copies what a calendar publishes, and
+ *   half those rows have no image, while the person who walked past the poster does.
  *
  * The browser sends a cropped, re-encoded JPEG. The crop box comes from the model that read the
  * poster; cropping there rather than here keeps image processing out of the server entirely.
@@ -45,29 +54,83 @@ export const POST: RequestHandler = async ({ params, request }) => {
 	}
 
 	const database = db();
-	const [row] = await database
-		.select({ id: events.id })
+	const [submission] = await database
+		.select({
+			id: events.id,
+			status: events.status,
+			outcome: events.submissionOutcome,
+			posterUrl: events.posterUrl,
+			duplicateOfId: events.duplicateOfId
+		})
 		.from(events)
-		.where(
-			and(
-				eq(events.id, id),
-				// Sent in from this browser, and published. An unapproved event keeps no picture —
-				// that is the promise, and this is where it is kept.
-				eq(events.submitterClientId, clientId),
-				eq(events.status, 'published'),
-				eq(events.submissionOutcome, 'approved'),
-				// Once only. Without this the endpoint is a way to replace the image on a live
-				// listing at any later date.
-				isNull(events.posterUrl)
-			)
-		)
+		// Sent in from this browser. Nothing else is asked of the id — see the column comment in
+		// schema.ts for what that id is and is not.
+		.where(and(eq(events.id, id), eq(events.submitterClientId, clientId)))
 		.limit(1);
 
-	if (!row) error(404, 'Fann ikkje ei godkjend hending som manglar bilete.');
+	if (!submission) error(404, 'Fann ikkje innsendinga.');
 
-	const url = await storePoster(row.id, body);
+	/*
+	 * Which row gets the picture, and whether it may have one at all.
+	 *
+	 * Both branches require the destination's `poster_url` to be null. An unapproved submission
+	 * keeps no image — that is the promise, and this is where it is kept — and a contribution fills
+	 * a gap or does nothing, because nothing existing is ever replaced (see
+	 * `@hendingar/core/contribution` for why gap-filling is what makes a browser-local id enough
+	 * authority to do this at all).
+	 */
+	let targetId: number | null = null;
+	let contributing = false;
 
-	await database
+	if (
+		submission.status === 'published' &&
+		submission.outcome === 'approved' &&
+		submission.posterUrl === null
+	) {
+		targetId = submission.id;
+	} else if (submission.outcome === 'contributed' && submission.duplicateOfId !== null) {
+		const [canonical] = await database
+			.select({ id: events.id })
+			.from(events)
+			.where(
+				and(
+					eq(events.id, submission.duplicateOfId),
+					eq(events.status, 'published'),
+					// Still canonical — a row since merged into another is not ours to write to.
+					isNull(events.duplicateOfId),
+					isNull(events.posterUrl)
+				)
+			)
+			.limit(1);
+		if (canonical) {
+			targetId = canonical.id;
+			contributing = true;
+		}
+	}
+
+	if (targetId === null) {
+		error(404, 'Fann ikkje ei hending som manglar bilete og kan få ditt.');
+	}
+
+	/*
+	 * Named after the submission that supplied it, never after the row it lands on.
+	 *
+	 * For an approved submission those are the same id, so nothing changes there. For a
+	 * contribution they are not, and naming the blob after the event would let two contributors
+	 * racing on the same gap overwrite each other's bytes while the database pointed both at one
+	 * URL. Named this way a blob is unique, is traceable to the row that owns it without a lookup
+	 * table, and matches `event_contributions.submission_id`.
+	 */
+	const url = await storePoster(submission.id, body);
+
+	/*
+	 * The claim is taken in the WHERE clause, not in the check above.
+	 *
+	 * `poster_url is null` is re-asserted at the moment of writing, so two contributors uploading
+	 * at once cannot both win: the second matches no row, learns it lost, and its blob is removed.
+	 * A read-then-write would have let both through.
+	 */
+	const claimed = await database
 		.update(events)
 		.set({
 			posterUrl: url,
@@ -79,7 +142,38 @@ export const POST: RequestHandler = async ({ params, request }) => {
 			posterRightsVerified: true,
 			updatedAt: new Date()
 		})
-		.where(eq(events.id, row.id));
+		.where(and(eq(events.id, targetId), isNull(events.posterUrl)))
+		.returning({ id: events.id });
+
+	if (claimed.length === 0) {
+		/*
+		 * Somebody filled the gap between the check and the write. Their picture is on the event
+		 * and ours is not needed, so it does not stay in the container — an unreferenced blob
+		 * nobody can attribute is the thing that makes a bucket impossible to clean up.
+		 */
+		await removePoster(submission.id);
+		return json({ posterUrl: null, reason: 'already-illustrated' }, { status: 409 });
+	}
+
+	if (contributing) {
+		/*
+		 * Where it came from, so it can be credited on the event and reverted from it.
+		 *
+		 * `onConflictDoNothing` against the one-offer-per-field index: a retried upload — a flaky
+		 * connection, a reload — must not append a second `poster_url` row for the same submission.
+		 */
+		await database
+			.insert(eventContributions)
+			.values({
+				eventId: targetId,
+				submissionId: submission.id,
+				clientId,
+				field: 'posterUrl',
+				value: url,
+				applied: true
+			})
+			.onConflictDoNothing();
+	}
 
 	return json({ posterUrl: url });
 };

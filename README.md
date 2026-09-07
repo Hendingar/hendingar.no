@@ -19,6 +19,10 @@ lock-in — community-owned infrastructure for public-good information.
 - **Shows its work** — [`/datasamling`](https://ca-hendingar-dev.whitewave-5f5b53f5.swedencentral.azurecontainerapps.io/datasamling)
   is a public status board: every source, how it is collected, how often, and what the last run did
 - **Accepts submissions from anyone** — no account required to add an event
+- **Lets anyone improve an event that is already there** — a photograph for a row that has no
+  poster, a second source, a ticket link. Gaps only: nothing already on an event is overwritten,
+  every contribution is recorded field by field, and contributors are credited beside the
+  calendars ([ADR 0014](docs/decisions/0014-event-enrichment.md))
 - **Verifies submissions with an agent pipeline** — see below
 - **Shows events on a map** — find what's happening near you
 - **Exports openly** — RSS and iCal per location, so your calendar app is a first-class client
@@ -49,7 +53,7 @@ Scope discipline is a feature. hendingar.no is deliberately **not**:
   | `select_content`  | event id, category, which listing it was opened from                 |
   | `click`           | the **host** a link went to, and whether it was a ticket or a source |
   | `add_to_calendar` | event id                                                             |
-  | `submit_result`   | how it was sent in, and which of the four outcomes                   |
+  | `submit_result`   | how it was sent in, and which of the five outcomes                   |
 
   Every parameter is a fact about the _event_, never about the reader. No search terms, no filter
   choices, no scroll depth, no time on page, nothing joinable back to a person. Those are the
@@ -74,10 +78,19 @@ the same answer every time. Two ask a **language model**, because they need judg
 | Corroboration  | rule             | Can it be confirmed against a cited source?                   |
 
 A unanimous confident pass publishes immediately. Everything else is decided the same moment, with
-one of four outcomes — `approved`, `duplicate`, `shady` or `declined` — because there is no queue
-and nobody in it. The person who sent it in is the one who can fix it: they see which check stopped
-it and why, and can correct it in `/kø` and send it again. A submission nobody comes back to is
-deleted after 48 hours, and revising it starts that clock over.
+one of five outcomes — `approved`, `duplicate`, `shady`, `declined` or `contributed` — because there
+is no queue and nobody in it. The person who sent it in is the one who can fix it: they see which
+check stopped it and why, and can correct it in `/kø` and send it again. A submission nobody comes
+back to is deleted after 48 hours, and revising it starts that clock over.
+
+**A duplicate is an invitation, not a refusal.** The events we already hold are mostly imported, and
+imported rows are thin — no poster, one citation, a deliberately vague category, because copying
+what a calendar publishes is honest and guessing at what it does not is not. So when a submission
+turns out to be about an event we have, the sender is offered the useful answer instead of the
+door: their poster, source link, ticket link, end time or description fills whatever that row is
+missing, they are credited on it, and no second listing appears. Only gaps are filled — a field
+that holds something keeps it — which is what makes it safe to let an anonymous browser write to a
+live page at all. See [ADR 0014](docs/decisions/0014-event-enrichment.md).
 
 Nothing is deleted on a model's say-so _while it can still be corrected_: a rejected submission is
 stored as rejected, so a wrong call is recoverable and repeat spam has something to match against.

@@ -55,7 +55,15 @@ export const VERIFICATION_CHECK_QUESTIONS: Record<VerificationCheck, string> = {
 export const VERIFICATION_CHECK_HINTS: Record<VerificationCheck, string> = {
 	plausibility:
 		'Legg til ei lenkje til arrangøren og fyll ut skildringa, så har kontrollen noko å gå på.',
-	duplicate: 'Sjekk om det er ei anna hending enn den vi alt har.',
+	/*
+	 * Two answers now, and the second one is the useful one.
+	 *
+	 * This used to name only the route that assumes we are wrong — "check whether it is a different
+	 * event" — which left the person who agrees with the check holding a poster and a source link
+	 * with nowhere to put them. That is the commoner case, so it is stated first.
+	 */
+	duplicate:
+		'Er det den same, kan du gjere den hendinga betre med det du sende. Er det ei anna, rett tittel, dato eller stad så det syner.',
 	normalisation: 'Sjekk dato, klokkeslett og stad.',
 	categorisation: 'Prøv ein annan kategori.',
 	corroboration:

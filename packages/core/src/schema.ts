@@ -62,7 +62,19 @@ export const submissionOutcomeEnum = pgEnum('submission_outcome', [
 	/** Reads as spam, an advert, or nonsense. Kept, never shown, never apologised for. */
 	'shady',
 	/** Real-looking but failed a check we cannot wave through — a date in the past, no venue. */
-	'declined'
+	'declined',
+	/**
+	 * The same event as one we have, and the sender said so — so it improved that row instead.
+	 *
+	 * Not a fifth flavour of no. `duplicate` means we decided this was a copy and kept it out of
+	 * the way; this means a person confirmed the match and their submission filled gaps on the
+	 * canonical row, which `event_contributions` lists field by field. `duplicate_of_id` names
+	 * the row they improved, exactly as it does for a `duplicate`.
+	 *
+	 * Appended, never inserted: `ALTER TYPE … ADD VALUE` only adds at the end, and the order of a
+	 * Postgres enum is the sort order of every column that uses it.
+	 */
+	'contributed'
 ]);
 
 export const ingestRunStatusEnum = pgEnum('ingest_run_status', [
@@ -424,6 +436,87 @@ export const events = pgTable(
 		index('events_duplicate_of_idx').on(t.duplicateOfId)
 	]
 );
+
+/**
+ * One field, on one event, filled by one submission that turned out to be about the same event.
+ *
+ * This is the record behind an enriched row, and it exists for three reasons the columns on
+ * `events` cannot serve:
+ *
+ * 1. **It is revertable.** A contributed value is authorised by `submitter_client_id`, a
+ *    browser-local bearer token. Gap-filling keeps the damage bounded — nothing existing is ever
+ *    replaced (see `contribution.ts`) — but "bounded" is only useful if the wrong poster on a real
+ *    event can be found and undone, and that means knowing which column came from where.
+ * 2. **It is credit.** Somebody photographed a poster and pasted a link for an event they did not
+ *    submit and get nothing for. The event page names them the way it names an importing source,
+ *    which is the only thing offered in exchange and the reason this happens at all.
+ * 3. **It says whether the idea works.** `applied` false rows are contributions the canonical row
+ *    already had covered — a second, independent human account of a live event, which is the one
+ *    corroboration signal nothing else in the system writes down.
+ *
+ * One row per field rather than one row per contribution with a JSON blob: the questions asked of
+ * this table are "where did this event's poster come from" and "what has this browser contributed",
+ * both of which are a field lookup, and neither of which should need JSON extraction to answer.
+ */
+export const eventContributions = pgTable(
+	'event_contributions',
+	{
+		id: serial('id').primaryKey(),
+		/** The canonical event that was improved. */
+		eventId: integer('event_id')
+			.notNull()
+			.references(() => events.id, { onDelete: 'cascade' }),
+		/**
+		 * The submission that offered it — itself an `events` row, `rejected` and pointing at
+		 * `event_id` through `duplicate_of_id`.
+		 *
+		 * Cascading, and that is the right behaviour rather than a loss: the submission expires
+		 * after 48 hours like any other unapproved row, and once it is gone this row's provenance
+		 * is a client id with nothing behind it. What was *written* stays on the event.
+		 */
+		submissionId: integer('submission_id')
+			.notNull()
+			.references(() => events.id, { onDelete: 'cascade' }),
+		/** Which browser. The same opaque id the hearts and the queue use; never a login. */
+		clientId: text('client_id'),
+		/** The column that was filled — a `ContributableField` from core's `contribution.ts`. */
+		field: text('field').notNull(),
+		/**
+		 * What it was set to, as text.
+		 *
+		 * Stored even for a redundant offer, because that is the corroboration: knowing somebody
+		 * independently gave us the same Facebook link is worth more than knowing they gave us
+		 * *a* link. An instant is written as an ISO string — this column is evidence to read, not
+		 * a value anything queries by.
+		 */
+		value: text('value').notNull(),
+		/**
+		 * Did this actually change the event?
+		 *
+		 * False when the canonical row already held something. Recorded rather than discarded — see
+		 * reason 3 above — and the reason this table is not simply "the list of writes".
+		 */
+		applied: boolean('applied').notNull().default(true),
+		createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
+	},
+	(t) => [
+		// "Where did this event's poster come from", and the event page's contributor credit.
+		index('event_contributions_event_idx').on(t.eventId),
+		// "What did this submission contribute" — the receipt and the queue both ask it.
+		index('event_contributions_submission_idx').on(t.submissionId),
+		/*
+		 * One offer per field per submission.
+		 *
+		 * Makes the write idempotent, which matters because a contribution's poster arrives in a
+		 * SECOND request — the browser uploads it after the verdict, exactly as it does for an
+		 * approved submission — and a retried upload must not append a second `poster_url` row.
+		 */
+		uniqueIndex('event_contributions_submission_field_idx').on(t.submissionId, t.field)
+	]
+);
+
+export type EventContribution = typeof eventContributions.$inferSelect;
+export type NewEventContribution = typeof eventContributions.$inferInsert;
 
 /**
  * One heart, from one browser, on one event.

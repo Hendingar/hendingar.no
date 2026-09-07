@@ -2,6 +2,7 @@ import { command, form, query } from '$app/server';
 import { z } from 'zod';
 import { and, asc, desc, eq, gte, inArray, isNull, lte, ne, or } from 'drizzle-orm';
 import {
+	eventContributions,
 	eventSeries,
 	events,
 	organizers,
@@ -12,6 +13,16 @@ import {
 import { eventFormSchema } from '@hendingar/core/validation';
 import { instantToZonedWallClock, zonedWallClockToInstant } from '@hendingar/core/datetime';
 import { DUPLICATE_WINDOW_MS, comparePair } from '@hendingar/core/consolidate';
+import {
+	CONTRIBUTION_SUGGESTION_THRESHOLD,
+	type ContributableField,
+	type ContributableFields,
+	describeFields,
+	isContributableField,
+	planContribution
+} from '@hendingar/core/contribution';
+import { titleSimilarity } from '@hendingar/core/similarity';
+import type { EventForm } from '@hendingar/core/validation';
 import { submissionCutoff } from '@hendingar/core/submissions';
 import { eventPath } from '@hendingar/core/slug';
 import {
@@ -85,11 +96,25 @@ export const findDuplicate = query(duplicateProbeSchema, async (probe) => {
 			startsAt: events.startsAt,
 			venueName: venues.name,
 			posterUrl: events.posterUrl,
-			venueTimeZone: venues.timezone
+			venueTimeZone: venues.timezone,
+			/*
+			 * What the row is missing, fetched with the match rather than in a second call.
+			 *
+			 * The probe already runs the moment a title and a date exist, which is the earliest
+			 * anybody could be told anything. Telling them "we have this one" and making the
+			 * useful half — "and it has no poster, which you are holding" — a separate round trip
+			 * would put the invitation a request behind the refusal it replaces.
+			 */
+			description: events.description,
+			endsAt: events.endsAt,
+			ctaUrl: events.ctaUrl,
+			sourceUrl: events.sourceUrl,
+			organizerName: organizers.name
 		})
 		.from(events)
 		.leftJoin(venues, eq(events.venueId, venues.id))
 		.leftJoin(sources, eq(events.sourceId, sources.id))
+		.leftJoin(organizers, eq(events.organizerId, organizers.id))
 		.where(
 			and(
 				gte(events.startsAt, from),
@@ -121,6 +146,8 @@ export const findDuplicate = query(duplicateProbeSchema, async (probe) => {
 		posterUrl: string | null;
 		path: string;
 		score: number;
+		/** What this row lacks, so the offer can name it instead of asking for help in general. */
+		gaps: readonly ContributableField[];
 	} | null = null;
 
 	for (const candidate of candidates) {
@@ -135,12 +162,207 @@ export const findDuplicate = query(duplicateProbeSchema, async (probe) => {
 			venueTimeZone: candidate.venueTimeZone,
 			posterUrl: candidate.posterUrl,
 			path: eventPath(candidate.id, candidate.title),
-			score: verdict.score
+			score: verdict.score,
+			// Offered nothing, so the plan reports gaps only — which is the question here.
+			gaps: planContribution(candidate, {}).gaps
 		};
 	}
 
 	return best;
 });
+
+/**
+ * The event somebody has offered to improve, and what improving it would mean.
+ *
+ * Read when the form opens in contribution mode, and it does two jobs. It gives the form the
+ * identity fields to show as fixed — the title, time and place are the canonical row's, and are not
+ * the contributor's to change — and it names the gaps, so the fields that would actually land are
+ * the ones marked worth filling in.
+ *
+ * Deliberately public, unlike `submissionDraft` and `submissionVerdict`: this describes a published
+ * event, which anybody can already read at its own URL. There is nothing here to scope to a
+ * browser, and scoping it would only mean an unauthenticated visitor could not be offered the one
+ * thing this feature exists to offer.
+ */
+export const contributionTarget = query(
+	z.object({ id: z.number().int().positive() }),
+	async ({ id }) => {
+		const [row] = await db()
+			.select({
+				id: events.id,
+				title: events.title,
+				startsAt: events.startsAt,
+				endsAt: events.endsAt,
+				category: events.category,
+				description: events.description,
+				posterUrl: events.posterUrl,
+				sourceUrl: events.sourceUrl,
+				ctaUrl: events.ctaUrl,
+				organizerName: organizers.name,
+				venueName: venues.name,
+				venueMunicipality: venues.municipality,
+				venueTimeZone: venues.timezone,
+				sourceName: sources.name
+			})
+			.from(events)
+			.leftJoin(venues, eq(events.venueId, venues.id))
+			.leftJoin(organizers, eq(events.organizerId, organizers.id))
+			.leftJoin(sources, eq(events.sourceId, sources.id))
+			.where(
+				and(
+					eq(events.id, id),
+					// Published only. An unpublished row is not something to send strangers at.
+					eq(events.status, 'published'),
+					// And canonical: improving a duplicate would write to a row nothing renders.
+					isNull(events.duplicateOfId)
+				)
+			)
+			.limit(1);
+
+		if (!row) return null;
+
+		const zone = row.venueTimeZone ?? 'Europe/Oslo';
+		const start = instantToZonedWallClock(row.startsAt, zone);
+
+		return {
+			id: row.id,
+			title: row.title,
+			path: eventPath(row.id, row.title),
+			startsAt: row.startsAt,
+			category: row.category,
+			/* The wall clock, in the venue's zone — the form's fields are a date and a time. */
+			date: start.date,
+			startTime: start.time,
+			venueName: row.venueName ?? '',
+			municipality: row.venueMunicipality ?? '',
+			venueTimeZone: zone,
+			sourceName: row.sourceName,
+			posterUrl: row.posterUrl,
+			gaps: planContribution(row, {}).gaps
+		};
+	}
+);
+
+export type ContributionTarget = NonNullable<Awaited<ReturnType<typeof contributionTarget>>>;
+
+/**
+ * Which published events this submission could improve instead of sitting in the queue.
+ *
+ * Derived when asked, not stored, and that is the point. A submission held back by an *uncertain*
+ * duplicate check has no `duplicate_of_id` — the server's own comparison said "not the same", which
+ * is why it was `declined` rather than `duplicate` — so the candidate it was compared against was
+ * computed and thrown away. Recomputing it costs one indexed query and needs no column, and it
+ * works for every submission already sitting in a queue from before any of this existed.
+ *
+ * Looser than the rule that decides, on purpose: see `CONTRIBUTION_SUGGESTION_THRESHOLD`. And
+ * ordered by resemblance rather than filtered to one, because the sender is the one who knows —
+ * two showings of the same play score alike and only they can say which evening they meant.
+ *
+ * Scoped to this browser like every other view of somebody's own submission. The events it names
+ * are public; which submission is being matched against them is not.
+ */
+export const contributionCandidates = query(
+	z.object({
+		id: z.number().int().positive(),
+		clientId: z
+			.string()
+			.trim()
+			.min(8)
+			.max(64)
+			.regex(/^[A-Za-z0-9-]+$/, 'client id must be opaque')
+	}),
+	async ({ id, clientId }) => {
+		const database = db();
+		const [submission] = await database
+			.select({
+				id: events.id,
+				title: events.title,
+				startsAt: events.startsAt,
+				venueName: venues.name
+			})
+			.from(events)
+			.leftJoin(venues, eq(events.venueId, venues.id))
+			.where(
+				and(
+					eq(events.id, id),
+					eq(events.submitterClientId, clientId),
+					/*
+					 * Not a published event, and not one that has already contributed.
+					 *
+					 * A submission on the site has nothing to contribute to — it IS the event — and
+					 * offering to fold it into another row would be an unpublish dressed up as a
+					 * favour. One that has contributed is finished, and re-offering it would invite
+					 * a second contribution that deletes the record of the first.
+					 */
+					revisable(),
+					gte(events.updatedAt, submissionCutoff())
+				)
+			)
+			.limit(1);
+
+		if (!submission) return [];
+
+		/* The same ±24h shortlist `submitEvent` builds, so the offer and the write agree. */
+		const from = new Date(submission.startsAt.getTime() - CONTRIBUTION_WINDOW_MS);
+		const to = new Date(submission.startsAt.getTime() + CONTRIBUTION_WINDOW_MS);
+
+		const candidates = await database
+			.select({
+				id: events.id,
+				title: events.title,
+				startsAt: events.startsAt,
+				description: events.description,
+				endsAt: events.endsAt,
+				posterUrl: events.posterUrl,
+				sourceUrl: events.sourceUrl,
+				ctaUrl: events.ctaUrl,
+				organizerName: organizers.name,
+				venueName: venues.name,
+				venueTimeZone: venues.timezone,
+				sourceName: sources.name
+			})
+			.from(events)
+			.leftJoin(venues, eq(events.venueId, venues.id))
+			.leftJoin(organizers, eq(events.organizerId, organizers.id))
+			.leftJoin(sources, eq(events.sourceId, sources.id))
+			.where(
+				and(
+					gte(events.startsAt, from),
+					lte(events.startsAt, to),
+					eq(events.status, 'published'),
+					isNull(events.duplicateOfId),
+					/* Never itself, however the ids happen to line up. */
+					ne(events.id, submission.id)
+				)
+			)
+			.limit(50);
+
+		return (
+			candidates
+				.map((candidate) => ({
+					id: candidate.id,
+					title: candidate.title,
+					path: eventPath(candidate.id, candidate.title),
+					startsAt: candidate.startsAt,
+					venueName: candidate.venueName,
+					venueTimeZone: candidate.venueTimeZone,
+					sourceName: candidate.sourceName,
+					gaps: planContribution(candidate, {}).gaps,
+					score: titleSimilarity(submission.title, candidate.title)
+				}))
+				.filter((candidate) => candidate.score >= CONTRIBUTION_SUGGESTION_THRESHOLD)
+				.sort((a, b) => b.score - a.score)
+				/*
+				 * Three at most. This is a question, and a question with fifteen answers is a list to
+				 * work through — the sender is being asked to recognise their own event, not to audit
+				 * the database.
+				 */
+				.slice(0, 3)
+		);
+	}
+);
+
+export type ContributionCandidate = Awaited<ReturnType<typeof contributionCandidates>>[number];
 
 /**
  * This browser's own submissions, and why each one did or did not go out.
@@ -199,10 +421,9 @@ export const mySubmissions = query(
 					 * Past its two days, and already gone as far as anyone can tell.
 					 *
 					 * Filtered on read as well as swept in the nightly job, so the page never lists
-					 * something that no longer exists in any meaningful sense. Published events are
-					 * exempt: they are the site's content, not somebody's draft.
+					 * something that no longer exists in any meaningful sense.
 					 */
-					or(eq(events.status, 'published'), gte(events.updatedAt, submissionCutoff()))
+					visibleToSender()
 				)
 			)
 			.orderBy(desc(events.updatedAt))
@@ -239,13 +460,36 @@ export const mySubmissions = query(
 					.where(inArray(events.id, duplicateIds))
 			: [];
 
+		/*
+		 * What each contribution actually changed, in one query rather than one per row.
+		 *
+		 * The queue is where somebody looks to see whether their work counted, and for a
+		 * contribution the row itself cannot say: it is `rejected` like every refusal, because it
+		 * is not a listing. Without this the page would show a contribution as indistinguishable
+		 * from a rejection, which is the opposite of what happened.
+		 */
+		const allContributions = await database
+			.select({
+				submissionId: eventContributions.submissionId,
+				field: eventContributions.field,
+				applied: eventContributions.applied
+			})
+			.from(eventContributions)
+			.where(inArray(eventContributions.submissionId, ids))
+			.orderBy(asc(eventContributions.id));
+
 		return rows.map((row) => {
 			const dupe = duplicates.find((d) => d.id === row.duplicateOfId);
+			const mine = allContributions.filter((c) => c.submissionId === row.id);
 			return {
 				...row,
 				path: eventPath(row.id, row.title),
 				checks: allChecks.filter((c) => c.eventId === row.id),
-				duplicateOf: dupe ? { title: dupe.title, path: eventPath(dupe.id, dupe.title) } : null
+				duplicateOf: dupe ? { title: dupe.title, path: eventPath(dupe.id, dupe.title) } : null,
+				contributed: mine
+					.filter((c) => c.applied)
+					.map((c) => c.field)
+					.filter(isContributableField)
 			};
 		});
 	}
@@ -300,8 +544,7 @@ export const submissionDraft = query(
 				and(
 					eq(events.id, id),
 					eq(events.submitterClientId, clientId),
-					// Never a published event: revising is a route onto the site, not a way to edit it.
-					ne(events.status, 'published'),
+					revisable(),
 					// Still inside its window; an expired row is gone as far as /kø is concerned.
 					gte(events.updatedAt, submissionCutoff())
 				)
@@ -437,7 +680,7 @@ export const submissionVerdict = query(
 					eq(events.id, id),
 					eq(events.submitterClientId, clientId),
 					// Expired is gone, here as everywhere else the sender can see their own work.
-					or(eq(events.status, 'published'), gte(events.updatedAt, submissionCutoff()))
+					visibleToSender()
 				)
 			)
 			.limit(1);
@@ -482,6 +725,20 @@ export const submissionVerdict = query(
 			}
 		}
 
+		/*
+		 * What this submission actually changed on the event it improved.
+		 *
+		 * Read from the table rather than recomputed, and that distinction matters here: the poster
+		 * lands in a second request *after* the verdict was returned, so a receipt reloaded a
+		 * moment later is the only place the full answer exists. Recomputing the plan would report
+		 * the gaps as they are now — after the fill — and say nothing was contributed.
+		 */
+		const contributions = await database
+			.select({ field: eventContributions.field, applied: eventContributions.applied })
+			.from(eventContributions)
+			.where(eq(eventContributions.submissionId, row.id))
+			.orderBy(asc(eventContributions.id));
+
 		return {
 			id: row.id,
 			title: row.title,
@@ -501,6 +758,16 @@ export const submissionVerdict = query(
 			sourceUrl: row.sourceUrl,
 			posterUrl: row.posterUrl,
 			duplicateOf,
+			/** Fields this submission filled on the event it improved. */
+			contributed: contributions
+				.filter((c) => c.applied)
+				.map((c) => c.field)
+				.filter(isContributableField),
+			/** Offered, and already there. Corroboration — see the table comment in schema.ts. */
+			corroborated: contributions
+				.filter((c) => !c.applied)
+				.map((c) => c.field)
+				.filter(isContributableField),
 			checks
 		};
 	}
@@ -687,7 +954,487 @@ function toRecurrence(submission: {
 	};
 }
 
-export const submitEvent = form(eventFormSchema, async (submission) => {
+/**
+ * How far from the claimed start a contribution's target may sit.
+ *
+ * The same ±24h window `submitEvent` already shortlists duplicates in, and reused deliberately
+ * rather than tightened: the offer is only ever made about a row from that shortlist, so the write
+ * accepts exactly the set the reader was shown and nothing else.
+ *
+ * A coherence check, and honest about being a soft one — anybody can set their date to match. The
+ * argument that makes this safe is not the window, it is that **a contribution grants strictly less
+ * capability than the front door already grants.** Anyone, with no account, can publish a brand-new
+ * event carrying any poster and any text; filling a null column on an existing row is a subset of
+ * that, it is attributed in `event_contributions`, and it is undone by setting one column back to
+ * null. If open submission is ever gated, this is gated by the same thing.
+ */
+const CONTRIBUTION_WINDOW_MS = 24 * 60 * 60 * 1000;
+
+/**
+ * Rows the sender may still see, and the two reasons a row outlives the 48-hour window.
+ *
+ * `published` is the site's content. `contributed` is the provenance of values now on somebody
+ * else's published event — it is `rejected` like every non-listing row, but nothing is waiting on
+ * anybody and deleting it would cascade the credit off the event page (see ADR 0014 and
+ * `isExpiredSubmission`, which the sweep reads). Everything else is a draft, and a draft nobody
+ * comes back to is deleted.
+ *
+ * One helper rather than the clause written out four times: `/kø`, the receipt, the draft loader
+ * and the candidate probe all have to agree about what still exists, and a page listing something
+ * the next sweep will remove is exactly the drift this prevents.
+ */
+function visibleToSender() {
+	return or(
+		eq(events.status, 'published'),
+		eq(events.submissionOutcome, 'contributed'),
+		gte(events.updatedAt, submissionCutoff())
+	);
+}
+
+/**
+ * A submission the sender may still edit.
+ *
+ * Never a published event — revising is a route onto the site, not a way to edit it — and never a
+ * contribution: that row is the provenance of values already on another event, and revising it
+ * deletes it (`event_contributions.submission_id` cascades), which would take the credit and the
+ * ability to revert with it while the poster stayed exactly where it was.
+ */
+function revisable() {
+	return and(ne(events.status, 'published'), ne(events.submissionOutcome, 'contributed'));
+}
+
+/** Written to `event_contributions.value`; an instant is evidence to read, not a value to query. */
+function contributionValue(value: string | Date | null | undefined): string {
+	if (value instanceof Date) return value.toISOString();
+	return value ?? '';
+}
+
+/**
+ * The shape both halves of `submitEvent` answer with.
+ *
+ * One type rather than a union, because the panel that renders it has to read `outcome`,
+ * `duplicateOf` and `contributed` without first working out which path produced the result. A
+ * union would push that discrimination into every component that touches a verdict.
+ */
+type SubmitResult = {
+	status: 'published' | 'rejected';
+	outcome: 'approved' | 'duplicate' | 'shady' | 'declined' | 'contributed';
+	/** The submission this replaced, when it was a revision. Null for a first attempt. */
+	revisedFrom: number | null;
+	eventId: number | null;
+	sourceUrl: string | null;
+	/**
+	 * The event we already had.
+	 *
+	 * The same field for a `duplicate` and for a `contributed`, because it is the same fact — the
+	 * canonical row this submission is about. Only what happened next differs.
+	 */
+	duplicateOf: {
+		title: string;
+		path: string;
+		startsAt: Date;
+		venueName: string | null;
+		venueTimeZone: string | null;
+	} | null;
+	/** Which of the canonical row's gaps this contribution actually filled. Empty otherwise. */
+	contributed: readonly ContributableField[];
+	/**
+	 * Should the browser send the image it is holding?
+	 *
+	 * Computed here rather than inferred from the outcome, because two different situations want it
+	 * and they have nothing else in common: an approved submission keeps its own poster, and a
+	 * contribution to an event that has none fills that gap. Both are a second request to
+	 * `/ko/<id>/bilete`; the endpoint works out which row it lands on.
+	 */
+	posterWanted: boolean;
+	recommendation: 'publish' | 'review' | 'reject';
+	summary: string;
+	checks: Awaited<ReturnType<typeof verifyEvent>>['checks'];
+};
+
+/**
+ * Improve an event we already have, from a submission about the same event.
+ *
+ * The path out of the dead end. Before this, a submission matching a published event was
+ * `duplicate` — kept, credited to nobody, its photograph never uploaded — and one that merely
+ * *resembled* one was `declined`, because `duplicate` is a blocking check and `uncertain` is not a
+ * pass. In both cases the sender was holding exactly what the row was missing and had nowhere to
+ * put it. See `@hendingar/core/contribution` for what may be filled and why only gaps.
+ *
+ * Nothing here publishes. The submission is stored as another report of the same event — `rejected`
+ * with `duplicate_of_id` set, which is what an imported duplicate looks like — so every listing,
+ * the day grouping and the iCal feed are untouched, and the canonical row simply has fewer nulls.
+ */
+async function contributeToEvent(
+	submission: EventForm,
+	startsAt: Date,
+	endsAt: Date | null
+): Promise<SubmitResult> {
+	const database = db();
+	const targetId = Number(submission.contributeTo);
+
+	/** Everything a refusal has to answer with, so the three of them cannot drift apart. */
+	const refuse = (summary: string): SubmitResult => ({
+		status: 'rejected',
+		/*
+		 * `declined`, not `shady`. Nobody was trying anything: the event they offered to improve
+		 * has been unpublished, merged, or is not the one they were looking at. Their own words are
+		 * still in the form, and sending it as a new event is one click away.
+		 */
+		outcome: 'declined',
+		revisedFrom: null,
+		eventId: null,
+		sourceUrl: submission.sourceUrl ?? null,
+		duplicateOf: null,
+		contributed: [],
+		posterWanted: false,
+		recommendation: 'review',
+		summary,
+		checks: []
+	});
+
+	const [target] = await database
+		.select({
+			id: events.id,
+			title: events.title,
+			startsAt: events.startsAt,
+			endsAt: events.endsAt,
+			description: events.description,
+			posterUrl: events.posterUrl,
+			sourceUrl: events.sourceUrl,
+			ctaUrl: events.ctaUrl,
+			venueId: events.venueId,
+			organizerId: events.organizerId,
+			organizerName: organizers.name,
+			venueName: venues.name,
+			venueTimeZone: venues.timezone
+		})
+		.from(events)
+		.leftJoin(venues, eq(events.venueId, venues.id))
+		.leftJoin(organizers, eq(events.organizerId, organizers.id))
+		.where(
+			and(
+				eq(events.id, targetId),
+				// Published, so the write lands on a row somebody can actually read.
+				eq(events.status, 'published'),
+				// And canonical, or the fill would go to a row no listing renders.
+				isNull(events.duplicateOfId)
+			)
+		)
+		.limit(1);
+
+	if (!target) {
+		return refuse(
+			'Hendinga du ville bidra til finst ikkje lenger, eller er slått saman med ei anna. Send inn som ei ny hending i staden.'
+		);
+	}
+
+	/*
+	 * The claimed event and the target have to be the same evening.
+	 *
+	 * The same window the duplicate shortlist uses, so the write accepts exactly the rows the
+	 * reader could have been offered — see `CONTRIBUTION_WINDOW_MS` for why this is a coherence
+	 * check rather than the thing making it safe.
+	 */
+	if (Math.abs(target.startsAt.getTime() - startsAt.getTime()) > CONTRIBUTION_WINDOW_MS) {
+		return refuse(
+			'Datoen din ligg for langt frå hendinga du ville bidra til, så vi tok det ikkje som same hending. Sjekk datoen, eller send inn som ei ny hending.'
+		);
+	}
+
+	/*
+	 * What is on offer, and what of it the row is missing.
+	 *
+	 * `posterUrl` is deliberately absent from the offer: at this moment the image is still in the
+	 * browser, exactly as it is for any other submission, and it is uploaded only after a verdict.
+	 * So it can never appear in `fill` here — it arrives in its own request, which is what
+	 * `posterWanted` asks for.
+	 */
+	const offered = {
+		description: submission.description,
+		endsAt,
+		organizerName: submission.organizerName,
+		sourceUrl: submission.sourceUrl,
+		ctaUrl: submission.ctaUrl,
+		/*
+		 * Present and undefined, not absent.
+		 *
+		 * `satisfies` keeps the precise value types while making the object total over
+		 * `ContributableField`, so the record-writing below can index it by any field in the plan
+		 * without a cast (CLAUDE.md rule 4) — and `planContribution` reads it as "not offered",
+		 * which is the truth: the image is still in the browser.
+		 */
+		posterUrl: undefined
+	} satisfies ContributableFields;
+	const plan = planContribution(target, offered);
+
+	/*
+	 * Still verified, and the reasoning still stored.
+	 *
+	 * Text a stranger wrote is about to appear on a live event page, so plausibility is asked the
+	 * same question it always asks. What changes is which answers can stop it: the duplicate check
+	 * has already been answered — by a person, in the affirmative, which is why we are here — and
+	 * normalisation is about a date and a place that this submission is not setting. So plausibility
+	 * is the only check that decides anything on this path.
+	 *
+	 * The candidate list names the target, so the panel's duplicate reasoning describes the event
+	 * being improved rather than reporting, confusingly, that nothing similar was found.
+	 */
+	const verdict = await verifyEvent({
+		title: submission.title,
+		description: submission.description,
+		category: submission.category,
+		startsAt: startsAt.toISOString(),
+		endsAt: endsAt?.toISOString() ?? null,
+		venueName: submission.venueName,
+		municipality: submission.municipality,
+		organizerName: submission.organizerName,
+		sourceUrl: submission.sourceUrl,
+		candidates: [
+			{
+				id: target.id,
+				title: target.title,
+				startsAt: target.startsAt.toISOString(),
+				venueName: target.venueName
+			}
+		]
+	});
+
+	const plausibility = verdict.checks.find((check) => check.check === 'plausibility');
+	const blocked = plausibility?.verdict === 'fail';
+
+	/*
+	 * An organiser row, only when its name is actually going to be used.
+	 *
+	 * Upserting it unconditionally would leave an organiser in the table for every contribution
+	 * that named one the event already had — rows nothing points at, which is how a lookup table
+	 * stops being trustworthy.
+	 */
+	let organizerId: number | undefined;
+	if (!blocked && plan.fill.includes('organizerName') && submission.organizerName) {
+		const [organizer] = await database
+			.insert(organizers)
+			.values({ name: submission.organizerName, slug: slugify(submission.organizerName) })
+			.onConflictDoUpdate({ target: organizers.slug, set: { name: submission.organizerName } })
+			.returning({ id: organizers.id });
+		organizerId = organizer?.id;
+	}
+
+	/* The columns to fill, built so a sixth contributable field cannot be added without deciding. */
+	const patch: Partial<{
+		description: string;
+		endsAt: Date;
+		sourceUrl: string;
+		ctaUrl: string;
+		organizerId: number;
+	}> = {};
+
+	if (!blocked) {
+		for (const field of plan.fill) {
+			switch (field) {
+				case 'description':
+					if (offered.description) patch.description = offered.description;
+					break;
+				case 'endsAt':
+					if (endsAt) patch.endsAt = endsAt;
+					break;
+				case 'sourceUrl':
+					if (offered.sourceUrl) patch.sourceUrl = offered.sourceUrl;
+					break;
+				case 'ctaUrl':
+					if (offered.ctaUrl) patch.ctaUrl = offered.ctaUrl;
+					break;
+				case 'organizerName':
+					if (organizerId !== undefined) patch.organizerId = organizerId;
+					break;
+				case 'posterUrl':
+					// Never reachable: the offer above carries no poster. Listed so the compiler
+					// keeps asking, and so the reason is written where somebody would look.
+					break;
+				default: {
+					const unhandled: never = field;
+					throw new Error(`unhandled contributable field: ${String(unhandled)}`);
+				}
+			}
+		}
+	}
+
+	const applied = blocked ? [] : plan.fill.filter((field) => field !== 'posterUrl');
+
+	const outcome = blocked ? ('shady' as const) : ('contributed' as const);
+
+	/*
+	 * One transaction, because a half-applied contribution is unreadable.
+	 *
+	 * The canonical row's new values and the rows saying where they came from have to arrive
+	 * together: an event holding a poster with no `event_contributions` row is a value nobody can
+	 * attribute or revert, which is the one property making this safe.
+	 */
+	const written = await database.transaction(async (tx) => {
+		/*
+		 * A declined near-duplicate becoming a contribution consumes the draft it came from.
+		 *
+		 * This is the 854 case: the submission was `declined` because the duplicate check was
+		 * uncertain, and `?rett=854&bidra=769` loads it back. Leaving the old row behind would show
+		 * the sender a refusal sitting next to their contribution, counting down to deletion.
+		 * Ownership is checked exactly as an ordinary revision checks it.
+		 */
+		let revising: number | null = null;
+		if (submission.revisionOf && submission.clientId) {
+			const [owned] = await tx
+				.select({ id: events.id, seriesId: events.seriesId })
+				.from(events)
+				.where(
+					and(
+						eq(events.id, Number(submission.revisionOf)),
+						eq(events.submitterClientId, submission.clientId),
+						// Never a published event, and never a contribution — see `revisable`.
+						revisable()
+					)
+				)
+				.limit(1);
+			if (owned) {
+				revising = owned.id;
+				if (owned.seriesId !== null) {
+					await tx.delete(events).where(eq(events.seriesId, owned.seriesId));
+				} else {
+					await tx.delete(events).where(eq(events.id, owned.id));
+				}
+			}
+		}
+
+		const [created] = await tx
+			.insert(events)
+			.values({
+				title: submission.title,
+				description: submission.description,
+				category: submission.category,
+				startsAt,
+				endsAt,
+				/*
+				 * The canonical row's venue, not one built from what was typed.
+				 *
+				 * A contribution must not invent a place. `venueName` is an identity field, so a
+				 * contributor naming the building where the calendar named the room would otherwise
+				 * create a second venue that nothing else ever uses — and geocoding would then be
+				 * asked to resolve it.
+				 */
+				venueId: target.venueId,
+				organizerId: organizerId ?? target.organizerId,
+				sourceUrl: submission.sourceUrl,
+				ctaUrl: submission.ctaUrl,
+				status: 'rejected',
+				submissionMethod: submission.method,
+				submissionOutcome: outcome,
+				submitterClientId: submission.clientId ?? null,
+				/* Another report of the same event — the same column an imported duplicate uses. */
+				duplicateOfId: target.id,
+				verificationNotes: verdict.summary
+			})
+			.returning({ id: events.id });
+
+		if (created) {
+			await tx.insert(verifications).values(
+				verdict.checks.map((check) => ({
+					eventId: created.id,
+					check: check.check,
+					verdict: check.verdict,
+					confidence: check.confidence,
+					reasoning: check.reasoning,
+					model: check.model,
+					deterministic: check.deterministic
+				}))
+			);
+		}
+
+		if (created && !blocked) {
+			if (Object.keys(patch).length > 0) {
+				await tx
+					.update(events)
+					.set({ ...patch, updatedAt: new Date() })
+					.where(eq(events.id, target.id));
+			}
+
+			/*
+			 * Both halves of the plan are recorded, and `applied` tells them apart.
+			 *
+			 * A redundant offer is not noise: it is a second, independent human account of a live
+			 * event, which is the corroboration signal nothing else in this system writes down.
+			 * See the table comment in schema.ts.
+			 */
+			const rows = [
+				...applied.map((field) => ({
+					eventId: target.id,
+					submissionId: created.id,
+					clientId: submission.clientId ?? null,
+					field,
+					value: contributionValue(offered[field]),
+					applied: true
+				})),
+				...plan.redundant.map((field) => ({
+					eventId: target.id,
+					submissionId: created.id,
+					clientId: submission.clientId ?? null,
+					field,
+					value: contributionValue(offered[field]),
+					applied: false
+				}))
+			];
+			if (rows.length > 0) await tx.insert(eventContributions).values(rows);
+		}
+
+		return { id: created?.id ?? null, revising };
+	});
+
+	/*
+	 * What happened, said plainly enough to be worth reading.
+	 *
+	 * Three different things can have happened and they are not interchangeable: the row gained
+	 * something, the row already had everything and gained a witness, or plausibility refused the
+	 * text. Only the last is a no.
+	 */
+	const posterWanted = !blocked && plan.gaps.includes('posterUrl');
+	let summary: string;
+	if (blocked) {
+		summary = verdict.summary;
+	} else if (applied.length > 0) {
+		summary = `«${target.title}» fekk ${describeFields(applied)} frå deg.`;
+	} else if (posterWanted) {
+		summary = `Hendinga hadde alt det du skreiv. Manglar ho framleis bilete, er ditt det som blir brukt.`;
+	} else {
+		summary =
+			'Hendinga hadde alt det du sende, så ingenting blei endra — men vi har notert at du stadfesta henne uavhengig.';
+	}
+
+	return {
+		status: 'rejected',
+		outcome,
+		revisedFrom: written.revising,
+		eventId: written.id,
+		sourceUrl: submission.sourceUrl ?? null,
+		duplicateOf: {
+			title: target.title,
+			path: eventPath(target.id, target.title),
+			startsAt: target.startsAt,
+			venueName: target.venueName,
+			venueTimeZone: target.venueTimeZone
+		},
+		contributed: applied,
+		posterWanted,
+		recommendation: verdict.recommendation,
+		summary,
+		checks: verdict.checks
+	};
+}
+
+/*
+ * Annotated, so both paths are held to the same shape.
+ *
+ * Without it TypeScript infers a union of three object literals and the panel has to discriminate
+ * before it can read `outcome` — and a field one branch forgets becomes a property that silently
+ * does not exist on some results. `sourceUrl` was already missing from one of them.
+ */
+export const submitEvent = form(eventFormSchema, async (submission): Promise<SubmitResult> => {
 	const database = db();
 	// A poster gives a wall clock, not an instant. Resolve it in the venue's zone, not the
 	// server's — otherwise every deployment outside Norway stores the wrong time.
@@ -699,6 +1446,18 @@ export const submitEvent = form(eventFormSchema, async (submission) => {
 	const endsAt = submission.endTime
 		? zonedWallClockToInstant(submission.date, submission.endTime, submission.timeZone)
 		: null;
+
+	/*
+	 * The sender said this is an event we already have, so it improves that row instead.
+	 *
+	 * Branching here, before the venue is upserted and before anything is decided, because almost
+	 * everything below is about creating a listing and a contribution creates none: no venue is
+	 * invented from what was typed (the place is the canonical row's and is not the contributor's
+	 * to change), no recurrence is expanded, and no row reaches any listing.
+	 */
+	if (submission.contributeTo) {
+		return await contributeToEvent(submission, startsAt, endsAt);
+	}
 
 	// Shortlist possible duplicates in SQL — the database is better at searching than a model is,
 	// and it keeps the model's job to the part that needs judgement.
@@ -903,7 +1662,10 @@ export const submitEvent = form(eventFormSchema, async (submission) => {
 				outcome: 'declined' as const,
 				revisedFrom: null,
 				eventId: null,
+				sourceUrl: submission.sourceUrl ?? null,
 				duplicateOf: null,
+				contributed: [],
+				posterWanted: false,
 				recommendation: 'review' as const,
 				summary: 'Gjentakinga traff ingen datoar. Sjekk vekedag og første dato, og prøv igjen.',
 				checks: verdict.checks
@@ -947,13 +1709,14 @@ export const submitEvent = form(eventFormSchema, async (submission) => {
 					eq(events.id, Number(submission.revisionOf)),
 					eq(events.submitterClientId, submission.clientId),
 					/*
-					 * Never a published event.
+					 * Never a published event, and never a contribution.
 					 *
 					 * Once something is out, editing it through this path would be a way to change
 					 * a live listing with nothing but a browser-local id — which is a bearer token,
 					 * not a credential. Revision is for getting a rejected submission over the line.
+					 * See `revisable` for why a contribution is excluded too.
 					 */
-					ne(events.status, 'published')
+					revisable()
 				)
 			)
 			.limit(1);
@@ -1063,6 +1826,10 @@ export const submitEvent = form(eventFormSchema, async (submission) => {
 		/* Echoed back so the verdict can link it: the sender needs to see the URL we judged. */
 		sourceUrl: submission.sourceUrl ?? null,
 		duplicateOf,
+		/* Nothing was improved on this path — a new listing was created, or nothing was. */
+		contributed: [],
+		/* An approved submission keeps its own picture; every other outcome keeps none. */
+		posterWanted: outcome === 'approved',
 		recommendation: verdict.recommendation,
 		summary: recurrence
 			? `${verdict.summary} Lagra som ${describeRecurrence(recurrence)} — ${inserted.length} datoar dei neste ${HORIZON_WEEKS} vekene.`

@@ -2,8 +2,14 @@
 	import { page } from '$app/state';
 	import { SUBMISSION_TTL_HOURS } from '@hendingar/core/submissions';
 	import VerdictPanel from '../../../../lib/components/submit/VerdictPanel.svelte';
+	import ContributeOffer from '../../../../lib/components/submit/ContributeOffer.svelte';
 	import { existingClientId } from '../../../../lib/client-id.ts';
-	import { submissionVerdict, type SubmissionVerdict } from '../../../../lib/submit.remote';
+	import {
+		contributionCandidates,
+		submissionVerdict,
+		type ContributionCandidate,
+		type SubmissionVerdict
+	} from '../../../../lib/submit.remote';
 
 	/**
 	 * The answer to one submission, at a URL.
@@ -22,6 +28,19 @@
 	let phase = $state<'loading' | 'ready' | 'notmine' | 'failed'>('loading');
 	let verdict = $state<SubmissionVerdict | null>(null);
 
+	/**
+	 * Events this submission could improve instead of expiring.
+	 *
+	 * Fetched alongside the verdict rather than behind a click, because it is the answer to the
+	 * question the verdict raises. A duplicate check reading "liknar på «Rolfsnes Marknaden»" used
+	 * to be the end of the road: the only routes forward were to edit the title until it stopped
+	 * matching, or to let the submission be deleted with the poster and the source link still in it.
+	 *
+	 * Best effort. A failed probe costs a missing offer, never the receipt itself — the sender is
+	 * here to read a verdict, and that has already arrived.
+	 */
+	let candidates = $state<readonly ContributionCandidate[]>([]);
+
 	$effect(() => {
 		const clientId = existingClientId();
 		if (!clientId || !Number.isSafeInteger(id) || id <= 0) {
@@ -32,8 +51,19 @@
 			.then((result) => {
 				verdict = result;
 				phase = result ? 'ready' : 'notmine';
+				/*
+				 * Only where there is still something to do with it. An approved submission is on
+				 * the site, and one that has already contributed has been through this.
+				 */
+				if (!result || result.outcome === 'approved' || result.outcome === 'contributed') return;
+				return contributionCandidates({ id, clientId }).then((found) => {
+					candidates = found;
+				});
 			})
-			.catch(() => (phase = 'failed'));
+			.catch(() => {
+				// A verdict already on screen is not lost to a failed follow-up probe.
+				if (phase === 'loading') phase = 'failed';
+			});
 	});
 </script>
 
@@ -70,12 +100,14 @@
 	{:else}
 		<h1 class="visually-hidden">Kvittering for {verdict.title}</h1>
 		<!--
-			No `poster` prop.
+			The stored poster, never a local one.
 
 			The image the fields were read from lives in the browser that sent it, and it is only
-			ever uploaded after a verdict of `approved`. So on this page — which is reached by
-			reload or by opening the URL later — an approved submission shows its stored poster and
-			an unapproved one shows none, which is exactly what the panel's copy promises.
+			ever uploaded after a verdict — for an approved submission onto its own row, and for a
+			contribution onto the event it improved. So on this page, which is reached by reload or
+			by opening the URL later, an approved submission shows its stored poster and everything
+			else shows none: a contribution's picture is on the canonical event, not on this row.
+			Either way the panel's copy matches what is on screen.
 		-->
 		<VerdictPanel
 			status={verdict.status}
@@ -85,11 +117,22 @@
 			checks={verdict.checks}
 			sourceUrl={verdict.sourceUrl}
 			poster={verdict.posterUrl}
+			contributed={verdict.contributed}
 		/>
+
+		{#if candidates.length > 0}
+			<ContributeOffer submissionId={verdict.id} {candidates} />
+		{/if}
 
 		<p class="receipt__actions">
 			{#if verdict.outcome === 'approved'}
 				<a class="btn btn--solid" href={verdict.path}>Sjå hendinga</a>
+			{:else if verdict.outcome === 'contributed'}
+				<!-- The event they improved, not their own row: theirs is a record, not a listing. -->
+				{#if verdict.duplicateOf}
+					<a class="btn btn--solid" href={verdict.duplicateOf.path}>Sjå hendinga</a>
+				{/if}
+				<a class="btn" href="/send-inn">Send inn ei anna hending</a>
 			{:else}
 				<a class="btn btn--solid" href="/send-inn?rett={verdict.id}">Rett og send inn på nytt</a>
 			{/if}

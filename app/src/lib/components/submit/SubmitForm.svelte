@@ -20,11 +20,14 @@
 	} from '@hendingar/core/verification';
 	import {
 		cropSuggestion,
+		contributionTarget,
 		findDuplicate,
 		submissionDraft,
 		submissionVerdict,
-		submitEvent
+		submitEvent,
+		type ContributionTarget
 	} from '../../submit.remote';
+	import { describeFields } from '@hendingar/core/contribution';
 	import { ensureClientId, existingClientId } from '../../client-id.ts';
 	import { claimTypedBeforeHydration } from '../../typed-before-hydration.ts';
 	import { cropToThumbnail, type CapturedImage } from '../../poster.ts';
@@ -40,12 +43,32 @@
 
 	let {
 		photoEnabled,
-		revisionOf = null
+		revisionOf = null,
+		contributeTo = null
 	}: {
 		photoEnabled: boolean;
 		/** Set when this form is revising a submission that did not pass its checks. */
 		revisionOf?: number | null;
+		/**
+		 * Set when this submission is improving an event we already have, rather than adding one.
+		 *
+		 * `?bidra=<id>`. Reached two ways, and both matter: from the duplicate banner below, before
+		 * anything has been sent, and from a receipt or the queue for a submission the duplicate
+		 * check already held back — which is the case this exists for.
+		 */
+		contributeTo?: number | null;
 	} = $props();
+
+	/**
+	 * The event being improved, once we know it is real.
+	 *
+	 * Null while loading and null if the id names nothing publishable, and the form behaves as an
+	 * ordinary submission in both cases — which is the right failure. `?bidra=` is a hint from a
+	 * URL, so a stale or invented id must leave somebody in front of a working form rather than in
+	 * front of an error about a query parameter.
+	 */
+	let target = $state<ContributionTarget | null>(null);
+	const contributing = $derived(target !== null);
 
 	/*
 	 * Who is sending this, so they can find it again in /kø and revise it until it passes.
@@ -73,6 +96,38 @@
 	 * shows an empty form as though that were the answer.
 	 */
 	let revisionLoaded = $state(false);
+	let targetLoaded = $state(false);
+
+	$effect(() => {
+		if (!contributeTo || targetLoaded) return;
+		void contributionTarget({ id: contributeTo })
+			.then((found) => {
+				target = found;
+				/*
+				 * Fill in the event's own identity — but only when there is no draft coming.
+				 *
+				 * `f.set` replaces rather than merges (see the note on `prefill`), so doing this
+				 * alongside a revision would race the draft and one of the two would win at random.
+				 * With `?rett=` the draft already describes the same event, near enough by
+				 * definition: it is what the duplicate check matched in the first place.
+				 */
+				if (found && !revisionOf) {
+					f.set({
+						title: found.title,
+						category: found.category,
+						date: found.date,
+						startTime: found.startTime,
+						venueName: found.venueName,
+						municipality: found.municipality || undefined
+					});
+					mode = 'form';
+				}
+			})
+			.catch(() => {
+				// An ordinary submission form is a working page. An error about `?bidra=` is not.
+			})
+			.finally(() => (targetLoaded = true));
+	});
 
 	/**
 	 * The checks that did not pass on the submission being corrected.
@@ -252,7 +307,15 @@
 	$effect(() => {
 		const result = verdict;
 		if (!result || posterState !== 'idle') return;
-		if (result.outcome !== 'approved' || !result.eventId || !poster) return;
+		/*
+		 * `posterWanted` rather than the outcome.
+		 *
+		 * Two unrelated situations want the image and they have nothing else in common: an approved
+		 * submission keeps its own poster, and a contribution fills the gap on an event that has
+		 * none. The server decides which, because only it knows whether the event being improved
+		 * already had a picture — the browser asking "was this approved?" cannot tell.
+		 */
+		if (!result.posterWanted || !result.eventId || !poster) return;
 
 		posterState = 'saving';
 		void (async () => {
@@ -893,10 +956,42 @@
 				source — a picture or a page — is what makes "check this" a request they can act on,
 				since it tells them what to check it against.
 			-->
-			<p class="label">{INTRO_LABEL[method]}</p>
-			<h2 class="display display--md">{INTRO_HEADING[method]}</h2>
-			{#if method !== 'form'}
-				<p class="form__read">{INTRO_LEDE[method]}</p>
+			{#if target}
+				<!--
+					A contribution is a different request, so it says so instead of borrowing the
+					submission form's heading.
+
+					What lands and what does not is stated up front and specifically, because the
+					fields below cannot say it: title, time and place belong to the event being
+					improved, and the boxes holding them are read-only. Everything else fills a gap
+					only where there is one — nothing already on the event is replaced.
+				-->
+				<p class="label">Bidrag</p>
+				<h2 class="display display--md">Gjer denne betre</h2>
+				<p class="form__read">
+					Du bidreg til <a href={target.path}>{target.title}</a> —
+					{formatEventTime(new Date(target.startsAt), target.venueTimeZone) +
+						(target.venueName ? ` · ${target.venueName}` : '')}{target.sourceName
+						? `, frå ${target.sourceName}`
+						: ''}.
+				</p>
+				{#if target.gaps.length > 0}
+					<p class="form__from">
+						Ho manglar {describeFields([...target.gaps])}. Fyller du inn noko av det, blir det
+						hennar. Det som alt står der, står der framleis.
+					</p>
+				{:else}
+					<p class="form__from">
+						Ho har alt vi treng, så eit bidrag endrar ingenting no — men vi noterer at du stadfesta
+						henne.
+					</p>
+				{/if}
+			{:else}
+				<p class="label">{INTRO_LABEL[method]}</p>
+				<h2 class="display display--md">{INTRO_HEADING[method]}</h2>
+				{#if method !== 'form'}
+					<p class="form__read">{INTRO_LEDE[method]}</p>
+				{/if}
 			{/if}
 			<!--
 				The provenance sentence, said once and here.
@@ -944,18 +1039,26 @@
 			{/if}
 		</div>
 
-		{#if likelyDuplicate && !duplicateDismissed}
+		{#if likelyDuplicate && !duplicateDismissed && !contributing}
 			<!--
 				Advisory, and above the fields it would save someone filling in.
 
 				Never a block. Two showings of the same play on consecutive evenings score alike on
 				title and venue, and the person in front of us knows which one they went to — so this
 				names what we found, links to it, and gets out of the way.
+
+				It used to end with "treng du ikkje sende inn på nytt", which was true and was also a
+				dead end: somebody holding a photograph of the poster and a link to the Facebook
+				event was being told, politely, that their contribution had nowhere to go. The event
+				we found is frequently an imported row with neither. So the same finding now offers
+				the useful answer, and names what the row is short of — a specific ask, rather than
+				an invitation to help in general.
 			-->
 			<aside class="dupe-warn">
 				<p class="label">Finst denne alt?</p>
 				<p class="dupe-warn__lede">
-					Vi har ei hending som liknar. Er det den same, treng du ikkje sende inn på nytt.
+					Vi har ei hending som liknar. Er det den same, treng du ikkje sende henne inn på nytt —
+					men du kan gjere henne betre.
 				</p>
 				<a class="dupe-warn__link" href={likelyDuplicate.path} target="_blank" rel="noopener">
 					{likelyDuplicate.title} →
@@ -964,13 +1067,25 @@
 					{formatEventTime(new Date(likelyDuplicate.startsAt), likelyDuplicate.venueTimeZone) +
 						(likelyDuplicate.venueName ? ` · ${likelyDuplicate.venueName}` : '')}
 				</p>
-				<button
-					type="button"
-					class="dupe-warn__dismiss"
-					onclick={() => (duplicateDismissed = true)}
-				>
-					Nei, dette er ei anna hending — hald fram
-				</button>
+				{#if likelyDuplicate.gaps.length > 0}
+					<p class="dupe-warn__gaps">
+						Ho manglar {describeFields([...likelyDuplicate.gaps])}.
+					</p>
+				{/if}
+				<p class="dupe-warn__acts">
+					<a class="btn btn--solid" href="/send-inn?bidra={likelyDuplicate.id}">
+						{likelyDuplicate.gaps.length > 0
+							? 'Ja — gjer henne betre med mitt'
+							: 'Ja, det er den same'}
+					</a>
+					<button
+						type="button"
+						class="dupe-warn__dismiss"
+						onclick={() => (duplicateDismissed = true)}
+					>
+						Nei, dette er ei anna hending — hald fram
+					</button>
+				</p>
 			</aside>
 		{/if}
 
@@ -1013,21 +1128,40 @@
 		-->
 		<input {...f.clientId.as('text')} type="hidden" value={submitterId} />
 		<input {...f.revisionOf.as('text')} type="hidden" value={revisionOf ?? ''} />
+		<!--
+			Which event this improves — posted only once we have confirmed the id names a published,
+			canonical row. A `?bidra=` pointing at nothing then submits as an ordinary event rather
+			than as a contribution to something that is not there.
+		-->
+		<input {...f.contributeTo.as('text')} type="hidden" value={target ? String(target.id) : ''} />
 
 		<fieldset class="group">
 			<legend class="group__legend">Hendinga</legend>
-			<p class="group__hint">Kva er det, og kva slag hending er det?</p>
+			<p class="group__hint">
+				{contributing
+					? 'Dette er hendinga du bidreg til. Tittel og kategori hennar står fast — skildringa fyller vi berre inn om ho manglar ei.'
+					: 'Kva er det, og kva slag hending er det?'}
+			</p>
 			<div class="grid">
 				<p class="field field--wide">
 					<label for="title">Tittel</label>
 					{@render needsFix('title')}
 					{@render readFrom('title')}
+					<!--
+						Read-only, not disabled.
+
+						A disabled input posts nothing, and this value is still stored on the
+						contribution row as the sender's own account of the event. `readonly` keeps
+						it in the submission and out of their hands, which is what identity means
+						here: see IDENTITY_FIELDS in @hendingar/core/contribution.
+					-->
 					<input
 						id="title"
 						{...f.title.as('text')}
 						required
 						maxlength="200"
 						autocomplete="off"
+						readonly={contributing}
 						oninput={() => ownField('title')}
 					/>
 					{#each f.title.issues() ?? [] as issue (issue.message)}
@@ -1073,13 +1207,23 @@
 
 		<fieldset class="group">
 			<legend class="group__legend">Når</legend>
-			<p class="group__hint">Dato og klokkeslett i lokal tid, slik dei er oppgitte.</p>
+			<p class="group__hint">
+				{contributing
+					? 'Dato og starttid kjem frå hendinga. Ei sluttid fyller vi inn om ho manglar ei.'
+					: 'Dato og klokkeslett i lokal tid, slik dei er oppgitte.'}
+			</p>
 			<div class="grid">
 				<p class="field">
 					<label for="date">{repeating || extraDates.length > 0 ? 'Første dato' : 'Dato'}</label>
 					{@render needsFix('date')}
 					{@render readFrom('date')}
-					<input id="date" {...f.date.as('date')} required oninput={() => ownField('date')} />
+					<input
+						id="date"
+						{...f.date.as('date')}
+						required
+						readonly={contributing}
+						oninput={() => ownField('date')}
+					/>
 					{#each f.date.issues() ?? [] as issue (issue.message)}
 						<span class="field__error">{issue.message}</span>
 					{/each}
@@ -1130,6 +1274,7 @@
 						maxlength="5"
 						placeholder="19:30"
 						autocomplete="off"
+						readonly={contributing}
 						pattern="([01][0-9]|2[0-3]):[0-5][0-9]"
 						title="Klokkeslett på 24-timarsform, til dømes 19:30"
 						oninput={(e) => {
@@ -1172,7 +1317,15 @@
 					with them. Folded in here it is one row until the answer is yes, which is also
 					where the question belongs: it is part of saying when something happens.
 				-->
-				<fieldset class="repeat field--wide">
+				<!--
+					Not asked at all when contributing.
+
+					A contribution improves one existing row and creates none, so there is nothing
+					for a repetition to expand into — `eventFormSchema` refuses the combination
+					outright rather than dropping it silently. Leaving the select on screen would
+					offer a choice whose only outcome is a validation error.
+				-->
+				<fieldset class="repeat field--wide" hidden={contributing}>
 					<legend class="repeat__legend">Gjentaking</legend>
 					<p class="repeat__hint">
 						Ein plakat som seier «torsdagar» er ei gjentaking, ikkje ein dato.
@@ -1243,7 +1396,11 @@
 
 		<fieldset class="group">
 			<legend class="group__legend">Kvar</legend>
-			<p class="group__hint">Staden hendinga går føre seg.</p>
+			<p class="group__hint">
+				{contributing
+					? 'Staden kjem frå hendinga du bidreg til. Eit bidrag flyttar henne ikkje.'
+					: 'Staden hendinga går føre seg.'}
+			</p>
 			<div class="grid">
 				<p class="field">
 					<label for="venueName">Stad</label>
@@ -1254,6 +1411,7 @@
 						{...f.venueName.as('text')}
 						required
 						maxlength="200"
+						readonly={contributing}
 						oninput={() => ownField('venueName')}
 					/>
 					{#each f.venueName.issues() ?? [] as issue (issue.message)}
@@ -1268,6 +1426,7 @@
 						id="municipality"
 						{...f.municipality.as('text')}
 						maxlength="100"
+						readonly={contributing}
 						oninput={() => ownField('municipality')}
 					/>
 					{#each f.municipality.issues() ?? [] as issue (issue.message)}
@@ -1389,8 +1548,26 @@
 		font-size: var(--step-micro);
 		color: var(--peach-dim);
 	}
+	.dupe-warn__gaps {
+		margin: 0;
+		font-size: 0.875rem;
+		color: var(--peach-dim);
+	}
+	/*
+	 * The two answers side by side, with the useful one weighted.
+	 *
+	 * "Yes, it is the same" is now an action rather than a full stop, so it gets the solid button
+	 * and "no, carry on" stays the quiet link it always was — the person who is adding a genuinely
+	 * different event has not been interrupted, they have been asked one question.
+	 */
+	.dupe-warn__acts {
+		margin: 0.6rem 0 0;
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.6rem 0.9rem;
+		align-items: center;
+	}
 	.dupe-warn__dismiss {
-		margin-block-start: 0.4rem;
 		background: none;
 		border: 0;
 		padding: 0;
