@@ -18,6 +18,20 @@ describe('plainText', () => {
 		expect(plainText('<p>&#229;pen &amp; fin</p>')).toBe('åpen & fin');
 	});
 
+	it('decodes the guillemets, which are Norwegian’s own quotation marks', () => {
+		/*
+		 * Live on the site: a Moster Amfi concert published as
+		 * `Viser, Historie og Humor &laquo;Frå Vestlandet til Amerika i 200 år&raquo;` — in the
+		 * `<h1>`, in the JSON-LD `name`, in the `.ics`, and in the slug as `-laquo-…-raquo`.
+		 *
+		 * The named table is a list while the numeric branch is generic, so a missing entry fails
+		 * silently and reads as the source's own text. These two are not an exotic character here.
+		 */
+		expect(plainText('Humor &laquo;Frå Vestlandet til Amerika&raquo;')).toBe(
+			'Humor «Frå Vestlandet til Amerika»'
+		);
+	});
+
 	it('turns a line break into a line, not a space', () => {
 		expect(plainText('<p>søndag<br>kl. 11</p>')).toBe('søndag\nkl. 11');
 	});

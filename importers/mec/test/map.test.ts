@@ -285,6 +285,32 @@ describe('mapEvent: identity and the rest of the shape', () => {
 		}
 	});
 
+	it('decodes what the page encodes, rather than publishing the entity', () => {
+		/*
+		 * The live bug. This concert was stored, rendered in the `<h1>`, written into the `.ics` and
+		 * published in the JSON-LD `name` as `…Humor &laquo;Frå Vestlandet til Amerika i 200 år&raquo;`,
+		 * and its slug read `-laquo-fraa-vestlandet-til-amerika-i-200-aar-raquo`. Guillemets are
+		 * Norwegian's own quotation marks, so this is the common case and not an exotic one.
+		 *
+		 * Asserted on the committed page that carried it, so the guard is about real markup.
+		 */
+		const mapped = mapOne(find(moster, 'Viser, Historie og Humor'), mosterInstance);
+		if (isFailure(mapped)) throw new Error(mapped.problem);
+		expect(mapped.title).toBe('Viser, Historie og Humor «Frå Vestlandet til Amerika i 200 år»');
+	});
+
+	it('leaves no HTML entity in any title on any of the three skins', () => {
+		// The class of bug, not the one instance: a named entity this decoder does not carry
+		// survives verbatim and looks exactly like the source's own text.
+		for (const [, listing, instance] of ALL) {
+			for (const o of listing.occurrences) {
+				const mapped = mapOne(o, instance);
+				if (isFailure(mapped)) continue;
+				expect(mapped.title).not.toMatch(/&(#x?[0-9a-fA-F]+|[a-zA-Z]+);/);
+			}
+		}
+	});
+
 	it('rejects an event whose URL has no post id rather than inventing one', () => {
 		const o = bibliotek.occurrences[0]!;
 		const mapped = mapEvent(o.event, null, o.card, bibliotekInstance);
