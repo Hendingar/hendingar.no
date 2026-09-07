@@ -237,6 +237,59 @@ module ai 'ai.bicep' = {
   }
 }
 
+// Where the Postgres admin password lives, so it does not have to live on anybody's laptop.
+//
+// The password already reaches this template as a deploy parameter, from the GitHub Actions secret.
+// Actions secrets cannot be read back, so before this vault the only way for a developer to run
+// `pnpm db:pull` was for somebody to hand them the password out of band and for them to keep it in
+// a local .env — a shared credential, copied by hand, sitting in as many places as there are
+// checkouts. Writing it here on every deploy means the value is already where a tool can fetch it,
+// and `az login` becomes the whole of the access story.
+//
+// RBAC rather than access policies, and reading a secret is a DATA-plane action: the deploy can
+// write this secret with Contributor on the resource group, because `vaults/secrets` write is
+// control-plane, but nobody can read it back without `Key Vault Secrets User` on the vault.
+// Granting that is a manual step — the CI principal is only a Contributor and, as the note at the
+// top of this file records, Contributor cannot write role assignments. infra/BOOTSTRAP.md has the
+// command.
+//
+// Names are capped at 24 characters, which is why this one is truncated rather than carrying `env`
+// the way `pgName` does. The suffix is derived from the resource group id, and each environment has
+// its own group, so it is already distinct.
+var keyVaultName = take('kv-${appName}-${suffix}', 24)
+
+resource vault 'Microsoft.KeyVault/vaults@2023-07-01' = {
+  name: keyVaultName
+  location: location
+  tags: tags
+  properties: {
+    sku: {
+      family: 'A'
+      name: 'standard'
+    }
+    tenantId: subscription().tenantId
+    enableRbacAuthorization: true
+    // Soft delete cannot be turned off. Seven days rather than the default ninety because a
+    // deleted vault's NAME stays reserved until it is purged, and this one is derived from the
+    // resource group — so a rebuild of the environment inside the retention window would otherwise
+    // collide with the corpse of the old vault and need an explicit purge to proceed.
+    softDeleteRetentionInDays: 7
+    // Deliberately not enabled: purge protection is irreversible per vault, and this holds one
+    // rotatable credential rather than anything whose loss is unrecoverable.
+    enablePurgeProtection: null
+    publicNetworkAccess: 'Enabled'
+  }
+}
+
+resource postgresPasswordSecret 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
+  parent: vault
+  name: 'postgres-admin-password'
+  properties: {
+    value: postgresAdminPassword
+    contentType: 'Postgres administrator password for ${pgName}'
+  }
+}
+
 output acrName string = acr.name
 output acrLoginServer string = acr.properties.loginServer
 output postgresFqdn string = postgres.properties.fullyQualifiedDomainName
@@ -250,3 +303,4 @@ output postersContainerUrl string = '${posters.properties.primaryEndpoints.blob}
 output openAiEndpoint string = ai.outputs.endpoint
 output openAiAccountName string = ai.outputs.accountName
 output openAiDeployment string = ai.outputs.deploymentName
+output keyVaultName string = vault.name

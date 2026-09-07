@@ -20,7 +20,8 @@ cd services/verifier && ruff check . && ruff format --check . && pytest -q
 Nothing else is evidence — not "it looks right", not a passing subset of tests.
 
 ```bash
-pnpm db:bootstrap  # up + migrate + seed + ingest. A database that looks like production
+pnpm db:pull       # copy the DEPLOYED database into the local one. Under a minute, no upstreams
+pnpm db:bootstrap  # up + migrate + seed + ingest. The same rows the slow way — 13 min, 15 sources
 pnpm dev           # http://localhost:5173
 pnpm test:e2e      # Playwright, headless
 pnpm db:psql       # a shell in the database
@@ -33,6 +34,15 @@ representative — several days, several categories, and six events carrying a p
 grouping and thumbnails are not observable without them, and the listing e2e specs assert both.
 Posters in the seed are a local same-origin file: a seed that hotlinked the source's CDN would
 make the browser specs depend on a third party's uptime.
+
+**Reach for `pnpm db:pull` before `pnpm db:bootstrap`.** Both end with a realistic database;
+bootstrap gets there by asking fifteen third parties for rows that already exist in a database we
+own. The pull needs `az login` and one `Key Vault Secrets User` grant (infra/BOOTSTRAP.md) — the
+password comes from the vault the deploy writes, not from a `.env`. It rewrites the two browser
+bearer tokens on the way in rather than copying them, and applies any migration newer than the
+deployment.
+The e2e specs are the exception and still need the seed state — `.claude/skills/local-data/SKILL.md`
+is the whole decision.
 
 **A seed-only database misreports the product, and it does so quietly.** It holds one source, so
 `/datasamling` lists a single collected row and the front page's coverage line says "1 kjelde";

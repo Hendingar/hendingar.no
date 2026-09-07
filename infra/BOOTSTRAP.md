@@ -136,6 +136,37 @@ KV_ID=$(az resource list -g "$RG" --resource-type Microsoft.KeyVault/vaults --qu
 # Key Vault Secrets User 4633458b-17de-408a-b874-0445c86b69e6 -> $KV_ID
 ```
 
+### Developers, so `pnpm db:pull` works
+
+The vault holds `postgres-admin-password`, written by every deploy from the same GitHub Actions
+secret that creates the server. `scripts/db-pull.sh` reads it, which is what keeps the password off
+laptops and out of `.env` files.
+
+**Reading a secret is a data-plane action, and the deploy cannot grant it.** The CI principal is
+Contributor, which is enough to _write_ `vaults/secrets` through ARM but not to write a role
+assignment — the same limitation recorded at the top of `infra/main.bicep`. So each person who
+needs `db:pull` gets the role once, from somebody holding User Access Administrator:
+
+```bash
+RG=rg-hendingar-swc-dev
+KV=$(az keyvault list -g "$RG" --query '[0].name' -o tsv)
+
+# For yourself:
+az role assignment create \
+  --assignee "$(az ad signed-in-user show --query id -o tsv)" \
+  --role 'Key Vault Secrets User' \
+  --scope "$(az keyvault show -n "$KV" --query id -o tsv)"
+
+# For somebody else, by their sign-in address:
+az role assignment create \
+  --assignee "$(az ad user show --id someone@nordlo.com --query id -o tsv)" \
+  --role 'Key Vault Secrets User' \
+  --scope "$(az keyvault show -n "$KV" --query id -o tsv)"
+```
+
+Without it `db:pull` says so and prints this command rather than failing obscurely — an `az`
+authorization error on a secret read looks identical to the secret not existing.
+
 ## Open — the database
 
 **Azure has no serverless Postgres available on this subscription.** Verified:
