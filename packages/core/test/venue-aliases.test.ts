@@ -21,6 +21,31 @@ describe('resolveVenueName', () => {
 		);
 	});
 
+	it('resolves both sources that name the same room the same way', () => {
+		/*
+		 * The asymmetry trap, and the reason this is a test and not just a list.
+		 *
+		 * `bomlo-kulturhus` and `bomlo-aktivitetforalle` both carry the culture house's programme
+		 * and both write the room, so they agreed before either was listed here. Listing only one
+		 * of them broke that: one side resolved to the building, the other stayed `Storsalen`, and
+		 * `venueSimilarity` between those is 0 — so a title the pair had already matched on was
+		 * refused on venue. Thirteen of this venue's 28 events were about to publish twice.
+		 */
+		for (const room of ['Storsalen', 'Litlesalen', 'Kulturhuskafeen', 'Foajéen']) {
+			expect(resolveVenueName('bomlo-kulturhus', room), room).toBe('Bømlo Kulturhus');
+			expect(resolveVenueName('bomlo-aktivitetforalle', room), room).toBe(
+				resolveVenueName('bomlo-kulturhus', room)
+			);
+		}
+	});
+
+	it('leaves a hall in another building where it is', () => {
+		// The house programmes a concert in Bremnes church and writes the church's name. Folding
+		// that onto the culture house would put the event in a building it is not in — the mirror
+		// of the mistake this file exists to prevent.
+		expect(resolveVenueName('bomlo-kulturhus', 'Bremnes kyrkje')).toBe('Bremnes kyrkje');
+	});
+
 	it('leaves an unlisted name exactly as it found it', () => {
 		expect(resolveVenueName('stord-kulturhus', 'Osvald Pub')).toBe('Osvald Pub');
 		expect(resolveVenueName('bomlo-kyrkja', 'Moster kyrkje')).toBe('Moster kyrkje');

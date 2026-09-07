@@ -161,6 +161,61 @@ export const VENUE_ALIASES: readonly VenueAlias[] = [
 		name: 'Foajéen',
 		place: 'Bømlo Kulturhus',
 		evidence: 'Its own events say so: "musikalsk pubkveld i foajéen i Bømlo kulturhus".'
+	},
+
+	/*
+	 * Bømlo kulturhus — the house's own programme, which we now collect directly.
+	 *
+	 * The same four rooms as the municipal calendar above, because they are the same four rooms.
+	 * Both calendars carry the culture house's programme and **both write the room name**, so the
+	 * two agreed perfectly before either was listed here.
+	 *
+	 * Which is the trap this block is really about: an alias on *one* of two sources that already
+	 * agree turns a match into a mismatch. With only the `bomlo-aktivitetforalle` entries above,
+	 * one side of every pair resolved to `Bømlo Kulturhus` while the other stayed `Storsalen`, and
+	 * `venueSimilarity` between those two is 0 — so a title the pair had already matched on was
+	 * refused on venue. Measured over 656 upcoming events: 71 groups without these four entries,
+	 * 84 with them. Thirteen of this venue's 28 events were about to be published twice.
+	 *
+	 * `Bremnes kyrkje` is deliberately not here. The house programmes a concert in the church and
+	 * writes the church's name, and folding that onto the culture house would put an event in a
+	 * building it is not in — the mirror of the mistake this file prevents, and the reason every
+	 * entry is a name and not a rule. It needs no entry to merge, for the reason above: the
+	 * municipal calendar writes the same words and neither side is aliased.
+	 *
+	 * Not fixed here, and not this file's problem: the four Riksteatret tours in Storsalen still
+	 * arrive twice. `riksteatret-bomlo` lists them as "Apestjernen" against this source's
+	 * "Riksteatret: Apestjernen", which scores 0.50–0.67 on title and so never reaches the venue
+	 * comparison at all — the threshold is 0.7. A venue alias cannot help a pair refused a step
+	 * earlier.
+	 */
+	{
+		source: 'bomlo-kulturhus',
+		name: 'Storsalen',
+		place: 'Bømlo Kulturhus',
+		evidence:
+			'Eight titles land at the same instant as bomlo-aktivitetforalle in the same room, e.g. "Bømlakonferansen 2026" 17 Sep 08:00Z; they merge only when both sides resolve to the building.'
+	},
+	{
+		source: 'bomlo-kulturhus',
+		name: 'Litlesalen',
+		place: 'Bømlo Kulturhus',
+		evidence:
+			'"Pårørandekonferansen 2026" 2 Oct 08:00Z is the same row bomlo-aktivitetforalle lists in Litlesalen.'
+	},
+	{
+		source: 'bomlo-kulturhus',
+		name: 'Kulturhuskafeen',
+		place: 'Bømlo Kulturhus',
+		evidence:
+			'"TorsdagsQuiz" 10 Sep 17:00Z and "Pubkveld: Åsmund Nesse Trio" 18 Sep 19:00Z are the same rows bomlo-aktivitetforalle lists in Kulturhuskafeen.'
+	},
+	{
+		source: 'bomlo-kulturhus',
+		name: 'Foajéen',
+		place: 'Bømlo Kulturhus',
+		evidence:
+			'"Pubkveld med Bømlo kormix" 24 Oct 17:00Z is the same row bomlo-aktivitetforalle lists in Foajéen.'
 	}
 ];
 
