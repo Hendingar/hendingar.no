@@ -1,5 +1,6 @@
 <script lang="ts">
 	import {
+		VERIFICATION_CHECK_HINTS,
 		VERIFICATION_CHECK_LABELS,
 		VERIFICATION_VERDICT_LABELS
 	} from '@hendingar/core/verification';
@@ -61,16 +62,6 @@
 		shady:
 			'Denne kom ikkje gjennom truverd-kontrollen. Er det ei ekte lokal hending, legg til ei lenkje til arrangøren og fyll ut skildringa.'
 	};
-
-	function checkHint(check: QueuedSubmission['checks'][number]): string | null {
-		if (check.verdict === 'pass') return null;
-		if (check.check === 'corroboration')
-			return 'Ei lenkje til arrangøren eller Facebook-hendinga gjer denne sterkare — men ho stoppar deg ikkje.';
-		if (check.check === 'normalisation') return 'Sjekk dato, klokkeslett og stad.';
-		if (check.check === 'categorisation') return 'Prøv ein annan kategori.';
-		if (check.check === 'duplicate') return 'Sjekk om det er ei anna hending enn den vi alt har.';
-		return null;
-	}
 </script>
 
 <svelte:head>
@@ -155,9 +146,9 @@
 											>{VERIFICATION_VERDICT_LABELS[check.verdict]}</span
 										>
 										<span class="reasons__why">{check.reasoning}</span>
-										{#if checkHint(check)}
-											<span class="reasons__hint">{checkHint(check)}</span>
-										{/if}
+										<!-- The remedy comes from core, which is also where the form reads it, so the
+										     two places a sender is told what to change cannot say different things. -->
+										<span class="reasons__hint">{VERIFICATION_CHECK_HINTS[check.check]}</span>
 									</li>
 								{/each}
 							</ul>

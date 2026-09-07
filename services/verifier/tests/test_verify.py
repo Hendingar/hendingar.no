@@ -137,27 +137,31 @@ class _StubFactory:
         return False
 
 
-class TestCorroborationDoesNotBlock:
-    """The fishing festival.
+class TestAdvisoryChecksDoNotBlock:
+    """The fishing festival and the opening party.
 
-    A real submission — a poster photographed off a noticeboard — passed normalisation at 100%,
+    Two real submissions, refused by the same mistake twice.
+
+    The festival — a poster photographed off a noticeboard — passed normalisation at 100%,
     duplicate at 95%, plausibility at 90% and categorisation at 90%, and was still held back
     because it had no source URL. Corroboration reported 60% confidence, which sat under the
     floor, and "we could not cross-check this" became "a human must look at it" in a queue with
     nobody in it.
+
+    The party was submitted as `anna` and came back "uncertain, 70%: a category like 'fest' might
+    fit better". Also true, also not a reason to refuse an event, and refused all the same.
+
+    A check that reports something worth saying is not the same as a check that decides. These
+    assert which is which, in both directions.
     """
 
     def test_corroboration_is_not_a_blocking_check(self):
         from verifier.verify import BLOCKING_CHECKS
 
         assert "corroboration" not in BLOCKING_CHECKS
-        # The other four are the ones that genuinely say something about the event itself.
-        assert BLOCKING_CHECKS == {
-            "plausibility",
-            "duplicate",
-            "normalisation",
-            "categorisation",
-        }
+        # The three that genuinely say something about the event itself: is it real, do we already
+        # have it, is it legible. Categorisation left for the reason recorded beside the set.
+        assert BLOCKING_CHECKS == {"plausibility", "duplicate", "normalisation"}
 
     def test_a_missing_source_still_reports_what_it_found(self):
         from verifier.verify import check_corroboration
@@ -200,6 +204,110 @@ class TestCorroborationDoesNotBlock:
         # confirmed" is what made a published event read as a refusal.
         assert response.summary.startswith("Alle avgjerande sjekkar gjekk gjennom")
         assert "kjelde-URL" in response.summary
+
+    async def test_a_suboptimal_category_does_not_hold_back_an_event(self, monkeypatch):
+        """The opening party.
+
+        Submitted as `anna`, and the check came back "uncertain, 70 %: a category like 'fest' or
+        'opning' might fit better". A fair remark, and it refused the event — because with no human
+        queue, "review" is no. Nobody looking for that party would have failed to find it under
+        `anna`; they never got the chance.
+        """
+        from verifier import verify as verify_module
+        from verifier.models import CheckResult
+
+        async def _plausible(_factory, _request):
+            return CheckResult(
+                check="plausibility",
+                verdict="pass",
+                confidence=95,
+                reasoning="Ser ut som ei ekte lokal hending.",
+                deterministic=False,
+                model="stub",
+            )
+
+        async def _unsure_category(_factory, _request):
+            return CheckResult(
+                check="categorisation",
+                verdict="uncertain",
+                confidence=70,
+                reasoning="Tittelen tyder på ein opningsfest; 'fest' kan passe betre enn 'anna'.",
+                deterministic=False,
+                model="stub",
+            )
+
+        monkeypatch.setattr(verify_module, "check_plausibility", _plausible)
+        monkeypatch.setattr(verify_module, "check_categorisation", _unsure_category)
+
+        response = await verify(object(), _request())
+
+        assert response.recommendation == "publish"
+        # Published, and still told: the sender learns a better category exists and can change it.
+        assert response.summary.startswith("Alle avgjerande sjekkar gjekk gjennom")
+        assert "opningsfest" in response.summary
+
+    async def test_a_low_confidence_category_does_not_hold_back_an_event(self, monkeypatch):
+        """Confidence under the floor is the other half of the same door.
+
+        `corroboration` was held back by a 60 % that sat under `CONFIDENCE_FLOOR` rather than by a
+        verdict, so a `pass` at low confidence has to be covered too — otherwise the block simply
+        moves.
+        """
+        from verifier import verify as verify_module
+        from verifier.models import CheckResult
+
+        async def _plausible(_factory, _request):
+            return CheckResult(
+                check="plausibility",
+                verdict="pass",
+                confidence=95,
+                reasoning="Ekte.",
+                deterministic=False,
+                model="stub",
+            )
+
+        async def _barely_sure(_factory, _request):
+            return CheckResult(
+                check="categorisation",
+                verdict="pass",
+                confidence=30,
+                reasoning="Kategorien er nok greit nok.",
+                deterministic=False,
+                model="stub",
+            )
+
+        monkeypatch.setattr(verify_module, "check_plausibility", _plausible)
+        monkeypatch.setattr(verify_module, "check_categorisation", _barely_sure)
+
+        assert (await verify(object(), _request())).recommendation == "publish"
+
+    async def test_a_category_fail_is_clamped_rather_than_rejecting(self, monkeypatch):
+        """A `fail` from any check rejects, so this one must not be able to produce one.
+
+        The prompt asks the model not to; this asserts the code does not depend on it obeying.
+        Tested at `check_categorisation` rather than through `verify`, because the clamp is the
+        thing under test and `verify` would only show its consequence.
+        """
+        from verifier import verify as verify_module
+        from verifier.models import CheckResult
+
+        async def _judge_says_fail(_factory, check, _prompt):
+            return CheckResult(
+                check=check,
+                verdict="fail",
+                confidence=90,
+                reasoning="Heilt feil kategori.",
+                deterministic=False,
+                model="stub",
+            )
+
+        monkeypatch.setattr(verify_module, "_judge", _judge_says_fail)
+
+        result = await verify_module.check_categorisation(object(), _request())
+
+        assert result.verdict == "uncertain"
+        # Downgraded, not silenced: what it found is still what the sender is told.
+        assert result.reasoning == "Heilt feil kategori."
 
     async def test_a_real_failure_still_stops_it(self, monkeypatch):
         from verifier import verify as verify_module

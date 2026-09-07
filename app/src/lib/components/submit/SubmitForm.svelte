@@ -10,7 +10,21 @@
 		type Weekday
 	} from '@hendingar/core/recurrence';
 	import type { ExtractedEvent } from '@hendingar/core/validation';
-	import { cropSuggestion, findDuplicate, submissionDraft, submitEvent } from '../../submit.remote';
+	import {
+		VERIFICATION_CHECK_FIELDS,
+		VERIFICATION_CHECK_HINTS,
+		VERIFICATION_CHECK_LABELS,
+		VERIFICATION_VERDICT_LABELS,
+		type VerificationCheck,
+		type VerificationVerdict
+	} from '@hendingar/core/verification';
+	import {
+		cropSuggestion,
+		findDuplicate,
+		submissionDraft,
+		submissionVerdict,
+		submitEvent
+	} from '../../submit.remote';
 	import { ensureClientId, existingClientId } from '../../client-id.ts';
 	import { claimTypedBeforeHydration } from '../../typed-before-hydration.ts';
 	import { cropToThumbnail, type CapturedImage } from '../../poster.ts';
@@ -21,7 +35,7 @@
 	import UrlCapture from './UrlCapture.svelte';
 	import VerdictPanel from './VerdictPanel.svelte';
 	import { page } from '$app/state';
-	import { pushState } from '$app/navigation';
+	import { afterNavigate, pushState } from '$app/navigation';
 	import { track } from '../../analytics.ts';
 
 	let {
@@ -59,6 +73,30 @@
 	 * shows an empty form as though that were the answer.
 	 */
 	let revisionLoaded = $state(false);
+
+	/**
+	 * The checks that did not pass on the submission being corrected.
+	 *
+	 * Empty for a first submission, and empty for an approved one — there is nothing to fix in
+	 * either case. Only the non-passing checks are kept: five green rows above a form buries the
+	 * one line that says what to change, which is the same argument /kø's list already makes.
+	 */
+	let toFix = $state<
+		{ check: VerificationCheck; verdict: VerificationVerdict; reasoning: string }[]
+	>([]);
+	const unresolved = $derived(toFix.filter((c) => c.verdict !== 'pass'));
+
+	/**
+	 * The checks that read a given field, so the field can carry its own reason.
+	 *
+	 * From `VERIFICATION_CHECK_FIELDS` in core rather than a list here: which field a check reads
+	 * is a fact about the check, and a second copy in a component goes stale the first time the
+	 * verifier changes what it looks at. A scan over at most five checks per field, which is
+	 * cheaper than the reactive Map it replaced and does not need one.
+	 */
+	function fixesFor(field: string) {
+		return unresolved.filter((check) => VERIFICATION_CHECK_FIELDS[check.check].includes(field));
+	}
 	$effect(() => {
 		if (!revisionOf || revisionLoaded) return;
 		const id = existingClientId();
@@ -66,6 +104,24 @@
 			revisionLoaded = true;
 			return;
 		}
+		/*
+		 * The answer, alongside the draft.
+		 *
+		 * A form that opens filled in still does not say what was wrong with it — the sender had to
+		 * read the checks on the previous page, remember them, and come here to guess which of
+		 * eleven boxes they were about. So the same verdict /kø renders is fetched here and put
+		 * beside the fields it names. Separate from the draft and allowed to fail on its own: a
+		 * form that opens without its reasons is worse, but a form that does not open at all
+		 * because the reasons could not be fetched is much worse.
+		 */
+		void submissionVerdict({ id: revisionOf, clientId: id })
+			.then((result) => {
+				if (result && result.outcome !== 'approved') toFix = result.checks;
+			})
+			.catch(() => {
+				// Nothing shown, nothing said. The fields are the thing being corrected.
+			});
+
 		void submissionDraft({ id: revisionOf, clientId: id })
 			.then((draft) => {
 				if (!draft) return;
@@ -133,10 +189,57 @@
 	 * poster upload moves state and a second report would double every submission that carried a
 	 * picture.
 	 */
+	/**
+	 * The verdict belongs to the submission that produced it — not to the next visit.
+	 *
+	 * `submitEvent.result` is documented as ephemeral: it "will vanish if you resubmit, navigate
+	 * away, or reload the page". On a reload it does. On a *client-side* navigation it does not —
+	 * the form module holds it — so arriving at /send-inn again renders the previous answer where
+	 * the form should be, and there is no form on the page at all.
+	 *
+	 * Both doors were reported. Following "Rett og send inn på nytt" out of /kø handed the sender
+	 * back the rejection they had just read, and the `pushState` effect below then rewrote the
+	 * address bar to the receipt — so asking to correct an event took you to the verdict for it.
+	 * The nav's own "Send inn" link did the same thing, which meant a second event could not be
+	 * sent without reloading. Every e2e spec covering this used `page.goto(href)`, a full load,
+	 * which is exactly the one navigation that clears the result: the specs could not see it.
+	 *
+	 * So: a result counts as ours if this page produced it. Two ways that happens.
+	 *
+	 *  - With JavaScript, `submitEvent.pending` rises before the result lands.
+	 *  - Without it, the browser POSTs for real and the response renders at the form's own action
+	 *    URL, which carries `?/remote=…`. Read from the URL rather than from `$app/environment`'s
+	 *    `browser`, because the server render and the hydrated client must agree — a flag that is
+	 *    true on the server and false after hydration makes the verdict disappear on somebody
+	 *    whose JavaScript merely arrived late. That class of bug is what
+	 *    `typed-before-hydration.ts` exists for.
+	 */
+	const submittedWithoutJs = $derived(page.url.searchParams.has('/remote'));
+	let submittedHere = $state(false);
+	$effect(() => {
+		if (submitEvent.pending > 0) submittedHere = true;
+	});
+
+	/*
+	 * A real navigation starts a new visit, and the previous verdict is not its answer.
+	 *
+	 * Needed in addition to the flag above because /send-inn → /send-inn is the *same route*, so
+	 * SvelteKit reuses the component and nothing resets on its own. That is the door the nav's own
+	 * "Send inn" link goes through, and without this the panel stays where the form should be.
+	 *
+	 * `shallow` is what keeps the `pushState` below from undoing itself: giving the verdict a URL
+	 * is a shallow navigation, not a new visit.
+	 */
+	afterNavigate((navigation) => {
+		if (!navigation.shallow) submittedHere = false;
+	});
+
+	const verdict = $derived(submittedHere || submittedWithoutJs ? submitEvent.result : undefined);
+
 	let reportedResult = $state<string | null>(null);
 
 	$effect(() => {
-		const result = submitEvent.result;
+		const result = verdict;
 		if (!result?.outcome) return;
 		const key = `${method}:${result.outcome}:${result.eventId ?? 'none'}`;
 		if (reportedResult === key) return;
@@ -147,7 +250,7 @@
 	let posterState = $state<'idle' | 'saving' | 'saved' | 'skipped'>('idle');
 
 	$effect(() => {
-		const result = submitEvent.result;
+		const result = verdict;
 		if (!result || posterState !== 'idle') return;
 		if (result.outcome !== 'approved' || !result.eventId || !poster) return;
 
@@ -322,7 +425,7 @@
 	 */
 	let addressed = $state(false);
 	$effect(() => {
-		const result = submitEvent.result;
+		const result = verdict;
 		if (!result?.eventId || addressed) return;
 		addressed = true;
 		pushState(`${SUBMIT_PATH}/kvittering/${result.eventId}`, page.state);
@@ -640,14 +743,14 @@
 	common next move (read the checks) competed with a form you had already submitted. The panel
 	carries its own route forward: /kø, or the CTA on the receipt page.
 -->
-{#if submitEvent.result}
+{#if verdict}
 	<VerdictPanel
-		status={submitEvent.result.status}
-		outcome={submitEvent.result.outcome}
-		duplicateOf={submitEvent.result.duplicateOf}
-		summary={submitEvent.result.summary}
-		checks={submitEvent.result.checks}
-		sourceUrl={submitEvent.result.sourceUrl}
+		status={verdict.status}
+		outcome={verdict.outcome}
+		duplicateOf={verdict.duplicateOf}
+		summary={verdict.summary}
+		checks={verdict.checks}
+		sourceUrl={verdict.sourceUrl}
 		{poster}
 	/>
 {:else}
@@ -757,6 +860,28 @@
 	{/if}
 {/snippet}
 
+<!--
+	The reason a field is being asked about, at the field.
+
+	`readFrom` above marks a field the picture filled; this marks one a check stopped on. Two
+	different questions — "is this what the poster said?" and "this is what did not pass" — so two
+	marks rather than one overloaded glyph.
+
+	`role="note"` and real words, not a glyph with a tooltip: this is the sentence the correction
+	depends on, and it has to be readable by whoever is reading the form.
+-->
+{#snippet needsFix(name: string)}
+	{#each fixesFor(name) as fix (fix.check)}
+		<span class="field__fix" role="note">
+			<span class="field__fix-name">
+				<span aria-hidden="true">▲</span>
+				{VERIFICATION_CHECK_LABELS[fix.check]}
+			</span>
+			{fix.reasoning}
+		</span>
+	{/each}
+{/snippet}
+
 {#snippet formPanel()}
 	<!-- `oninput` mints the browser id on the first keystroke — see `claimIdentity`. -->
 	<form {...submitEvent} class="form frame" oninput={claimIdentity}>
@@ -789,6 +914,33 @@
 			{/if}
 			{#if unreadable.length > 0}
 				<p class="form__unread">Klarte ikkje lese: {unreadable.join(', ')}. Fyll inn sjølv.</p>
+			{/if}
+
+			<!--
+				What did not pass, said once at the top and again at each field.
+
+				Here so the sender knows how much they are being asked to change before they start
+				scrolling; at the field because that is where they act on it. The same two-places
+				argument the ◧ mark above makes, and the hint comes from core so this cannot say
+				something different from what /kø said on the way in.
+			-->
+			{#if unresolved.length > 0}
+				<div class="form__fix">
+					<p class="form__fix-lede">
+						Dette stoppa henne sist. Felta det gjeld er merkte
+						<span aria-hidden="true">▲</span> under.
+					</p>
+					<ul class="form__fix-list">
+						{#each unresolved as check (check.check)}
+							<li>
+								<span class="form__fix-name">{VERIFICATION_CHECK_LABELS[check.check]}</span>
+								<span class="form__fix-verdict">{VERIFICATION_VERDICT_LABELS[check.verdict]}</span>
+								<span class="form__fix-why">{check.reasoning}</span>
+								<span class="form__fix-hint">{VERIFICATION_CHECK_HINTS[check.check]}</span>
+							</li>
+						{/each}
+					</ul>
+				</div>
 			{/if}
 		</div>
 
@@ -868,6 +1020,7 @@
 			<div class="grid">
 				<p class="field field--wide">
 					<label for="title">Tittel</label>
+					{@render needsFix('title')}
 					{@render readFrom('title')}
 					<input
 						id="title"
@@ -883,6 +1036,7 @@
 				</p>
 				<p class="field field--wide">
 					<label for="description">Beskriving <span class="field__opt">valfritt</span></label>
+					{@render needsFix('description')}
 					{@render readFrom('description')}
 					<textarea
 						id="description"
@@ -897,6 +1051,7 @@
 				</p>
 				<p class="field">
 					<label for="category">Kategori</label>
+					{@render needsFix('category')}
 					{@render readFrom('category')}
 					<select
 						id="category"
@@ -922,6 +1077,7 @@
 			<div class="grid">
 				<p class="field">
 					<label for="date">{repeating || extraDates.length > 0 ? 'Første dato' : 'Dato'}</label>
+					{@render needsFix('date')}
 					{@render readFrom('date')}
 					<input id="date" {...f.date.as('date')} required oninput={() => ownField('date')} />
 					{#each f.date.issues() ?? [] as issue (issue.message)}
@@ -964,6 +1120,7 @@
 				{/if}
 				<p class="field">
 					<label for="startTime">Startar</label>
+					{@render needsFix('startTime')}
 					{@render readFrom('startTime')}
 					<input
 						id="startTime"
@@ -986,6 +1143,7 @@
 				</p>
 				<p class="field">
 					<label for="endTime">Sluttar <span class="field__opt">valfritt</span></label>
+					{@render needsFix('endTime')}
 					{@render readFrom('endTime')}
 					<input
 						id="endTime"
@@ -1089,6 +1247,7 @@
 			<div class="grid">
 				<p class="field">
 					<label for="venueName">Stad</label>
+					{@render needsFix('venueName')}
 					{@render readFrom('venueName')}
 					<input
 						id="venueName"
@@ -1103,6 +1262,7 @@
 				</p>
 				<p class="field">
 					<label for="municipality">Kommune <span class="field__opt">valfritt</span></label>
+					{@render needsFix('municipality')}
 					{@render readFrom('municipality')}
 					<input
 						id="municipality"
@@ -1146,6 +1306,7 @@
 					<label for="sourceUrl">
 						Lenkje til kjelde <span class="field__opt">valfritt, men hjelper</span>
 					</label>
+					{@render needsFix('sourceUrl')}
 					<input id="sourceUrl" {...f.sourceUrl.as('url')} />
 					<span class="field__hint">
 						Ei side som omtalar hendinga. Vi lenkjer alltid tilbake til kjelda, og ei lenkje gjer at
@@ -1585,6 +1746,53 @@
 		font-size: 0.875rem;
 		color: var(--peach-hi);
 	}
+	/*
+	 * What stopped it last time, at the top of the form it is being corrected in.
+	 *
+	 * Same list /kø renders, deliberately: somebody arriving here clicked through that page, and a
+	 * second summary in different words would read as a second, different problem.
+	 */
+	.form__fix {
+		display: grid;
+		gap: 0.5rem;
+		border: var(--rule) solid var(--peach-line);
+		padding: clamp(0.75rem, 2vw, 1rem);
+	}
+	.form__fix-lede {
+		margin: 0;
+		font-size: 0.875rem;
+		color: var(--peach-hi);
+		max-inline-size: 60ch;
+	}
+	.form__fix-list {
+		list-style: none;
+		margin: 0;
+		padding: 0;
+		display: grid;
+		gap: 0.6rem;
+	}
+	.form__fix-list li {
+		display: grid;
+		gap: 0.15rem;
+		max-inline-size: 60ch;
+	}
+	.form__fix-name,
+	.form__fix-verdict {
+		font-family: var(--font-mono);
+		font-size: var(--step-micro);
+		letter-spacing: 0.06em;
+		text-transform: uppercase;
+	}
+	.form__fix-verdict {
+		color: var(--peach-dim);
+	}
+	.form__fix-why {
+		font-size: 0.875rem;
+	}
+	.form__fix-hint {
+		font-size: 0.8125rem;
+		color: var(--peach-dim);
+	}
 	.group {
 		border: 0;
 		border-block-end: var(--rule) solid var(--peach-line);
@@ -1647,6 +1855,29 @@
 		font-family: var(--font-mono);
 		font-size: 0.8125rem;
 		color: var(--peach-hi);
+	}
+	/*
+	 * The reason a field is being asked about, at the field.
+	 *
+	 * A block rather than an inline mark like `.field__from`: this is a sentence from the check,
+	 * not a four-word provenance label, and inline it pushed every marked label onto two lines.
+	 * `--peach-hi` is the same colour `.field__error` uses, because to the person correcting the
+	 * form these are the same kind of thing — something to change before sending again.
+	 */
+	.field__fix {
+		display: block;
+		font-size: 0.8125rem;
+		color: var(--peach-hi);
+		max-inline-size: 60ch;
+		border-inline-start: var(--rule) solid var(--peach-line);
+		padding-inline-start: 0.6em;
+	}
+	.field__fix-name {
+		display: block;
+		font-family: var(--font-mono);
+		font-size: var(--step-micro);
+		letter-spacing: 0.06em;
+		text-transform: uppercase;
 	}
 	/*
 	 * Scoped to .field, not bare `input`/`select`/`textarea`.

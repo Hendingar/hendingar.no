@@ -27,10 +27,23 @@ CONFIDENCE_FLOOR = 70
 #: about the event held back a real fishing festival whose other four checks passed at 90–100%,
 #: because a 60% confidence sat under the floor.
 #:
-#: Corroboration still reports what it found, and a `fail` from any check still rejects. What it can
-#: no longer do is turn "we could not cross-check this" into "a human must look at it" — which, with
-#: nobody in the queue, meant no.
-BLOCKING_CHECKS = frozenset({"plausibility", "duplicate", "normalisation", "categorisation"})
+#: Categorisation is absent for the same reason, and it took the same kind of report to see it. An
+#: opening party submitted as `anna` came back "uncertain, 70%: a category like 'fest' might fit
+#: better" — which is a fair remark and not a reason to refuse the event. Nobody looking for that
+#: party would have failed to find it under `anna`; they simply never got the chance, because with
+#: no human queue "review" means no.
+#:
+#: There is a second argument, and it is the one that settles it: `importers/mec` files *every*
+#: event it imports as `anna` on purpose, because guessing a category from a listing that states
+#: none would be inventing a fact. Publishing hundreds of imported events under a deliberately
+#: vague category while refusing a person's for a suboptimal one is not a standard, it is an
+#: inconsistency. A category is metadata we can improve; it is not grounds to reject a real local
+#: event.
+#:
+#: Both still report what they found, and both still appear on the verdict and in /kø — so a sender
+#: is told a better category exists, and can change it if they agree. What they no longer do is
+#: decide the outcome.
+BLOCKING_CHECKS = frozenset({"plausibility", "duplicate", "normalisation"})
 
 SYSTEM = """Du vurderer innsende arrangement for hendingar.no, ein open kalender for lokale
 arrangement i Noreg.
@@ -222,15 +235,27 @@ async def check_plausibility(factory: LlmClientFactory, request: VerifyRequest) 
 
 
 async def check_categorisation(factory: LlmClientFactory, request: VerifyRequest) -> CheckResult:
-    return await _judge(
+    """Advisory. Reports a better category where it sees one, and never refuses the event.
+
+    The prompt asks for no ``fail``, and the verdict is clamped anyway: a `fail` from *any* check
+    rejects the submission outright, so leaving that outcome reachable here would mean a dropdown
+    choice could lose a real event — the one thing this check is not allowed to do. Asking a model
+    politely is not the same as making it impossible. See ``BLOCKING_CHECKS``.
+    """
+    result = await _judge(
         factory,
         "categorisation",
         f"Passar kategorien «{request.category}» til dette arrangementet?\n\n"
         f"Tittel: {request.title}\n"
         f"Skildring: {request.description or '(ingen)'}\n\n"
         "Svar 'pass' om kategorien er rimeleg, 'uncertain' om ein annan passar klart betre "
-        "(nemn kva for ein i reasoning), 'fail' berre om kategorien er heilt feil.",
+        "(nemn kva for ein i reasoning). Bruk ALDRI 'fail' her: eit val i ei nedtrekksliste er "
+        "ikkje grunn til å avvise eit ekte arrangement, og eit 'fail' frå kvar som helst av "
+        "sjekkane avviser innsendinga.",
     )
+    if result.verdict == "fail":
+        return result.model_copy(update={"verdict": "uncertain"})
+    return result
 
 
 def check_corroboration(request: VerifyRequest) -> CheckResult:
