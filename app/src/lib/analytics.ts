@@ -128,5 +128,5 @@ export type TrackedEvent =
 	| 'click'
 	/** The calendar file downloaded. Whether the export promise is used. */
 	| 'add_to_calendar'
-	/** A submission decided, and which of the five checks decided it. */
+	/** A submission decided, and which of the checks decided it. */
 	| 'submit_result';

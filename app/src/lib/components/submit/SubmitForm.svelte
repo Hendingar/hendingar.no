@@ -18,6 +18,8 @@
 		type VerificationCheck,
 		type VerificationVerdict
 	} from '@hendingar/core/verification';
+	import { coveredMunicipalitiesSentence } from '@hendingar/core/coverage';
+	import { CHECK_COUNT_WORD_LEADING } from '../../checks.ts';
 	import {
 		cropSuggestion,
 		contributionTarget,
@@ -146,7 +148,7 @@
 	 *
 	 * From `VERIFICATION_CHECK_FIELDS` in core rather than a list here: which field a check reads
 	 * is a fact about the check, and a second copy in a component goes stale the first time the
-	 * verifier changes what it looks at. A scan over at most five checks per field, which is
+	 * verifier changes what it looks at. A scan over a handful of checks per field, which is
 	 * cheaper than the reactive Map it replaced and does not need one.
 	 */
 	function fixesFor(field: string) {
@@ -1427,8 +1429,20 @@
 						{...f.municipality.as('text')}
 						maxlength="100"
 						readonly={contributing}
+						aria-describedby="municipality-hint"
 						oninput={() => ownField('municipality')}
 					/>
+					<!--
+						Optional in the schema, and the thing that decides whether the event goes out
+						now. The coverage check reads this box: a covered kommune publishes, an empty
+						one is a question that lands in /kø, and somewhere else is a no. A sender who
+						is told that here never meets the last two — which is the whole point of
+						saying it at the field rather than only in the verdict.
+					-->
+					<span class="field__hint" id="municipality-hint">
+						Vi legg ut hendingar i {coveredMunicipalitiesSentence()}. Skriv kommunen, så går
+						hendinga ut med ein gong.
+					</span>
 					{#each f.municipality.issues() ?? [] as issue (issue.message)}
 						<span class="field__error">{issue.message}</span>
 					{/each}
@@ -1490,7 +1504,9 @@
 			<button class="btn btn--solid" type="submit" disabled={submitEvent.pending > 0}>
 				{submitEvent.pending > 0 ? 'Kontrollerer…' : 'Send inn hendinga'}
 			</button>
-			<p class="form__send-note">Fem kontrollar går med ein gong — ingen kø, ingen som ventar.</p>
+			<p class="form__send-note">
+				{CHECK_COUNT_WORD_LEADING} kontrollar går med ein gong — ingen kø, ingen som ventar.
+			</p>
 		</div>
 		<div class="form__foot">
 			<p class="form__fine fineprint">

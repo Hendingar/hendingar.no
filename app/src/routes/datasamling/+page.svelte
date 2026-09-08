@@ -7,6 +7,7 @@
 	import SubmissionLog from '../../lib/components/collection/SubmissionLog.svelte';
 	import PageMeta from '../../lib/components/PageMeta.svelte';
 	import { listCollection } from '../../lib/collection.remote';
+	import { CHECK_COUNT_WORD } from '../../lib/checks.ts';
 
 	// Top-level await so the status board is in the server-rendered HTML (CLAUDE.md).
 	const data = await listCollection();
@@ -152,9 +153,9 @@
 	<p class="label">Innsendingar</p>
 	<h2 id="h-submissions" class="display block__h">Sendt inn av folk</h2>
 	<p class="block__lede">
-		Kva som er kome inn gjennom <a href="/send-inn">skjemaet</a> eller frå eit bilete, og kva dei fem
-		kontrollane avgjorde. Alt blir avgjort med ein gong — kom hendinga ikkje ut, kan den som sende henne
-		rette og prøve igjen, og ho blir sletta om ingen gjer det innan 48 timar.
+		Kva som er kome inn gjennom <a href="/send-inn">skjemaet</a> eller frå eit bilete, og kva dei
+		{CHECK_COUNT_WORD} kontrollane avgjorde. Alt blir avgjort med ein gong — kom hendinga ikkje ut, kan
+		den som sende henne rette og prøve igjen, og ho blir sletta om ingen gjer det innan 48 timar.
 	</p>
 	<SubmissionLog submissions={data.submissions} />
 

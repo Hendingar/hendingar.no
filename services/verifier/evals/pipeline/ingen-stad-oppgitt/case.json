@@ -1,0 +1,16 @@
+{
+	"description": "Nothing places this event at all — no kommune, and a venue name that could be in any village in Norway. The right answer is a question, not a refusal: it goes back to the one person who knows where it is. Assert `review`, and assert it is NOT `reject`.",
+	"source": "constructed — the branch that keeps the kommune field safely optional",
+	"request": {
+		"title": "Basar i bedehuset",
+		"description": "Årets basar med loddsal, kaffi og heimebakst.",
+		"category": "anna",
+		"starts_at": "+18d",
+		"venue_name": "Bedehuset"
+	},
+	"expect": {
+		"recommendation": { "equals": "review" },
+		"check.coverage.verdict": { "equals": "uncertain" },
+		"check.coverage.reasoning": { "contains": "kommune" }
+	}
+}

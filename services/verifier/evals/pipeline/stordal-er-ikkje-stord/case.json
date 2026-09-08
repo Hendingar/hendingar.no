@@ -1,0 +1,16 @@
+{
+	"description": "Stordal is in Møre og Romsdal, 400km north, and its name contains 'Stord'. A substring match publishes it. The token rule is what stops it, and this case is here because that bug is one line away in either language.",
+	"source": "constructed from the substring hazard in packages/core/src/coverage.ts",
+	"request": {
+		"title": "Bygdekveld i Stordal",
+		"description": "Kaffi, kaker og allsong på bygdehuset.",
+		"category": "anna",
+		"starts_at": "+21d",
+		"venue_name": "Stordal bygdehus",
+		"municipality": "Stordal"
+	},
+	"expect": {
+		"recommendation": { "equals": "reject" },
+		"check.coverage.verdict": { "equals": "fail" }
+	}
+}

@@ -1,0 +1,18 @@
+{
+	"description": "The fishing festival, with coverage now in the pipeline. A poster off a noticeboard: no URL, because the poster IS the source. It was once held back for that, and the fix was to stop letting corroboration decide. This case asserts the newest blocking check did not quietly re-create that wall.",
+	"source": "the fishing-festival report recorded beside BLOCKING_CHECKS in verify.py",
+	"request": {
+		"title": "Fiskefestival på Langevåg",
+		"description": "Fiskekonkurranse for store og små, grillmat og premiar til dei største fangstane.",
+		"category": "festival",
+		"starts_at": "+45d",
+		"venue_name": "Langevåg båtforeining",
+		"municipality": "Bømlo"
+	},
+	"expect": {
+		"recommendation": { "equals": "publish" },
+		"check.coverage.verdict": { "equals": "pass" },
+		"check.corroboration.verdict": { "equals": "uncertain" },
+		"summary": { "contains": "Alle avgjerande sjekkar gjekk gjennom" }
+	}
+}

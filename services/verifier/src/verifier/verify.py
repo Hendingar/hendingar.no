@@ -11,6 +11,7 @@ import logging
 import re
 from datetime import datetime, timedelta
 
+from .coverage import classify_coverage, covered_sentence
 from .llm import SEED, TEMPERATURE, LlmClientFactory
 from .models import CheckResult, VerifyRequest, VerifyResponse
 
@@ -43,7 +44,13 @@ CONFIDENCE_FLOOR = 70
 #: Both still report what they found, and both still appear on the verdict and in /kø — so a sender
 #: is told a better category exists, and can change it if they agree. What they no longer do is
 #: decide the outcome.
-BLOCKING_CHECKS = frozenset({"plausibility", "duplicate", "normalisation"})
+#:
+#: Coverage is here, and it is the only one of these a sender can fail without having got
+#: anything wrong. An event in Bergen is a real, well-formed, correctly categorised event; it is
+#: simply not one this calendar covers, and publishing it is the failure. So it blocks — and unlike
+#: the other three it can also `fail` outright, because "somewhere else" is not a thing a human
+#: review would resolve differently. See `coverage.py`.
+BLOCKING_CHECKS = frozenset({"plausibility", "duplicate", "normalisation", "coverage"})
 
 SYSTEM = """Du vurderer innsende arrangement for hendingar.no, ein open kalender for lokale
 arrangement i Noreg.
@@ -110,6 +117,72 @@ def check_normalisation(request: VerifyRequest) -> CheckResult:
         verdict="pass",
         confidence=100,
         reasoning="Dato og tid er gyldige og ligg framover i tid.",
+        deterministic=True,
+    )
+
+
+def check_coverage(request: VerifyRequest) -> CheckResult:
+    """A rule: is this event in one of the municipalities we publish?
+
+    The check that was missing. A concert by The Watch in Grieghallen, Bergen was submitted, passed
+    plausibility at 90%, categorisation at 90%, normalisation at 100% and duplicate at 95%, and went
+    live — because every one of those questions has a correct answer for a Bergen concert and none
+    of them is "where is it". "Bergen" travelled through the whole pipeline as a string nothing
+    compared to anything.
+
+    A rule rather than a model, on the same grounds as `check_duplicate`: which municipality a place
+    is in is a fact. A model asked "is Grieghallen in Stord" would usually be right, cost a call,
+    and be occasionally, unpredictably wrong about the one thing the product is.
+
+    Three outcomes, not two, and the middle one is the point:
+
+    * a covered place is named          → ``pass``
+    * somewhere else is named           → ``fail``, because no human review resolves "Bergen"
+    * nothing places it, or a county    → ``uncertain``, so it goes back to the person who knows
+
+    That last branch is why the kommune box being optional is still safe. Leaving it empty does not
+    refuse the event; it means we ask. What it no longer does is publish.
+    """
+    state, detail = classify_coverage(request.municipality, request.venue_name)
+
+    if state == "inside":
+        return CheckResult(
+            check="coverage",
+            verdict="pass",
+            confidence=100,
+            reasoning=f"Hendinga ligg i {detail}, som vi dekkjer.",
+            deterministic=True,
+        )
+    if state == "outside":
+        return CheckResult(
+            check="coverage",
+            verdict="fail",
+            confidence=95,
+            reasoning=(
+                f"«{detail}» er ikkje ein av kommunane vi dekkjer. hendingar.no legg ut "
+                f"hendingar i {covered_sentence()}."
+            ),
+            deterministic=True,
+        )
+    if state == "too-broad":
+        return CheckResult(
+            check="coverage",
+            verdict="uncertain",
+            confidence=50,
+            reasoning=(
+                f"«{detail}» er større enn ein kommune, så vi kunne ikkje avgjere om hendinga "
+                f"ligg i {covered_sentence()}. Skriv kommunen."
+            ),
+            deterministic=True,
+        )
+    return CheckResult(
+        check="coverage",
+        verdict="uncertain",
+        confidence=50,
+        reasoning=(
+            "Ingen kommune oppgitt, så vi kunne ikkje avgjere om hendinga ligg i "
+            f"{covered_sentence()}. Skriv kommunen, så går ho ut med ein gong."
+        ),
         deterministic=True,
     )
 
@@ -295,6 +368,7 @@ async def verify(factory: LlmClientFactory | None, request: VerifyRequest) -> Ve
     checks: list[CheckResult] = [
         check_normalisation(request),
         check_duplicate(request),
+        check_coverage(request),
         check_corroboration(request),
     ]
 

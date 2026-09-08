@@ -66,7 +66,7 @@ Scope discipline is a feature. hendingar.no is deliberately **not**:
 ## Agentic verification
 
 Open submission invites spam, duplicates and junk. Rather than gate contributions behind accounts,
-every incoming event runs through five checks before it goes live. Three are **rules** — code with
+every incoming event runs through six checks before it goes live. Four are **rules** — code with
 the same answer every time. Two ask a **language model**, because they need judgement:
 
 | Check          | How              | What it asks                                                  |
@@ -74,8 +74,17 @@ the same answer every time. Two ask a **language model**, because they need judg
 | Plausibility   | model            | Is this a real event, or spam / a test / an ad?               |
 | Duplicate      | rule + shortlist | Does it already exist, across venue, time and title variants? |
 | Normalisation  | rule             | Are time, place and required fields present and well-formed?  |
+| Coverage       | rule             | Is it in a municipality we publish?                           |
 | Categorisation | model            | Does the category match the content?                          |
 | Corroboration  | rule             | Can it be confirmed against a cited source?                   |
+
+**Coverage is the newest, and it exists because we got it wrong.** A concert in Grieghallen, Bergen
+was submitted, passed every check — correctly; it is a real, well-formed, correctly categorised
+concert — and went live on a calendar for Sunnhordland, because not one of the five questions was
+"where is this". It has three answers rather than two: a covered place publishes, a different
+municipality is refused, and _nothing stated_ is a question sent back to the sender rather than a
+refusal, because most people leave the kommune box empty and their events are local anyway. See
+[ADR 0015](docs/decisions/0015-coverage-area.md).
 
 A unanimous confident pass publishes immediately. Everything else is decided the same moment, with
 one of five outcomes — `approved`, `duplicate`, `shady`, `declined` or `contributed` — because there
@@ -121,7 +130,11 @@ against an account with key authentication disabled. See
 | **2 — MVP**         | 🚧 Now     | Submission form, listing + map view, search & filtering, categories, agentic verification |
 | **3 — Community**   | ⏳ Planned | Optional accounts, moderation tooling, RSS/iCal, notifications                            |
 
-Pilot region: Norway — Bergen, Haugalandet, Sunnhordland — then outward across the EU.
+Coverage today: **Stord, Bømlo and Fitjar** — the three municipalities in
+`packages/core/src/coverage.ts`, which is what the coverage check enforces and the only thing that
+decides where a submission can be. Bergen and Haugalandet were once written here as pilot regions
+and were never covered by a source or a check; saying so cost a real submitter their event. Outward
+from Sunnhordland, then across the EU — one municipality at a time, each added to that list.
 
 ### Under consideration
 

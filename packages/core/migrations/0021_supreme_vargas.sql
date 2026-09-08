@@ -1,0 +1,1 @@
+ALTER TYPE "public"."verification_check" ADD VALUE 'coverage' BEFORE 'categorisation';

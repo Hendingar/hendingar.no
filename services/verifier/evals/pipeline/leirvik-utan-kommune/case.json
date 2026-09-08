@@ -1,0 +1,16 @@
+{
+	"description": "Nobody fills in the kommune box; it is optional and it looks it. This event names its venue and nothing else, and the venue carries the place. If this needs a human, the check has made an optional field mandatory in practice — which for most senders means their event silently does not appear.",
+	"source": "the shape /send-inn actually posts when the kommune field is left blank",
+	"request": {
+		"title": "Kveldsmesse i Stord kyrkje",
+		"description": "Kveldsmesse med Stord kyrkjekor.",
+		"category": "kyrkjeliv",
+		"starts_at": "+10d",
+		"venue_name": "Leirvik bedehus"
+	},
+	"expect": {
+		"recommendation": { "equals": "publish" },
+		"check.coverage.verdict": { "equals": "pass" },
+		"check.coverage.reasoning": { "contains": "Stord" }
+	}
+}

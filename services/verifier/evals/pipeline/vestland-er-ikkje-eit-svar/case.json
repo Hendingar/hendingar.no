@@ -1,0 +1,17 @@
+{
+	"description": "A sender who answered the question one zoom level out. Stord is in Vestland, so 'Vestland' is not evidence the event is somewhere else — reading it as 'not here' would reject local events for describing themselves imprecisely. Must be `review`, never `reject`.",
+	"source": "constructed — the UNCOMMITTED_PLACE_WORDS branch",
+	"request": {
+		"title": "Slektsgranskarkveld",
+		"description": "Open kveld for alle som driv med slektsgransking.",
+		"category": "kurs",
+		"starts_at": "+25d",
+		"venue_name": "Biblioteket",
+		"municipality": "Vestland"
+	},
+	"expect": {
+		"recommendation": { "equals": "review" },
+		"check.coverage.verdict": { "equals": "uncertain" },
+		"check.coverage.reasoning": { "contains": "større enn ein kommune" }
+	}
+}

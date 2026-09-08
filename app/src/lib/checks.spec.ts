@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
-import { PIPELINE } from './checks.ts';
+import { CHECK_COUNT_WORD, CHECK_COUNT_WORD_LEADING, PIPELINE } from './checks.ts';
 
 /**
  * The rendered pipeline restates the README's verification table. That duplication is deliberate
@@ -26,7 +26,7 @@ function section(from: string, to: string): string {
 	return readme.slice(start, end);
 }
 
-describe('the five checks', () => {
+describe('the checks', () => {
 	it('has a pipeline step for every stage the README documents', () => {
 		// Count the rows of the verification table structurally. Matching stage names would be
 		// brittle in both directions: prettier pads the cells, and the rendered copy is Nynorsk
@@ -38,5 +38,27 @@ describe('the five checks', () => {
 			.slice(1); // drop the header row
 		expect(rows.length).toBeGreaterThan(0);
 		expect(PIPELINE.length).toBe(rows.length);
+	});
+});
+
+describe('the count, spelled out', () => {
+	it('is the Nynorsk word for however many checks there are', () => {
+		// Six pieces of copy on four routes said "fem kontrollar" in their own words. This is the
+		// assertion that would have failed the moment a sixth check landed, instead of the page
+		// naming five directly above a list of six.
+		const words = ['null', 'ein', 'to', 'tre', 'fire', 'fem', 'seks', 'sju', 'åtte', 'ni'];
+		expect(CHECK_COUNT_WORD).toBe(words[PIPELINE.length]);
+	});
+
+	it('capitalises for the copy that opens a sentence with it', () => {
+		expect(CHECK_COUNT_WORD_LEADING).toBe(
+			CHECK_COUNT_WORD.charAt(0).toUpperCase() + CHECK_COUNT_WORD.slice(1)
+		);
+	});
+
+	it('never renders as undefined, however long the pipeline gets', () => {
+		// A numeral table is a lookup, and a lookup past its end puts `undefined` in a heading.
+		expect(CHECK_COUNT_WORD).toMatch(/^[^\s]+$/);
+		expect(CHECK_COUNT_WORD).not.toContain('undefined');
 	});
 });
