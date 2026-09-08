@@ -1,0 +1,18 @@
+{
+	"description": "The other direction: coverage must not become the only thing that stops anything. This is an advert, and it is in Stord — so coverage passes and plausibility has to do its job. A pipeline that publishes this is one where adding a rule made the model checks decorative.",
+	"source": "constructed",
+	"request": {
+		"title": "TJEN 50 000 KR I MÅNEDEN HJEMMEFRA!!! KLIKK HER",
+		"description": "Hemmelig metode. Ingen erfaring nødvendig. Begrenset antall plasser, klikk lenken nå!!!",
+		"category": "kurs",
+		"starts_at": "+7d",
+		"venue_name": "Online",
+		"municipality": "Stord",
+		"source_url": "https://tjen-raskt-na.example.com/tilbud"
+	},
+	"expect": {
+		"recommendation": { "equals": "reject" },
+		"check.coverage.verdict": { "equals": "pass" },
+		"check.plausibility.verdict": { "equals": "fail" }
+	}
+}

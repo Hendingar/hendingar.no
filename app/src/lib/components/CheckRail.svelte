@@ -2,7 +2,7 @@
 	import { PIPELINE } from '../checks.ts';
 
 	/**
-	 * The five checks as a rail of numbered steps.
+	 * The checks as a rail of numbered steps, however many there are.
 	 *
 	 * Shared between `/` and `/send-inn` rather than copied: the submission page used to describe
 	 * the checks in a paragraph at the very bottom, which is both a second telling and the wrong
@@ -27,9 +27,9 @@
 		padding: 0;
 		margin: 0;
 		display: grid;
-		/* 12rem, not 17: there are five checks, and a 17rem minimum fits four per row on a laptop,
-		   which strands the fifth alone on a second row. Sized so all five sit on one line where
-		   there is room, and the count comes from core — so this must not assume a number. */
+		/* 12rem, not 17: a 17rem minimum fits four per row on a laptop, which stranded the fifth
+		   alone on a second row back when there were five. Sized so the row wraps evenly rather
+		   than for a particular count — the count comes from core, so this must not assume one. */
 		grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr));
 		gap: 0 1.25rem;
 	}

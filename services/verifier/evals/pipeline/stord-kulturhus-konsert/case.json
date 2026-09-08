@@ -1,0 +1,19 @@
+{
+	"description": "The ordinary good submission: inside the area, sourced, well-formed. If this one ever needs a human, the pipeline has stopped working.",
+	"source": "shaped after the rows importers/kulturhus reads from stord kulturhus",
+	"request": {
+		"title": "Haustkonsert med Stord Storband",
+		"description": "Stord Storband spelar swing og storbandklassikarar i storsalen.",
+		"category": "musikk",
+		"starts_at": "+30d",
+		"venue_name": "Stord kulturhus",
+		"municipality": "Stord",
+		"source_url": "https://stordkulturhus.no/program/haustkonsert"
+	},
+	"expect": {
+		"recommendation": { "equals": "publish" },
+		"check.coverage.verdict": { "equals": "pass" },
+		"check.coverage.confidence": { "atLeast": 90 },
+		"check.corroboration.verdict": { "equals": "pass" }
+	}
+}

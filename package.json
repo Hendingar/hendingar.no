@@ -31,6 +31,7 @@
 		"ingest": "pnpm -r --filter \"./importers/*\" --workspace-concurrency=1 --no-bail ingest",
 		"verifier:dev": "cd services/verifier && ./.venv/bin/verifier dev",
 		"verifier:eval": "cd services/verifier && ./.venv/bin/python evals/run.py",
+		"verifier:eval:pipeline": "cd services/verifier && ./.venv/bin/python evals/run_pipeline.py",
 		"db:bootstrap": "pnpm run db:up && pnpm run db:migrate && pnpm run db:seed && pnpm run db:sources && pnpm run ingest && pnpm run consolidate"
 	},
 	"devDependencies": {

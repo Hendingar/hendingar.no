@@ -27,7 +27,14 @@ CategorySlug = Literal[
     "anna",
 ]
 
-CheckName = Literal["plausibility", "duplicate", "normalisation", "categorisation", "corroboration"]
+CheckName = Literal[
+    "plausibility",
+    "duplicate",
+    "normalisation",
+    "coverage",
+    "categorisation",
+    "corroboration",
+]
 Verdict = Literal["pass", "uncertain", "fail"]
 
 

@@ -1,0 +1,18 @@
+{
+	"description": "The third municipality, and the smallest. Present because a coverage list is exactly the kind of thing that gets tested for its first entry and shipped missing its last.",
+	"source": "constructed",
+	"request": {
+		"title": "Bygdekveld på Rimbareid",
+		"description": "Rimbareid skule inviterar til bygdekveld med kaffi, kaker og lokale artistar.",
+		"category": "anna",
+		"starts_at": "+14d",
+		"venue_name": "Rimbareid skule",
+		"municipality": "Fitjar",
+		"source_url": "https://www.fitjar.kommune.no/aktuelt/bygdekveld"
+	},
+	"expect": {
+		"recommendation": { "equals": "publish" },
+		"check.coverage.verdict": { "equals": "pass" },
+		"check.coverage.reasoning": { "contains": "Fitjar" }
+	}
+}

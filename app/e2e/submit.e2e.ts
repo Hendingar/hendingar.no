@@ -1,4 +1,6 @@
 import { expect, test } from '@playwright/test';
+import { VERIFICATION_CHECK_LABELS, VERIFICATION_CHECKS } from '@hendingar/core/verification';
+import { CHECK_COUNT_WORD_LEADING, PIPELINE } from '../src/lib/checks.ts';
 
 /**
  * The submission page. Two things are load-bearing and both are easy to break silently:
@@ -19,26 +21,33 @@ test('the form is server-rendered, with every required field', async ({ request 
 	 * the two-day window, because deleting somebody's submission is not something to mention only
 	 * once it has happened.
 	 */
-	expect(html).toMatch(/Fem kontrollar går/);
+	// The numeral comes from the pipeline, not from this line. It read /Fem kontrollar går/ and
+	// failed the day a sixth check landed — a spec that hardcodes a count is one more copy of the
+	// count, and it fails for the wrong reason: the page was right and the assertion was stale.
+	expect(html).toContain(`${CHECK_COUNT_WORD_LEADING} kontrollar går`);
 	expect(html).toMatch(/48 timar/);
 	expect(html).toMatch(/href="\/ko"/);
 });
 
 /**
- * The five checks are named on the way in, not only described afterwards.
+ * The checks are named on the way in, not only described afterwards.
  *
  * They used to be a paragraph saying "fem kontrollar" without naming one of them, so the thing
  * that makes an open submission form trustworthy was the least legible thing on the page. The
  * names come from `VERIFICATION_CHECK_LABELS`, which is also what the verdict prints back — this
  * asserts the rail is actually rendered from that, rather than retyped and free to drift.
+ *
+ * Read from core rather than listed here, for the same reason. The list used to be five literals,
+ * so `coverage` could be added to the pipeline and this spec would still pass while the page said
+ * nothing about it — a spec that names yesterday's checks cannot notice a missing one.
  */
-test('the five checks are named before you submit, not just counted', async ({ request }) => {
+test('every check is named before you submit, not just counted', async ({ request }) => {
 	const html = await (await request.get('/send-inn')).text();
-	for (const check of ['Truverd', 'Dublett', 'Normalisering', 'Kategori', 'Kjelde']) {
-		expect(html).toContain(check);
+	for (const check of VERIFICATION_CHECKS) {
+		expect(html, `${check} is not named on /send-inn`).toContain(VERIFICATION_CHECK_LABELS[check]);
 	}
-	// The rail is numbered 01–05, which is what makes "kontroll 03 stoppa henne" mean something.
-	expect(html).toContain('>05<');
+	// The rail is numbered from 01, which is what makes "kontroll 03 stoppa henne" mean something.
+	expect(html).toContain(`>${String(PIPELINE.length).padStart(2, '0')}<`);
 });
 
 test('both submission modes are in the server-rendered HTML', async ({ request }) => {

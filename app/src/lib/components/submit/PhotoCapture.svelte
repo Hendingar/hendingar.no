@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { CHECK_COUNT_WORD } from '../../checks.ts';
 	import { extractFromPhoto } from '../../submit.remote';
 	import { downscaleForUpload, type CapturedImage } from '../../poster.ts';
 	import type { ExtractedEvent } from '@hendingar/core/validation';
@@ -199,7 +200,7 @@
 			     checks. Vanishing silently taught them the feature did not exist. -->
 			<p class="capture__off">
 				Bilettolking er ikkje slått på i dette miljøet, så opplasting er mellombels av. Send inn med
-				skjemaet — det går same vegen, gjennom dei same fem kontrollane.
+				skjemaet — det går same vegen, gjennom dei same {CHECK_COUNT_WORD} kontrollane.
 			</p>
 		{:else}
 			<!--

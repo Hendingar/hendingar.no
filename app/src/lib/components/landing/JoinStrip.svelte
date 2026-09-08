@@ -1,11 +1,17 @@
+<script lang="ts">
+	// The count comes from core, not from this sentence. It said "Fem" for a day after a sixth
+	// check shipped — see the note beside CHECK_COUNT_WORD.
+	import { CHECK_COUNT_WORD_LEADING } from '../../checks.ts';
+</script>
+
 <!--
 	The one thing left on the front page that is about us — and it is an action, not a claim.
 
-	It replaces three sections: the manifest band, the verification pipeline with its five checks,
+	It replaces three sections: the manifest band, the verification pipeline with its checks,
 	and a call to action offering the GitHub repository and an issue template. Those were five
 	screens explaining the project to somebody who arrived asking what was on this evening.
 
-	The checks themselves have not gone anywhere. `/send-inn` states the same five BEFORE you
+	The checks themselves have not gone anywhere. `/send-inn` states them all BEFORE you
 	submit, which is where they change what a person does; on the front page they described a
 	process to people who were never going to start it. The promises live in the footer now, where
 	fine print belongs, and the source link with them.
@@ -19,8 +25,8 @@
 			<p class="label">Ver med</p>
 			<h2 id="h-join" class="display join__h">Saknar du noko?</h2>
 			<p class="join__p">
-				Alle kan sende inn, utan konto. Fem kontrollar før hendinga blir synleg — stoppar noko
-				henne, seier vi kva, og du kan rette og prøve igjen.
+				Alle kan sende inn, utan konto. {CHECK_COUNT_WORD_LEADING} kontrollar før hendinga blir synleg
+				— stoppar noko henne, seier vi kva, og du kan rette og prøve igjen.
 			</p>
 		</div>
 		<a class="btn btn--invert" href="/send-inn">Send inn ei hending</a>

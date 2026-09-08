@@ -1,0 +1,19 @@
+{
+	"description": "The regression. Submitted 2026-09-08, published, and 90km outside the area — a real concert, correctly categorised, correctly formatted, in the wrong town. Every check passed because none of them asked where it was. The model must still say 'a genuine concert' here; what has changed is that a rule outranks it.",
+	"source": "submission 880, https://hendingar.no/send-inn/kvittering/880",
+	"request": {
+		"title": "The Watch spelar Genesis",
+		"description": "Det britiske bandet The Watch tolkar Genesis-musikk frå 70-talet.",
+		"category": "musikk",
+		"starts_at": "+120d",
+		"venue_name": "Grieghallen",
+		"municipality": "Bergen"
+	},
+	"expect": {
+		"recommendation": { "equals": "reject" },
+		"check.coverage.verdict": { "equals": "fail" },
+		"check.coverage.deterministic": { "equals": true },
+		"summary": { "contains": "Bergen" },
+		"check.plausibility.verdict": { "equals": "pass" }
+	}
+}

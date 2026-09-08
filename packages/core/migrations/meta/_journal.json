@@ -148,6 +148,13 @@
       "when": 1788799901730,
       "tag": "0020_aspiring_tarantula",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1788869868348,
+      "tag": "0021_supreme_vargas",
+      "breakpoints": true
     }
   ]
 }

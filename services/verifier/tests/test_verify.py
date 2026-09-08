@@ -7,7 +7,7 @@ from typing import ClassVar
 import pytest
 
 from verifier.models import CandidateEvent, VerifyRequest
-from verifier.verify import check_duplicate, check_normalisation, verify
+from verifier.verify import check_coverage, check_duplicate, check_normalisation, verify
 
 
 def _request(**overrides) -> VerifyRequest:
@@ -16,6 +16,10 @@ def _request(**overrides) -> VerifyRequest:
         "category": "musikk",
         "starts_at": (datetime.now(UTC) + timedelta(days=7)).isoformat(),
         "venue_name": "Den Blå Time",
+        # Inside the covered area, because that is the ordinary case and every pipeline test below
+        # is about something else. A default of `None` would put `coverage` at "uncertain" in all
+        # of them and quietly turn assertions about corroboration into assertions about geography.
+        "municipality": "Stord",
     }
     return VerifyRequest(**{**base, **overrides})
 
@@ -98,6 +102,64 @@ class TestDuplicate:
         assert result.verdict == "pass"
 
 
+class TestCoverage:
+    """The Bergen concert.
+
+    A real submission: The Watch playing Genesis in Grieghallen, Bergen. Plausibility said 90%
+    ("this looks like a genuine concert"), categorisation 90%, normalisation 100%, duplicate 95% —
+    every answer correct, and the event went live on a calendar for Sunnhordland, because not one
+    of those five questions was "where is this".
+
+    The tests below are in two halves, and the second half is the longer one on purpose. Refusing
+    Bergen is easy; the risk in a rule like this is refusing Leirvik.
+    """
+
+    def test_the_bergen_concert_is_stopped(self):
+        result = check_coverage(_request(municipality="Bergen", venue_name="Grieghallen"))
+        assert result.verdict == "fail"
+        assert "Bergen" in result.reasoning
+        # And the reasoning says where we DO publish, because the sender cannot guess.
+        assert "Stord" in result.reasoning and "Fitjar" in result.reasoning
+
+    def test_it_is_decided_without_a_model(self):
+        """Which kommune a place is in is a fact, so no call is made and none can drift."""
+        assert check_coverage(_request(municipality="Stord")).deterministic is True
+        assert check_coverage(_request(municipality="Stord")).model is None
+
+    def test_a_covered_municipality_passes(self):
+        for municipality in ("Stord", "Bømlo", "Fitjar"):
+            assert check_coverage(_request(municipality=municipality)).verdict == "pass"
+
+    def test_a_village_passes(self):
+        """What people actually type. Bremnes stopped being a municipality in 1963 and is still
+        what Bømlo kulturhus reports as its city."""
+        assert check_coverage(_request(municipality="Bremnes")).verdict == "pass"
+        assert check_coverage(_request(municipality="Leirvik")).verdict == "pass"
+
+    def test_a_venue_name_can_place_an_event_on_its_own(self):
+        result = check_coverage(_request(municipality=None, venue_name="Stord kulturhus"))
+        assert result.verdict == "pass"
+
+    def test_stordal_is_not_stord(self):
+        assert check_coverage(_request(municipality="Stordal")).verdict == "fail"
+
+    def test_a_missing_kommune_asks_instead_of_refusing(self):
+        """The branch that keeps the field safely optional: no kommune is a question, not a no."""
+        result = check_coverage(_request(municipality=None, venue_name="Bedehuset"))
+        assert result.verdict == "uncertain"
+        assert "kommune" in result.reasoning.lower()
+
+    def test_a_county_asks_instead_of_refusing(self):
+        """Stord is in Vestland, so "Vestland" is not evidence the event is somewhere else."""
+        for stated in ("Vestland", "Hordaland", "Sunnhordland", "Noreg"):
+            assert check_coverage(_request(municipality=stated)).verdict == "uncertain"
+
+    def test_a_venue_name_cannot_argue_an_event_out_of_the_area(self):
+        """There is a pub called Bergen Bar in most towns in Norway."""
+        result = check_coverage(_request(municipality="Stord", venue_name="Bergen Bar"))
+        assert result.verdict == "pass"
+
+
 class TestPipeline:
     async def test_without_a_model_it_defers_rather_than_publishing(self):
         """The safety property that matters: no model must never mean auto-publish."""
@@ -119,6 +181,26 @@ class TestPipeline:
     async def test_a_missing_source_alone_does_not_reject(self):
         response = await verify(None, _request())
         assert response.recommendation == "review"
+
+    async def test_an_event_outside_the_area_is_rejected_outright(self):
+        """The regression, through the whole pipeline and with no model in play.
+
+        `verify(None, …)` is the no-model path, so plausibility defers and the recommendation
+        would otherwise be `review`. `reject` here can only have come from coverage.
+        """
+        response = await verify(None, _request(municipality="Bergen", venue_name="Grieghallen"))
+        assert response.recommendation == "reject"
+        assert "Bergen" in response.summary
+
+    async def test_coverage_is_a_blocking_check(self):
+        from verifier.verify import BLOCKING_CHECKS
+
+        assert "coverage" in BLOCKING_CHECKS
+
+    async def test_every_submission_gets_a_coverage_verdict(self):
+        """Including the no-model path: it is a rule, so an unavailable model cannot skip it."""
+        response = await verify(None, _request())
+        assert any(c.check == "coverage" for c in response.checks)
 
 
 class _StubFactory:
@@ -159,9 +241,10 @@ class TestAdvisoryChecksDoNotBlock:
         from verifier.verify import BLOCKING_CHECKS
 
         assert "corroboration" not in BLOCKING_CHECKS
-        # The three that genuinely say something about the event itself: is it real, do we already
-        # have it, is it legible. Categorisation left for the reason recorded beside the set.
-        assert BLOCKING_CHECKS == {"plausibility", "duplicate", "normalisation"}
+        # The four that genuinely say something about the event itself: is it real, do we already
+        # have it, is it legible, is it here. Categorisation left for the reason recorded beside
+        # the set.
+        assert BLOCKING_CHECKS == {"plausibility", "duplicate", "normalisation", "coverage"}
 
     def test_a_missing_source_still_reports_what_it_found(self):
         from verifier.verify import check_corroboration
@@ -200,6 +283,9 @@ class TestAdvisoryChecksDoNotBlock:
         response = await verify(object(), _request(source_url=None))
 
         assert response.recommendation == "publish"
+        # And coverage is not the new corroboration: a stated kommune we cover is a pass, not a
+        # caveat that ends up in the summary of an event we just published.
+        assert next(c for c in response.checks if c.check == "coverage").verdict == "pass"
         # And the summary leads with the decision, not with the caveat. Opening on "could not be
         # confirmed" is what made a published event read as a refusal.
         assert response.summary.startswith("Alle avgjerande sjekkar gjekk gjennom")

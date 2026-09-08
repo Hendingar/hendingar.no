@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { page } from '$app/state';
+	import { CHECK_COUNT_WORD, CHECK_COUNT_WORD_LEADING } from '../../lib/checks.ts';
 	import CheckRail from '../../lib/components/CheckRail.svelte';
 	import SubmitForm from '../../lib/components/submit/SubmitForm.svelte';
 	import PageMeta from '../../lib/components/PageMeta.svelte';
@@ -29,7 +30,7 @@
 
 <PageMeta
 	title="Send inn ei hending — hendingar.no"
-	description="Legg til ei hending på hendingar.no. Ta bilete av ein plakat eller ei Facebook-hending, eller fyll ut skjemaet. Alle innsendingar går gjennom fem opne kontrollar."
+	description={`Legg til ei hending på hendingar.no. Ta bilete av ein plakat eller ei Facebook-hending, eller fyll ut skjemaet. Alle innsendingar går gjennom ${CHECK_COUNT_WORD} opne kontrollar.`}
 	path="/send-inn"
 />
 
@@ -68,7 +69,7 @@
 </section>
 
 <!--
-	The five checks, named rather than described.
+	The checks, named rather than described.
 
 	They used to be a paragraph here that said "fem kontrollar" without saying what any of them
 	was — so the one thing that makes an open submission form trustworthy was the least legible
@@ -77,7 +78,7 @@
 -->
 <section class="how shell" aria-labelledby="how-h">
 	<p class="label">Kva skjer i det du trykkjer send</p>
-	<h2 class="display how__h" id="how-h">Fem kontrollar,<br />ingen kø</h2>
+	<h2 class="display how__h" id="how-h">{CHECK_COUNT_WORD_LEADING} kontrollar,<br />ingen kø</h2>
 	<CheckRail />
 	<p class="fineprint how__fine">
 		Går alt gjennom, ligg hendinga ute same sekund. Gjer ho ikkje det, får du vite kva som stoppa

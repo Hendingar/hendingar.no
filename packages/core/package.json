@@ -24,7 +24,8 @@
 		"./address": "./src/address.ts",
 		"./standing": "./src/standing.ts",
 		"./search": "./src/search.ts",
-		"./contribution": "./src/contribution.ts"
+		"./contribution": "./src/contribution.ts",
+		"./coverage": "./src/coverage.ts"
 	},
 	"scripts": {
 		"typecheck": "tsc --noEmit",

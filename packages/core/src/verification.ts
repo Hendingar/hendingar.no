@@ -1,18 +1,25 @@
+import { coveredMunicipalitiesSentence } from './coverage.ts';
+
 /**
  * The verification checks — defined here and NOWHERE ELSE.
  *
  * The Postgres enum in schema.ts, the Zod enum in validation.ts and the UI labels all derive from
- * `VERIFICATION_CHECKS`. `services/verifier` implements the same five names in Python; that is the
+ * `VERIFICATION_CHECKS`. `services/verifier` implements the same six names in Python; that is the
  * one copy we cannot make the compiler enforce, so it is asserted in the service's tests instead.
  *
  * The split between rule and model is deliberate and is the thing we promise in the README: a
  * model is only asked the questions that need judgement. See
  * docs/decisions/0006-agentic-verification.md.
+ *
+ * `coverage` is the sixth and newest, and it was added because a concert in Grieghallen, Bergen was
+ * submitted and published. Every check passed, correctly — none of them asked where the event was.
+ * See docs/decisions/0015-coverage-area.md.
  */
 export const VERIFICATION_CHECKS = [
 	'plausibility',
 	'duplicate',
 	'normalisation',
+	'coverage',
 	'categorisation',
 	'corroboration'
 ] as const;
@@ -27,6 +34,7 @@ export const VERIFICATION_CHECK_LABELS: Record<VerificationCheck, string> = {
 	plausibility: 'Truverd',
 	duplicate: 'Dublett',
 	normalisation: 'Normalisering',
+	coverage: 'Område',
 	categorisation: 'Kategori',
 	corroboration: 'Kjelde'
 };
@@ -36,6 +44,7 @@ export const VERIFICATION_CHECK_QUESTIONS: Record<VerificationCheck, string> = {
 	plausibility: 'Ser dette ut som ei ekte hending, ikkje spam eller tull?',
 	duplicate: 'Finst hendinga i basen frå før?',
 	normalisation: 'Er tid, stad og felt utfylte og i rett format?',
+	coverage: `Skjer hendinga i ${coveredMunicipalitiesSentence('eller')}?`,
 	categorisation: 'Passar kategorien til innhaldet?',
 	corroboration: 'Kan hendinga stadfestast mot ei kjelde?'
 };
@@ -65,6 +74,14 @@ export const VERIFICATION_CHECK_HINTS: Record<VerificationCheck, string> = {
 	duplicate:
 		'Er det den same, kan du gjere den hendinga betre med det du sende. Er det ei anna, rett tittel, dato eller stad så det syner.',
 	normalisation: 'Sjekk dato, klokkeslett og stad.',
+	/*
+	 * The only hint that has to name the area, because it is the only check a sender can fail
+	 * without having done anything wrong: an event in Bergen is a real event, it is just not one
+	 * this calendar covers. So the words say where we publish, and say the useful half first — most
+	 * of the time this check fires because the kommune box was left empty, not because the event is
+	 * somewhere else.
+	 */
+	coverage: `Skriv kommunen — vi legg ut hendingar i ${coveredMunicipalitiesSentence()}.`,
 	categorisation: 'Prøv ein annan kategori.',
 	corroboration:
 		'Ei lenkje til arrangøren eller Facebook-hendinga gjer denne sterkare — men ho stoppar deg ikkje.'
@@ -89,6 +106,12 @@ export const VERIFICATION_CHECK_FIELDS: Record<VerificationCheck, readonly strin
 	plausibility: ['title', 'description', 'sourceUrl'],
 	duplicate: ['title', 'date', 'startTime', 'venueName'],
 	normalisation: ['date', 'startTime', 'endTime', 'venueName', 'municipality'],
+	/*
+	 * `municipality` first: it is the field that decides the check, and the one the form puts the
+	 * failing verdict beside. `venueName` is here because a venue often carries the place — a
+	 * submission naming "Stord kulturhus" and no kommune passes on the venue alone.
+	 */
+	coverage: ['municipality', 'venueName'],
 	categorisation: ['category'],
 	corroboration: ['sourceUrl']
 };

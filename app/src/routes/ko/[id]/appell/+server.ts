@@ -1,5 +1,6 @@
 import { error } from '@sveltejs/kit';
 import { and, eq, gte, isNotNull, isNull, ne } from 'drizzle-orm';
+import { classifyCoverage, coveredMunicipalitiesSentence } from '@hendingar/core/coverage';
 import { events, venues } from '@hendingar/core/schema';
 import { submissionCutoff } from '@hendingar/core/submissions';
 import { db } from '../../../../lib/server/db';
@@ -88,6 +89,30 @@ export const POST: RequestHandler = async ({ params, request }) => {
 		.limit(1);
 
 	if (!row) error(404, 'Fann ikkje ei innsending du kan appellere.');
+
+	/*
+	 * Coverage is not appealable, and this is the only place that has to say so.
+	 *
+	 * The panel is three models weighing whether somebody is telling the truth about a real event
+	 * in their town, and it can publish. That is the right instrument for "is this spam" and the
+	 * wrong one for "is this in Bømlo": the second has an answer, the checks already applied it,
+	 * and an appeal against a fact is a licence to argue a model into publishing an event 90km
+	 * outside the area — which is precisely the failure the coverage check was added for. Refusing
+	 * here costs nothing and asks no juror to be firm about geography.
+	 *
+	 * Only `outside` is refused. An event whose kommune was merely left blank has something to
+	 * appeal about, and its sender is likelier to fix the field than to write a case for it.
+	 */
+	const coverage = classifyCoverage({
+		municipality: row.venueMunicipality,
+		venueName: row.venueName
+	});
+	if (coverage.state === 'outside') {
+		error(
+			400,
+			`«${coverage.stated}» ligg utanfor området vi dekkjer, og det er ikkje noko eit appellpanel kan gjere om på. hendingar.no legg ut hendingar i ${coveredMunicipalitiesSentence()}.`
+		);
+	}
 
 	const { jurors, quorum } = await appealPanel();
 
