@@ -60,6 +60,14 @@ Scope discipline is a feature. hendingar.no is deliberately **not**:
   engagement metrics named two bullets up, and a non-goal is only worth having if it holds when it
   is inconvenient.
 
+  **Automated browsers are not counted, and are not blocked either.** A month of the dashboard,
+  filtered to the United States, was 501 page views of headless Chrome out of cloud datacentres,
+  in sessions exactly an hour long. The site still serves every one of those requests — an event
+  index that turns crawlers away has failed at its job — but reporting them makes the numbers
+  answer a different question from the one they are for. The filter is client-side and honest
+  about its limits (`isAutomatedBrowser`): a scraper that patches `navigator.webdriver` still gets
+  counted, and nothing running in the page can do anything about that.
+
 - **A walled garden** — accounts stay optional, and everything is exportable. Leaving is easy
   by design.
 
