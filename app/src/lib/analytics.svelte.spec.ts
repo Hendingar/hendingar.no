@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { startAnalytics, track } from './analytics.ts';
+import { isAutomatedBrowser, startAnalytics, track } from './analytics.ts';
 
 /**
  * Whether the tracker actually starts, in a real browser, with the network stubbed.
@@ -13,7 +13,18 @@ import { startAnalytics, track } from './analytics.ts';
  * `resetModules` reaches here. Exactly one test may therefore use the live hostname; the rest use
  * development ones, which return before touching the latch. Two live tests would pass or fail on
  * the order they happened to run in.
+ *
+ * This file also has to hand in a reader's identity, because it runs under Playwright — which is
+ * an automated browser, and is now exactly what the second gate exists to turn away. That is not
+ * an inconvenience to work around, it is the most direct evidence the gate works that this suite
+ * can produce, so there is an assertion on it below.
  */
+const READER = {
+	webdriver: false,
+	userAgent:
+		'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36'
+};
+
 const installD8a = vi.fn(() => {
 	// The real one defines this global; the module reads it back and gives up quietly without it.
 	(window as unknown as { d8a?: unknown }).d8a = d8a;
@@ -24,11 +35,21 @@ const d8a = vi.fn();
 vi.mock('@d8a-tech/wt', () => ({ installD8a }));
 
 describe('startAnalytics', () => {
+	it('refuses the browser running this very test', () => {
+		/*
+		 * Asserted on the pure function, not through `startAnalytics`, deliberately: the install
+		 * latch is module state shared by this whole file, so going through it would make this
+		 * pass or fail on which test ran first (CLAUDE.md rule 6). This says the one thing that
+		 * needs a real browser to say at all — that the shipped gate fires on a driven one.
+		 */
+		expect(isAutomatedBrowser(navigator)).toBe(true);
+	});
+
 	it('installs once on the live site and points it at our collector', async () => {
 		// Three calls, because the layout effect can re-run: a second install double-counts everyone.
-		await startAnalytics('hendingar.no');
-		await startAnalytics('hendingar.no');
-		await startAnalytics('hendingar.no');
+		await startAnalytics('hendingar.no', READER);
+		await startAnalytics('hendingar.no', READER);
+		await startAnalytics('hendingar.no', READER);
 
 		expect(installD8a).toHaveBeenCalledTimes(1);
 		expect(d8a).toHaveBeenCalledWith('js', expect.any(Date));
@@ -66,7 +87,7 @@ describe('startAnalytics', () => {
 		 */
 		const before = installD8a.mock.calls.length;
 		for (const host of ['localhost', '127.0.0.1', 'app.internal.azurecontainerapps.io']) {
-			await startAnalytics(host);
+			await startAnalytics(host, READER);
 		}
 		expect(installD8a.mock.calls.length).toBe(before);
 	});

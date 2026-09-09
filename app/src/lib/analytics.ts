@@ -24,6 +24,57 @@ export function shouldTrack(hostname: string): boolean {
 	return LIVE_HOSTS.has(hostname);
 }
 
+/**
+ * The little a browser will admit about being driven rather than read.
+ *
+ * Structural, not `Navigator`: this needs two of its ninety properties, and taking the interface
+ * would make it untestable without a browser. `webdriver` is a real `Navigator` field — Chrome
+ * sets it under CDP automation — so the shape is honest.
+ */
+type BrowserIdentity = { webdriver?: boolean; userAgent?: string };
+
+/**
+ * Automation markers that appear in a user agent.
+ *
+ * Deliberately narrow. `bot`, `crawler` and `spider` are absent, and not by oversight: `/bot/i`
+ * matches Cubot, a real phone brand, and a plain crawler does not run this script anyway. The
+ * whole point is the headless browsers that DO run it.
+ */
+const AUTOMATION_MARKERS = /headless|puppeteer|playwright|phantomjs|selenium|webdriver/i;
+
+/**
+ * Is this a browser being driven by a program?
+ *
+ * One month of the dashboard, filtered to the United States: 46 "users", 50 sessions, 501 page
+ * views. Every session exactly an hour long — which is a timeout, not a reader. The browser column
+ * said `(not set)` at 11.5 views per session, with `Headless Chrome` named outright beside it. The
+ * regions were California, Iowa, Texas, Oregon and New York, which is a list of cloud datacentres
+ * rather than a list of places people live.
+ *
+ * They execute JavaScript — this file only runs on `hendingar.no` and it ran — so they are real
+ * headless browsers walking the listing, not the polite crawlers that fetch HTML and leave. There
+ * is nothing wrong with that, and there is something wrong with counting it: the numbers exist to
+ * answer "is anybody reading this, and does it lead anywhere", and 500 page views from a
+ * datacentre answers it with a lie.
+ *
+ * **A filter, not a block.** Nothing here refuses anybody a page — the site still serves every one
+ * of these requests, and search engines must keep crawling it or an event index has failed at its
+ * job. This only declines to report them.
+ *
+ * It catches stock Playwright, Puppeteer and Selenium. It does not catch a scraper that patches
+ * `navigator.webdriver` and sends a plausible user agent, and nothing running in the page can:
+ * that is an arms race the client side does not win, and pretending otherwise here would be worse
+ * than the gap. The trade is asymmetric and cheap in our favour — a false positive costs one
+ * uncounted page view, which is the same currency the whole problem is denominated in.
+ */
+export function isAutomatedBrowser(nav: BrowserIdentity): boolean {
+	if (nav.webdriver === true) return true;
+	// A real browser always sends one. Empty is the `(not set)` column in the dashboard.
+	const ua = nav.userAgent?.trim() ?? '';
+	if (!ua) return true;
+	return AUTOMATION_MARKERS.test(ua);
+}
+
 let started = false;
 
 /**
@@ -35,9 +86,18 @@ let started = false;
  * Deliberately quiet on failure. Analytics is the least important thing on the page: a blocked
  * request, an extension that removes the script, or a collector that is down must cost the reader
  * nothing at all.
+ *
+ * Two gates, and `nav` is a parameter because of the second one. The hostname gate keeps
+ * development quiet; `isAutomatedBrowser` keeps datacentres out of the numbers — and the browser
+ * spec for this file runs under Playwright, which *is* an automated browser, so it has to be able
+ * to hand in a reader's identity to test the reader's path at all. Defaulted rather than required,
+ * because the one real call site should not have to know that.
  */
-export async function startAnalytics(hostname: string): Promise<void> {
-	if (started || !shouldTrack(hostname)) return;
+export async function startAnalytics(
+	hostname: string,
+	nav: BrowserIdentity = navigator
+): Promise<void> {
+	if (started || !shouldTrack(hostname) || isAutomatedBrowser(nav)) return;
 	started = true;
 
 	try {
