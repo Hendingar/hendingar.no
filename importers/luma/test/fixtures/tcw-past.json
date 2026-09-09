@@ -1,0 +1,1057 @@
+{
+	"entries": [
+		{
+			"api_id": "calev-nvSWIcKyCrbcQ0F",
+			"event": {
+				"api_id": "evt-Wi7VbTAeZWf59qJ",
+				"calendar_api_id": "cal-yKlrTBwsAAkMhX3",
+				"cover_url": "https://images.lumacdn.com/event-covers/q0/8e9f0691-e435-40db-b9c6-4550de00a6ef",
+				"end_at": "2024-09-19T18:00:00.000Z",
+				"event_type": "independent",
+				"hide_rsvp": false,
+				"location_type": "offline",
+				"name": "Ekstremt Trykk, Ekstrem Tillit: Måleteknisk pålitelighet igjennom årtider",
+				"one_to_one": true,
+				"recurrence_id": null,
+				"show_guest_list": true,
+				"social_image_url": null,
+				"start_at": "2024-09-19T16:30:00.000Z",
+				"timezone": "Europe/Oslo",
+				"url": "15508l3e",
+				"user_api_id": "usr-mGnA79gIOWptIDq",
+				"visibility": "public",
+				"virtual_info": {
+					"has_access": false
+				},
+				"geo_address_info": {
+					"city": "Bremnes",
+					"type": "google",
+					"region": "Vestland",
+					"address": "Sams senter",
+					"country": "Norway",
+					"latitude": "59.7945364",
+					"place_id": "ChIJE7WU_c6DPEYR1BL-HbEh_aE",
+					"longitude": "5.172268899999999",
+					"city_state": "Bremnes, Vestland",
+					"description": "",
+					"full_address": "Sams senter, Bankbrekko 22, 5430 Bremnes, Norway",
+					"mode": "shown"
+				},
+				"geo_address_visibility": "public",
+				"coordinate": {
+					"longitude": 5.172269,
+					"latitude": 59.794536
+				},
+				"waitlist_enabled": false,
+				"waitlist_status": "disabled"
+			},
+			"cover_image": {
+				"colors": [
+					"#f8f7f7",
+					"#f8cd7a",
+					"#d5cbbf",
+					"#7b5d3a"
+				],
+				"palette": {
+					"neutral": [
+						{
+							"color": "#f8f7f7",
+							"percentage": 59.41
+						},
+						{
+							"color": "#c6bcb1",
+							"percentage": 15.04
+						}
+					],
+					"vibrant": [
+						{
+							"color": "#f2c876",
+							"percentage": 21.78
+						}
+					]
+				}
+			},
+			"calendar": {
+				"access_level": "public",
+				"api_id": "cal-yKlrTBwsAAkMhX3",
+				"avatar_url": "https://images.lumacdn.com/calendars/jw/521518b1-7c0d-48be-9969-8ab3afac6bf4",
+				"coordinate": {
+					"longitude": 5.500207,
+					"latitude": 59.780697
+				},
+				"cover_image_url": "https://images.lumacdn.com/calendar-cover-images/6u/f3928652-f566-49e0-a542-027933becc60",
+				"description_short": "Tech Cluster Vest er eit forsøk på å samla folk frå Stord og omegn som arbeider med, eller har ei interesse for, utvikling innan IT og teknologi. ",
+				"event_submission_restriction": "open",
+				"google_measurement_id": null,
+				"instagram_handle": null,
+				"is_blocked": false,
+				"launch_status": "launched",
+				"linkedin_handle": "/company/tech-cluster-west",
+				"location": {
+					"city": "Leirvik",
+					"region": "Vestland",
+					"country": "Norway",
+					"place_id": "ChIJQWtEfDl5PEYRlLkeBvg8u70",
+					"timezone": "Europe/Oslo",
+					"localized": {
+						"no": {
+							"city": "Leirvik",
+							"region": "Vestland",
+							"country": "Norge"
+						}
+					},
+					"country_code": "NO"
+				},
+				"luma_plan": "free",
+				"luma_plus_active": false,
+				"meta_pixel_id": null,
+				"name": "Tech Cluster West",
+				"personal_user_api_id": null,
+				"refund_policy": null,
+				"slug": "tcw",
+				"social_image_url": null,
+				"stripe_account_id": null,
+				"tax_config": null,
+				"tiktok_handle": null,
+				"tint_color": "#325ffa",
+				"track_meta_ads_from_luma": false,
+				"twitter_handle": null,
+				"verified_at": "2024-03-07T12:38:14.174Z",
+				"website": null,
+				"youtube_handle": null,
+				"city": {
+					"city": "Leirvik",
+					"region": "Vestland",
+					"country": "Norway",
+					"place_id": "ChIJQWtEfDl5PEYRlLkeBvg8u70",
+					"timezone": "Europe/Oslo",
+					"localized": {
+						"no": {
+							"city": "Leirvik",
+							"region": "Vestland",
+							"country": "Norge"
+						}
+					},
+					"country_code": "NO"
+				},
+				"is_personal": false,
+				"personal_user": null,
+				"geo_city": "Leirvik",
+				"geo_country": "Norway",
+				"geo_region": "Vestland",
+				"timezone": "Europe/Oslo"
+			},
+			"start_at": "2024-09-19T16:30:00.000Z",
+			"hosts": [
+				{
+					"api_id": "usr-mGnA79gIOWptIDq",
+					"avatar_url": "https://images.lumacdn.com/avatars/7s/09adbe27-402c-4845-9361-5e455058ae39",
+					"bio_short": "Developer at Grasp & Ilder",
+					"first_name": "Tor",
+					"last_name": "Gjøsæter",
+					"instagram_handle": null,
+					"is_verified": false,
+					"linkedin_handle": "/in/torgjosater",
+					"name": "Tor Gjøsæter, PhD",
+					"tiktok_handle": null,
+					"timezone": "Europe/Oslo",
+					"twitter_handle": null,
+					"username": "tor",
+					"website": "https://ilder.no",
+					"youtube_handle": ""
+				},
+				{
+					"api_id": "usr-zBsFD4EqCtjAdWj",
+					"avatar_url": "https://cdn.lu.ma/avatars-default/avatar_36.png",
+					"bio_short": null,
+					"first_name": "Børge",
+					"last_name": "Kvamme",
+					"instagram_handle": null,
+					"is_verified": false,
+					"linkedin_handle": null,
+					"name": "Børge Kvamme",
+					"tiktok_handle": null,
+					"timezone": "Europe/Oslo",
+					"twitter_handle": null,
+					"username": null,
+					"website": null,
+					"youtube_handle": null
+				}
+			],
+			"guest_count": 10,
+			"ticket_count": 10,
+			"ticket_info": {
+				"price": null,
+				"is_free": true,
+				"max_price": null,
+				"is_sold_out": false,
+				"spots_remaining": null,
+				"is_near_capacity": false,
+				"require_approval": false
+			},
+			"registration_availability": "open",
+			"featured_guests": [
+				{
+					"api_id": "usr-xkyblmAfyNAUwSe",
+					"avatar_url": "https://cdn.lu.ma/avatars-default/avatar_44.png",
+					"bio_short": null,
+					"first_name": null,
+					"last_name": null,
+					"instagram_handle": null,
+					"is_verified": false,
+					"linkedin_handle": null,
+					"name": "Svein Martens ",
+					"tiktok_handle": null,
+					"timezone": "Europe/Oslo",
+					"twitter_handle": null,
+					"username": null,
+					"website": null,
+					"youtube_handle": null
+				},
+				{
+					"api_id": "usr-BkZBPegQy8TLVkK",
+					"avatar_url": "https://cdn.lu.ma/avatars-default/avatar_26.png",
+					"bio_short": null,
+					"first_name": null,
+					"last_name": null,
+					"instagram_handle": null,
+					"is_verified": false,
+					"linkedin_handle": null,
+					"name": "Edgar Vorland",
+					"tiktok_handle": null,
+					"timezone": "Europe/Oslo",
+					"twitter_handle": null,
+					"username": null,
+					"website": null,
+					"youtube_handle": null
+				},
+				{
+					"api_id": "usr-9tI2wC6Y1RkQXpA",
+					"avatar_url": "https://cdn.lu.ma/avatars-default/avatar_35.png",
+					"bio_short": null,
+					"first_name": null,
+					"last_name": null,
+					"instagram_handle": null,
+					"is_verified": false,
+					"linkedin_handle": null,
+					"name": "Svein Martens",
+					"tiktok_handle": null,
+					"timezone": "Europe/Oslo",
+					"twitter_handle": null,
+					"username": null,
+					"website": null,
+					"youtube_handle": null
+				},
+				{
+					"api_id": "usr-GzIQ2CVyxFwKllO",
+					"avatar_url": "https://cdn.lu.ma/avatars-default/avatar_29.png",
+					"bio_short": null,
+					"first_name": null,
+					"last_name": null,
+					"instagram_handle": null,
+					"is_verified": false,
+					"linkedin_handle": null,
+					"name": "Michael Conrad",
+					"tiktok_handle": null,
+					"timezone": "Europe/Oslo",
+					"twitter_handle": null,
+					"username": null,
+					"website": null,
+					"youtube_handle": null
+				},
+				{
+					"api_id": "usr-8odSYxXgMuPyu1E",
+					"avatar_url": "https://cdn.lu.ma/avatars-default/avatar_3.png",
+					"bio_short": null,
+					"first_name": "Øyvind",
+					"last_name": "Olsen",
+					"instagram_handle": null,
+					"is_verified": false,
+					"linkedin_handle": null,
+					"name": "Øyvind Olsen",
+					"tiktok_handle": null,
+					"timezone": "Europe/Oslo",
+					"twitter_handle": null,
+					"username": null,
+					"website": null,
+					"youtube_handle": null
+				},
+				{
+					"api_id": "usr-OaxZBVxT9BpKShw",
+					"avatar_url": "https://cdn.lu.ma/avatars-default/avatar_10.png",
+					"bio_short": null,
+					"first_name": null,
+					"last_name": null,
+					"instagram_handle": null,
+					"is_verified": false,
+					"linkedin_handle": null,
+					"name": "Petter Michaelsen",
+					"tiktok_handle": null,
+					"timezone": "Europe/Oslo",
+					"twitter_handle": null,
+					"username": null,
+					"website": null,
+					"youtube_handle": null
+				},
+				{
+					"api_id": "usr-zBsFD4EqCtjAdWj",
+					"avatar_url": "https://cdn.lu.ma/avatars-default/avatar_36.png",
+					"bio_short": null,
+					"first_name": "Børge",
+					"last_name": "Kvamme",
+					"instagram_handle": null,
+					"is_verified": false,
+					"linkedin_handle": null,
+					"name": "Børge Kvamme",
+					"tiktok_handle": null,
+					"timezone": "Europe/Oslo",
+					"twitter_handle": null,
+					"username": null,
+					"website": null,
+					"youtube_handle": null
+				},
+				{
+					"api_id": "usr-xx75DqFuKkF1vWx",
+					"avatar_url": "https://cdn.lu.ma/avatars-default/avatar_31.png",
+					"bio_short": null,
+					"first_name": null,
+					"last_name": null,
+					"instagram_handle": null,
+					"is_verified": false,
+					"linkedin_handle": null,
+					"name": "Dag Bjørnar Hollund",
+					"tiktok_handle": null,
+					"timezone": "Europe/Oslo",
+					"twitter_handle": null,
+					"username": null,
+					"website": null,
+					"youtube_handle": null
+				},
+				{
+					"api_id": "usr-66z6d7yciOH0Ge1",
+					"avatar_url": "https://cdn.lu.ma/avatars-default/avatar_19.png",
+					"bio_short": null,
+					"first_name": null,
+					"last_name": null,
+					"instagram_handle": null,
+					"is_verified": false,
+					"linkedin_handle": null,
+					"name": "Dan",
+					"tiktok_handle": null,
+					"timezone": "Europe/Oslo",
+					"twitter_handle": null,
+					"username": null,
+					"website": null,
+					"youtube_handle": null
+				},
+				{
+					"api_id": "usr-6YGmQbPLh1CaMoY",
+					"avatar_url": "https://cdn.lu.ma/avatars-default/avatar_5.png",
+					"bio_short": null,
+					"first_name": "Nina",
+					"last_name": "",
+					"instagram_handle": null,
+					"is_verified": false,
+					"linkedin_handle": null,
+					"name": "Nina",
+					"tiktok_handle": null,
+					"timezone": "Europe/Oslo",
+					"twitter_handle": null,
+					"username": null,
+					"website": null,
+					"youtube_handle": null
+				}
+			],
+			"manager_info": null,
+			"guest_info": null,
+			"host_info": null,
+			"waitlist_active": false,
+			"featured_city": null,
+			"calendar_api_id": "cal-yKlrTBwsAAkMhX3",
+			"is_manager": true,
+			"platform": "luma",
+			"status": "approved",
+			"submitted_by_user_api_id": "usr-mGnA79gIOWptIDq",
+			"tags": []
+		},
+		{
+			"api_id": "calev-wBtLAzNs3Sv18O7",
+			"event": {
+				"api_id": "evt-KdxpGeP6uRbSujR",
+				"calendar_api_id": "cal-yKlrTBwsAAkMhX3",
+				"cover_url": "https://images.lumacdn.com/gallery-images/iz/715dd128-cc88-40e7-bf7d-6fb8f7242007",
+				"end_at": "2024-06-13T18:30:00.000Z",
+				"event_type": "independent",
+				"hide_rsvp": false,
+				"location_type": "offline",
+				"name": "Fiende i midten",
+				"one_to_one": true,
+				"recurrence_id": null,
+				"show_guest_list": true,
+				"social_image_url": null,
+				"start_at": "2024-06-13T17:00:00.000Z",
+				"timezone": "Europe/Oslo",
+				"url": "1abtat89",
+				"user_api_id": "usr-mGnA79gIOWptIDq",
+				"visibility": "public",
+				"virtual_info": {
+					"has_access": false
+				},
+				"geo_address_info": {
+					"city": "Stord",
+					"type": "google",
+					"region": "Vestland",
+					"address": "Rundehaugen 17",
+					"country": "Norway",
+					"latitude": "59.7632039",
+					"place_id": "ChIJuTPaBS5_PEYRhU-Bg_b8eKs",
+					"longitude": "5.4568317",
+					"city_state": "Stord, Vestland",
+					"description": "Hos Atea",
+					"full_address": "Rundehaugen 17, 5412 Stord, Norway",
+					"mode": "shown"
+				},
+				"geo_address_visibility": "public",
+				"coordinate": {
+					"longitude": 5.456832,
+					"latitude": 59.763204
+				},
+				"waitlist_enabled": false,
+				"waitlist_status": "disabled"
+			},
+			"cover_image": {
+				"colors": [
+					"#d2fe11",
+					"#a89e9c",
+					"#cdf258",
+					"#143e48"
+				],
+				"palette": {
+					"neutral": [
+						{
+							"color": "#aa9ea0",
+							"percentage": 10.27
+						},
+						{
+							"color": "#081b1c",
+							"percentage": 4.57
+						}
+					],
+					"vibrant": [
+						{
+							"color": "#d1fb1b",
+							"percentage": 51.3
+						}
+					]
+				}
+			},
+			"calendar": {
+				"access_level": "public",
+				"api_id": "cal-yKlrTBwsAAkMhX3",
+				"avatar_url": "https://images.lumacdn.com/calendars/jw/521518b1-7c0d-48be-9969-8ab3afac6bf4",
+				"coordinate": {
+					"longitude": 5.500207,
+					"latitude": 59.780697
+				},
+				"cover_image_url": "https://images.lumacdn.com/calendar-cover-images/6u/f3928652-f566-49e0-a542-027933becc60",
+				"description_short": "Tech Cluster Vest er eit forsøk på å samla folk frå Stord og omegn som arbeider med, eller har ei interesse for, utvikling innan IT og teknologi. ",
+				"event_submission_restriction": "open",
+				"google_measurement_id": null,
+				"instagram_handle": null,
+				"is_blocked": false,
+				"launch_status": "launched",
+				"linkedin_handle": "/company/tech-cluster-west",
+				"location": {
+					"city": "Leirvik",
+					"region": "Vestland",
+					"country": "Norway",
+					"place_id": "ChIJQWtEfDl5PEYRlLkeBvg8u70",
+					"timezone": "Europe/Oslo",
+					"localized": {
+						"no": {
+							"city": "Leirvik",
+							"region": "Vestland",
+							"country": "Norge"
+						}
+					},
+					"country_code": "NO"
+				},
+				"luma_plan": "free",
+				"luma_plus_active": false,
+				"meta_pixel_id": null,
+				"name": "Tech Cluster West",
+				"personal_user_api_id": null,
+				"refund_policy": null,
+				"slug": "tcw",
+				"social_image_url": null,
+				"stripe_account_id": null,
+				"tax_config": null,
+				"tiktok_handle": null,
+				"tint_color": "#325ffa",
+				"track_meta_ads_from_luma": false,
+				"twitter_handle": null,
+				"verified_at": "2024-03-07T12:38:14.174Z",
+				"website": null,
+				"youtube_handle": null,
+				"city": {
+					"city": "Leirvik",
+					"region": "Vestland",
+					"country": "Norway",
+					"place_id": "ChIJQWtEfDl5PEYRlLkeBvg8u70",
+					"timezone": "Europe/Oslo",
+					"localized": {
+						"no": {
+							"city": "Leirvik",
+							"region": "Vestland",
+							"country": "Norge"
+						}
+					},
+					"country_code": "NO"
+				},
+				"is_personal": false,
+				"personal_user": null,
+				"geo_city": "Leirvik",
+				"geo_country": "Norway",
+				"geo_region": "Vestland",
+				"timezone": "Europe/Oslo"
+			},
+			"start_at": "2024-06-13T17:00:00.000Z",
+			"hosts": [
+				{
+					"api_id": "usr-mGnA79gIOWptIDq",
+					"avatar_url": "https://images.lumacdn.com/avatars/7s/09adbe27-402c-4845-9361-5e455058ae39",
+					"bio_short": "Developer at Grasp & Ilder",
+					"first_name": "Tor",
+					"last_name": "Gjøsæter",
+					"instagram_handle": null,
+					"is_verified": false,
+					"linkedin_handle": "/in/torgjosater",
+					"name": "Tor Gjøsæter, PhD",
+					"tiktok_handle": null,
+					"timezone": "Europe/Oslo",
+					"twitter_handle": null,
+					"username": "tor",
+					"website": "https://ilder.no",
+					"youtube_handle": ""
+				},
+				{
+					"api_id": "usr-zBsFD4EqCtjAdWj",
+					"avatar_url": "https://cdn.lu.ma/avatars-default/avatar_36.png",
+					"bio_short": null,
+					"first_name": "Børge",
+					"last_name": "Kvamme",
+					"instagram_handle": null,
+					"is_verified": false,
+					"linkedin_handle": null,
+					"name": "Børge Kvamme",
+					"tiktok_handle": null,
+					"timezone": "Europe/Oslo",
+					"twitter_handle": null,
+					"username": null,
+					"website": null,
+					"youtube_handle": null
+				},
+				{
+					"api_id": "usr-smk7jvvCkuK9HvZ",
+					"avatar_url": "https://cdn.lu.ma/avatars-default/avatar_34.png",
+					"bio_short": null,
+					"first_name": null,
+					"last_name": null,
+					"instagram_handle": null,
+					"is_verified": false,
+					"linkedin_handle": null,
+					"name": "Talita",
+					"tiktok_handle": null,
+					"timezone": "Europe/Oslo",
+					"twitter_handle": null,
+					"username": null,
+					"website": null,
+					"youtube_handle": null
+				}
+			],
+			"guest_count": 9,
+			"ticket_count": 9,
+			"ticket_info": {
+				"price": null,
+				"is_free": true,
+				"max_price": null,
+				"is_sold_out": false,
+				"spots_remaining": null,
+				"is_near_capacity": false,
+				"require_approval": false
+			},
+			"registration_availability": "open",
+			"featured_guests": [
+				{
+					"api_id": "usr-8odSYxXgMuPyu1E",
+					"avatar_url": "https://cdn.lu.ma/avatars-default/avatar_3.png",
+					"bio_short": null,
+					"first_name": "Øyvind",
+					"last_name": "Olsen",
+					"instagram_handle": null,
+					"is_verified": false,
+					"linkedin_handle": null,
+					"name": "Øyvind Olsen",
+					"tiktok_handle": null,
+					"timezone": "Europe/Oslo",
+					"twitter_handle": null,
+					"username": null,
+					"website": null,
+					"youtube_handle": null
+				},
+				{
+					"api_id": "usr-ERvOOAQ6y0dpEyQ",
+					"avatar_url": "https://cdn.lu.ma/avatars-default/avatar_26.png",
+					"bio_short": null,
+					"first_name": null,
+					"last_name": null,
+					"instagram_handle": null,
+					"is_verified": false,
+					"linkedin_handle": null,
+					"name": "Isabelle Mikkelsen",
+					"tiktok_handle": null,
+					"timezone": "Europe/Oslo",
+					"twitter_handle": null,
+					"username": null,
+					"website": null,
+					"youtube_handle": null
+				},
+				{
+					"api_id": "usr-aGO58ZtlggPkuIs",
+					"avatar_url": "https://cdn.lu.ma/avatars-default/avatar_0.png",
+					"bio_short": null,
+					"first_name": null,
+					"last_name": null,
+					"instagram_handle": null,
+					"is_verified": false,
+					"linkedin_handle": null,
+					"name": "Mikael Lindberg",
+					"tiktok_handle": null,
+					"timezone": "Europe/Oslo",
+					"twitter_handle": null,
+					"username": null,
+					"website": null,
+					"youtube_handle": null
+				},
+				{
+					"api_id": "usr-6aRezvw533EMMWu",
+					"avatar_url": "https://cdn.lu.ma/avatars-default/avatar_44.png",
+					"bio_short": null,
+					"first_name": "Stig Birger",
+					"last_name": "Sørmo",
+					"instagram_handle": null,
+					"is_verified": false,
+					"linkedin_handle": null,
+					"name": "Stig Birger Sørmo",
+					"tiktok_handle": null,
+					"timezone": "Europe/Oslo",
+					"twitter_handle": null,
+					"username": null,
+					"website": null,
+					"youtube_handle": null
+				},
+				{
+					"api_id": "usr-WV5bu67dWBcRpr8",
+					"avatar_url": "https://cdn.lu.ma/avatars-default/avatar_37.png",
+					"bio_short": null,
+					"first_name": null,
+					"last_name": null,
+					"instagram_handle": null,
+					"is_verified": false,
+					"linkedin_handle": null,
+					"name": "Live Gravdal",
+					"tiktok_handle": null,
+					"timezone": "Europe/Oslo",
+					"twitter_handle": null,
+					"username": null,
+					"website": null,
+					"youtube_handle": null
+				},
+				{
+					"api_id": "usr-zBsFD4EqCtjAdWj",
+					"avatar_url": "https://cdn.lu.ma/avatars-default/avatar_36.png",
+					"bio_short": null,
+					"first_name": "Børge",
+					"last_name": "Kvamme",
+					"instagram_handle": null,
+					"is_verified": false,
+					"linkedin_handle": null,
+					"name": "Børge Kvamme",
+					"tiktok_handle": null,
+					"timezone": "Europe/Oslo",
+					"twitter_handle": null,
+					"username": null,
+					"website": null,
+					"youtube_handle": null
+				},
+				{
+					"api_id": "usr-smk7jvvCkuK9HvZ",
+					"avatar_url": "https://cdn.lu.ma/avatars-default/avatar_34.png",
+					"bio_short": null,
+					"first_name": null,
+					"last_name": null,
+					"instagram_handle": null,
+					"is_verified": false,
+					"linkedin_handle": null,
+					"name": "Talita",
+					"tiktok_handle": null,
+					"timezone": "Europe/Oslo",
+					"twitter_handle": null,
+					"username": null,
+					"website": null,
+					"youtube_handle": null
+				},
+				{
+					"api_id": "usr-EI9Ay7rWK0BDx6V",
+					"avatar_url": "https://cdn.lu.ma/avatars-default/avatar_42.png",
+					"bio_short": null,
+					"first_name": null,
+					"last_name": null,
+					"instagram_handle": null,
+					"is_verified": false,
+					"linkedin_handle": null,
+					"name": "Arne Kristoffer Aas",
+					"tiktok_handle": null,
+					"timezone": "Europe/Oslo",
+					"twitter_handle": null,
+					"username": null,
+					"website": null,
+					"youtube_handle": null
+				},
+				{
+					"api_id": "usr-td5a9ITbZnIALAF",
+					"avatar_url": "https://cdn.lu.ma/avatars-default/avatar_11.png",
+					"bio_short": null,
+					"first_name": null,
+					"last_name": null,
+					"instagram_handle": null,
+					"is_verified": false,
+					"linkedin_handle": null,
+					"name": "Christer Trasti",
+					"tiktok_handle": null,
+					"timezone": "Europe/Oslo",
+					"twitter_handle": null,
+					"username": null,
+					"website": null,
+					"youtube_handle": null
+				}
+			],
+			"manager_info": null,
+			"guest_info": null,
+			"host_info": null,
+			"waitlist_active": false,
+			"featured_city": null,
+			"calendar_api_id": "cal-yKlrTBwsAAkMhX3",
+			"is_manager": true,
+			"platform": "luma",
+			"status": "approved",
+			"submitted_by_user_api_id": "usr-mGnA79gIOWptIDq",
+			"tags": []
+		},
+		{
+			"api_id": "calev-79GOEgtdtRRnRqO",
+			"event": {
+				"api_id": "evt-ViVPA5iQ93dO9j1",
+				"calendar_api_id": "cal-yKlrTBwsAAkMhX3",
+				"cover_url": "https://images.lumacdn.com/event-covers/d3/3c55dddf-560d-4fea-a588-09d17a8d5cf9",
+				"end_at": "2024-03-14T18:00:00.000Z",
+				"event_type": "independent",
+				"hide_rsvp": false,
+				"location_type": "offline",
+				"name": "Bruk av teknologi i eit reint teknologiselskap + litt praktisk AI med Fonn",
+				"one_to_one": true,
+				"recurrence_id": null,
+				"show_guest_list": true,
+				"social_image_url": null,
+				"start_at": "2024-03-14T16:30:00.000Z",
+				"timezone": "Europe/Oslo",
+				"url": "ilp91a5t",
+				"user_api_id": "usr-mGnA79gIOWptIDq",
+				"visibility": "public",
+				"virtual_info": {
+					"has_access": false
+				},
+				"geo_address_info": {
+					"city": "Bremnes",
+					"type": "google",
+					"region": "Vestland",
+					"address": "Sams senter",
+					"country": "Norway",
+					"latitude": "59.7945364",
+					"place_id": "ChIJE7WU_c6DPEYR1BL-HbEh_aE",
+					"longitude": "5.172268899999999",
+					"city_state": "Bremnes, Vestland",
+					"description": "",
+					"full_address": "Sams senter, Bankbrekko 22, 5430 Bremnes, Norway",
+					"mode": "shown"
+				},
+				"geo_address_visibility": "public",
+				"coordinate": {
+					"longitude": 5.172269,
+					"latitude": 59.794536
+				},
+				"waitlist_enabled": true,
+				"waitlist_status": "enabled"
+			},
+			"cover_image": {
+				"colors": [
+					"#1b2025",
+					"#f1f2f2",
+					"#a4a29a",
+					"#f76808"
+				],
+				"palette": {
+					"neutral": [
+						{
+							"color": "#191e24",
+							"percentage": 77.14
+						},
+						{
+							"color": "#f0f2f3",
+							"percentage": 11.43
+						}
+					],
+					"vibrant": [
+						{
+							"color": "#f96509",
+							"percentage": 1.47
+						},
+						{
+							"color": "#5b3615",
+							"percentage": 0.51
+						}
+					]
+				}
+			},
+			"calendar": {
+				"access_level": "public",
+				"api_id": "cal-yKlrTBwsAAkMhX3",
+				"avatar_url": "https://images.lumacdn.com/calendars/jw/521518b1-7c0d-48be-9969-8ab3afac6bf4",
+				"coordinate": {
+					"longitude": 5.500207,
+					"latitude": 59.780697
+				},
+				"cover_image_url": "https://images.lumacdn.com/calendar-cover-images/6u/f3928652-f566-49e0-a542-027933becc60",
+				"description_short": "Tech Cluster Vest er eit forsøk på å samla folk frå Stord og omegn som arbeider med, eller har ei interesse for, utvikling innan IT og teknologi. ",
+				"event_submission_restriction": "open",
+				"google_measurement_id": null,
+				"instagram_handle": null,
+				"is_blocked": false,
+				"launch_status": "launched",
+				"linkedin_handle": "/company/tech-cluster-west",
+				"location": {
+					"city": "Leirvik",
+					"region": "Vestland",
+					"country": "Norway",
+					"place_id": "ChIJQWtEfDl5PEYRlLkeBvg8u70",
+					"timezone": "Europe/Oslo",
+					"localized": {
+						"no": {
+							"city": "Leirvik",
+							"region": "Vestland",
+							"country": "Norge"
+						}
+					},
+					"country_code": "NO"
+				},
+				"luma_plan": "free",
+				"luma_plus_active": false,
+				"meta_pixel_id": null,
+				"name": "Tech Cluster West",
+				"personal_user_api_id": null,
+				"refund_policy": null,
+				"slug": "tcw",
+				"social_image_url": null,
+				"stripe_account_id": null,
+				"tax_config": null,
+				"tiktok_handle": null,
+				"tint_color": "#325ffa",
+				"track_meta_ads_from_luma": false,
+				"twitter_handle": null,
+				"verified_at": "2024-03-07T12:38:14.174Z",
+				"website": null,
+				"youtube_handle": null,
+				"city": {
+					"city": "Leirvik",
+					"region": "Vestland",
+					"country": "Norway",
+					"place_id": "ChIJQWtEfDl5PEYRlLkeBvg8u70",
+					"timezone": "Europe/Oslo",
+					"localized": {
+						"no": {
+							"city": "Leirvik",
+							"region": "Vestland",
+							"country": "Norge"
+						}
+					},
+					"country_code": "NO"
+				},
+				"is_personal": false,
+				"personal_user": null,
+				"geo_city": "Leirvik",
+				"geo_country": "Norway",
+				"geo_region": "Vestland",
+				"timezone": "Europe/Oslo"
+			},
+			"start_at": "2024-03-14T16:30:00.000Z",
+			"hosts": [
+				{
+					"api_id": "usr-mGnA79gIOWptIDq",
+					"avatar_url": "https://images.lumacdn.com/avatars/7s/09adbe27-402c-4845-9361-5e455058ae39",
+					"bio_short": "Developer at Grasp & Ilder",
+					"first_name": "Tor",
+					"last_name": "Gjøsæter",
+					"instagram_handle": null,
+					"is_verified": false,
+					"linkedin_handle": "/in/torgjosater",
+					"name": "Tor Gjøsæter, PhD",
+					"tiktok_handle": null,
+					"timezone": "Europe/Oslo",
+					"twitter_handle": null,
+					"username": "tor",
+					"website": "https://ilder.no",
+					"youtube_handle": ""
+				},
+				{
+					"api_id": "usr-2dBQRBbVs5qSdcK",
+					"avatar_url": "https://cdn.lu.ma/avatars-default/avatar_31.png",
+					"bio_short": null,
+					"first_name": null,
+					"last_name": null,
+					"instagram_handle": null,
+					"is_verified": false,
+					"linkedin_handle": null,
+					"name": "Mari Pedersen Totland ",
+					"tiktok_handle": null,
+					"timezone": "Europe/Oslo",
+					"twitter_handle": null,
+					"username": null,
+					"website": null,
+					"youtube_handle": null
+				},
+				{
+					"api_id": "usr-zBsFD4EqCtjAdWj",
+					"avatar_url": "https://cdn.lu.ma/avatars-default/avatar_36.png",
+					"bio_short": null,
+					"first_name": "Børge",
+					"last_name": "Kvamme",
+					"instagram_handle": null,
+					"is_verified": false,
+					"linkedin_handle": null,
+					"name": "Børge Kvamme",
+					"tiktok_handle": null,
+					"timezone": "Europe/Oslo",
+					"twitter_handle": null,
+					"username": null,
+					"website": null,
+					"youtube_handle": null
+				}
+			],
+			"guest_count": 4,
+			"ticket_count": 4,
+			"ticket_info": {
+				"price": null,
+				"is_free": true,
+				"max_price": null,
+				"is_sold_out": false,
+				"spots_remaining": 36,
+				"is_near_capacity": false,
+				"require_approval": false
+			},
+			"registration_availability": "open",
+			"featured_guests": [
+				{
+					"api_id": "usr-jj9wrvJOs4r7uFT",
+					"avatar_url": "https://cdn.lu.ma/avatars-default/avatar_14.png",
+					"bio_short": null,
+					"first_name": null,
+					"last_name": null,
+					"instagram_handle": null,
+					"is_verified": false,
+					"linkedin_handle": null,
+					"name": "niklas",
+					"tiktok_handle": null,
+					"timezone": "Europe/Stockholm",
+					"twitter_handle": null,
+					"username": null,
+					"website": null,
+					"youtube_handle": null
+				},
+				{
+					"api_id": "usr-zBsFD4EqCtjAdWj",
+					"avatar_url": "https://cdn.lu.ma/avatars-default/avatar_36.png",
+					"bio_short": null,
+					"first_name": "Børge",
+					"last_name": "Kvamme",
+					"instagram_handle": null,
+					"is_verified": false,
+					"linkedin_handle": null,
+					"name": "Børge Kvamme",
+					"tiktok_handle": null,
+					"timezone": "Europe/Oslo",
+					"twitter_handle": null,
+					"username": null,
+					"website": null,
+					"youtube_handle": null
+				},
+				{
+					"api_id": "usr-TiY8FvAeiHNEcls",
+					"avatar_url": "https://cdn.lu.ma/avatars-default/avatar_4.png",
+					"bio_short": null,
+					"first_name": null,
+					"last_name": null,
+					"instagram_handle": null,
+					"is_verified": false,
+					"linkedin_handle": null,
+					"name": "Nina Ingvaldsen",
+					"tiktok_handle": null,
+					"timezone": "Europe/Oslo",
+					"twitter_handle": null,
+					"username": null,
+					"website": null,
+					"youtube_handle": null
+				},
+				{
+					"api_id": "usr-2dBQRBbVs5qSdcK",
+					"avatar_url": "https://cdn.lu.ma/avatars-default/avatar_31.png",
+					"bio_short": null,
+					"first_name": null,
+					"last_name": null,
+					"instagram_handle": null,
+					"is_verified": false,
+					"linkedin_handle": null,
+					"name": "Mari Pedersen Totland ",
+					"tiktok_handle": null,
+					"timezone": "Europe/Oslo",
+					"twitter_handle": null,
+					"username": null,
+					"website": null,
+					"youtube_handle": null
+				}
+			],
+			"manager_info": null,
+			"guest_info": null,
+			"host_info": null,
+			"waitlist_active": false,
+			"featured_city": null,
+			"calendar_api_id": "cal-yKlrTBwsAAkMhX3",
+			"is_manager": true,
+			"platform": "luma",
+			"status": "approved",
+			"submitted_by_user_api_id": "usr-mGnA79gIOWptIDq",
+			"tags": [
+				{
+					"api_id": "tag-dPRbVtNUbU73VvB",
+					"name": "fonn",
+					"color": "orange"
+				},
+				{
+					"api_id": "tag-fetSBmo4sX2RJXr",
+					"name": "tcw",
+					"color": "red"
+				}
+			]
+		}
+	],
+	"has_more": false
+}

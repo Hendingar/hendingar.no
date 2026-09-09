@@ -127,6 +127,12 @@ export const SOURCE_PLATFORMS: readonly SourcePlatform[] = [
 		note: 'Turlaga sine eigne aktivitetskalendrar, eitt lag om gongen.'
 	},
 	{
+		slug: 'luma',
+		name: 'Luma',
+		url: 'https://luma.com',
+		note: 'Ein hendingsplattform mange miljø og nettverk køyrer kalenderen sin på. Vi hentar frå kvar kalender for seg, rett frå arrangøren sin eigen, så hendinga høyrer heime hos den som står bak.'
+	},
+	{
 		slug: 'riksteatret',
 		name: 'Riksteatret',
 		url: 'https://www.riksteatret.no',

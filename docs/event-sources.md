@@ -100,6 +100,45 @@ of navigating, so nobody upstream has ever followed one. The modal fills itself 
 endpoint (`/api/search/activitydetails?id=…`), which is where the description and the working
 outbound link live. A URL existing in a response is not evidence that it resolves; fetch one.
 
+### When the URL you were given is not the key
+
+`luma.com/tcw` is a Luma calendar — Tech Cluster West, a Stord tech meetup. Luma's own client calls
+one endpoint, and it takes no notice of the handle in the address bar:
+
+```bash
+# The handle gets you the page; the page gets you the id.
+curl -s https://luma.com/tcw \
+  | grep -oE '"api_id":"cal-[A-Za-z0-9]+"' | head -1
+# → "api_id":"cal-yKlrTBwsAAkMhX3"
+
+curl -s 'https://api.lu.ma/calendar/get-items?calendar_api_id=cal-yKlrTBwsAAkMhX3&period=future'
+# → {"entries":[…],"has_more":false}
+```
+
+No key, no auth, for any calendar whose `access_level` is `public`. **`api.lu.ma`, not
+`api.luma.com`** — both answer identically today, and the first is the host the site itself calls.
+
+Three things this source taught us, all recorded in `importers/luma/`:
+
+- **`period=future` alone loses an event the moment it starts.** Which is [#95](https://github.com/Hendingar/hendingar.no/pull/95)
+  again, and worse than it sounds: a two-hour meetup would disappear from the listing at exactly
+  the moment somebody checks where to go. One page of `period=past` catches anything in progress.
+- **The times are real instants, and that was checked rather than assumed.** `start_at` is UTC with
+  a `Z` and `timezone` is a separate IANA zone — and the calendar page's own embedded schema.org
+  says `startDate: 2026-10-22T18:30:00.000+02:00` for the event the API reports as
+  `16:30:00.000Z`. Two independent statements from the source, agreeing. That is the cross-check
+  CLAUDE.md asks for, and it is what tells this apart from Modern Events Calendar, which adds the
+  site's offset to a wall clock and then writes the offset it added.
+- **`geo_address_info.city` is a post town.** The committed fixture says `Bremnes`, which is in
+  Bømlo and stopped being a municipality in 1963. It goes in the address, never in
+  `venues.municipality` — the same refusal the allevents, TEC and aktivitetforalle importers
+  already record.
+
+The payoff is a first for this repo: Luma repeats the coordinate Google gave the organiser when
+they picked their own venue, so these venues arrive `geocode_status: resolved` with real latitude
+and longitude. Not a geocoder — that was tried and rejected (`packages/core/src/address.ts`) —
+but the source's own assertion about its own event, which is the only kind worth storing.
+
 ## What we already collect
 
 Live status — every source, its method, its schedule, and what the last run actually did:

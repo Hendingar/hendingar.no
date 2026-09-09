@@ -6,6 +6,7 @@ describe('platformOf', () => {
 		expect(platformOf('allevents-stord-jazzklubb')?.slug).toBe('allevents');
 		expect(platformOf('billetto-bremnes-idrettslag')?.slug).toBe('billetto');
 		expect(platformOf('dnt-stord-fitjar')?.slug).toBe('dnt');
+		expect(platformOf('luma-tcw')?.slug).toBe('luma');
 		expect(platformOf('dnt-bomlo')?.slug).toBe('dnt');
 	});
 
