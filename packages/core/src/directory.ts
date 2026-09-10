@@ -127,6 +127,12 @@ export const SOURCE_PLATFORMS: readonly SourcePlatform[] = [
 		note: 'Turlaga sine eigne aktivitetskalendrar, eitt lag om gongen.'
 	},
 	{
+		slug: 'hoopla',
+		name: 'Hoopla',
+		url: 'https://hoopla.no',
+		note: 'Ein norsk billettplattform der arrangøren får sin eigen nettbutikk. Vi hentar frå kvar arrangør for seg, så hendinga høyrer heime hos den som står bak — og vi tek med det som er utseld, for utseld er ikkje avlyst.'
+	},
+	{
 		slug: 'luma',
 		name: 'Luma',
 		url: 'https://luma.com',
