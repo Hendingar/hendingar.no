@@ -146,12 +146,20 @@ export function venueNameOf(event: UpstreamEvent): string | null {
 	const street = event.data.location?.street_address?.trim();
 	if (!street) return raw;
 
-	const withoutStreet = raw
-		.replace(new RegExp(escapeForRegExp(street), 'gi'), ' ')
-		// The separators the two spellings leave behind — a dash, a comma, or both.
-		.replace(/[\s,–—-]+/g, ' ')
-		.trim();
-	return withoutStreet || raw;
+	const withoutStreet = raw.replace(new RegExp(escapeForRegExp(street), 'gi'), ' ');
+	/*
+	 * The street was not in the name, so the name is returned exactly as written.
+	 *
+	 * The early return matters: without it the separator collapse below still ran, and it rewrote
+	 * names it had taken nothing out of — Mono-Log's "Torget_10, Loungen" came back as
+	 * "Torget_10 Loungen", losing a comma for no reason. Underscored because that is the venue's
+	 * own branding, which is exactly the kind of thing this function must not quietly tidy.
+	 */
+	if (withoutStreet === raw) return raw;
+
+	// The separators the two spellings leave behind — a dash, a comma, or both.
+	const cleaned = withoutStreet.replace(/[\s,–—-]+/g, ' ').trim();
+	return cleaned || raw;
 }
 
 /** So a street containing `.` or `(` cannot compile into a pattern that matches something else. */
@@ -165,6 +173,17 @@ function escapeForRegExp(value: string): string {
  * `fromParts` and not `fromLine`: the source already separates street, postnummer and post town,
  * so nothing needs inferring — "the clean case, and the one to prefer wherever a source offers
  * it", in that function's own words.
+ *
+ * The postnummer is taken as stated, including when the shop contradicts itself about it. The
+ * mono-log fixture gives Torget 10 as `5411 Stord` on seven rows and `5417 Stord` on three, and
+ * Småsceneri gives the same street `5417`; both 5411 and 5417 are real Stord postnummer covering
+ * different delivery areas, so there is no way to tell from here which one Torget 10 is in.
+ * Picking would be inventing a fact, so the last write wins, as it does in every other importer.
+ *
+ * That is safe rather than merely tolerable, and worth saying why: both shops resolve to the same
+ * `vikjoscenen-stord` venue, which is correct — one room, one row, two organisers hiring it — and
+ * the venue's id does not move when its postnummer is rewritten, so no event is ever marked
+ * `updated` by this. It costs one field's consistency, and nothing downstream.
  *
  * The post town does NOT become `venues.municipality`. `5410 Sagvåg` is in the fixture, and
  * Sagvåg is a village in Stord rather than a municipality; the allevents, TEC, aktivitetforalle
