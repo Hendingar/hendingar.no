@@ -1,19 +1,23 @@
 {
-	"name": "@hendingar/importer-kulturhus",
+	"name": "@hendingar/importer",
 	"version": "0.0.0",
 	"private": true,
 	"type": "module",
+	"exports": {
+		"./contract": "./src/contract.ts",
+		"./ingest": "./src/ingest.ts",
+		"./store": "./src/store.ts",
+		"./cli": "./src/cli.ts",
+		"./mapped": "./src/mapped.ts"
+	},
 	"scripts": {
 		"typecheck": "tsc --noEmit",
 		"lint": "eslint .",
-		"test": "vitest run",
-		"ingest": "node --env-file-if-exists=../../.env --experimental-strip-types src/cli.ts"
+		"test": "vitest run"
 	},
 	"dependencies": {
 		"@hendingar/core": "workspace:*",
-		"@hendingar/importer": "workspace:*",
-		"drizzle-orm": "^0.44.0",
-		"zod": "^4.0.0"
+		"drizzle-orm": "^0.44.0"
 	},
 	"devDependencies": {
 		"@types/node": "^22.10.0",
