@@ -23,6 +23,18 @@ const instance = instanceBySlug('bomlo-kyrkja')!;
 const calendarHtml = extractCalendarHtml(page)!;
 const parsed = parseCalendar(calendarHtml, instance.url);
 
+/*
+ * The second parish, on the same module. Added as a fixture rather than trusted to behave like
+ * Bømlo: "same platform" is a hypothesis until a committed page proves it, and this one differs in
+ * ways that mattered — it labels almost every event, and it emits numeric entities everywhere.
+ */
+const stordInstance = instanceBySlug('stord-kyrkja')!;
+const stordPage = readFileSync(
+	fileURLToPath(new URL('./fixtures/stord-kalender.html', import.meta.url)),
+	'utf-8'
+);
+const stord = parseCalendar(extractCalendarHtml(stordPage)!, stordInstance.url);
+
 describe('extractCalendarHtml', () => {
 	it('finds the calendar inside the escaped script blob', () => {
 		// The page's own markup has no dates at all — the calendar is JSON-escaped in a script tag
@@ -36,6 +48,56 @@ describe('extractCalendarHtml', () => {
 	it('returns null when the blob is absent, so a redesign fails loudly', () => {
 		expect(extractCalendarHtml('<html><body>no calendar here</body></html>')).toBeNull();
 		expect(extractCalendarHtml('var data = {"d":not-json};')).toBeNull();
+	});
+
+	it('returns null when the page no longer says where its detail pages are', () => {
+		/*
+		 * A blob without an `OutputCalendar` call is not a calendar we can publish: the hrefs
+		 * inside it are a template, and the only thing that turns them into addresses is the
+		 * argument that call carries. Importing anyway would publish a page of 404s, which is
+		 * exactly the failure this guard exists for.
+		 */
+		const blobOnly = page.replace(/OutputCalendar\(/g, 'SomethingElse(');
+		expect(extractCalendarHtml(blobOnly)).toBeNull();
+	});
+});
+
+describe('the link rewriting the page does for itself', () => {
+	/*
+	 * The bug this was written for. `LoaderScripts.js` rewrites every href before the markup ever
+	 * reaches the DOM — `CalendarPage` becomes the parish's detail page and `Publish=All` becomes
+	 * `Publish=Polo`. We published the un-rewritten template instead, so every link to the source
+	 * on every kyrkja event answered 404.
+	 */
+	it('leaves no event pointing at the template', () => {
+		for (const event of [...parsed.events, ...stord.events]) {
+			expect(event.href, `un-rewritten link: ${event.href}`).not.toContain('CalendarPage');
+			expect(event.href).not.toContain('Publish=All');
+			expect(event.href).toContain('Publish=Polo');
+		}
+	});
+
+	it('takes the detail page from each page, because the two parishes disagree', () => {
+		// Stord nests it under the calendar and Bømlo does not. Hardcoding either one breaks the
+		// other, which is why the argument is read off the page rather than put in an instance.
+		for (const event of parsed.events) {
+			expect(event.href).toMatch(
+				/^https:\/\/bomlo\.kyrkja\.no\/Kalenderdetaljer\?Publish=Polo&Att=Nei&EventId=/
+			);
+		}
+		for (const event of stord.events) {
+			expect(event.href).toMatch(
+				/^https:\/\/www\.kyrkjastord\.no\/Kalender\/Kalenderdetaljer\?Publish=Polo&Att=Nei&EventId=/
+			);
+		}
+	});
+
+	it('keeps the occurrence in the link, so it opens that date and not the series', () => {
+		// A recurring event shares one EventId across every occurrence; the OccurenceId is what
+		// makes the link land on the evening we listed.
+		for (const event of [...parsed.events, ...stord.events]) {
+			expect(event.href).toContain(`OccurenceId=${event.occurrenceId}`);
+		}
 	});
 });
 
@@ -178,18 +240,6 @@ describe('instances', () => {
 		expect(instanceBySlug('bomlo-kyrkja')).toBeTruthy();
 	});
 });
-
-/*
- * The second parish, on the same module. Added as a fixture rather than trusted to behave like
- * Bømlo: "same platform" is a hypothesis until a committed page proves it, and this one differs in
- * ways that mattered — it labels almost every event, and it emits numeric entities everywhere.
- */
-const stordInstance = instanceBySlug('stord-kyrkja')!;
-const stordPage = readFileSync(
-	fileURLToPath(new URL('./fixtures/stord-kalender.html', import.meta.url)),
-	'utf-8'
-);
-const stord = parseCalendar(extractCalendarHtml(stordPage)!, stordInstance.url);
 
 describe('Stord parish, on the same module', () => {
 	it('parses with the Bømlo parser, unchanged', () => {

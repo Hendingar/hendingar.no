@@ -142,15 +142,19 @@ export async function ingestInstance(
 
 	try {
 		/*
-		 * Fail loudly if the blob is gone.
+		 * Fail loudly if the blob or the rewrite instructions are gone.
 		 *
 		 * A redesign that stops embedding the calendar would otherwise parse to zero events and
 		 * report success — the importer's own definition of "the source went quiet" has to be an
-		 * error, not an empty list.
+		 * error, not an empty list. A page that still embeds the calendar but no longer says where
+		 * its detail pages live is the same kind of silence: the links in the blob are a template,
+		 * and publishing them unrewritten means publishing 404s.
 		 */
 		const calendarHtml = extractCalendarHtml(await read(instance));
 		if (!calendarHtml) {
-			throw new Error('no calendar payload in the page — the embedded JSON blob is gone');
+			throw new Error(
+				'no usable calendar in the page — the embedded JSON blob or the OutputCalendar call is gone'
+			);
 		}
 
 		const parsed = parseCalendar(calendarHtml, instance.url);
