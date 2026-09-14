@@ -84,24 +84,59 @@ export type ParsedCalendar = { events: RawEvent[]; rejected: string[] };
 const clean = (value: string) => decodeEntities(value).replace(/\s+/g, ' ').trim();
 
 /**
- * Pull the calendar out of the page's script tag and unescape it.
+ * The module's own link rewriting, read off the page.
  *
- * Returns null when the blob is absent, which is how a redesign should surface — the ingest then
- * fails loudly instead of importing zero events and reporting success.
+ * `LoaderScripts.js` hands the blob to `OutputCalendar(data, controlId, CalendarPage, FullPage,
+ * CalView)`, which replaces the literal `CalendarPage` in every href with that third argument, and
+ * `Publish=All` with `Publish=Polo`, before writing the markup into the DOM. The hrefs inside the
+ * blob are therefore a template and not addresses: every one of them 404s as published.
+ *
+ * That is not cosmetic. All 372 of Stord's links pointed at `/CalendarPage?Publish=All&…`, which
+ * the parish answers with a 404 — every link to the source we published for that parish was dead.
+ * Nothing was malformed and nothing failed; the fixture looks right because the fixture is the
+ * template too. Only a browser, or this, turns it into a URL.
+ *
+ * The arguments differ per parish — Stord's detail page is `/Kalender/Kalenderdetaljer`, Bømlo's
+ * is `/Kalenderdetaljer` — so they are read from the page rather than configured per instance, and
+ * a parish that moves its detail page keeps working with no change here.
+ */
+const OUTPUT_CALENDAR =
+	/OutputCalendar\(\s*data\s*,\s*'[^']*'\s*,\s*'([^']*)'\s*,\s*'([^']*)'\s*,\s*'([^']*)'\s*\)/;
+
+/**
+ * Pull the calendar out of the page's script tag, unescape it, and rewrite it as the module does.
+ *
+ * Returns null when either the blob or the `OutputCalendar` call is missing, which is how a
+ * redesign should surface — the ingest then fails loudly rather than importing zero events and
+ * reporting success, or importing a calendar of links that all 404.
  */
 export function extractCalendarHtml(pageHtml: string): string | null {
 	const match = /var data = (\{"d":".*?"\});/s.exec(pageHtml);
 	if (!match?.[1]) return null;
+
+	const call = OUTPUT_CALENDAR.exec(pageHtml);
+	if (!call) return null;
+	const detailPath = call[1]!;
+	const fullPage = call[2]!;
+	const view = call[3]!;
+
+	let raw: string;
 	try {
 		const parsed: unknown = JSON.parse(match[1]);
-		if (typeof parsed === 'object' && parsed !== null && 'd' in parsed) {
-			const d = (parsed as { d: unknown }).d;
-			return typeof d === 'string' ? d : null;
-		}
-		return null;
+		if (typeof parsed !== 'object' || parsed === null || !('d' in parsed)) return null;
+		const value = (parsed as { d: unknown }).d;
+		if (typeof value !== 'string') return null;
+		raw = value;
 	} catch {
 		return null;
 	}
+
+	// The same substitutions, in the same order, as OutputCalendar — global, as it does them, so
+	// that everything downstream parses what a visitor's browser actually holds.
+	let html = raw.replaceAll('CalendarPage', detailPath).replaceAll('Publish=All', 'Publish=Polo');
+	if (view === 'Page') html = html.replaceAll('/kalender', fullPage);
+
+	return html;
 }
 
 /**
