@@ -6,14 +6,17 @@ the agent's reasoning is auditable — a verdict with no record of why is the bl
 would not build.
 """
 
-import json
 import logging
 import re
+from dataclasses import dataclass
 from datetime import datetime, timedelta
 
+from agent_framework.orchestrations import ConcurrentBuilder
+from pydantic import BaseModel
+
 from .coverage import classify_coverage, covered_sentence
-from .llm import SEED, TEMPERATURE, LlmClientFactory
-from .models import CheckResult, VerifyRequest, VerifyResponse
+from .llm import AgentFactory
+from .models import CheckName, CheckResult, Verdict, VerifyRequest, VerifyResponse
 
 log = logging.getLogger(__name__)
 
@@ -253,88 +256,149 @@ def check_duplicate(request: VerifyRequest) -> CheckResult:
     )
 
 
-_RESULT_SCHEMA = {
-    "type": "object",
-    "properties": {
-        "verdict": {"type": "string", "enum": ["pass", "uncertain", "fail"]},
-        "confidence": {"type": "integer"},
-        "reasoning": {"type": "string"},
-    },
-    "required": ["verdict", "confidence", "reasoning"],
-    "additionalProperties": False,
-}
+class _Judgement(BaseModel):
+    """What one judging agent must answer with. Internal — the wire shape is `CheckResult`."""
+
+    verdict: Verdict
+    # Bare, and clamped by `_to_result`. Strict mode does not enforce a numeric range, so a model
+    # is free to answer 400 — and a check thrown away over that would read as "could not decide".
+    confidence: int
+    reasoning: str
 
 
-async def _judge(factory: LlmClientFactory, check: str, prompt: str) -> CheckResult:
-    client = factory.client()
-    completion = await client.chat.completions.create(
-        model=factory.model,
-        max_completion_tokens=500,
-        # Same reasoning as extraction: a verdict that flips between runs on identical input is
-        # not a verdict. We store the reasoning and show it to people, so it has to be stable.
-        temperature=TEMPERATURE,
-        seed=SEED,
-        messages=[{"role": "system", "content": SYSTEM}, {"role": "user", "content": prompt}],
-        response_format={
-            "type": "json_schema",
-            "json_schema": {"name": "verdict", "schema": _RESULT_SCHEMA, "strict": True},
-        },
-    )
-    choice = completion.choices[0]
-    if choice.finish_reason == "content_filter" or not choice.message.content:
-        # Fail open to a human, never to publication.
-        return CheckResult(
-            check=check,  # type: ignore[arg-type]
-            verdict="uncertain",
-            confidence=0,
-            reasoning="Automatisk vurdering kunne ikkje fullførast, så vi kunne ikkje avgjere denne.",
-            model=factory.model,
-        )
-    data = json.loads(choice.message.content)
-    return CheckResult(
-        check=check,  # type: ignore[arg-type]
-        verdict=data["verdict"],
-        confidence=max(0, min(100, int(data["confidence"]))),
-        reasoning=data["reasoning"],
-        model=factory.model,
-    )
+# One judging call is a sentence of reasoning and two numbers. Enough headroom that a model which
+# thinks out loud before answering still lands the object.
+MAX_TOKENS = 500
 
 
-async def check_plausibility(factory: LlmClientFactory, request: VerifyRequest) -> CheckResult:
-    return await _judge(
-        factory,
-        "plausibility",
-        "Er dette eit verkeleg lokalt arrangement, eller er det spam, reklame eller ein test?\n\n"
+@dataclass(frozen=True)
+class _ModelCheck:
+    """A seat at the judging table: which check it answers, and what it is asked to weigh."""
+
+    check: CheckName
+    question: str
+
+
+#: The two checks a rule cannot decide.
+#:
+#: They are asked *concurrently*, of the same rendered submission, because they are independent
+#: questions about one record — "is this real" does not depend on "is the category right", and
+#: neither improves for having seen the other's answer. Asking them one after the other, which is
+#: what this did before, spent two round-trips of a person's time on the submit button for no
+#: better verdict.
+_MODEL_CHECKS: tuple[_ModelCheck, ...] = (
+    _ModelCheck(
+        check="plausibility",
+        question=(
+            "Spørsmålet ditt er dette: Er dette eit verkeleg lokalt arrangement, eller er det "
+            "spam, reklame eller ein test? Vurder heile innsendinga under eitt."
+        ),
+    ),
+    _ModelCheck(
+        check="categorisation",
+        question=(
+            "Spørsmålet ditt er dette: Passar kategorien som er vald til arrangementet? "
+            "Svar 'pass' om kategorien er rimeleg, 'uncertain' om ein annan passar klart betre "
+            "(nemn kva for ein i reasoning). Bruk ALDRI 'fail' her: eit val i ei nedtrekksliste er "
+            "ikkje grunn til å avvise eit ekte arrangement, og eit 'fail' frå kvar som helst av "
+            "sjekkane avviser innsendinga."
+        ),
+    ),
+)
+
+
+def _case(request: VerifyRequest) -> str:
+    """The submission, rendered once, for every judging agent to read.
+
+    One rendering rather than a prompt per check: the record is the same record, and two prompts
+    that each named a different subset of it is how `coverage` came to be missing in the first
+    place — nothing compared the place to anything because no prompt carried it.
+    """
+    return (
         f"Tittel: {request.title}\n"
+        f"Kategori: {request.category}\n"
         f"Skildring: {request.description or '(ingen)'}\n"
         f"Stad: {request.venue_name or '(ukjend)'}, {request.municipality or '(ukjend kommune)'}\n"
         f"Arrangør: {request.organizer_name or '(ukjend)'}\n"
-        f"Tid: {request.starts_at}",
+        f"Tid: {request.starts_at}"
     )
 
 
-async def check_categorisation(factory: LlmClientFactory, request: VerifyRequest) -> CheckResult:
-    """Advisory. Reports a better category where it sees one, and never refuses the event.
+def _undecided(check: CheckName, model: str | None) -> CheckResult:
+    """Fail open to a human, never to publication."""
+    return CheckResult(
+        check=check,
+        verdict="uncertain",
+        confidence=0,
+        reasoning="Automatisk vurdering kunne ikkje fullførast, så vi kunne ikkje avgjere denne.",
+        model=model,
+    )
 
-    The prompt asks for no ``fail``, and the verdict is clamped anyway: a `fail` from *any* check
-    rejects the submission outright, so leaving that outcome reachable here would mean a dropdown
-    choice could lose a real event — the one thing this check is not allowed to do. Asking a model
-    politely is not the same as making it impossible. See ``BLOCKING_CHECKS``.
+
+def _to_result(check: CheckName, text: str, model: str) -> CheckResult:
+    """One agent's answer as a check result, with the rules that must not depend on the model.
+
+    Categorisation is clamped here rather than trusted to obey its prompt: a `fail` from *any*
+    check rejects the submission outright, so leaving that outcome reachable would mean a dropdown
+    choice could lose a real event. Asking a model politely is not the same as making it
+    impossible. See ``BLOCKING_CHECKS``.
     """
-    result = await _judge(
-        factory,
-        "categorisation",
-        f"Passar kategorien «{request.category}» til dette arrangementet?\n\n"
-        f"Tittel: {request.title}\n"
-        f"Skildring: {request.description or '(ingen)'}\n\n"
-        "Svar 'pass' om kategorien er rimeleg, 'uncertain' om ein annan passar klart betre "
-        "(nemn kva for ein i reasoning). Bruk ALDRI 'fail' her: eit val i ei nedtrekksliste er "
-        "ikkje grunn til å avvise eit ekte arrangement, og eit 'fail' frå kvar som helst av "
-        "sjekkane avviser innsendinga.",
+    judgement = _Judgement.model_validate_json(text)
+    verdict = judgement.verdict
+    if check == "categorisation" and verdict == "fail":
+        verdict = "uncertain"
+    return CheckResult(
+        check=check,
+        verdict=verdict,
+        confidence=max(0, min(100, judgement.confidence)),
+        reasoning=judgement.reasoning,
+        model=model,
     )
-    if result.verdict == "fail":
-        return result.model_copy(update={"verdict": "uncertain"})
-    return result
+
+
+async def model_checks(factory: AgentFactory, request: VerifyRequest) -> list[CheckResult]:
+    """Ask both judging agents at once, and report them in a fixed order.
+
+    Fixed order because the aggregator receives them in whatever order they finished, and the
+    checks are rendered to the sender in the order they arrive: a list that reshuffles itself
+    between two identical submissions is the same class of instability the pinned sampling exists
+    to prevent.
+    """
+    agents = [
+        factory.agent(
+            name=check.check,
+            instructions=f"{SYSTEM}\n\n{check.question}",
+            response_format=_Judgement,
+            max_tokens=MAX_TOKENS,
+        )
+        for check in _MODEL_CHECKS
+    ]
+
+    def aggregate(responses) -> dict[str, CheckResult]:
+        results: dict[str, CheckResult] = {}
+        for response in responses:
+            check: CheckName = response.executor_id  # the agent's name is the check's name
+            text = response.agent_response.messages[-1].text if response.agent_response else ""
+            if response.agent_response.finish_reason == "content_filter" or not text:
+                results[check] = _undecided(check, factory.model)
+                continue
+            try:
+                results[check] = _to_result(check, text, factory.model)
+            except ValueError:
+                # A malformed answer is an answer we cannot act on, not a reason to lose the
+                # submission. The strict schema makes this close to unreachable; the branch is
+                # here because "close to" is not "never" and the cost of being wrong is an event.
+                log.warning("check %s returned something unreadable", check)
+                results[check] = _undecided(check, factory.model)
+        return results
+
+    workflow = ConcurrentBuilder(participants=agents).with_aggregator(aggregate).build()
+    outputs = (await factory.run_workflow(workflow, _case(request))).get_outputs()
+    by_check: dict[str, CheckResult] = outputs[0] if outputs else {}
+    return [
+        by_check.get(check.check) or _undecided(check.check, factory.model)
+        for check in _MODEL_CHECKS
+    ]
 
 
 def check_corroboration(request: VerifyRequest) -> CheckResult:
@@ -363,7 +427,7 @@ def check_corroboration(request: VerifyRequest) -> CheckResult:
     )
 
 
-async def verify(factory: LlmClientFactory | None, request: VerifyRequest) -> VerifyResponse:
+async def verify(factory: AgentFactory | None, request: VerifyRequest) -> VerifyResponse:
     """Run every check. Without a model, the rule-based checks still run and the rest defers."""
     checks: list[CheckResult] = [
         check_normalisation(request),
@@ -383,8 +447,7 @@ async def verify(factory: LlmClientFactory | None, request: VerifyRequest) -> Ve
             )
         )
     else:
-        checks.append(await check_plausibility(factory, request))
-        checks.append(await check_categorisation(factory, request))
+        checks.extend(await model_checks(factory, request))
 
     if any(c.verdict == "fail" for c in checks):
         recommendation = "reject"

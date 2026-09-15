@@ -2,12 +2,18 @@
 
 import json
 from datetime import UTC, datetime, timedelta
-from typing import ClassVar
 
 import pytest
+from fake_model import FakeOpenAI, factory_for
 
 from verifier.models import CandidateEvent, VerifyRequest
-from verifier.verify import check_coverage, check_duplicate, check_normalisation, verify
+from verifier.verify import (
+    check_coverage,
+    check_duplicate,
+    check_normalisation,
+    model_checks,
+    verify,
+)
 
 
 def _request(**overrides) -> VerifyRequest:
@@ -259,26 +265,20 @@ class TestAdvisoryChecksDoNotBlock:
         from verifier import verify as verify_module
         from verifier.models import CheckResult
 
-        async def _passing(_factory, request, *, check: str):
-            return CheckResult(
-                check=check,
-                verdict="pass",
-                confidence=90,
-                reasoning="Ser ut som ei ekte lokal hending.",
-                deterministic=False,
-                model="stub",
-            )
+        async def _both_pass(_factory, _request):
+            return [
+                CheckResult(
+                    check=check,
+                    verdict="pass",
+                    confidence=90,
+                    reasoning="Ser ut som ei ekte lokal hending.",
+                    deterministic=False,
+                    model="stub",
+                )
+                for check in ("plausibility", "categorisation")
+            ]
 
-        monkeypatch.setattr(
-            verify_module,
-            "check_plausibility",
-            lambda f, r: _passing(f, r, check="plausibility"),
-        )
-        monkeypatch.setattr(
-            verify_module,
-            "check_categorisation",
-            lambda f, r: _passing(f, r, check="categorisation"),
-        )
+        monkeypatch.setattr(verify_module, "model_checks", _both_pass)
 
         response = await verify(object(), _request(source_url=None))
 
@@ -302,28 +302,27 @@ class TestAdvisoryChecksDoNotBlock:
         from verifier import verify as verify_module
         from verifier.models import CheckResult
 
-        async def _plausible(_factory, _request):
-            return CheckResult(
-                check="plausibility",
-                verdict="pass",
-                confidence=95,
-                reasoning="Ser ut som ei ekte lokal hending.",
-                deterministic=False,
-                model="stub",
-            )
+        async def _plausible_but_miscategorised(_factory, _request):
+            return [
+                CheckResult(
+                    check="plausibility",
+                    verdict="pass",
+                    confidence=95,
+                    reasoning="Ser ut som ei ekte lokal hending.",
+                    deterministic=False,
+                    model="stub",
+                ),
+                CheckResult(
+                    check="categorisation",
+                    verdict="uncertain",
+                    confidence=70,
+                    reasoning="Tittelen tyder på ein opningsfest; 'fest' kan passe betre enn 'anna'.",
+                    deterministic=False,
+                    model="stub",
+                ),
+            ]
 
-        async def _unsure_category(_factory, _request):
-            return CheckResult(
-                check="categorisation",
-                verdict="uncertain",
-                confidence=70,
-                reasoning="Tittelen tyder på ein opningsfest; 'fest' kan passe betre enn 'anna'.",
-                deterministic=False,
-                model="stub",
-            )
-
-        monkeypatch.setattr(verify_module, "check_plausibility", _plausible)
-        monkeypatch.setattr(verify_module, "check_categorisation", _unsure_category)
+        monkeypatch.setattr(verify_module, "model_checks", _plausible_but_miscategorised)
 
         response = await verify(object(), _request())
 
@@ -342,85 +341,76 @@ class TestAdvisoryChecksDoNotBlock:
         from verifier import verify as verify_module
         from verifier.models import CheckResult
 
-        async def _plausible(_factory, _request):
-            return CheckResult(
-                check="plausibility",
-                verdict="pass",
-                confidence=95,
-                reasoning="Ekte.",
-                deterministic=False,
-                model="stub",
-            )
-
         async def _barely_sure(_factory, _request):
-            return CheckResult(
-                check="categorisation",
-                verdict="pass",
-                confidence=30,
-                reasoning="Kategorien er nok greit nok.",
-                deterministic=False,
-                model="stub",
-            )
+            return [
+                CheckResult(
+                    check="plausibility",
+                    verdict="pass",
+                    confidence=95,
+                    reasoning="Ekte.",
+                    deterministic=False,
+                    model="stub",
+                ),
+                CheckResult(
+                    check="categorisation",
+                    verdict="pass",
+                    confidence=30,
+                    reasoning="Kategorien er nok greit nok.",
+                    deterministic=False,
+                    model="stub",
+                ),
+            ]
 
-        monkeypatch.setattr(verify_module, "check_plausibility", _plausible)
-        monkeypatch.setattr(verify_module, "check_categorisation", _barely_sure)
+        monkeypatch.setattr(verify_module, "model_checks", _barely_sure)
 
         assert (await verify(object(), _request())).recommendation == "publish"
 
-    async def test_a_category_fail_is_clamped_rather_than_rejecting(self, monkeypatch):
+    def test_a_category_fail_is_clamped_rather_than_rejecting(self):
         """A `fail` from any check rejects, so this one must not be able to produce one.
 
         The prompt asks the model not to; this asserts the code does not depend on it obeying.
-        Tested at `check_categorisation` rather than through `verify`, because the clamp is the
-        thing under test and `verify` would only show its consequence.
+        Tested where the clamp is rather than through `verify`, which would only show its
+        consequence.
         """
-        from verifier import verify as verify_module
-        from verifier.models import CheckResult
+        from verifier.verify import _to_result
 
-        async def _judge_says_fail(_factory, check, _prompt):
-            return CheckResult(
-                check=check,
-                verdict="fail",
-                confidence=90,
-                reasoning="Heilt feil kategori.",
-                deterministic=False,
-                model="stub",
-            )
+        answer = json.dumps(
+            {"verdict": "fail", "confidence": 90, "reasoning": "Heilt feil kategori."}
+        )
 
-        monkeypatch.setattr(verify_module, "_judge", _judge_says_fail)
-
-        result = await verify_module.check_categorisation(object(), _request())
-
+        result = _to_result("categorisation", answer, "stub")
         assert result.verdict == "uncertain"
         # Downgraded, not silenced: what it found is still what the sender is told.
         assert result.reasoning == "Heilt feil kategori."
+
+        # …and the clamp is this check's alone. A `fail` from plausibility is a real refusal.
+        assert _to_result("plausibility", answer, "stub").verdict == "fail"
 
     async def test_a_real_failure_still_stops_it(self, monkeypatch):
         from verifier import verify as verify_module
         from verifier.models import CheckResult
 
         async def _spam(_factory, _request):
-            return CheckResult(
-                check="plausibility",
-                verdict="fail",
-                confidence=95,
-                reasoning="Reklame.",
-                deterministic=False,
-                model="stub",
-            )
+            return [
+                CheckResult(
+                    check="plausibility",
+                    verdict="fail",
+                    confidence=95,
+                    reasoning="Reklame.",
+                    deterministic=False,
+                    model="stub",
+                ),
+                CheckResult(
+                    check="categorisation",
+                    verdict="pass",
+                    confidence=90,
+                    reasoning="Greitt.",
+                    deterministic=False,
+                    model="stub",
+                ),
+            ]
 
-        async def _fine(_factory, _request):
-            return CheckResult(
-                check="categorisation",
-                verdict="pass",
-                confidence=90,
-                reasoning="Greitt.",
-                deterministic=False,
-                model="stub",
-            )
-
-        monkeypatch.setattr(verify_module, "check_plausibility", _spam)
-        monkeypatch.setattr(verify_module, "check_categorisation", _fine)
+        monkeypatch.setattr(verify_module, "model_checks", _spam)
 
         response = await verify(object(), _request(source_url=None))
         assert response.recommendation == "reject"
@@ -432,53 +422,13 @@ def test_confidence_is_bounded(verdict_field):
     assert 0 <= getattr(result, verdict_field) <= 100
 
 
-class _RecordingClient:
-    """Captures the kwargs of the one call it expects, and returns a valid strict-schema reply."""
-
-    def __init__(self, payload: str):
-        self.calls: list[dict] = []
-        self._payload = payload
-
-        outer = self
-
-        class _Completions:
-            async def create(self, **kwargs):
-                outer.calls.append(kwargs)
-
-                class _Msg:
-                    content = outer._payload
-
-                class _Choice:
-                    finish_reason = "stop"
-                    message = _Msg()
-
-                class _Completion:
-                    choices: ClassVar[list] = [_Choice()]
-
-                return _Completion()
-
-        class _Chat:
-            completions = _Completions()
-
-        self.chat = _Chat()
-
-
-class _RecordingFactory:
-    model = "stub-deployment"
-
-    def __init__(self, payload: str):
-        self.recorded = _RecordingClient(payload)
-
-    def client(self):
-        return self.recorded
-
-
 class TestSamplingIsPinned:
     """Extraction is transcription and verdicts are stored and shown; neither may vary run to run.
 
     Asserted rather than trusted because the default is temperature 1.0 — dropping these two
-    kwargs is a silent change with no failing test and no visible symptom until two people read
-    the same poster and get different drafts.
+    settings is a silent change with no failing test and no visible symptom until two people read
+    the same poster and get different drafts. They now live on the agent rather than on the call,
+    which is a place it is easier to forget them, so the assertion is on the payload itself.
     """
 
     async def test_extraction_pins_temperature_and_seed(self):
@@ -503,23 +453,92 @@ class TestSamplingIsPinned:
                 "note": "Lese frå plakaten.",
             }
         )
-        factory = _RecordingFactory(payload)
+        fake = FakeOpenAI(payload)
         await extract_poster(
-            factory,  # type: ignore[arg-type]
+            factory_for(fake),
             ExtractRequest(image_base64="A" * 200, media_type="image/jpeg", today="2026-08-28"),
         )
-        (call,) = factory.recorded.calls
+        (call,) = fake.calls
         assert call["temperature"] == TEMPERATURE == 0.0
         assert call["seed"] == SEED
         assert call["response_format"]["json_schema"]["strict"] is True
 
     async def test_judging_pins_temperature_and_seed(self):
+        """Both judging agents, because they are now built in a loop — one could drift alone."""
         from verifier.llm import SEED, TEMPERATURE
-        from verifier.verify import check_plausibility
+        from verifier.verify import model_checks
 
         payload = json.dumps({"verdict": "pass", "confidence": 88, "reasoning": "Ser ekte ut."})
-        factory = _RecordingFactory(payload)
-        await check_plausibility(factory, _request())  # type: ignore[arg-type]
-        (call,) = factory.recorded.calls
-        assert call["temperature"] == TEMPERATURE == 0.0
-        assert call["seed"] == SEED
+        fake = FakeOpenAI(payload)
+        await model_checks(factory_for(fake), _request())
+
+        assert len(fake.calls) == 2
+        for call in fake.calls:
+            assert call["temperature"] == TEMPERATURE == 0.0
+            assert call["seed"] == SEED
+            assert call["response_format"]["json_schema"]["strict"] is True
+
+
+class TestModelChecks:
+    """The two checks a rule cannot decide, now asked at the same time instead of one after the
+    other. What the orchestration must not change is what comes out of it."""
+
+    @staticmethod
+    def _payload(verdict: str = "pass", confidence: int = 88, reasoning: str = "Ser ekte ut."):
+        return json.dumps({"verdict": verdict, "confidence": confidence, "reasoning": reasoning})
+
+    async def test_both_checks_are_asked_and_both_come_back(self):
+        fake = FakeOpenAI(self._payload())
+        results = await model_checks(factory_for(fake), _request())
+
+        assert [r.check for r in results] == ["plausibility", "categorisation"]
+        assert all(r.verdict == "pass" for r in results)
+        assert all(r.model == "stub-deployment" for r in results)
+        # Neither is a rule, and neither may claim to be: `deterministic` is what the sender is
+        # shown to tell a model's opinion from a fact about their dates.
+        assert not any(r.deterministic for r in results)
+
+    async def test_each_check_is_asked_its_own_question_about_the_same_record(self):
+        """One rendering of the submission, two briefs.
+
+        Two prompts that each named a different subset of the record is how `coverage` came to be
+        missing: nothing compared the place to anything, because no prompt carried it.
+        """
+        fake = FakeOpenAI(self._payload())
+        await model_checks(factory_for(fake), _request(municipality="Stord"))
+
+        plausibility = fake.call_instructing("spam, reklame eller ein test")
+        categorisation = fake.call_instructing("Passar kategorien")
+        assert plausibility is not categorisation
+        for call in (plausibility, categorisation):
+            case = str(call["messages"][-1]["content"])
+            assert "Konsert på Den Blå Time" in case
+            assert "Stord" in case  # the place every judging prompt now carries
+            assert "musikk" in case  # and the category, which only one of them used to see
+
+    async def test_a_filtered_check_defers_to_a_human_rather_than_failing_the_event(self):
+        fake = FakeOpenAI(None, finish_reason="content_filter")
+        results = await model_checks(factory_for(fake), _request())
+
+        assert [r.check for r in results] == ["plausibility", "categorisation"]
+        assert all(r.verdict == "uncertain" for r in results)
+        assert all(r.confidence == 0 for r in results)
+
+    async def test_an_unreadable_answer_defers_rather_than_raising(self):
+        """Close to unreachable behind a strict schema. The cost of being wrong is an event."""
+        fake = FakeOpenAI("ikkje json i det heile")
+        results = await model_checks(factory_for(fake), _request())
+
+        assert all(r.verdict == "uncertain" for r in results)
+        assert all(r.confidence == 0 for r in results)
+
+    async def test_the_order_is_fixed_no_matter_who_finishes_first(self):
+        """The aggregator is handed results in completion order, and the sender reads them in the
+        order they arrive. A list that reshuffles between two identical submissions is the
+        instability the pinned sampling exists to prevent."""
+        fake = FakeOpenAI(
+            self._payload(reasoning="først"),
+            self._payload(reasoning="sist"),
+        )
+        results = await model_checks(factory_for(fake), _request())
+        assert [r.check for r in results] == ["plausibility", "categorisation"]

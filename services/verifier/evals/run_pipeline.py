@@ -27,7 +27,7 @@ from pathlib import Path
 from matchers import Failure, check, resolve
 
 from verifier.config import load_config
-from verifier.llm import LlmClientFactory
+from verifier.llm import AgentFactory
 from verifier.models import VerifyRequest
 from verifier.verify import verify
 
@@ -61,7 +61,7 @@ def flatten(response: dict) -> dict:
     return {**response, "check": {c["check"]: c for c in response["checks"]}}
 
 
-async def run_case(factory: LlmClientFactory, case: Path) -> tuple[bool, list[Failure], dict]:
+async def run_case(factory: AgentFactory, case: Path) -> tuple[bool, list[Failure], dict]:
     spec = json.loads((case / "case.json").read_text(encoding="utf-8"))
     payload = dict(spec["request"])
     for field in ("starts_at", "ends_at"):
@@ -96,7 +96,7 @@ async def main() -> int:
         print(f"no cases matching {needle!r}", file=sys.stderr)
         return 2
 
-    factory = LlmClientFactory(load_config())
+    factory = AgentFactory(load_config())
     passed = 0
     for case in cases:
         ok, failures, got = await run_case(factory, case)

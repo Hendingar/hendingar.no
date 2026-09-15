@@ -7,13 +7,19 @@ approach safe — the model is a typing shortcut, not an authority.
 Extraction is transcription, not generation, so it is pinned as close to deterministic as the API
 allows: temperature 0, a fixed seed, and a strict JSON schema. Two people photographing the same
 poster should get the same draft, and re-reading an image should not produce a different answer the
-second time.
+second time. All three live in `llm.py` now and apply to every agent this service builds.
+
+The strict schema used to be hand-hardened here — strict mode requires `additionalProperties:
+false` and every property in `required`, on nested objects too, and Pydantic emits neither. Naming
+`ExtractedEvent` as the agent's `response_format` gets the same schema from the OpenAI SDK's own
+converter, nested `$defs` included, so that function is gone rather than duplicated.
 """
 
-import json
 import logging
 
-from .llm import SEED, TEMPERATURE, LlmClientFactory
+from agent_framework import Content, Message
+
+from .llm import AgentFactory
 from .models import ExtractedEvent, ExtractPageRequest, ExtractRequest
 
 log = logging.getLogger(__name__)
@@ -89,86 +95,57 @@ show, mat-og-drikke, dans, marknad, konferanse, kurs, anna."""
 # become one enormous bill — the app truncates too, and this is the backstop.
 MAX_PAGE_CHARS = 12_000
 
+# A read is the whole event: title, description, dates, venue, and a crop box. Generous because
+# running out of tokens mid-object produces no event at all, not a shorter one.
+MAX_TOKENS = 2000
 
-def _harden(node: dict) -> None:
-    """Apply strict-mode rules to an object schema and everything nested inside it.
 
-    Strict mode requires every property to be listed in `required` and `additionalProperties:
-    false` — on nested objects too, not just the root. Pydantic emits neither, and it hoists nested
-    models into `$defs`, which are reached through `$ref` and so need hardening in place.
+def _unreadable(what: str, subject: str) -> ExtractedEvent:
+    """The content filter is a normal outcome, not an exception.
+
+    Report it as an unreadable image rather than a server error, so the person just fills in the
+    form themselves instead of meeting a failure they can do nothing about.
     """
-    if node.get("type") == "object" and "properties" in node:
-        node["additionalProperties"] = False
-        node["required"] = list(node["properties"].keys())
-    for key in ("properties", "$defs"):
-        for child in node.get(key, {}).values():
-            if isinstance(child, dict):
-                _harden(child)
-    for child in node.get("anyOf", []):
-        if isinstance(child, dict):
-            _harden(child)
-    items = node.get("items")
-    if isinstance(items, dict):
-        _harden(items)
-
-
-def _schema() -> dict:
-    """JSON Schema for the structured response, hardened for strict mode."""
-    schema = ExtractedEvent.model_json_schema()
-    _harden(schema)
-    return schema
-
-
-async def extract_poster(factory: LlmClientFactory, request: ExtractRequest) -> ExtractedEvent:
-    client = factory.client()
-    completion = await client.chat.completions.create(
-        model=factory.model,
-        max_completion_tokens=2000,
-        temperature=TEMPERATURE,
-        seed=SEED,
-        messages=[
-            {"role": "system", "content": SYSTEM},
-            {
-                "role": "user",
-                "content": [
-                    {
-                        "type": "image_url",
-                        "image_url": {
-                            "url": f"data:{request.media_type};base64,{request.image_base64}"
-                        },
-                    },
-                    {
-                        "type": "text",
-                        "text": (
-                            f"I dag er {request.today}. Hent ut arrangementet frå dette biletet."
-                        ),
-                    },
-                ],
-            },
-        ],
-        response_format={
-            "type": "json_schema",
-            "json_schema": {"name": "extracted_event", "schema": _schema(), "strict": True},
-        },
+    return ExtractedEvent(
+        confidence=0,
+        unreadable=[what],
+        note=f"{subject} kunne ikkje lesast automatisk. Fyll inn skjemaet sjølv.",
     )
 
-    choice = completion.choices[0]
-    if choice.finish_reason == "content_filter":
-        # The content filter is a normal outcome, not an exception. Report it as an unreadable
-        # image rather than a server error, so the person just fills in the form themselves.
-        return ExtractedEvent(
-            confidence=0,
-            unreadable=["heile biletet"],
-            note="Biletet kunne ikkje lesast automatisk. Fyll inn skjemaet sjølv.",
-        )
 
-    content = choice.message.content
-    if not content:
+async def extract_poster(factory: AgentFactory, request: ExtractRequest) -> ExtractedEvent:
+    agent = factory.agent(
+        name="plakatlesaren",
+        instructions=SYSTEM,
+        response_format=ExtractedEvent,
+        max_tokens=MAX_TOKENS,
+    )
+    # The image is already base64 from the browser, so it travels as the `data:` URI it will be
+    # sent as. Handing over raw bytes would decode and re-encode it for nothing.
+    response = await factory.run(
+        agent,
+        Message(
+            role="user",
+            contents=[
+                Content.from_uri(
+                    uri=f"data:{request.media_type};base64,{request.image_base64}",
+                    media_type=request.media_type,
+                ),
+                Content.from_text(
+                    f"I dag er {request.today}. Hent ut arrangementet frå dette biletet."
+                ),
+            ],
+        ),
+    )
+
+    if response.finish_reason == "content_filter":
+        return _unreadable("heile biletet", "Biletet")
+    if response.value is None:
         raise ValueError("model returned no content")
-    return ExtractedEvent.model_validate(json.loads(content))
+    return response.value
 
 
-async def extract_page(factory: LlmClientFactory, request: ExtractPageRequest) -> ExtractedEvent:
+async def extract_page(factory: AgentFactory, request: ExtractPageRequest) -> ExtractedEvent:
     """Read an event out of page text.
 
     Same schema, same determinism settings and the same review step as the poster path: what comes
@@ -176,39 +153,19 @@ async def extract_page(factory: LlmClientFactory, request: ExtractPageRequest) -
     prompt, which has to cope with navigation and footers rather than a photograph, and that no
     thumbnail crop is asked for — there is no image here to crop.
     """
-    client = factory.client()
-    completion = await client.chat.completions.create(
-        model=factory.model,
-        max_completion_tokens=2000,
-        temperature=TEMPERATURE,
-        seed=SEED,
-        messages=[
-            {"role": "system", "content": SYSTEM_PAGE},
-            {
-                "role": "user",
-                "content": (
-                    f"I dag er {request.today}. Sida ligg på {request.url}.\n\n"
-                    f"{request.text[:MAX_PAGE_CHARS]}"
-                ),
-            },
-        ],
-        response_format={
-            "type": "json_schema",
-            "json_schema": {"name": "extracted_event", "schema": _schema(), "strict": True},
-        },
+    agent = factory.agent(
+        name="sidelesaren",
+        instructions=SYSTEM_PAGE,
+        response_format=ExtractedEvent,
+        max_tokens=MAX_TOKENS,
+    )
+    response = await factory.run(
+        agent,
+        f"I dag er {request.today}. Sida ligg på {request.url}.\n\n{request.text[:MAX_PAGE_CHARS]}",
     )
 
-    choice = completion.choices[0]
-    if choice.finish_reason == "content_filter":
-        # Same treatment as an unreadable poster: a normal outcome, not a server error. The person
-        # fills the form in themselves.
-        return ExtractedEvent(
-            confidence=0,
-            unreadable=["heile sida"],
-            note="Sida kunne ikkje lesast automatisk. Fyll inn skjemaet sjølv.",
-        )
-
-    content = choice.message.content
-    if not content:
+    if response.finish_reason == "content_filter":
+        return _unreadable("heile sida", "Sida")
+    if response.value is None:
         raise ValueError("model returned no content")
-    return ExtractedEvent.model_validate(json.loads(content))
+    return response.value
