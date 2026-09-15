@@ -6,6 +6,14 @@ requires-python = ">=3.12"
 dependencies = [
     "fastapi>=0.115",
     "uvicorn[standard]>=0.32",
+    # Microsoft Agent Framework. `core` is the Agent and the workflow graph, `openai` the chat
+    # client that reaches Azure AI Foundry with an Entra credential, `orchestrations` the
+    # multi-agent builders. See docs/decisions/0016-agent-framework.md.
+    "agent-framework-core>=1.18",
+    "agent-framework-openai>=1.14",
+    "agent-framework-orchestrations>=1.1",
+    # Reached through the framework rather than directly, but it is what the wire types are and
+    # what the tests construct their fake responses from, so the floor is ours to state.
     "openai>=1.60",
     "azure-identity>=1.19",
     "pydantic>=2.9",

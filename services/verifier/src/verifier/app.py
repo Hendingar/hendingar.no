@@ -8,7 +8,7 @@ from .appeal import JURORS, QUORUM, judge_appeal, juror_by_id
 from .config import Config, load_config
 from .crop import suggest_crop
 from .extract import extract_page, extract_poster
-from .llm import LlmClientFactory
+from .llm import AgentFactory
 from .models import (
     AppealRequest,
     CropRequest,
@@ -33,11 +33,11 @@ MAX_IMAGE_BASE64_BYTES = 8 * 1024 * 1024
 MAX_PAGE_TEXT_CHARS = 40_000
 
 
-def create_app(config: Config | None = None, factory: LlmClientFactory | None = None) -> FastAPI:
-    """Factory so tests can inject a fake LLM factory and never touch Azure."""
+def create_app(config: Config | None = None, factory: AgentFactory | None = None) -> FastAPI:
+    """Factory so tests can inject an `AgentFactory` over a fake client and never touch Azure."""
     config = config or load_config()
     logging.basicConfig(level=config.log_level)
-    factory = factory or LlmClientFactory(config)
+    factory = factory or AgentFactory(config)
 
     app = FastAPI(title="hendingar verifier", version="0.1.0")
 

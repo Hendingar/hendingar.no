@@ -1,9 +1,9 @@
-"""The appeal panel. No Azure and no network — the client factory is a stub."""
+"""The appeal panel. No Azure and no network — the socket under the client is a fake."""
 
 import json
-from typing import ClassVar
 
 import pytest
+from fake_model import FakeOpenAI, factory_for
 
 from verifier.appeal import JURORS, QUORUM, judge_appeal, juror_by_id
 from verifier.models import AppealRequest
@@ -22,42 +22,9 @@ def _request(**overrides) -> AppealRequest:
     return AppealRequest(**{**base, **overrides})
 
 
-class _Stub:
-    """Returns a fixed payload, or raises, depending on how it was built."""
-
-    def __init__(self, payload: str | None = None, boom: Exception | None = None):
-        self._payload = payload
-        self._boom = boom
-        self.model = "stub-model"
-        self.prompts: list[str] = []
-
-    def client(self):
-        return self
-
-    @property
-    def chat(self):
-        return self
-
-    @property
-    def completions(self):
-        return self
-
-    async def create(self, **kwargs):
-        if self._boom:
-            raise self._boom
-        self.prompts.append("\n".join(m["content"] for m in kwargs["messages"]))
-
-        class _Msg:
-            content = self._payload
-
-        class _Choice:
-            finish_reason = "stop"
-            message = _Msg()
-
-        class _Completion:
-            choices: ClassVar[list] = [_Choice()]
-
-        return _Completion()
+def _sent(fake: FakeOpenAI) -> str:
+    """Everything the juror was told, as one string."""
+    return "\n".join(str(message["content"]) for message in fake.last["messages"])
 
 
 class TestPanel:
@@ -80,39 +47,45 @@ class TestPanel:
 
 class TestJudging:
     async def test_a_vote_carries_its_reasoning_and_who_cast_it(self):
-        stub = _Stub(json.dumps({"publish": True, "confidence": 82, "reasoning": "Verkar ekte."}))
-        verdict = await judge_appeal(stub, juror_by_id("advocate"), _request())
+        fake = FakeOpenAI(
+            json.dumps({"publish": True, "confidence": 82, "reasoning": "Verkar ekte."})
+        )
+        verdict = await judge_appeal(factory_for(fake), juror_by_id("advocate"), _request())
         assert verdict.publish is True
         assert verdict.confidence == 82
         assert verdict.juror == "advocate"
         assert verdict.name == "Forsvararen"
-        assert verdict.model == "stub-model"
+        assert verdict.model == "stub-deployment"
 
     async def test_the_juror_sees_the_case_and_what_was_said_against_it(self):
         """A juror arguing with a stated reason, not with a mood."""
-        stub = _Stub(json.dumps({"publish": True, "confidence": 70, "reasoning": "Greitt."}))
-        await judge_appeal(stub, juror_by_id("skeptic"), _request())
-        prompt = stub.prompts[0]
+        fake = FakeOpenAI(json.dumps({"publish": True, "confidence": 70, "reasoning": "Greitt."}))
+        await judge_appeal(factory_for(fake), juror_by_id("skeptic"), _request())
+        prompt = _sent(fake)
         assert "Vinsen båtforeining" in prompt  # the sender's own words
         assert "Ingen kjelde-URL oppgitt." in prompt  # what the check said
         assert "Fiskefestival i Vinsen" in prompt  # the event itself
 
     async def test_confidence_is_clamped(self):
-        stub = _Stub(json.dumps({"publish": True, "confidence": 400, "reasoning": "x"}))
-        assert (await judge_appeal(stub, juror_by_id("local"), _request())).confidence == 100
+        """Clamped rather than refused: strict mode does not bound the number, and a vote thrown
+        away over a formatting quirk counts as a vote against."""
+        fake = FakeOpenAI(json.dumps({"publish": True, "confidence": 400, "reasoning": "x"}))
+        verdict = await judge_appeal(factory_for(fake), juror_by_id("local"), _request())
+        assert verdict.confidence == 100
+        assert verdict.publish is True
 
     async def test_a_juror_that_cannot_answer_votes_no(self):
         """It never raises, so one bad call cannot take the panel down with it."""
-        stub = _Stub(boom=RuntimeError("upstream on fire"))
-        verdict = await judge_appeal(stub, juror_by_id("local"), _request())
+        fake = FakeOpenAI(error=RuntimeError("upstream on fire"))
+        verdict = await judge_appeal(factory_for(fake), juror_by_id("local"), _request())
         assert verdict.publish is False
         assert verdict.confidence == 0
         assert "ikkje tilgjengeleg" in verdict.reasoning
         assert verdict.model is None
 
     async def test_a_filtered_response_votes_no(self):
-        stub = _Stub(payload=None)
-        verdict = await judge_appeal(stub, juror_by_id("skeptic"), _request())
+        fake = FakeOpenAI(None, finish_reason="content_filter")
+        verdict = await judge_appeal(factory_for(fake), juror_by_id("skeptic"), _request())
         assert verdict.publish is False
 
 

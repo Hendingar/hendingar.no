@@ -15,13 +15,13 @@ from matchers import Failure, check, resolve
 
 from verifier.config import load_config
 from verifier.extract import extract_poster
-from verifier.llm import LlmClientFactory
+from verifier.llm import AgentFactory
 from verifier.models import ExtractRequest
 
 CASES = Path(__file__).parent / "cases"
 
 
-async def run_case(factory: LlmClientFactory, case: Path) -> tuple[bool, list[Failure], dict]:
+async def run_case(factory: AgentFactory, case: Path) -> tuple[bool, list[Failure], dict]:
     spec = json.loads((case / "expected.json").read_text(encoding="utf-8"))
     image = next(case.glob("image.*"))
     media = "image/png" if image.suffix == ".png" else "image/jpeg"
@@ -49,7 +49,7 @@ async def main() -> int:
         print(f"no cases matching {needle!r}", file=sys.stderr)
         return 2
 
-    factory = LlmClientFactory(load_config())
+    factory = AgentFactory(load_config())
     passed = 0
     for case in cases:
         ok, failures, got = await run_case(factory, case)

@@ -15,11 +15,15 @@ watch a blank screen for the length of three model round-trips.
 
 from __future__ import annotations
 
-import json
+import logging
 from dataclasses import dataclass
 
-from .llm import SEED, TEMPERATURE, LlmClientFactory
+from pydantic import BaseModel
+
+from .llm import AgentFactory
 from .models import AppealRequest, JurorVerdict
+
+log = logging.getLogger(__name__)
 
 #: How many jurors must be convinced. Two of three.
 QUORUM = 2
@@ -69,16 +73,22 @@ JURORS: tuple[Juror, ...] = (
     ),
 )
 
-_SCHEMA = {
-    "type": "object",
-    "additionalProperties": False,
-    "properties": {
-        "publish": {"type": "boolean"},
-        "confidence": {"type": "integer"},
-        "reasoning": {"type": "string"},
-    },
-    "required": ["publish", "confidence", "reasoning"],
-}
+
+class _Vote(BaseModel):
+    """What one juror must answer with. Internal — the wire shape is `JurorVerdict`.
+
+    `confidence` is a bare int and clamped after the fact rather than bounded here. Strict mode
+    does not enforce a numeric range, so a model is free to answer 400 — and a vote thrown away
+    over a formatting quirk is a vote against, which could tip a panel. Clamping keeps it a vote.
+    """
+
+    publish: bool
+    confidence: int
+    reasoning: str
+
+
+# A vote is a yes or no, a number, and one or two sentences somebody will read.
+MAX_TOKENS = 400
 
 
 def juror_by_id(juror_id: str) -> Juror | None:
@@ -105,36 +115,31 @@ def _prompt(request: AppealRequest) -> str:
     return "\n".join(lines)
 
 
-async def judge_appeal(
-    factory: LlmClientFactory, juror: Juror, request: AppealRequest
-) -> JurorVerdict:
-    """One juror's vote. Never raises: a juror that cannot answer votes no, with a reason."""
-    system = (
-        f"{juror.brief}\n\n"
-        "Du vurderer om ei innsend hending skal publiserast på ein lokal hendingskalender for "
-        "Sunnhordland. Svar på nynorsk, i éi til to setningar. Grunngjevinga blir vist til "
-        "innsendaren, så skriv til dei, ikkje om dei."
+async def judge_appeal(factory: AgentFactory, juror: Juror, request: AppealRequest) -> JurorVerdict:
+    """One juror's vote. Never raises: a juror that cannot answer votes no, with a reason.
+
+    The never-raising is load-bearing and is the reason this stays a plain call rather than an
+    orchestration. Agent Framework's concurrent builder would fan the panel out for us, but a
+    participant that throws takes the whole workflow down with it — so one juror meeting a
+    rate-limited endpoint would lose the other two votes as well. Here the panel is assembled by
+    the caller, which asks the three seats separately and streams each verdict as it lands; a seat
+    that cannot answer costs only itself.
+    """
+    agent = factory.agent(
+        name=juror.id,
+        instructions=(
+            f"{juror.brief}\n\n"
+            "Du vurderer om ei innsend hending skal publiserast på ein lokal hendingskalender for "
+            "Sunnhordland. Svar på nynorsk, i éi til to setningar. Grunngjevinga blir vist til "
+            "innsendaren, så skriv til dei, ikkje om dei."
+        ),
+        response_format=_Vote,
+        max_tokens=MAX_TOKENS,
     )
     try:
-        client = factory.client()
-        completion = await client.chat.completions.create(
-            model=factory.model,
-            max_completion_tokens=400,
-            # Same reasoning as every other call here: a verdict that flips between runs on
-            # identical input is not a verdict, and this one is shown to the person it is about.
-            temperature=TEMPERATURE,
-            seed=SEED,
-            messages=[
-                {"role": "system", "content": system},
-                {"role": "user", "content": _prompt(request)},
-            ],
-            response_format={
-                "type": "json_schema",
-                "json_schema": {"name": "juror", "schema": _SCHEMA, "strict": True},
-            },
-        )
-        choice = completion.choices[0]
-        if choice.finish_reason == "content_filter" or not choice.message.content:
+        response = await factory.run(agent, _prompt(request))
+        text = response.text
+        if response.finish_reason == "content_filter" or not text:
             return JurorVerdict(
                 juror=juror.id,
                 name=juror.name,
@@ -143,16 +148,17 @@ async def judge_appeal(
                 reasoning="Denne juroren klarte ikkje vurdere saka.",
                 model=factory.model,
             )
-        data = json.loads(choice.message.content)
+        vote = _Vote.model_validate_json(text)
         return JurorVerdict(
             juror=juror.id,
             name=juror.name,
-            publish=bool(data["publish"]),
-            confidence=max(0, min(100, int(data["confidence"]))),
-            reasoning=data["reasoning"],
+            publish=vote.publish,
+            confidence=max(0, min(100, vote.confidence)),
+            reasoning=vote.reasoning,
             model=factory.model,
         )
     except Exception as exc:  # noqa: BLE001 - a juror that fails votes no, it does not break the panel
+        log.warning("juror %s could not answer: %s", juror.id, type(exc).__name__)
         return JurorVerdict(
             juror=juror.id,
             name=juror.name,

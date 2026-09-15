@@ -103,7 +103,7 @@ app/src/lib/listing-url.ts         filters ↔ URL. The page, the tokens and the
                                    compose addresses through it, so they cannot disagree
 
 services/verifier/src/verifier/
-  llm.py                   Entra token → AsyncOpenAI. Rebuilt per call; the credential is reused
+  llm.py                   Entra credential → Agent Framework client. EVERY agent is built here
   extract.py               the vision call. Nynorsk prompt, strict json_schema
   crop.py                  the small vision call: where to cut a thumbnail, or nothing
   verify.py                the five checks. Rules and model calls deliberately mixed
@@ -156,7 +156,8 @@ Scoped in a component, the next agent cannot see it and writes a second one.
 
 3. **`services/verifier` is the only place a model runs.** No model SDK in `app/` or
    `importers/`, and no API keys anywhere — the service authenticates to Azure with a managed
-   identity. Importers are `fetch → parse → validate → upsert`, deterministic and replayable;
+   identity, through Microsoft Agent Framework (ADR 0016) — so a model call is an `Agent` built by
+   `llm.AgentFactory`, never a hand-assembled request. Importers are `fetch → parse → validate → upsert`, deterministic and replayable;
    verification happens later, on already-structured data, and anything uncertain is reported back
    to whoever sent it in so they can correct it (ADR 0012). See `docs/decisions/0004-deterministic-importers.md` and
    `docs/decisions/0008-verification-service.md`.

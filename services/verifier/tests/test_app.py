@@ -1,30 +1,15 @@
 """HTTP surface, with the model stubbed out. No Azure, no network."""
 
+from fake_model import FakeOpenAI, config, factory_for
 from fastapi.testclient import TestClient
 
 from verifier.app import MAX_IMAGE_BASE64_BYTES, MAX_PAGE_TEXT_CHARS, create_app
-from verifier.config import Config
-
-
-class _StubFactory:
-    """Stands in for LlmClientFactory. `client()` is never reached in these tests."""
-
-    model = "stub-deployment"
-
-    def client(self):  # pragma: no cover - guards against an accidental real call
-        raise AssertionError("tests must not reach the model")
 
 
 def _client() -> TestClient:
-    config = Config(
-        openai_endpoint="https://example.invalid/",
-        openai_chat_model="stub-deployment",
-        azure_client_id=None,
-        azure_tenant_id=None,
-        log_level="WARNING",
-        request_timeout_seconds=5,
-    )
-    return TestClient(create_app(config=config, factory=_StubFactory()))
+    """An app whose socket explodes, so any test that reaches a model fails loudly."""
+    fake = FakeOpenAI(error=AssertionError("tests must not reach the model"))
+    return TestClient(create_app(config=config(), factory=factory_for(fake)))
 
 
 def test_health_reports_ready_without_calling_the_model():
