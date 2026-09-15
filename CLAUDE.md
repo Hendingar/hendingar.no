@@ -91,7 +91,8 @@ app/src/lib/
   events.remote.ts       the one client↔server boundary
 app/e2e/                 Playwright specs
 
-app/src/lib/components/submit/   single-use sections owned by `/send-inn`
+app/src/lib/components/submit/   single-use sections owned by `/send-inn`. DescriptionHelp is
+                                 the suggested-text panel — it never writes to the form itself
 app/src/lib/submit.remote.ts     the submission boundary — photo, form, verification, and the
                                  contribution path: a submission that matches an event we already
                                  have fills that row's gaps instead of being refused (ADR 0014).
@@ -106,6 +107,8 @@ services/verifier/src/verifier/
   llm.py                   Entra credential → Agent Framework client. EVERY agent is built here
   extract.py               the vision call. Nynorsk prompt, strict json_schema
   crop.py                  the small vision call: where to cut a thumbnail, or nothing
+  improve.py               the ONLY place that writes prose: a writer and a fact-checker,
+                           as a group chat. An unapproved draft is thrown away (ADR 0017)
   verify.py                the five checks. Rules and model calls deliberately mixed
   app.py                   FastAPI. create_app(config, factory) so tests inject a stub
   tests/test_contract.py   asserts the check names still match packages/core

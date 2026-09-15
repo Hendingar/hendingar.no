@@ -3,7 +3,9 @@ import type { CategorySlug } from '@hendingar/core/taxonomy';
 import {
 	cropSuggestionSchema,
 	extractedEventSchema,
+	improveSuggestionSchema,
 	type ExtractedEvent,
+	type ImproveSuggestion,
 	type ThumbnailCrop
 } from '@hendingar/core/validation';
 import type { VerificationCheck, VerificationVerdict } from '@hendingar/core/verification';
@@ -43,6 +45,13 @@ const EXTRACT_TIMEOUT_MS = 45_000;
 const VERIFY_TIMEOUT_MS = 30_000;
 /** A crop is four numbers about one image, asked after the verdict. Nobody is watching it. */
 const CROP_TIMEOUT_MS = 20_000;
+/**
+ * Up to four model calls in a row, and somebody is watching the button they pressed.
+ *
+ * Longer than verification because the writer and the fact-checker take turns rather than run at
+ * once — that is the point of them — and shorter than patience, because the answer is optional.
+ */
+const IMPROVE_TIMEOUT_MS = 60_000;
 
 async function post<T>(path: string, body: unknown, timeoutMs: number): Promise<T> {
 	if (!VERIFIER_URL) throw new Error('verifier is not configured');
@@ -149,6 +158,49 @@ export async function extractPage(
 	);
 	return toExtractedEvent(raw);
 }
+
+/**
+ * A better description for a submission, written and then audited by the verifier (ADR 0017).
+ *
+ * Throws, unlike `suggestCrop`, and that is the difference between the two: a crop is asked for by
+ * the browser after a verdict and nobody is waiting on it, whereas this is asked by a person who
+ * pressed a button and is owed an answer — including "that did not work". The caller turns the
+ * failure into a sentence; it never blocks the submission, which is what the form was for.
+ *
+ * A `description` of null is the ordinary outcome rather than an error: the service holds back any
+ * draft whose claims it could not trace back to the submission. The note says so, in Nynorsk, and
+ * `missing` is worth showing either way.
+ */
+export async function improveDescription(input: ImproveInput): Promise<ImproveSuggestion> {
+	const raw = await post<Record<string, unknown>>(
+		'/improve',
+		{
+			title: input.title,
+			description: input.description ?? null,
+			category: input.category,
+			starts_at: input.startsAt,
+			ends_at: input.endsAt ?? null,
+			venue_name: input.venueName ?? null,
+			municipality: input.municipality ?? null,
+			organizer_name: input.organizerName ?? null,
+			source_url: input.sourceUrl ?? null
+		},
+		IMPROVE_TIMEOUT_MS
+	);
+	return improveSuggestionSchema.parse(raw);
+}
+
+export type ImproveInput = {
+	title: string;
+	description?: string | null;
+	category: CategorySlug;
+	startsAt: string;
+	endsAt?: string | null;
+	venueName?: string | null;
+	municipality?: string | null;
+	organizerName?: string | null;
+	sourceUrl?: string | null;
+};
 
 export type VerifyInput = {
 	title: string;

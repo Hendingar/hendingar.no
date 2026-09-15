@@ -8,6 +8,7 @@ from .appeal import JURORS, QUORUM, judge_appeal, juror_by_id
 from .config import Config, load_config
 from .crop import suggest_crop
 from .extract import extract_page, extract_poster
+from .improve import improve as run_improve
 from .llm import AgentFactory
 from .models import (
     AppealRequest,
@@ -16,6 +17,8 @@ from .models import (
     ExtractedEvent,
     ExtractPageRequest,
     ExtractRequest,
+    ImproveRequest,
+    ImproveSuggestion,
     JurorVerdict,
     VerifyRequest,
     VerifyResponse,
@@ -101,6 +104,23 @@ def create_app(config: Config | None = None, factory: AgentFactory | None = None
         except Exception as exc:
             log.exception("verification failed")
             raise HTTPException(status_code=502, detail=f"verification failed: {exc}") from exc
+
+    @app.post("/improve", response_model=ImproveSuggestion)
+    async def improve(request: ImproveRequest) -> ImproveSuggestion:
+        """A better description for a submission, or — usually — an honest nothing.
+
+        The only endpoint here that writes prose rather than reading it, and the only one that is
+        a group chat: a writer drafts, a fact-checker strikes every claim the submission does not
+        contain, and an unapproved draft is discarded rather than shown. See `improve.py`.
+
+        A 502 costs nothing. Nobody is blocked on this — the person is looking at a form they
+        filled in themselves, and the worst outcome is that they keep their own words.
+        """
+        try:
+            return await run_improve(factory, request)
+        except Exception as exc:
+            log.exception("improvement failed")
+            raise HTTPException(status_code=502, detail=f"improve failed: {exc}") from exc
 
     @app.get("/appeal/panel")
     async def panel() -> dict:

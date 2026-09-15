@@ -23,12 +23,13 @@ and anything uncertain is reported to the person who sent it in so they can corr
 
 ## Endpoints
 
-| Method | Path       | Purpose                                               |
-| ------ | ---------- | ----------------------------------------------------- |
-| `GET`  | `/health`  | Reachability. Deliberately does not call the model    |
-| `POST` | `/extract` | Photographed poster → structured draft event          |
-| `POST` | `/verify`  | Submitted event → per-check verdicts + recommendation |
-| `POST` | `/crop`    | Image → where to cut a card thumbnail, or nothing     |
+| Method | Path       | Purpose                                                    |
+| ------ | ---------- | ---------------------------------------------------------- |
+| `GET`  | `/health`  | Reachability. Deliberately does not call the model         |
+| `POST` | `/extract` | Photographed poster → structured draft event               |
+| `POST` | `/verify`  | Submitted event → per-check verdicts + recommendation      |
+| `POST` | `/crop`    | Image → where to cut a card thumbnail, or nothing          |
+| `POST` | `/improve` | Submission → a suggested description, or (usually) nothing |
 
 `/crop` is the small one, and it is small on purpose: an image that reached us with a form somebody
 typed in themselves has never been looked at, so there is no crop box beside its fields the way
@@ -49,6 +50,13 @@ check expensive and unpredictable:
 | Categorisation | Model      | Same                                                            |
 
 Every check returns its reasoning in Nynorsk, because it is shown to people rather than logged.
+
+`/improve` is the exception to everything above: it is the one endpoint that _writes_ rather than
+reads. A writer drafts a description and a fact-checker strikes any claim the submission does not
+contain, as a group chat, and an unapproved draft is discarded — so answering "no text, but here is
+what you could add yourself" is the ordinary outcome. Two further rules decide without a model: no
+number may appear that is not already in the submission, and only the description is ever
+rewritten. See [ADR 0017](../../docs/decisions/0017-written-suggestions.md).
 
 **It fails away from publication, never towards it.** No model configured, a content filter, a
 timeout — all produce `uncertain`, which means the event does not go out. What happens next is the

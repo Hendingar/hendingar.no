@@ -65,7 +65,12 @@
 		`?bidra=<id>` is the same kind of hint about which published event to improve — re-checked
 		server-side for being published, canonical and the same evening before a single column moves.
 	-->
-	<SubmitForm photoEnabled={capabilities.photo} revisionOf={revising} contributeTo={contributing} />
+	<SubmitForm
+		photoEnabled={capabilities.photo}
+		improveEnabled={capabilities.improve}
+		revisionOf={revising}
+		contributeTo={contributing}
+	/>
 </section>
 
 <!--

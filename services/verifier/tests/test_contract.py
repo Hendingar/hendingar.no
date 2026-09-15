@@ -102,6 +102,29 @@ def test_crop_box_fields_match_the_shared_schema():
     assert not missing, f"named by the verifier but not by thumbnailCropSchema: {missing}"
 
 
+def test_improvement_fields_match_the_shared_schema():
+    """Same drop-on-the-floor hazard as extraction, on the endpoint that writes prose.
+
+    It is the worse one to get wrong. `removed` is what the fact-checker struck out of a draft,
+    and if the app's schema forgets to name it, Zod strips it — leaving a suggestion on screen with
+    no record that anything was taken out of it, which is precisely the reassurance it exists to
+    give.
+    """
+    from verifier.models import ImproveSuggestion
+
+    validation = (
+        Path(__file__).resolve().parents[3] / "packages" / "core" / "src" / "validation.ts"
+    ).read_text(encoding="utf-8")
+    schema = validation.split("export const improveSuggestionSchema", 1)[1].split("\n});", 1)[0]
+
+    missing = [
+        field
+        for field in ImproveSuggestion.model_fields
+        if not re.search(rf"^\s*{re.escape(field)}\s*:", schema, re.MULTILINE)
+    ]
+    assert not missing, f"named by the verifier but not by improveSuggestionSchema: {missing}"
+
+
 def test_extraction_fields_match_the_shared_schema():
     """Every field the service returns must be named in the app's schema, or it is dropped.
 

@@ -10,7 +10,7 @@ import {
 	venues,
 	verifications
 } from '@hendingar/core/schema';
-import { eventFormSchema } from '@hendingar/core/validation';
+import { categorySchema, eventFormSchema } from '@hendingar/core/validation';
 import { instantToZonedWallClock, zonedWallClockToInstant } from '@hendingar/core/datetime';
 import { DUPLICATE_WINDOW_MS, comparePair } from '@hendingar/core/consolidate';
 import {
@@ -37,6 +37,7 @@ import { db } from './server/db';
 import {
 	extractPage,
 	extractPoster,
+	improveDescription,
 	suggestCrop,
 	verifierEnabled,
 	verifyEvent
@@ -776,7 +777,18 @@ export const submissionVerdict = query(
 export type SubmissionVerdict = NonNullable<Awaited<ReturnType<typeof submissionVerdict>>>;
 
 /** Is the photo shortcut available? The UI hides it rather than offering a broken button. */
-export const submissionCapabilities = query(async () => ({ photo: verifierEnabled() }));
+/**
+ * What this deployment can actually offer, asked once and rendered server-side.
+ *
+ * Both capabilities are the verifier being configured, and they are reported separately anyway: a
+ * page that reads "ta eit bilete av plakaten" when nothing can read a poster is a broken promise,
+ * and so is a button that cannot be pressed. If either ever grows its own switch, the callers do
+ * not change.
+ */
+export const submissionCapabilities = query(async () => ({
+	photo: verifierEnabled(),
+	improve: verifierEnabled()
+}));
 
 const photoSchema = z.object({
 	/** Base64 without the data: prefix. The browser downscales before sending. */
@@ -827,6 +839,64 @@ export const cropSuggestion = command(
 		// Never throws — see the note on `suggestCrop`. A thumbnail is not worth an error path in a
 		// flow whose event is already published.
 		return await suggestCrop(imageBase64, mediaType);
+	}
+);
+
+/**
+ * A second opinion on the description somebody has written, from two agents that disagree.
+ *
+ * The verifier runs a writer and a fact-checker over the submission as it stands in the form, and
+ * the fact-checker throws the draft away if it makes a claim the submission does not contain — so
+ * a null `description` is the ordinary answer rather than a failure (ADR 0017). What comes back is
+ * shown beside the box; nothing is written into the form unless the person presses the button that
+ * does it.
+ *
+ * A `command` rather than a `query`, for the same reason `extractFromUrl` is one: it spends model
+ * calls, so it must be something a person asks for and never something a crawler triggers by
+ * following a link.
+ *
+ * Bounded here as well as in the service, because this text reaches a model and its length is
+ * decided by whoever is typing.
+ */
+export const improveText = command(
+	z.object({
+		title: z.string().trim().min(1).max(200),
+		description: z.string().max(5000).nullish(),
+		category: categorySchema,
+		/*
+		 * The sender's own wall clock, exactly as the two boxes hold it — not an instant.
+		 *
+		 * Nothing is stored from this call, and the time is in the record for one reason: so the
+		 * fact-checker can tell a time the sender gave from one a draft invented. Resolving it
+		 * against a zone first would be work in service of a question nobody asks here.
+		 */
+		date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+		startTime: z.string().regex(/^\d{2}:\d{2}$/),
+		venueName: z.string().max(200).nullish(),
+		municipality: z.string().max(200).nullish(),
+		organizerName: z.string().max(200).nullish(),
+		sourceUrl: z.string().max(2000).nullish()
+	}),
+	async ({ date, startTime, ...rest }) => {
+		if (!verifierEnabled()) {
+			return { ok: false as const, error: 'Skrivehjelpa er ikkje slått på her.' };
+		}
+		try {
+			const suggestion = await improveDescription({
+				...rest,
+				startsAt: `${date}T${startTime}`
+			});
+			return { ok: true as const, suggestion };
+		} catch (error) {
+			// The person keeps what they wrote, which is the outcome this feature protects anyway.
+			return {
+				ok: false as const,
+				error:
+					error instanceof Error && error.name === 'TimeoutError'
+						? 'Skrivehjelpa brukte for lang tid. Teksten din står som han er.'
+						: 'Skrivehjelpa er ikkje tilgjengeleg no. Teksten din står som han er.'
+			};
+		}
 	}
 );
 
