@@ -30,6 +30,7 @@ and anything uncertain is reported to the person who sent it in so they can corr
 | `POST` | `/verify`  | Submitted event → per-check verdicts + recommendation      |
 | `POST` | `/crop`    | Image → where to cut a card thumbnail, or nothing          |
 | `POST` | `/improve` | Submission → a suggested description, or (usually) nothing |
+| `POST` | `/kurator` | This weekend's events → up to three worth going out for    |
 
 `/crop` is the small one, and it is small on purpose: an image that reached us with a form somebody
 typed in themselves has never been looked at, so there is no crop box beside its fields the way

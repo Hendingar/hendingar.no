@@ -341,6 +341,33 @@ export const improveSuggestionSchema = z.object({
 
 export type ImproveSuggestion = z.infer<typeof improveSuggestionSchema>;
 
+/**
+ * The kurator's picks for a weekend, as the service reports them.
+ *
+ * `picks` is routinely shorter than asked for and sometimes empty — a selection nobody could stand
+ * behind is an honest answer (ADR 0018), and `considered` is the denominator that lets a page say
+ * so rather than imply a judgement nobody made. There is no score here on purpose: `rank` is the
+ * order the kurator gave and nothing is ordered by anything measured.
+ */
+export const curatorPickSchema = z.object({
+	eventId: z.number().int().positive(),
+	rank: z.number().int().min(1),
+	/** One sentence in Nynorsk. An opinion, stated as one, that a reader can disagree with. */
+	reason: z.string().min(1)
+});
+
+export type CuratorPick = z.infer<typeof curatorPickSchema>;
+
+export const curatorSelectionSchema = z.object({
+	picks: z.array(curatorPickSchema).default([]),
+	considered: z.number().int().min(0).default(0),
+	note: z.string().default(''),
+	/** Which model made the call, stored so a change in taste is traceable to a change in model. */
+	model: z.string().nullable().default(null)
+});
+
+export type CuratorSelection = z.infer<typeof curatorSelectionSchema>;
+
 /** The verification pipeline's per-check output. */
 export const verificationResultSchema = z.object({
 	verdict: z.enum(VERIFICATION_VERDICTS),

@@ -2,8 +2,10 @@ import { VERIFIER_URL } from '$app/env/private';
 import type { CategorySlug } from '@hendingar/core/taxonomy';
 import {
 	cropSuggestionSchema,
+	curatorSelectionSchema,
 	extractedEventSchema,
 	improveSuggestionSchema,
+	type CuratorSelection,
 	type ExtractedEvent,
 	type ImproveSuggestion,
 	type ThumbnailCrop
@@ -52,6 +54,14 @@ const CROP_TIMEOUT_MS = 20_000;
  * once — that is the point of them — and shorter than patience, because the answer is optional.
  */
 const IMPROVE_TIMEOUT_MS = 60_000;
+/**
+ * Two model calls over a weekend's worth of events, once a night, with nobody waiting.
+ *
+ * Generous because the cost of it timing out is a section that does not appear until tomorrow, and
+ * because the prompt is the largest this service sends — up to sixty events with their
+ * descriptions.
+ */
+const CURATE_TIMEOUT_MS = 120_000;
 
 async function post<T>(path: string, body: unknown, timeoutMs: number): Promise<T> {
 	if (!VERIFIER_URL) throw new Error('verifier is not configured');
@@ -200,6 +210,59 @@ export type ImproveInput = {
 	municipality?: string | null;
 	organizerName?: string | null;
 	sourceUrl?: string | null;
+};
+
+/**
+ * The weekend's picks (ADR 0018). Throws; the caller decides what a failure means.
+ *
+ * It means very little: this is called once a night by a workflow, and a night with no selection is
+ * a weekend page that renders exactly as it did before the kurator existed.
+ *
+ * Note the shape of `candidates`. There is no heart count and no view count in it, and there must
+ * never be: the kurator is asked which events are worth going out for, and `/poppis` answers "what
+ * are people looking at" separately and honestly. A popularity signal in this payload would quietly
+ * merge the two questions.
+ */
+export async function curateWeekend(candidates: CuratorCandidate[]): Promise<CuratorSelection> {
+	const raw = await post<Record<string, unknown>>(
+		'/kurator',
+		{
+			candidates: candidates.map((c) => ({
+				id: c.id,
+				title: c.title,
+				description: c.description ?? null,
+				category: c.category,
+				starts_at: c.startsAt,
+				venue_name: c.venueName ?? null,
+				municipality: c.municipality ?? null,
+				organizer_name: c.organizerName ?? null,
+				source_name: c.sourceName ?? null
+			}))
+		},
+		CURATE_TIMEOUT_MS
+	);
+	return curatorSelectionSchema.parse({
+		picks: ((raw.picks ?? []) as Record<string, unknown>[]).map((pick) => ({
+			eventId: pick.event_id,
+			rank: pick.rank,
+			reason: pick.reason
+		})),
+		considered: raw.considered,
+		note: raw.note,
+		model: raw.model
+	});
+}
+
+export type CuratorCandidate = {
+	id: number;
+	title: string;
+	description: string | null;
+	category: CategorySlug;
+	startsAt: string;
+	venueName: string | null;
+	municipality: string | null;
+	organizerName: string | null;
+	sourceName: string | null;
 };
 
 export type VerifyInput = {

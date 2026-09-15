@@ -102,6 +102,57 @@ def test_crop_box_fields_match_the_shared_schema():
     assert not missing, f"named by the verifier but not by thumbnailCropSchema: {missing}"
 
 
+def test_curator_fields_match_the_shared_schema():
+    """The picks cross the same boundary, with the same silent failure waiting.
+
+    `reason` is the whole offer — a pick without its reasoning is an unexplained recommendation,
+    which is the thing ADR 0018 says this must never be. If the app's schema stops naming it, Zod
+    strips it and the page renders three bare titles that claim to have been chosen for something.
+    """
+    from verifier.models import CuratorPick, CuratorSelection
+
+    validation = (
+        Path(__file__).resolve().parents[3] / "packages" / "core" / "src" / "validation.ts"
+    ).read_text(encoding="utf-8")
+
+    # The service speaks snake_case and the schema camelCase; only `event_id` differs.
+    pick_schema = validation.split("export const curatorPickSchema", 1)[1].split("\n});", 1)[0]
+    camel = {"event_id": "eventId"}
+    missing = [
+        field
+        for field in CuratorPick.model_fields
+        if not re.search(
+            rf"^\s*{re.escape(camel.get(field, field))}\s*:", pick_schema, re.MULTILINE
+        )
+    ]
+    assert not missing, f"named by the verifier but not by curatorPickSchema: {missing}"
+
+    selection_schema = validation.split("export const curatorSelectionSchema", 1)[1].split(
+        "\n});", 1
+    )[0]
+    missing = [
+        field
+        for field in CuratorSelection.model_fields
+        if not re.search(rf"^\s*{re.escape(field)}\s*:", selection_schema, re.MULTILINE)
+    ]
+    assert not missing, f"named by the verifier but not by curatorSelectionSchema: {missing}"
+
+
+def test_the_curator_is_never_told_what_is_popular():
+    """The rule ADR 0018 rests on, asserted against the type rather than against one call.
+
+    `tests/test_kurator.py` checks that no popularity signal reaches the model on a given run. This
+    checks the stronger thing: that there is no field for one. A payload that cannot carry hearts
+    or views cannot leak them by accident, and the separation from `/poppis` stays real rather than
+    becoming a promise somebody has to remember.
+    """
+    from verifier.models import CuratorCandidate
+
+    forbidden = {"hearts", "views", "heart_count", "view_count", "popularity", "rank", "score"}
+    named = set(CuratorCandidate.model_fields) & forbidden
+    assert not named, f"the kurator's candidates must not carry {named}"
+
+
 def test_improvement_fields_match_the_shared_schema():
     """Same drop-on-the-floor hazard as extraction, on the endpoint that writes prose.
 

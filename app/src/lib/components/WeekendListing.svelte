@@ -10,12 +10,14 @@
 	import type { WeekendChoice } from '@hendingar/core/validation';
 	import { eventPath } from '@hendingar/core/slug';
 	import EventsByDay from './EventsByDay.svelte';
+	import WeekendPicks from './WeekendPicks.svelte';
 	import AlsoOpen from './AlsoOpen.svelte';
 	import PageMeta from './PageMeta.svelte';
 	import { localDayKey } from '../calendar.ts';
 	import { canonicalUrl } from '../origin.ts';
 	import { breadcrumbJsonLd, itemListJsonLd, jsonLdScript } from '../jsonld.ts';
 	import { weekendEvents } from '../events.remote';
+	import { weekendPicks } from '../kurator.remote';
 	import { heartCounts } from '../hearts.remote';
 
 	/**
@@ -46,6 +48,17 @@
 	const hearts = Object.fromEntries(
 		(await heartCounts(events.map((e) => e.id))).map((h) => [h.eventId, h.hearts])
 	);
+
+	/**
+	 * The kurator's picks, and only for the weekend it was asked about.
+	 *
+	 * The nightly run curates the weekend a reader is standing in or walking into — the same window
+	 * `/denne-helga` shows — so there is nothing stored for `/neste-helg` and asking would be a
+	 * query that is always empty. Awaited at the top like everything else on this page: a selection
+	 * that arrived after hydration would be absent from the server-rendered HTML, which is where
+	 * both crawlers and readers without JavaScript see it (CLAUDE.md).
+	 */
+	const picks = untrack(() => which) === 'denne' ? await weekendPicks() : [];
 
 	/*
 	 * The same dates the query used, worked out again here rather than returned alongside the rows.
@@ -137,6 +150,11 @@
 		<p class="weekend__count">
 			{events.length === 1 ? 'Éi hending' : `${events.length} hendingar`}
 		</p>
+		<!--
+			The picks sit above the listing they are drawn from, never instead of it. A reader who
+			disagrees with all three has lost a scroll, not the weekend.
+		-->
+		<WeekendPicks {picks} />
 		<!-- headingLevel 2 so each day nests under this page's h1. -->
 		<EventsByDay {events} {hearts} headingLevel={2} />
 		<AlsoOpen />

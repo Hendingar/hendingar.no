@@ -9,11 +9,14 @@ from .config import Config, load_config
 from .crop import suggest_crop
 from .extract import extract_page, extract_poster
 from .improve import improve as run_improve
+from .kurator import curate as run_curate
 from .llm import AgentFactory
 from .models import (
     AppealRequest,
     CropRequest,
     CropSuggestion,
+    CuratorRequest,
+    CuratorSelection,
     ExtractedEvent,
     ExtractPageRequest,
     ExtractRequest,
@@ -121,6 +124,23 @@ def create_app(config: Config | None = None, factory: AgentFactory | None = None
         except Exception as exc:
             log.exception("improvement failed")
             raise HTTPException(status_code=502, detail=f"improve failed: {exc}") from exc
+
+    @app.post("/kurator", response_model=CuratorSelection)
+    async def kurator(request: CuratorRequest) -> CuratorSelection:
+        """This weekend's picks: a judgement, made once a night and stored by the caller.
+
+        The second endpoint that is a group chat, and the first that is asked for an opinion rather
+        than a fact. `kurator.py` carries the reasoning, including why the candidates arrive with
+        no heart or view counts on them.
+
+        A 502 costs a section on a page, and nothing else: the app renders the weekend listing it
+        would have rendered anyway.
+        """
+        try:
+            return await run_curate(factory, request)
+        except Exception as exc:
+            log.exception("curation failed")
+            raise HTTPException(status_code=502, detail=f"curation failed: {exc}") from exc
 
     @app.get("/appeal/panel")
     async def panel() -> dict:

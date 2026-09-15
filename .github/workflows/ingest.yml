@@ -131,6 +131,36 @@ jobs:
           export DATABASE_URL
           pnpm consolidate | tee -a result.txt
 
+      # The weekend's picks, chosen after the rows they are chosen from exist.
+      #
+      # Last, and deliberately: it must run after `consolidate`, or the kurator can pick two rows
+      # that are the same event reported by two sources and offer them as two of its three.
+      #
+      # A curl rather than a script, because the model lives somewhere this runner cannot reach.
+      # The verifier's ingress is internal (infra/verifier.bicep, `external: false`) so that an
+      # unauthenticated /extract cannot become a public vision-model proxy, and this runner is
+      # outside the Container Apps environment entirely — it gets to Postgres only through the
+      # firewall rule above. The app is inside, so the app makes the call and we ask the app.
+      #
+      # `continue-on-error`: a weekend without picks is a page that renders exactly as it did
+      # before the kurator existed. Failing the ingest over it would turn an optional section into
+      # a red build about fifteen sources that imported perfectly.
+      - name: Curate the weekend
+        if: always() && inputs.dry_run != true
+        continue-on-error: true
+        run: |
+          APP=$(az containerapp show --resource-group "$RG" --name ca-hendingar-dev \
+            --query "properties.configuration.ingress.fqdn" -o tsv)
+          test -n "$APP" || { echo "::warning::no app ingress found; skipping curation"; exit 0; }
+          # Idempotent per day: a second POST returns the stored picks without calling a model, so
+          # a re-run costs nothing and cannot produce a second, different selection.
+          #
+          # The Origin header is not decoration. SvelteKit refuses a cross-origin POST, and a curl
+          # sends no Origin at all — without this the nightly call is a 403 that nobody reads,
+          # because this step is continue-on-error. `app/e2e/kurator.e2e.ts` asserts both halves.
+          curl -fsS -X POST -H "Origin: https://$APP" "https://$APP/api/kurator" | tee -a result.txt
+          echo >> result.txt
+
       # A separate always() step: a bash EXIT trap does not survive SIGKILL, and a leaked rule
       # leaves a recycled public runner IP allowed against the database.
       - name: Close firewall
