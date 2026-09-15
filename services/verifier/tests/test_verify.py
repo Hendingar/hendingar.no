@@ -532,13 +532,21 @@ class TestModelChecks:
         assert all(r.verdict == "uncertain" for r in results)
         assert all(r.confidence == 0 for r in results)
 
-    async def test_the_order_is_fixed_no_matter_who_finishes_first(self):
-        """The aggregator is handed results in completion order, and the sender reads them in the
-        order they arrive. A list that reshuffles between two identical submissions is the
-        instability the pinned sampling exists to prevent."""
-        fake = FakeOpenAI(
-            self._payload(reasoning="først"),
-            self._payload(reasoning="sist"),
-        )
-        results = await model_checks(factory_for(fake), _request())
+    def test_a_check_missing_from_the_aggregate_still_appears_as_undecided(self):
+        """Every check the sender is shown has to be one of ours.
+
+        The framework hands results back in participant order rather than completion order — that
+        was measured with a deliberately slow participant, so it is not what this guards. What it
+        guards is a check that never made it into the aggregate at all: it must come back
+        undecided and in place, because a check that quietly vanished reads downstream as one that
+        passed, and `plausibility` is a blocking check.
+        """
+        from verifier.verify import _in_declared_order, _to_result
+
+        judged = {"categorisation": _to_result("categorisation", self._payload(), "stub")}
+        results = _in_declared_order(judged, "stub")
+
         assert [r.check for r in results] == ["plausibility", "categorisation"]
+        assert results[0].verdict == "uncertain"
+        assert results[0].confidence == 0
+        assert results[1].verdict == "pass"

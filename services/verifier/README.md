@@ -79,8 +79,19 @@ verifier serve           # http://localhost:8080
 pytest                   # no Azure, no network
 ```
 
-## Token lifetime
+## How a model is reached
 
-An Entra token is baked into the OpenAI client at construction and lives about an hour. A
-long-lived process that caches the client wakes up one morning with a stale token — so the client
-is rebuilt per call and the _credential_ is reused, since it caches and refreshes.
+Through **Microsoft Agent Framework** ([ADR 0016](../../docs/decisions/0016-agent-framework.md)).
+`llm.AgentFactory` is the only thing here that knows the endpoint, the credential, the sampling
+policy and the request deadline; everything else asks it for an agent and says what it wants read
+or judged.
+
+Token lifetime used to be the trap: an Entra token baked into a client at construction lives about
+an hour, so the old code rebuilt the client on every call to avoid waking up stale. The framework
+holds a token _provider_ over the credential instead, and azure-identity caches and refreshes
+behind it — so there is one client, shared.
+
+The two judging checks are asked at the same time through a `ConcurrentBuilder` fan-out. The
+appeal panel is not: a participant that raises takes a whole workflow down with it, and a juror
+that cannot answer must cost only its own vote (`CLAUDE.md` rule 8). The three seats are asked
+separately by the app, which streams each verdict as it lands.

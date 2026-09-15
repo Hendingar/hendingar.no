@@ -356,14 +356,20 @@ def _to_result(check: CheckName, text: str, model: str) -> CheckResult:
     )
 
 
-async def model_checks(factory: AgentFactory, request: VerifyRequest) -> list[CheckResult]:
-    """Ask both judging agents at once, and report them in a fixed order.
+def _in_declared_order(judged: dict[str, CheckResult], model: str | None) -> list[CheckResult]:
+    """Both checks, in the order this file declares them, whatever the orchestration returned.
 
-    Fixed order because the aggregator receives them in whatever order they finished, and the
-    checks are rendered to the sender in the order they arrive: a list that reshuffles itself
-    between two identical submissions is the same class of instability the pinned sampling exists
-    to prevent.
+    The framework's fan-in already hands results back in participant order rather than completion
+    order — measured, with a deliberately slow participant, not assumed. This does not exist to
+    correct that. It exists so that a check *missing* from the aggregate still appears, as
+    undecided: every check the sender is shown has to be one of ours, and a check that quietly
+    vanished would be read downstream as one that passed.
     """
+    return [judged.get(check.check) or _undecided(check.check, model) for check in _MODEL_CHECKS]
+
+
+async def model_checks(factory: AgentFactory, request: VerifyRequest) -> list[CheckResult]:
+    """Ask both judging agents at once, and report them in a fixed order."""
     agents = [
         factory.agent(
             name=check.check,
@@ -394,11 +400,7 @@ async def model_checks(factory: AgentFactory, request: VerifyRequest) -> list[Ch
 
     workflow = ConcurrentBuilder(participants=agents).with_aggregator(aggregate).build()
     outputs = (await factory.run_workflow(workflow, _case(request))).get_outputs()
-    by_check: dict[str, CheckResult] = outputs[0] if outputs else {}
-    return [
-        by_check.get(check.check) or _undecided(check.check, factory.model)
-        for check in _MODEL_CHECKS
-    ]
+    return _in_declared_order(outputs[0] if outputs else {}, factory.model)
 
 
 def check_corroboration(request: VerifyRequest) -> CheckResult:
