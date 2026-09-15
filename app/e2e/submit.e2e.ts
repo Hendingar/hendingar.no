@@ -70,6 +70,54 @@ test('both submission modes are in the server-rendered HTML', async ({ request }
 });
 
 /**
+ * The suggested description (ADR 0017).
+ *
+ * `VERIFIER_URL` here is set but points at a closed port, so these cover the same thing the appeal
+ * specs do: the guards around the panel, and that an unreachable service degrades to a sentence
+ * rather than to a spinner. What the writer and the fact-checker actually do needs a model that can
+ * be made to object on demand, and is tested in services/verifier/tests/test_improve.py.
+ */
+test('the writing help waits for something to write about', async ({ page }) => {
+	await page.goto('/send-inn');
+	const help = page.getByRole('button', { name: /Få hjelp med teksten/ });
+
+	// Four model calls to be told the form is empty is worse than a disabled button. The title is
+	// what a draft would be about; the date and time are what let the fact-checker tell a time the
+	// sender gave from one a draft invented.
+	await expect(help).toBeDisabled();
+
+	await page.locator('#title').fill('Bygdekino i Sagvåg');
+	await page.locator('#date').fill('2027-05-19');
+	await page.locator('#startTime').fill('18:00');
+
+	/*
+	 * Still disabled, because the category select starts on its empty option and the command
+	 * validates it against the taxonomy. Without this the button was pressable and answered
+	 * "skrivehjelpa er ikkje tilgjengeleg" — the right message for the wrong reason, which is how
+	 * this spec passed while the server was logging a Zod error.
+	 */
+	await expect(help).toBeDisabled();
+	await page.locator('#category').selectOption('show');
+	await expect(help).toBeEnabled();
+});
+
+test('an unreachable writing help is a sentence, never a hang', async ({ page }) => {
+	await page.goto('/send-inn');
+	await page.locator('#title').fill('Bygdekino i Sagvåg');
+	await page.locator('#category').selectOption('show');
+	await page.locator('#date').fill('2027-05-19');
+	await page.locator('#startTime').fill('18:00');
+	await page.locator('#description').fill('film på laurdag, ta med ungane');
+
+	await page.getByRole('button', { name: /Få hjelp med teksten/ }).click();
+
+	await expect(page.getByRole('alert')).toContainText(/Teksten din står som han er/);
+	// And the point of that promise: whatever they typed is still theirs, untouched.
+	await expect(page.locator('#description')).toHaveValue('film på laurdag, ta med ungane');
+	await expect(page.getByRole('button', { name: /Få hjelp med teksten/ })).toBeEnabled();
+});
+
+/**
  * The photo shortcut outranks the form, and that ranking is in the markup.
  *
  * Three tabs of equal weight put the fourteen-field form first and made the shortcut the page is

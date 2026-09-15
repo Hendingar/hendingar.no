@@ -210,6 +210,50 @@ class VerifyResponse(BaseModel):
     summary: str
 
 
+class ImproveRequest(BaseModel):
+    """A submission as it stands in the form, before anybody has judged it.
+
+    The same fields `VerifyRequest` carries, minus the duplicate candidates: this asks what the
+    text could say, not whether we already have the event.
+    """
+
+    title: str = Field(min_length=1, max_length=200)
+    description: str | None = Field(default=None, max_length=5000)
+    category: CategorySlug
+    starts_at: str
+    ends_at: str | None = None
+    venue_name: str | None = None
+    municipality: str | None = None
+    organizer_name: str | None = None
+    source_url: str | None = None
+
+
+class ImproveSuggestion(BaseModel):
+    """A description the sender may take or leave, and what was learned either way.
+
+    `description` is null far more often than it is set, and that is the design rather than a
+    failure mode: it is only filled when a second agent has confirmed every claim in it is already
+    in the submission. `missing` and `removed` are useful even then — they are the honest half of
+    the answer, and they survive a discarded draft.
+    """
+
+    description: str | None = Field(
+        default=None, description="The proposed text, or null when none could be grounded"
+    )
+    removed: list[str] = Field(
+        default_factory=list,
+        description="Claims the fact-checker struck out, in its own words, for the sender to read",
+    )
+    missing: list[str] = Field(
+        default_factory=list,
+        description="Facts a reader would want that the submission does not state. Questions, not guesses",
+    )
+    note: str = Field(description="One sentence in Nynorsk to the person who wrote the text")
+    rounds: int = Field(
+        default=0, ge=0, description="How many turns the writer and the fact-checker took"
+    )
+
+
 class AppealRequest(BaseModel):
     """An event the checks declined, plus the sender's case for it."""
 

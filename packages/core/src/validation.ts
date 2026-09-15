@@ -319,6 +319,28 @@ export const cropSuggestionSchema = z.object({
 
 export type CropSuggestion = z.infer<typeof cropSuggestionSchema>;
 
+/**
+ * What the writer and the fact-checker agreed to offer a sender — usually nothing.
+ *
+ * `description` is null whenever the fact-checker did not approve the draft, which is a normal
+ * outcome rather than a failure: the service holds back any text carrying a claim the submission
+ * does not contain (ADR 0017). The other two fields survive that and are worth showing on their
+ * own — `removed` is what was struck and why, `missing` is what the sender could add themselves.
+ *
+ * Validated at the boundary like every other verifier response: the service speaks snake_case, we
+ * speak camelCase, and a field the schema does not name is silently dropped by Zod.
+ */
+export const improveSuggestionSchema = z.object({
+	description: z.string().min(1).nullable().default(null),
+	removed: z.array(z.string()).default([]),
+	missing: z.array(z.string()).default([]),
+	/** One sentence in Nynorsk, written to the sender. Shown whether or not there is a draft. */
+	note: z.string().default(''),
+	rounds: z.number().int().min(0).default(0)
+});
+
+export type ImproveSuggestion = z.infer<typeof improveSuggestionSchema>;
+
 /** The verification pipeline's per-check output. */
 export const verificationResultSchema = z.object({
 	verdict: z.enum(VERIFICATION_VERDICTS),

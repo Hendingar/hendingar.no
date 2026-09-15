@@ -37,6 +37,7 @@
 	import { photoFilledFields } from '../../provenance.ts';
 	import PhotoCapture from './PhotoCapture.svelte';
 	import PosterField from './PosterField.svelte';
+	import DescriptionHelp from './DescriptionHelp.svelte';
 	import UrlCapture from './UrlCapture.svelte';
 	import VerdictPanel from './VerdictPanel.svelte';
 	import { page } from '$app/state';
@@ -45,10 +46,13 @@
 
 	let {
 		photoEnabled,
+		improveEnabled = false,
 		revisionOf = null,
 		contributeTo = null
 	}: {
 		photoEnabled: boolean;
+		/** Whether the verifier can be asked for a second opinion on the description (ADR 0017). */
+		improveEnabled?: boolean;
 		/** Set when this form is revising a submission that did not pass its checks. */
 		revisionOf?: number | null;
 		/**
@@ -1185,6 +1189,52 @@
 						<span class="field__error">{issue.message}</span>
 					{/each}
 				</p>
+				{#if improveEnabled && !contributing}
+					<!--
+						Asked, never volunteered, and only for a submission that is adding an event.
+
+						A contribution fills gaps in a row somebody else's words are already on, so
+						rewriting its description is not this form's business — `contributing` makes the
+						title read-only for the same reason.
+
+						Its own grid cell rather than a child of the field above: the field is a `<p>`, and
+						a panel with a blockquote and two lists inside one is invalid HTML that the browser
+						silently repairs by closing the paragraph early — which then hydrates into a
+						mismatch. Caught by running the page, not by the typechecker.
+
+						The values are read through a getter at the moment the button is pressed rather
+						than passed as a snapshot, because the person is still typing while the panel is on
+						screen, and a stale record is what would make the fact-checker strike a claim they
+						did make.
+					-->
+					<div class="field field--wide">
+						<DescriptionHelp
+							values={() => ({
+								title: f.title.value() ?? '',
+								description: f.description.value() ?? '',
+								category: f.category.value() ?? '',
+								date: f.date.value() ?? '',
+								startTime: f.startTime.value() ?? '',
+								venueName: f.venueName.value() ?? '',
+								municipality: f.municipality.value() ?? '',
+								organizerName: f.organizerName.value() ?? '',
+								sourceUrl: f.sourceUrl.value() ?? ''
+							})}
+							onaccept={(description) => {
+								/*
+								 * The field's own setter, never `f.set({ description })`.
+								 *
+								 * A whole-form `set` replaces rather than merges — that is what emptied
+								 * every other box when a link extraction wrote the source URL in a second
+								 * call — so accepting a suggestion that way would take the date, the venue
+								 * and the title with it.
+								 */
+								f.description.set(description);
+								ownField('description');
+							}}
+						/>
+					</div>
+				{/if}
 				<p class="field">
 					<label for="category">Kategori</label>
 					{@render needsFix('category')}
