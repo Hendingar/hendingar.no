@@ -210,6 +210,63 @@ class VerifyResponse(BaseModel):
     summary: str
 
 
+class CuratorCandidate(BaseModel):
+    """One event the kurator may choose, as the only thing it is told about that event.
+
+    Note what is absent and stays absent: no heart count, no view count, no rank, no measure of
+    attention of any kind. The kurator is asked which of this weekend's events are worth going out
+    for — a judgement — and a popularity signal in this payload would quietly answer a different
+    question, the one `/poppis` already answers honestly. See ADR 0018.
+    """
+
+    id: int
+    title: str
+    description: str | None = None
+    category: CategorySlug
+    starts_at: str
+    venue_name: str | None = None
+    municipality: str | None = None
+    organizer_name: str | None = None
+    source_name: str | None = None
+
+
+class CuratorRequest(BaseModel):
+    """This weekend's events, for the kurator to make a call about.
+
+    The window is the caller's: `weekendAhead` in `packages/core/src/datetime.ts` decides which
+    days are still worth offering somebody, and this service is told the result rather than working
+    it out again.
+    """
+
+    candidates: list[CuratorCandidate] = Field(default_factory=list)
+
+
+class CuratorPick(BaseModel):
+    """One event the kurator would go to, and why."""
+
+    event_id: int
+    rank: int = Field(ge=1)
+    reason: str = Field(
+        description="One sentence in Nynorsk on why this is worth going out for. An opinion, "
+        "stated as one, that a reader can disagree with."
+    )
+
+
+class CuratorSelection(BaseModel):
+    """The weekend's picks — often fewer than asked for, and sometimes none.
+
+    `considered` is how many events the choice was made from, and it is the honest denominator:
+    three picks out of four is not a selection, and the page says so rather than implying a
+    judgement nobody made.
+    """
+
+    picks: list[CuratorPick] = Field(default_factory=list)
+    considered: int = Field(default=0, ge=0)
+    note: str = Field(default="", description="One sentence in Nynorsk about the selection itself")
+    #: Which model made the call, so a change in taste is traceable to a change in the model.
+    model: str | None = None
+
+
 class ImproveRequest(BaseModel):
     """A submission as it stands in the form, before anybody has judged it.
 

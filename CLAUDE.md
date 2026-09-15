@@ -99,6 +99,11 @@ app/src/lib/submit.remote.ts     the submission boundary — photo, form, verifi
                                  The rule for what counts as a gap is pure, in
                                  packages/core/src/contribution.ts — never inline a second copy
 
+app/src/lib/server/kurator.ts     the nightly selection: candidates, the call, the write.
+                                 `POST /api/kurator` is the only thing that triggers it, and it
+                                 is idempotent per day — see ADR 0018 for why that is the whole
+                                 security argument
+
 app/src/lib/components/hendingar/  single-use sections owned by `/hendingar`
 app/src/lib/listing-url.ts         filters ↔ URL. The page, the tokens and the suggestions all
                                    compose addresses through it, so they cannot disagree
@@ -109,6 +114,8 @@ services/verifier/src/verifier/
   crop.py                  the small vision call: where to cut a thumbnail, or nothing
   improve.py               the ONLY place that writes prose: a writer and a fact-checker,
                            as a group chat. An unapproved draft is thrown away (ADR 0017)
+  kurator.py               the weekend's picks. A judgement, audited by a second agent, and
+                           told nothing about hearts or views on purpose (ADR 0018)
   verify.py                the five checks. Rules and model calls deliberately mixed
   app.py                   FastAPI. create_app(config, factory) so tests inject a stub
   tests/test_contract.py   asserts the check names still match packages/core

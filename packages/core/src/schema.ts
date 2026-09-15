@@ -623,6 +623,50 @@ export const verifications = pgTable(
 	(t) => [index('verifications_event_idx').on(t.eventId)]
 );
 
+/**
+ * The day's picks: a handful of upcoming events chosen for being unlike the rest of the listing.
+ *
+ * Stored rather than computed on read, for two reasons that both matter. The obvious one is cost —
+ * a model runs once a night, not once a visitor. The load-bearing one is that a selection which
+ * changed between two page loads would not be a selection: somebody who sends a friend a link to
+ * "what the kurator picked" has to find the same three events there.
+ *
+ * `forDate` is the day the selection belongs to, and with `eventId` it is unique — which is what
+ * makes the nightly call idempotent. A second POST on the same day finds these rows and returns
+ * them without asking a model anything.
+ *
+ * What is NOT here is as deliberate as what is: no score, no count, nothing ordinal beyond `rank`,
+ * which is the order the model gave and not a measure of anything. Hearts and views never reach
+ * the selection at all — see `services/verifier/src/verifier/kurator.py` and ADR 0018.
+ */
+export const curatorPicks = pgTable(
+	'curator_picks',
+	{
+		id: serial('id').primaryKey(),
+		/** The day this selection is for, local. A date, not an instant: it names a day, not a moment. */
+		forDate: date('for_date', { mode: 'string' }).notNull(),
+		eventId: integer('event_id')
+			.notNull()
+			.references(() => events.id, { onDelete: 'cascade' }),
+		/** The order the picker gave. Not a score, and never rendered as one. */
+		rank: integer('rank').notNull(),
+		/** One sentence in Nynorsk on why this one stands out. Shown to readers, not just logged. */
+		reason: text('reason').notNull(),
+		/** Which model chose it, so a change in the picks is traceable to a change in the model. */
+		model: text('model'),
+		createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
+	},
+	(t) => [
+		// One row per event per day: this is what makes a second call on the same day a no-op.
+		uniqueIndex('curator_picks_date_event_idx').on(t.forDate, t.eventId),
+		// The only read is "today's picks, in order".
+		index('curator_picks_date_idx').on(t.forDate)
+	]
+);
+
+export type CuratorPick = typeof curatorPicks.$inferSelect;
+export type NewCuratorPick = typeof curatorPicks.$inferInsert;
+
 export type IngestRun = typeof ingestRuns.$inferSelect;
 export type Verification = typeof verifications.$inferSelect;
 export type NewVerification = typeof verifications.$inferInsert;
