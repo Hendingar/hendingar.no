@@ -283,6 +283,32 @@ async def curate(factory: AgentFactory, request: CuratorRequest) -> CuratorSelec
         picks=picks,
         considered=len(candidates),
         model=factory.model,
-        note=draft.note.strip()
-        or ("Kuratoren fann ingenting å stå for denne helga." if not picks else ""),
+        note=_note(draft.note, kept=len(picks), chosen=len(draft.picks)),
     )
+
+
+def _note(written: str, *, kept: int, chosen: int) -> str:
+    """The kurator's own summary, but only while it is still true.
+
+    The note is written in the same breath as the picks, which is *before* Motlesaren has said
+    anything — so a selection that loses a pick to the audit keeps a sentence describing the
+    selection it used to be. The first real run did exactly that: three chosen, one struck for
+    claiming "internasjonal anerkjenning" about a film whose listing says no such thing, and a note
+    that still opened "Eg har valt tre hendingar".
+
+    Nobody reads that note on the page — the section carries its own lede — but the nightly run
+    prints it into the workflow summary, which is where a person goes to see what happened. A
+    summary that disagrees with the picks beside it is worse than no summary.
+
+    So the written note stands only when nothing was dropped. Otherwise it is replaced by the
+    count, which is the one thing that is certainly true and happens to be the more interesting
+    fact: the audit bit.
+    """
+    if kept == 0:
+        return "Kuratoren fann ingenting å stå for denne helga."
+    if kept < chosen:
+        return (
+            f"{kept} av {chosen} val stod etter faktasjekken. "
+            "Dei andre bygde på noko som ikkje står i oppføringa."
+        )
+    return written.strip()
