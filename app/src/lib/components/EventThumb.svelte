@@ -15,7 +15,8 @@
 		id,
 		posterUrl = null,
 		posterSrcset = null,
-		title
+		title,
+		sizes
 	}: {
 		id: number;
 		posterUrl?: string | null;
@@ -25,6 +26,16 @@
 		 */
 		posterSrcset?: string | null;
 		title: string;
+		/**
+		 * How wide this thumbnail is painted, when it is NOT a tile in the listing grid.
+		 *
+		 * `SIZES` below is measured against that grid and is right for it. A caller that paints the
+		 * same component at a different width — the kurator's picks are the first — has different
+		 * numbers, and passing the tile's would send a phone a file for a 5.5rem square and a
+		 * desktop one for a 310px column. Wrong in both directions, and invisible until somebody
+		 * looks at a blurry poster and wonders why.
+		 */
+		sizes?: string;
 	} = $props();
 
 	// Deterministic per event: no Math.random, so a tile never changes between server and client
@@ -89,7 +100,7 @@
 		style:--vt-name="event-poster-{id}"
 		src={posterUrl}
 		srcset={posterSrcset}
-		sizes={posterSrcset ? SIZES : undefined}
+		sizes={posterSrcset ? (sizes ?? SIZES) : undefined}
 		alt=""
 		loading="lazy"
 		decoding="async"
