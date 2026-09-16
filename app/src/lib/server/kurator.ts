@@ -45,6 +45,7 @@ export type WeekendPick = {
 	venueName: string | null;
 	venueTimeZone: string;
 	posterUrl: string | null;
+	posterSrcset: string | null;
 };
 
 /** Today where the events are. The picks belong to a day, so a day is what keys them. */
@@ -160,7 +161,8 @@ export async function currentPicks(): Promise<WeekendPick[]> {
 		startsAt: pick.startsAt,
 		venueName: pick.venueName,
 		venueTimeZone: pick.venueTimeZone,
-		posterUrl: pick.posterUrl
+		posterUrl: pick.posterUrl,
+		posterSrcset: pick.posterSrcset
 	}));
 }
 
@@ -181,6 +183,7 @@ export async function picksFor(date: string): Promise<WeekendPick[]> {
 			venueName: venues.name,
 			venueTimeZone: venues.timezone,
 			posterUrl: events.posterUrl,
+			posterSrcset: events.posterSrcset,
 			status: events.status,
 			duplicateOfId: events.duplicateOfId
 		})
@@ -210,7 +213,8 @@ export async function picksFor(date: string): Promise<WeekendPick[]> {
 			// A venue without a zone is formatted in the pilot's, which is what every other listing
 			// does. Never the server's or the browser's — that silently shifts concerts by an hour.
 			venueTimeZone: row.venueTimeZone ?? DEFAULT_TIME_ZONE,
-			posterUrl: row.posterUrl
+			posterUrl: row.posterUrl,
+			posterSrcset: row.posterSrcset
 		}));
 }
 
