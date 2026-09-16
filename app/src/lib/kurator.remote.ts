@@ -1,7 +1,5 @@
 import { query } from '$app/server';
-import { DEFAULT_TIME_ZONE } from '@hendingar/core/datetime';
-import { localDayKey } from './calendar.ts';
-import { picksFor } from './server/kurator';
+import { currentPicks } from './server/kurator';
 
 /**
  * This weekend's picks, as chosen last night (ADR 0018).
@@ -11,10 +9,15 @@ import { picksFor } from './server/kurator';
  * than a computation. A page that curated itself on every request would cost a model call per
  * visitor and, worse, could show two readers two different selections of the same weekend.
  *
+ * The newest selection stands until a newer one replaces it or the weekend it is about has passed —
+ * it is emphatically NOT "what was chosen today". Reading by today's date left the section empty
+ * every morning until the nightly job landed, which on a best-effort `schedule` is nearer noon than
+ * dawn. See `currentPicks`.
+ *
  * Empty is ordinary and means several different things, none of them an error: no verifier
- * configured, too few events to choose between, nothing the kurator would stand behind, or simply
- * that tonight's run has not happened yet. The page renders the weekend listing either way.
+ * configured, too few events to choose between, nothing the kurator would stand behind, or a
+ * weekend that has been and gone. The page renders the weekend listing either way.
  */
 export const weekendPicks = query(async () => {
-	return await picksFor(localDayKey(new Date(), DEFAULT_TIME_ZONE));
+	return await currentPicks();
 });
