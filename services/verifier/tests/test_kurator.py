@@ -175,6 +175,41 @@ class TestTheSecondReader:
         # Renumbered, so nobody wonders what was at number one.
         assert selection.picks[0].rank == 1
 
+    async def test_the_note_stops_claiming_three_when_two_survived(self):
+        """From the first real run against production.
+
+        The kurator picked three and wrote "Eg har valt tre hendingar"; Motlesaren struck one for
+        claiming international acclaim about a film whose listing says nothing of the sort. The
+        picks were right and the sentence describing them was a day out of date the moment it was
+        written, because it is written before the audit speaks.
+        """
+        fake = FakeOpenAI(
+            _draft(
+                (1, "Ekte."),
+                (2, "Ekte."),
+                (3, "Internasjonalt anerkjend."),
+                note="Eg har valt tre hendingar.",
+            ),
+            _review(
+                (1, True, ""), (2, True, ""), (3, False, "«anerkjend» står ikkje i oppføringa")
+            ),
+        )
+        selection = await curate(factory_for(fake), _request())
+
+        assert len(selection.picks) == 2
+        assert "tre hendingar" not in selection.note
+        assert "2 av 3" in selection.note
+
+    async def test_the_note_is_left_alone_when_every_pick_stood(self):
+        fake = FakeOpenAI(
+            _draft((1, "Ekte."), (2, "Ekte."), note="To ulike kveldar."),
+            _review((1, True, ""), (2, True, "")),
+        )
+        selection = await curate(factory_for(fake), _request())
+
+        assert len(selection.picks) == 2
+        assert selection.note == "To ulike kveldar."
+
     async def test_a_pick_nobody_ruled_on_is_not_approved(self):
         """Fails closed, like every other judgement here: no verdict is not a pass."""
         fake = FakeOpenAI(_draft((1, "Grunn."), (2, "Grunn.")), _review((1, True, "")))
