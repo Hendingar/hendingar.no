@@ -41,6 +41,22 @@
 	 * Each entry rounds up so the browser never picks a candidate too small for the slot.
 	 */
 	const SIZES = '(width < 44rem) 92vw, (width < 70rem) 46vw, 420px';
+
+	/**
+	 * How many picks there are, in words — derived, never written into the sentence.
+	 *
+	 * The first version of this lede began "Tre av alt som skjer", and the first live selection had
+	 * two: the kurator chose three and the fact-checker struck one for claiming a film had
+	 * "internasjonal anerkjenning". So the page opened by miscounting the two things printed
+	 * directly beneath it.
+	 *
+	 * That is the same failure as the note in `kurator.py`, which also described a selection made
+	 * before the audit had spoken, and it is the second time a hardcoded count on this feature has
+	 * been falsified by the feature working correctly. The section is three items long at most;
+	 * there is no excuse for a number in it that was not counted.
+	 */
+	const COUNTS = ['Ingen', 'Éi hending', 'To hendingar', 'Tre hendingar'] as const;
+	const counted = $derived(COUNTS[picks.length] ?? `${picks.length} hendingar`);
 </script>
 
 {#if picks.length > 0}
@@ -48,8 +64,9 @@
 		<div class="picks__head">
 			<p class="label" id="picks-h">Kuratoren si helg</p>
 			<p class="picks__lede">
-				Tre av <span class="picks__em">alt</span> som skjer, valde av ein AI-kurator som ikkje veit kva
-				som er populært — berre kva som står i oppføringane. Han grunngjev kvart val, så du kan vere usamd.
+				<span class="picks__em">{counted}</span> valde ut av alt som skjer denne helga, av ein AI-kurator
+				som ikkje veit kva som er populært — berre kva som står i oppføringane. Han grunngjev kvart val,
+				så du kan vere usamd.
 			</p>
 		</div>
 
@@ -117,7 +134,7 @@
 		color: var(--peach-dim);
 	}
 	.picks__em {
-		/* The contrast the section turns on: three, out of everything below. */
+		/* The contrast the section turns on: this handful, out of everything below. */
 		color: var(--peach);
 		font-style: italic;
 	}
