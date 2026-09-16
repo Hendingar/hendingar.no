@@ -76,9 +76,20 @@ call per visitor and, worse, could show two readers two different selections of 
 Somebody sending a friend "look what the kurator picked" has to find the same three events there.
 
 **Empty is ordinary.** No verifier, fewer than four events, nothing the kurator would stand behind,
-or tonight's run has not happened yet — all render the weekend listing exactly as before. The
-section is an addition and never a replacement, so a reader who disagrees with all three picks has
-lost a scroll.
+or nothing has ever been chosen — all render the weekend listing exactly as before. The section is
+an addition and never a replacement, so a reader who disagrees with all three picks has lost a
+scroll.
+
+**The newest selection stands; it is not "today's".** Corrected the morning after this shipped,
+from the live site. The rows are keyed by the day the job ran, and the first version read the row
+for _today_ — but the job is a GitHub `schedule`, nominally 05:00 UTC and in practice landing
+nearer 10:00, so the section was empty every night and refilled at lunchtime. On the page whose
+whole question is "is anything worth going out for this weekend", there was no answer every single
+morning. What retires a selection now is not a clock but the weekend itself: each pick is checked
+against `weekendAhead`, so a Monday selection loses its Friday pick once Friday is over and empties
+by itself afterwards. Nothing has to run for that to be true, which is the property worth having —
+the page is correct on a day the job never fires. The rule is pure and tested in
+`app/src/lib/kurator.spec.ts`, deliberately, because it is the part that was wrong.
 
 **A pick can outlive its event.** An event unpublished after being picked is filtered on read
 rather than deleted: the row is a true record of what was chosen from what was shown, and a weekend

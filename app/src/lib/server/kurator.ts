@@ -1,7 +1,8 @@
-import { and, asc, eq, gte, isNull, lte, or } from 'drizzle-orm';
+import { and, asc, desc, eq, gte, isNull, lte, or } from 'drizzle-orm';
 import { curatorPicks, events, organizers, sources, venues } from '@hendingar/core/schema';
 import { DEFAULT_TIME_ZONE, weekendAhead } from '@hendingar/core/datetime';
 import { instantWindowForDays, localDayKey } from '../calendar.ts';
+import { currentSelection } from '../kurator.ts';
 import { db } from './db';
 import { curateWeekend, verifierEnabled } from './verifier';
 
@@ -112,7 +113,63 @@ async function candidates() {
 	);
 }
 
-/** The stored picks for a day, joined to what a card needs to render. */
+/**
+ * The picks a reader should see now: the most recent selection that is still about this weekend.
+ *
+ * **Not "today's selection", which is what this was and why it was wrong.** The rows are keyed by
+ * the day the job ran, and the job runs on a GitHub `schedule` — nominally 05:00 UTC, in practice
+ * landing nearer 10:00, because that scheduler is best-effort under load. Reading strictly by
+ * today's date therefore emptied the section every midnight and refilled it around lunchtime, so
+ * the one question this feature answers — "is anything worth going out for this weekend" — had no
+ * answer every single morning. Reported from the live site, not caught here.
+ *
+ * So the newest selection stands until a newer one replaces it. What retires it is not a clock but
+ * the weekend itself: every pick is filtered against `weekendAhead`, so a selection made on Monday
+ * loses its Friday pick once Friday is over, and empties on its own when the weekend has passed.
+ * Nothing needs to run for that to be true, which is the property worth having — the page is
+ * correct even on a day the job never fires.
+ */
+export async function currentPicks(): Promise<WeekendPick[]> {
+	const latest = await db()
+		.select({ forDate: curatorPicks.forDate })
+		.from(curatorPicks)
+		.where(lte(curatorPicks.forDate, today()))
+		.orderBy(desc(curatorPicks.forDate))
+		.limit(1);
+
+	const forDate = latest[0]?.forDate;
+	if (!forDate) return [];
+
+	/*
+	 * Which of those rows to show is decided by `currentSelection`, which is pure and tested —
+	 * `lib/kurator.spec.ts`. The SQL above narrows to one day's rows; the rule that says *which*
+	 * day and which of its picks still stand is the part that was wrong in production, so it lives
+	 * somewhere a test can ask it about any morning it likes.
+	 */
+	const rows = (await picksFor(forDate)).map((pick) => ({
+		...pick,
+		forDate,
+		localDate: localDayKey(pick.startsAt, pick.venueTimeZone)
+	}));
+
+	return currentSelection(rows, today()).map((pick) => ({
+		eventId: pick.eventId,
+		rank: pick.rank,
+		reason: pick.reason,
+		title: pick.title,
+		startsAt: pick.startsAt,
+		venueName: pick.venueName,
+		venueTimeZone: pick.venueTimeZone,
+		posterUrl: pick.posterUrl
+	}));
+}
+
+/**
+ * The stored picks for one specific day, joined to what a card needs to render.
+ *
+ * Addressed by date because that is what the idempotency turns on — `curateToday` asks whether
+ * *today* has already chosen. Readers want `currentPicks` instead.
+ */
 export async function picksFor(date: string): Promise<WeekendPick[]> {
 	const rows = await db()
 		.select({
