@@ -3,6 +3,7 @@ import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { CATEGORY_SLUGS } from '@hendingar/core/taxonomy';
 import { formatEventTime } from '@hendingar/core/datetime';
+import { classifyEventKind } from '@hendingar/core/standing';
 import { MAX_DETAILS, parseDetail, parseEvents, type UpstreamEvent } from '../src/api.ts';
 import {
 	SHOPS,
@@ -64,6 +65,31 @@ function only(eventId: number): UpstreamEvent {
 
 function mapped(eventId: number) {
 	const result = mapEvent(only(eventId), SHOP);
+	if (isFailure(result)) throw new Error(`${eventId} did not map: ${result.problem}`);
+	return result;
+}
+
+/**
+ * The second shop, which exercises paths Småsceneri's payload cannot reach: real coordinates, a
+ * populated category vocabulary (CONCERT/FESTIVAL/OTHER), a multi-day festival, and two rooms in
+ * one building.
+ */
+function monoLog(): HooplaShop {
+	const shop = SHOPS.find((s) => s.slug === 'hoopla-mono-log');
+	if (!shop) throw new Error('the fixtures describe Mono-Log; it must stay in SHOPS');
+	return shop;
+}
+
+const MONO_LIST = 'mono-log-events.json';
+
+function monoRows(): UpstreamEvent[] {
+	return parseEvents(fixture(MONO_LIST)).rows;
+}
+
+function monoMapped(eventId: number) {
+	const found = monoRows().find((e) => e.event_id === eventId);
+	if (!found) throw new Error(`${eventId} is not in ${MONO_LIST}`);
+	const result = mapEvent(found, monoLog());
 	if (isFailure(result)) throw new Error(`${eventId} did not map: ${result.problem}`);
 	return result;
 }
@@ -266,6 +292,14 @@ describe('the venue name, and the one room spelled two ways', () => {
 		expect(venueNameOf(row)).toBe('Storsalen');
 	});
 
+	it('does not tidy a name it took nothing out of', () => {
+		// The separator collapse must not run when the street was never in the name: it used to,
+		// and turned "Torget_10, Loungen" into "Torget_10 Loungen".
+		const row = structuredClone(only(174397646));
+		row.data.location = { name: 'Torget_10, Loungen', street_address: 'Torget 10' };
+		expect(venueNameOf(row)).toBe('Torget_10, Loungen');
+	});
+
 	it('returns nothing when the source names no venue', () => {
 		const row = structuredClone(only(174397646));
 		row.data.location = null;
@@ -407,5 +441,93 @@ describe('slugifyVenue', () => {
 
 	it('produces one stable slug per venue', () => {
 		expect(slugifyVenue('Vikjoscenen Stord')).toBe(slugifyVenue('  Vikjoscenen   Stord  '));
+	});
+});
+
+describe('Mono-Log, the second shop on the platform', () => {
+	it('reads every event in the committed response', () => {
+		expect(monoRows()).toHaveLength(10);
+		expect(parseEvents(fixture(MONO_LIST)).rejected).toEqual([]);
+	});
+
+	/*
+	 * The clock check for this shop, against what its page shows a human.
+	 *
+	 * Rendered at Europe/Oslo, the event page reads "Lør 19. sep. kl. 20:00" for the concert and
+	 * "Lør 19. sep. kl. 12:00" for the tea dance — which is 18:00Z and 10:00Z, the API's own
+	 * values, read as real instants.
+	 *
+	 * The same pages' JSON-LD says `18:00+02:00`, two hours earlier. It is wrong, and api.ts
+	 * records the evidence; this test exists so that "correcting" the mapper towards the markup
+	 * fails here instead of shipping.
+	 */
+	it('renders the clock the event page shows a human', () => {
+		expect(formatEventTime(monoMapped(77755875).startsAt, 'Europe/Oslo')).toContain('20:00');
+		expect(formatEventTime(monoMapped(142440509).startsAt, 'Europe/Oslo')).toContain('12:00');
+	});
+
+	it('stores the coordinate the shop asserts, so the venue is resolved not pending', () => {
+		// Småsceneri states none on any row; this is the first real coordinate the importer sees.
+		const m = monoMapped(77755875);
+		expect(m.latitude).toBeCloseTo(59.781487, 5);
+		expect(m.longitude).toBeCloseTo(5.500969, 5);
+	});
+
+	it('maps the categories this shop actually uses', () => {
+		expect(monoMapped(77755875).category).toBe('musikk');
+		expect(monoMapped(1873435757).category).toBe('festival');
+		// A tea dance the shop filed as OTHER. `dans` would fit, and the source did not say so.
+		expect(monoMapped(142440509).category).toBe('anna');
+	});
+
+	it('shares one venue row with the other shop, because it is one room', () => {
+		// Småsceneri and Mono-Log both hire Vikjoscenen; the listing should not show it twice.
+		expect(monoMapped(77755875).venueSlug).toBe(mapped(983124565).venueSlug);
+		expect(monoMapped(77755875).venueName).toBe('Vikjoscenen');
+	});
+
+	it('keeps a different room in the same building apart', () => {
+		/*
+		 * "Torget_10, Loungen" is the lounge, not the main hall, and its underscored spelling is
+		 * the venue's own branding rather than the street. It must NOT collapse into Vikjoscenen.
+		 */
+		const loungen = monoMapped(1991522871);
+		// Exactly as written: the street "Torget 10" is not in "Torget_10", so nothing is removed
+		// and nothing is tidied — the comma and the underscore are the venue's own spelling.
+		expect(loungen.venueName).toBe('Torget_10, Loungen');
+		expect(loungen.venueSlug).not.toBe(monoMapped(77755875).venueSlug);
+		expect(loungen.venueAddress.street).toBe('Torget 10');
+	});
+
+	it('takes the postnummer as stated even where the shop contradicts itself', () => {
+		// Torget 10 is `5411` on seven rows and `5417` on three. Both are real Stord postnummer;
+		// choosing between them would be inventing a fact. See the note in map.ts.
+		expect(monoMapped(77755875).venueAddress.postalCode).toBe('5411');
+		expect(monoMapped(1873435757).venueAddress.postalCode).toBe('5417');
+	});
+
+	it('leaves a two-day festival a dated event, not a standing one', () => {
+		const festival = monoMapped(1873435757);
+		const days = (festival.endsAt!.getTime() - festival.startsAt.getTime()) / 86_400_000;
+		expect(days).toBeGreaterThan(1);
+		expect(classifyEventKind(festival.startsAt, festival.endsAt)).toBe('dated');
+	});
+
+	it('gives two showings on one night two rows, not one', () => {
+		// ANTI_KLOVN plays twice on 24 October. Same title, same room, different event ids.
+		const early = monoMapped(1991522871);
+		const late = monoMapped(1730562927);
+		expect(early.externalId).not.toBe(late.externalId);
+		expect(+late.startsAt).toBeGreaterThan(+early.startsAt);
+	});
+
+	it('links to the event on its own shop host', () => {
+		expect(monoMapped(77755875).sourceUrl).toBe('https://mono-log.hoopla.no/event/77755875');
+	});
+
+	it('reads a description from each committed detail response', () => {
+		for (const id of [77755875, 142440509, 1991522871, 1873435757]) {
+			expect(parseDetail(fixture(`mono-log-event-${id}.json`)), String(id)).toBeTruthy();
+		}
 	});
 });

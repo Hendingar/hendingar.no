@@ -47,6 +47,32 @@ import { eventDetailUrl, eventsUrl, type HooplaShop } from './shops.ts';
  *
  * So these are parsed as instants and stored as instants. Nothing here resolves a wall clock, and
  * nothing here should start to. The shop's `Europe/Oslo` is for the venue row only.
+ *
+ * ## Do NOT "fix" this against the event page's JSON-LD. The JSON-LD is the broken one.
+ *
+ * This is the trap, and it is the inverse of the MEC one, so it is easy to walk into backwards.
+ * Every Hoopla event page carries server-rendered `application/ld+json` and an
+ * `event:start_time` meta tag, and **both disagree with the API by one or two hours**:
+ *
+ *     event 77755875   API `2026-09-19T18:00:00Z`   JSON-LD `2026-09-19T18:00:00+02:00`
+ *     event 174397646  API `2026-09-11T19:00:00Z`   JSON-LD `2026-09-11T19:00:00+02:00`
+ *     event 698512154  API `2026-11-06T20:00:00Z`   JSON-LD `2026-11-06T20:00:00+01:00`
+ *
+ * The markup keeps the API's clock numbers and stamps the venue's *correct local offset for that
+ * date* onto them — note it gets `+02:00` vs `+01:00` right across the clock change. That is
+ * exactly the shape of the MEC bug CLAUDE.md describes, and reading it as authoritative would
+ * publish every Hoopla event one or two hours early.
+ *
+ * It was settled the way CLAUDE.md says to settle it — against what the source shows a human.
+ * Rendering the page in a browser at `Europe/Oslo` (the React app formats from the API field,
+ * while the JSON-LD is generated server-side) shows:
+ *
+ *     event 77755875   "Lør 19. sep. kl. 20:00"   = 18:00Z, the API
+ *     event 142440509  "Lør 19. sep. kl. 12:00"   = 10:00Z, the API
+ *
+ * The visible clock, the descriptions' own "showstart kl 21:00", and the API all agree. The
+ * structured markup is alone, and wrong. So: the API is the source of truth here, and a future
+ * reader who notices the mismatch has already been told which way it goes.
  */
 
 /** An ISO instant. Required, and required to actually parse — `Invalid Date` is not a date. */

@@ -84,6 +84,32 @@ export const SHOPS: readonly HooplaShop[] = [
 		iconUrl: null,
 		trusted: true,
 		posterRightsCleared: false
+	},
+	{
+		slug: 'hoopla-mono-log',
+		name: 'Mono-Log',
+		subdomain: 'mono-log',
+		organizationId: '15868869',
+		region: 'Sunnhordland',
+		/*
+		 * `Mono-Log`, though the shop styles itself `mono-log` in lower case.
+		 *
+		 * Their own prose capitalises it — "Mono-Log Label", "Mono-Log Konsertserie", and the
+		 * event actually called "Mono-Log Festival 5.0" — so this is the brand as they write it,
+		 * not a tidy-up we invented.
+		 */
+		attribution: 'Mono-Log',
+		timezone: 'Europe/Oslo',
+		scheduleCron: '0 5 * * *',
+		/*
+		 * Null, like Småsceneri's. The shop's `og:image` is whichever event poster is current
+		 * rather than a logo — today a festival early-bird graphic — so hotlinking it as the
+		 * source's icon on /datasamling would put an unrelated poster next to the source name and
+		 * silently change it whenever they change their programme.
+		 */
+		iconUrl: null,
+		trusted: true,
+		posterRightsCleared: false
 	}
 ];
 
