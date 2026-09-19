@@ -196,6 +196,15 @@ shows up as a baffling authentication error against someone else's database.
 Useful: `pnpm db:psql`, `pnpm db:logs`, `pnpm db:reset` (wipes and re-migrates; refuses to run
 against anything that isn't localhost).
 
+### More than one checkout at a time
+
+The container, the volume and the ports above are global to your machine, so a second worktree
+running `pnpm db:reset` wipes the first one's database and a second `pnpm dev` cannot have :5173.
+`./.superset/setup.sh` gives a worktree its own database container and its own ports, writes them
+into that worktree's `.env`, and takes about twenty seconds; `./.superset/teardown.sh` removes
+them again. [Superset](https://superset.sh) runs both automatically when you create and delete a
+workspace, but neither script needs it — they are plain shell.
+
 Architectural decisions are recorded in [`docs/decisions/`](docs/decisions/) — worth a skim before
 proposing a change to the stack. `CLAUDE.md` is the working contract for both humans and agents.
 

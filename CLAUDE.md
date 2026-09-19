@@ -50,6 +50,45 @@ almost nothing has a poster, so the listing fills with generated tiles. Both loo
 regression in code that is in fact fine — this has already been reported as one. `pnpm db:reset`
 now prints what to run next, and `pnpm db:bootstrap` gets the whole picture in one command.
 
+## Worktrees: one workspace, one database, one set of ports
+
+Several agents work this repo at once, each in its own git worktree, on one machine. Three things
+are global to that machine and collide, and all three have cost real time:
+
+- **The database.** `scripts/db.sh` defaults to the container `hendingar-db` and the volume
+  `hendingar-pgdata`, so `pnpm db:reset` in any worktree destroys every other one's data. It
+  happened twice on 2026-09-06.
+- **The ports.** Two dev servers want :5173; two Playwright runs want :4173. Without `CI` set,
+  `reuseExistingServer` attaches the second suite to the first one's build against the first one's
+  database — 126 of 136 specs failed that way, loudly enough to look like a regression.
+- **`pnpm`.** PATH has 9.x, `package.json` pins 11.20.0, and there is no corepack. A bare
+  `pnpm install` offers to delete every worktree's `node_modules` and, non-interactively, answers
+  itself — then rewrites `pnpm-lock.yaml` in the old format, dropping the `overrides` block.
+
+`.superset/setup.sh` settles all three, and Superset runs it on workspace creation
+(`.superset/config.json` wires setup, teardown and run). It gives the worktree a slug derived from
+its path, writes `DB_CONTAINER_NAME`, `DB_VOLUME`, `DB_PORT`, `DEV_PORT` and `E2E_PORT` into `.env`
+— which is where `db.sh`, the importer CLIs, vite and `playwright.config.ts` all read them — then
+installs with the pinned pnpm and brings up that worktree's own migrated, seeded database. It takes
+about twenty seconds and is idempotent; re-running it keeps the ports it already handed out.
+
+**In a worktree that has been through setup, the plain commands are the right ones.** `pnpm dev`,
+`pnpm db:reset` and `pnpm test:e2e` each act on this worktree alone. `DATABASE_URL=…` in front of
+the suite is no longer needed — the config loads `.env` itself — and neither is `CI=true`, which
+was only ever there to stop Playwright reusing _another_ session's server on the shared :4173. On
+your own port the only thing `reuseExistingServer` can attach to is your own, so keep `CI=true`
+when a stale build would mislead you, and drop it when you want the fast loop. Outside a
+configured worktree the old hazards are all still there.
+
+**Deleting the workspace deletes its database.** `.superset/teardown.sh` runs `db:down --wipe` on
+the container named in _this_ `.env`, and refuses the shared defaults. Without it every workspace
+leaves a Postgres and a volume behind; there is an orphaned `hendingar-pgdata-sendinn` on this
+machine from before it existed.
+
+If a worktree was not created by Superset, run `./.superset/setup.sh` in it by hand. The one thing
+never to do is leave `.env` as a verbatim copy of `.env.example` — that is the shared database,
+and the reset that wipes it looks entirely routine.
+
 ## Shipping
 
 Every change lands as **one branch → one PR → merged on green → branch deleted**, and merging

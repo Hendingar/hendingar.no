@@ -1,10 +1,35 @@
 import { defineConfig } from '@playwright/test';
 
+/*
+ * Playwright is plain Node — nothing here has read the repo's .env, which is why DATABASE_URL had
+ * to be exported by hand or the suite booted the app against a database that does not exist. Load
+ * it, with the same precedence as `node --env-file` and as the importer CLIs: an exported value
+ * still wins, so a scratch database can be pointed at from the command line. Resolved against this
+ * file, not the cwd, and absent in CI — where the environment supplies everything.
+ */
+try {
+	process.loadEnvFile(new URL('../.env', import.meta.url));
+} catch {
+	// No .env: CI, or a checkout that has not run setup yet. The fallbacks below still apply.
+}
+
+/*
+ * 4173 everywhere except a git worktree, where `.superset/setup.sh` writes an E2E_PORT into .env
+ * and every worktree gets its own. Two suites on one machine otherwise fight over the port: with
+ * CI set the second one cannot bind it, and without CI `reuseExistingServer` quietly attaches to
+ * the first one's build, serving the first one's database. That cost a week of ambiguous failures
+ * once already. CI has no .env and no E2E_PORT, so it stays on 4173.
+ */
+const port = Number(process.env.E2E_PORT ?? 4173);
+
 export default defineConfig({
 	// pnpm, not npm — this is a workspace.
 	webServer: {
-		command: 'pnpm run build && pnpm run preview',
-		port: 4173,
+		// `pnpm exec vite preview`, not `pnpm run preview --port …`: pnpm passes the separator
+		// through to the script, and vite silently ignores everything after it — so the port flag
+		// never arrives and the suite waits out its timeout against an empty port.
+		command: `pnpm run build && pnpm exec vite preview --port ${port} --strictPort`,
+		port,
 		reuseExistingServer: !process.env.CI,
 		// The app validates DATABASE_URL at startup (src/env.ts). E2E doesn't touch the database,
 		// but the server still refuses to boot without a well-formed value.
@@ -25,7 +50,7 @@ export default defineConfig({
 	},
 	testDir: 'e2e',
 	testMatch: '**/*.e2e.{ts,js}',
-	use: { baseURL: 'http://localhost:4173' },
+	use: { baseURL: `http://localhost:${port}` },
 	/*
 	 * A bigger budget per assertion on CI, and deliberately NOT retries.
 	 *

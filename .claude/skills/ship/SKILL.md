@@ -19,7 +19,16 @@ git fetch origin --quiet
 git checkout -b <type>/<short-name> origin/main
 ```
 
-`feat/`, `fix/`, `chore/`, `docs/`. **Never branch off another unmerged branch.** PRs here are
+`feat/`, `fix/`, `chore/`, `docs/`.
+
+**A Superset workspace's own branch is not the branch to ship from.** A workspace created without
+`--branch` is put on something like `tortortortortortor/hendingar` — one branch for the workspace,
+not one for the piece of work. Ship two changes from it and the second inherits the first: the
+squash-merge shares no history with it, so it conflicts against every file the first one touched.
+Either create the workspace with the branch you mean to ship
+(`superset ws create --branch fix/…`), or do the `git checkout -b` above once you are inside it.
+
+**Never branch off another unmerged branch.** PRs here are
 squash-merged, which makes a brand-new commit that shares no history with the branch it came from
 — so a stacked branch conflicts against every file the parent touched the moment the parent lands.
 If two pieces of work genuinely depend on each other, finish and merge the first.
