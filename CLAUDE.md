@@ -81,9 +81,23 @@ when a stale build would mislead you, and drop it when you want the fast loop. O
 configured worktree the old hazards are all still there.
 
 **Deleting the workspace deletes its database.** `.superset/teardown.sh` runs `db:down --wipe` on
-the container named in _this_ `.env`, and refuses the shared defaults. Without it every workspace
-leaves a Postgres and a volume behind; there is an orphaned `hendingar-pgdata-sendinn` on this
-machine from before it existed.
+the container named in _this_ `.env`, and refuses the shared defaults.
+
+That only fires for workspaces Superset created. A worktree made by hand leaves its container
+running and its volume on disk with nothing to clean it up, and you cannot tell from
+`container ls` which of those is still wanted — the slug is a hash of a path. So ask the worktrees:
+
+```bash
+pnpm db:ls          # every hendingar database, and which worktree claims it
+pnpm db:reap        # remove the ones no worktree claims (prints the plan; --yes to act)
+```
+
+`db:ls` is also how you see the hazard itself, because a worktree that never ran setup claims the
+shared `hendingar-db` — several worktrees on one row is a `db:reset` away from losing all of them.
+And it lists worktrees whose branch has landed or gone from the remote, which is what you close
+down when you are finished: `git worktree remove <path> && pnpm db:reap --yes`. The reaper only
+ever touches what no worktree claims — "finished" is a judgement, so it is reported, never acted
+on.
 
 If a worktree was not created by Superset, run `./.superset/setup.sh` in it by hand. The one thing
 never to do is leave `.env` as a verbatim copy of `.env.example` — that is the shared database,
