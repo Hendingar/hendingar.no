@@ -28,6 +28,8 @@
 		"db:logs": "./scripts/db.sh logs",
 		"db:psql": "./scripts/db.sh psql",
 		"db:url": "./scripts/db.sh url",
+		"db:ls": "./scripts/db.sh ls",
+		"db:reap": "./scripts/db.sh reap",
 		"ingest": "pnpm -r --filter \"./importers/*\" --workspace-concurrency=1 --no-bail ingest",
 		"verifier:dev": "cd services/verifier && ./.venv/bin/verifier dev",
 		"verifier:eval": "cd services/verifier && ./.venv/bin/python evals/run.py",

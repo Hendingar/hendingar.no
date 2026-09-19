@@ -202,7 +202,8 @@ The container, the volume and the ports above are global to your machine, so a s
 running `pnpm db:reset` wipes the first one's database and a second `pnpm dev` cannot have :5173.
 `./.superset/setup.sh` gives a worktree its own database container and its own ports, writes them
 into that worktree's `.env`, and takes about twenty seconds; `./.superset/teardown.sh` removes
-them again. [Superset](https://superset.sh) runs both automatically when you create and delete a
+them again. `pnpm db:ls` shows every local database and which worktree claims it, and
+`pnpm db:reap` removes the ones nothing claims any more. [Superset](https://superset.sh) runs both automatically when you create and delete a
 workspace, but neither script needs it — they are plain shell.
 
 Architectural decisions are recorded in [`docs/decisions/`](docs/decisions/) — worth a skim before

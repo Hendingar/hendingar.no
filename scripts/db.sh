@@ -138,6 +138,47 @@ down() {
 
 reset() { assert_local; down --wipe; up; }
 
+# What exists on this machine, and who still wants it. See scripts/db-inventory.mjs for why this
+# asks the worktrees rather than reading container names.
+report() { need_runtime; node "$(dirname "$0")/db-inventory.mjs" report; }
+
+# Remove only what no worktree claims. Prints the plan and does nothing without --yes, because
+# the whole point of a reaper is that it runs when you are not thinking hard about it.
+reap() {
+  need_runtime
+  local plan; plan=$(node "$(dirname "$0")/db-inventory.mjs" plan)
+
+  if [ -z "$plan" ]; then
+    echo "nothing to reap — every hendingar database is claimed by a worktree"
+    return 0
+  fi
+
+  echo "No worktree claims these:"
+  printf '%s\n' "$plan" | sed 's/^/  /'
+
+  if [ "${1:-}" != "--yes" ]; then
+    printf '\nNothing removed. To remove them: pnpm db:reap --yes\n'
+    return 0
+  fi
+
+  printf '%s\n' "$plan" | while IFS="$(printf '\t')" read -r kind name; do
+    case "$kind:$name" in
+      container:hendingar-db*)
+        container stop "$name" >/dev/null 2>&1 || true
+        container rm "$name" >/dev/null 2>&1 || true
+        echo "removed container $name"
+        ;;
+      # The same guard as assert_local, repeated because this loop runs unattended.
+      volume:hendingar-pgdata*)
+        container volume rm "$name" >/dev/null 2>&1 && echo "wiped volume $name"
+        ;;
+      *)
+        echo "refusing to touch '$name'"
+        ;;
+    esac
+  done
+}
+
 case "${1:-}" in
   up)     up ;;
   down)   shift; down "${1:-}" ;;
@@ -146,5 +187,7 @@ case "${1:-}" in
   logs)   need_runtime; container logs "${2:---follow}" "$NAME" ;;
   psql)   need_runtime; container exec --interactive --tty "$NAME" psql -U "$PGUSER_" -d "$PGDB_" ;;
   url)    echo "$LOCAL_URL" ;;
-  *)      echo "usage: db.sh {up|down [--wipe]|reset|status|logs|psql|url}" >&2; exit 2 ;;
+  ls)     report ;;
+  reap)   shift; reap "${1:-}" ;;
+  *)      echo "usage: db.sh {up|down [--wipe]|reset|status|logs|psql|url|ls|reap [--yes]}" >&2; exit 2 ;;
 esac
