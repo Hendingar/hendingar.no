@@ -335,6 +335,27 @@ def _undecided(check: CheckName, model: str | None) -> CheckResult:
     )
 
 
+def _not_asked(check: CheckName) -> CheckResult:
+    """A check we chose not to run, said as that and not as one that failed to answer.
+
+    `_undecided` is a different sentence: it means we asked and could not get an answer, which is
+    a fact about our own availability and the reason rule 8 exists. This means the submission was
+    already refused by a rule before we got here, so asking would have cost somebody a wait for a
+    verdict that could not change the outcome.
+
+    `deterministic` is true because it is: the decision not to ask was made by a rule, not by a
+    model, and `model` is null because none was called. The sender is shown that badge to tell a
+    model's opinion from a fact, and "Modell" on a call that never happened would be the wrong one.
+    """
+    return CheckResult(
+        check=check,
+        verdict="uncertain",
+        confidence=0,
+        reasoning="Innsendinga blei stoppa av ein annan kontroll, så denne blei ikkje vurdert.",
+        deterministic=True,
+    )
+
+
 def _to_result(check: CheckName, text: str, model: str) -> CheckResult:
     """One agent's answer as a check result, with the rules that must not depend on the model.
 
@@ -429,8 +450,37 @@ def check_corroboration(request: VerifyRequest) -> CheckResult:
     )
 
 
+def _unavailable(check: CheckName) -> CheckResult:
+    """No model is configured at all, which is a fact about us and not about the submission."""
+    return CheckResult(
+        check=check,
+        verdict="uncertain",
+        confidence=0,
+        reasoning="Automatisk vurdering er ikkje slått på, så vi kunne ikkje avgjere denne.",
+        deterministic=True,
+    )
+
+
 async def verify(factory: AgentFactory | None, request: VerifyRequest) -> VerifyResponse:
-    """Run every check. Without a model, the rule-based checks still run and the rest defers."""
+    """Run the rules, and only then decide whether asking a model can still change the answer.
+
+    The rules come first because they are free — four pure functions over a record already in
+    memory — and because one of their outcomes settles the whole thing. **A `fail` anywhere is
+    `reject`**, which is the rule three lines below this and has always been. So once a rule has
+    failed, the two model calls cannot move the recommendation; they can only be spent, and spent
+    while somebody waits on the submit button for them.
+
+    The case that makes this worth doing is the one where the calls are least use. An event in
+    Bergen is refused by `check_coverage` (ADR 0015) and is a real, well-formed, correctly
+    categorised concert — so the two questions we would go on to ask are "does this look genuine"
+    and "is the category right", and the honest answers are yes and yes. That was two model calls
+    and the wait for the slower of them, to tell a sender something true and irrelevant about an
+    event we had already declined.
+
+    What does not change: every sender still sees all six checks. A check that is not asked says
+    so (`_not_asked`) rather than vanishing, because a check missing from the list reads downstream
+    as one that passed — the same reason `_in_declared_order` exists one function up.
+    """
     checks: list[CheckResult] = [
         check_normalisation(request),
         check_duplicate(request),
@@ -438,16 +488,21 @@ async def verify(factory: AgentFactory | None, request: VerifyRequest) -> Verify
         check_corroboration(request),
     ]
 
+    #: The checks that were never put, so the summary can leave them out of the sentence a sender
+    #: reads. They stay in `checks` and they stay in the recommendation below — an unasked check is
+    #: `uncertain`, so it can only ever make the outcome more cautious, never less. What it must
+    #: not do is talk: "this was not assessed" appended to the reason it was not assessed is a
+    #: circle, and it would land in front of the one sentence that says what to fix.
+    unasked: frozenset[str] = frozenset()
+
     if factory is None:
-        checks.append(
-            CheckResult(
-                check="plausibility",
-                verdict="uncertain",
-                confidence=0,
-                reasoning="Automatisk vurdering er ikkje slått på, så vi kunne ikkje avgjere denne.",
-                deterministic=True,
-            )
-        )
+        # Both of them, not just the blocking one. `plausibility` alone was enough to force
+        # `review` and so was all this branch ever emitted, which left the sender in an
+        # environment without a verifier looking at five rows where the page promises six.
+        checks.extend(_unavailable(check.check) for check in _MODEL_CHECKS)
+    elif any(check.verdict == "fail" for check in checks):
+        unasked = frozenset(check.check for check in _MODEL_CHECKS)
+        checks.extend(_not_asked(check.check) for check in _MODEL_CHECKS)
     else:
         checks.extend(await model_checks(factory, request))
 
@@ -461,12 +516,13 @@ async def verify(factory: AgentFactory | None, request: VerifyRequest) -> Verify
     else:
         recommendation = "publish"
 
+    spoke = [c for c in checks if c.check not in unasked]
     blocking = [
         c
-        for c in checks
+        for c in spoke
         if c.verdict != "pass" and (c.check in BLOCKING_CHECKS or c.verdict == "fail")
     ]
-    caveats = [c for c in checks if c.verdict != "pass" and c not in blocking]
+    caveats = [c for c in spoke if c.verdict != "pass" and c not in blocking]
 
     if blocking:
         summary = " ".join(c.reasoning for c in blocking)
