@@ -96,3 +96,65 @@ def test_verify_runs_the_rule_based_checks_end_to_end():
 def test_malformed_body_is_a_422_not_a_crash():
     response = _client().post("/verify", json={"title": "mangler alt anna"})
     assert response.status_code == 422
+
+
+def _improve_body() -> dict:
+    return {
+        "title": "Bygdekino i Sagvåg",
+        "description": "film på laurdag, ta med ungane",
+        "category": "show",
+        "starts_at": "2026-09-05T18:00:00+02:00",
+        "venue_name": "Sagvåg grendahus",
+        "municipality": "Stord",
+    }
+
+
+def _frames(body: str) -> list[tuple[str, str]]:
+    """The SSE frames, as (event, data). Blank-line separated, exactly as a browser reads them."""
+    parsed: list[tuple[str, str]] = []
+    for frame in body.split("\n\n"):
+        lines = [line for line in frame.splitlines() if line]
+        if not lines:
+            continue
+        name = next((line[7:] for line in lines if line.startswith("event: ")), None)
+        data = next((line[6:] for line in lines if line.startswith("data: ")), None)
+        if name and data:
+            parsed.append((name, data))
+    return parsed
+
+
+def test_the_streamed_improvement_arrives_as_sse_frames():
+    import json
+
+    draft = json.dumps({"description": "Bygdekino i grendahuset i Sagvåg.", "missing": []})
+    review = json.dumps({"approved": True, "problems": []})
+    fake = FakeOpenAI(draft, review)
+    client = TestClient(create_app(config=config(), factory=factory_for(fake)))
+
+    response = client.post("/improve/stream", json=_improve_body())
+
+    assert response.status_code == 200
+    assert response.headers["content-type"].startswith("text/event-stream")
+    # A proxy that buffers would hold the whole stream and deliver it at once, which is the
+    # experience this endpoint exists to avoid.
+    assert response.headers["x-accel-buffering"] == "no"
+
+    frames = _frames(response.text)
+    assert [name for name, _ in frames] == ["draft", "review", "suggestion"]
+    assert json.loads(frames[-1][1])["description"] == "Bygdekino i grendahuset i Sagvåg."
+
+
+def test_a_failure_mid_stream_is_a_frame_rather_than_a_status():
+    """By the time anything can fail the headers are long gone, so 502 is not available.
+
+    The caller degrades exactly as it does for one: the person keeps the words they wrote.
+    """
+    fake = FakeOpenAI(error=RuntimeError("the socket died"))
+    client = TestClient(create_app(config=config(), factory=factory_for(fake)))
+
+    response = client.post("/improve/stream", json=_improve_body())
+
+    assert response.status_code == 200
+    names = [name for name, _ in _frames(response.text)]
+    assert names[-1] == "error"
+    assert "suggestion" not in names

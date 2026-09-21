@@ -14,7 +14,7 @@ from __future__ import annotations
 from typing import Any
 
 from agent_framework.openai import OpenAIChatCompletionClient
-from openai.types.chat import ChatCompletion
+from openai.types.chat import ChatCompletion, ChatCompletionChunk
 
 from verifier.config import Config
 from verifier.llm import AgentFactory
@@ -56,11 +56,16 @@ class FakeOpenAI:
         self._error = error
         self.chat = type("_Chat", (), {"completions": _Completions(self)})()
 
-    def _respond(self, kwargs: dict[str, Any]) -> ChatCompletion:
+    def _respond(self, kwargs: dict[str, Any]) -> Any:
         self.calls.append(kwargs)
         if self._error is not None:
             raise self._error
         index = min(len(self.calls) - 1, len(self._payloads) - 1)
+        if kwargs.get("stream"):
+            # An orchestration run with `stream=True` puts every participant's client into
+            # streaming mode, so the socket is asked for chunks rather than a completion. Same
+            # payload, delivered in pieces — which is what the caller under test has to reassemble.
+            return self._chunks(self._payloads[index])
         return ChatCompletion.model_validate(
             {
                 "id": "fake",
@@ -73,6 +78,48 @@ class FakeOpenAI:
                         "finish_reason": self._finish_reason,
                         "logprobs": None,
                         "message": {"role": "assistant", "content": self._payloads[index]},
+                    }
+                ],
+            }
+        )
+
+    async def _chunks(self, payload: str | None) -> Any:
+        """The same answer as a chat-completion stream, cut into pieces.
+
+        Cut deliberately small, and never on a token boundary that means anything: the point is
+        that whatever reassembles this has to reassemble it, rather than happening to work because
+        each chunk was valid JSON on its own.
+        """
+        text = payload or ""
+        for start in range(0, max(len(text), 1), 17):
+            yield ChatCompletionChunk.model_validate(
+                {
+                    "id": "fake",
+                    "created": 0,
+                    "model": MODEL,
+                    "object": "chat.completion.chunk",
+                    "choices": [
+                        {
+                            "index": 0,
+                            "delta": {"role": "assistant", "content": text[start : start + 17]},
+                            "finish_reason": None,
+                            "logprobs": None,
+                        }
+                    ],
+                }
+            )
+        yield ChatCompletionChunk.model_validate(
+            {
+                "id": "fake",
+                "created": 0,
+                "model": MODEL,
+                "object": "chat.completion.chunk",
+                "choices": [
+                    {
+                        "index": 0,
+                        "delta": {},
+                        "finish_reason": self._finish_reason,
+                        "logprobs": None,
                     }
                 ],
             }
@@ -100,7 +147,7 @@ class _Completions:
     def __init__(self, owner: FakeOpenAI) -> None:
         self._owner = owner
 
-    async def create(self, **kwargs: Any) -> ChatCompletion:
+    async def create(self, **kwargs: Any) -> Any:
         return self._owner._respond(kwargs)
 
 

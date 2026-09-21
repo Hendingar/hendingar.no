@@ -209,3 +209,29 @@ def test_extraction_fields_match_the_shared_schema():
         f"named by the verifier but not by extractedEventSchema: {missing}. "
         "The app will drop these without an error."
     )
+
+
+def test_streamed_turn_fields_match_the_shared_schema():
+    """The turns cross the boundary too, and Zod strips what a schema does not name.
+
+    `problems` is the one that matters: it is what the fact-checker struck, and a stream that
+    reports approval without the objections is an argument with one side missing — which is the
+    reassurance ADR 0017 says this feature exists to give.
+    """
+    from verifier.models import ImproveDraft, ImproveReview
+
+    validation = (
+        Path(__file__).resolve().parents[3] / "packages" / "core" / "src" / "validation.ts"
+    ).read_text(encoding="utf-8")
+
+    for model, schema_name in (
+        (ImproveDraft, "improveDraftSchema"),
+        (ImproveReview, "improveReviewSchema"),
+    ):
+        schema = validation.split(f"export const {schema_name}", 1)[1].split("\n});", 1)[0]
+        missing = [
+            field
+            for field in model.model_fields
+            if not re.search(rf"^\s*{re.escape(field)}\s*:", schema, re.MULTILINE)
+        ]
+        assert not missing, f"named by the verifier but not by {schema_name}: {missing}"

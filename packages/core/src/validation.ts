@@ -330,6 +330,29 @@ export type CropSuggestion = z.infer<typeof cropSuggestionSchema>;
  * Validated at the boundary like every other verifier response: the service speaks snake_case, we
  * speak camelCase, and a field the schema does not name is silently dropped by Zod.
  */
+/**
+ * One turn from the writer, as `/improve/stream` reports it.
+ *
+ * A turn is a *report*, never an offer. The draft in it may be one the fact-checker goes on to
+ * strike, or one the number rule refuses after the checker waved it through — which is why nothing
+ * that reads this may put it in front of an accept button. The only acceptable text is the one in
+ * `improveSuggestionSchema`, which is what survived every rule (ADR 0017).
+ */
+export const improveDraftSchema = z.object({
+	description: z.string().default(''),
+	missing: z.array(z.string()).default([])
+});
+
+export type ImproveDraft = z.infer<typeof improveDraftSchema>;
+
+/** One turn from the fact-checker: whether the draft stands, and what it could not trace. */
+export const improveReviewSchema = z.object({
+	approved: z.boolean().default(false),
+	problems: z.array(z.string()).default([])
+});
+
+export type ImproveReview = z.infer<typeof improveReviewSchema>;
+
 export const improveSuggestionSchema = z.object({
 	description: z.string().min(1).nullable().default(null),
 	removed: z.array(z.string()).default([]),
