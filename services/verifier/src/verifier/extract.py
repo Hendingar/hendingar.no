@@ -16,11 +16,14 @@ converter, nested `$defs` included, so that function is gone rather than duplica
 """
 
 import logging
+from collections.abc import AsyncIterator
+from typing import Literal
 
 from agent_framework import Content, Message
 
 from .llm import AgentFactory
-from .models import ExtractedEvent, ExtractPageRequest, ExtractRequest
+from .models import ExtractedEvent, ExtractedField, ExtractPageRequest, ExtractRequest
+from .partial import completed_fields
 
 log = logging.getLogger(__name__)
 
@@ -113,36 +116,114 @@ def _unreadable(what: str, subject: str) -> ExtractedEvent:
     )
 
 
-async def extract_poster(factory: AgentFactory, request: ExtractRequest) -> ExtractedEvent:
-    agent = factory.agent(
+def _poster_agent(factory: AgentFactory):
+    return factory.agent(
         name="plakatlesaren",
         instructions=SYSTEM,
         response_format=ExtractedEvent,
         max_tokens=MAX_TOKENS,
     )
+
+
+def _poster_message(request: ExtractRequest) -> Message:
     # The image is already base64 from the browser, so it travels as the `data:` URI it will be
     # sent as. Handing over raw bytes would decode and re-encode it for nothing.
-    response = await factory.run(
-        agent,
-        Message(
-            role="user",
-            contents=[
-                Content.from_uri(
-                    uri=f"data:{request.media_type};base64,{request.image_base64}",
-                    media_type=request.media_type,
-                ),
-                Content.from_text(
-                    f"I dag er {request.today}. Hent ut arrangementet frå dette biletet."
-                ),
-            ],
-        ),
+    return Message(
+        role="user",
+        contents=[
+            Content.from_uri(
+                uri=f"data:{request.media_type};base64,{request.image_base64}",
+                media_type=request.media_type,
+            ),
+            Content.from_text(
+                f"I dag er {request.today}. Hent ut arrangementet frå dette biletet."
+            ),
+        ],
     )
+
+
+async def extract_poster(factory: AgentFactory, request: ExtractRequest) -> ExtractedEvent:
+    """One image, one answer.
+
+    Deliberately NOT the streamed path collapsed, which is what `improve` does one file over. The
+    extraction evals in `evals/` score this function against the live model, and ADR 0016 kept the
+    wire payload byte-for-byte on the argument that nothing measured about extraction should have to
+    be re-measured. Changing what this sends would quietly move that baseline. `extract_poster_stream`
+    is the same agent, the same prompt and the same schema over a different transport, and a test
+    asserts the reassembled bytes are identical — which is the claim that lets the two coexist.
+    """
+    response = await factory.run(_poster_agent(factory), _poster_message(request))
 
     if response.finish_reason == "content_filter":
         return _unreadable("heile biletet", "Biletet")
     if response.value is None:
         raise ValueError("model returned no content")
     return response.value
+
+
+#: What the caller is handed while the model is still writing, and then at the end.
+type PosterEvent = tuple[Literal["field"], ExtractedField] | tuple[Literal["event"], ExtractedEvent]
+
+#: The fields worth putting in front of somebody mid-read, in the order the schema emits them.
+#:
+#: Not every key. `unreadable`, `confidence` and `note` are about the reading rather than about the
+#: evening and read as noise beside a title; `recurrence`, `dates` and `thumbnail` are structures a
+#: person does not read. All of them still arrive on the finished object, which is the only thing
+#: that ever reaches the form.
+STREAMED_FIELDS: tuple[str, ...] = (
+    "title",
+    "description",
+    "category",
+    "date",
+    "start_time",
+    "end_time",
+    "venue_name",
+    "municipality",
+    "organizer_name",
+    "ticket_url",
+)
+
+
+async def extract_poster_stream(
+    factory: AgentFactory, request: ExtractRequest
+) -> AsyncIterator[PosterEvent]:
+    """The same read, reported field by field as the model writes them.
+
+    **Why this is worth doing.** Reading a poster is the longest single wait in the product — five
+    to fifteen seconds of one call — and the page could say nothing true about it, so it narrated
+    stages on a timer: "Les tittel og dato…" at three seconds whether or not that had happened. A
+    strict-schema answer is emitted in schema order, so the title is finished and correct while the
+    organiser does not yet exist. There is a real answer to show and it was being thrown away.
+
+    **A streamed field is for reading and never for filling in.** Only the `event` at the end
+    reaches the form, and only a person pressing a button puts it there — the review step is what
+    makes reading somebody's poster with a model defensible at all, and a half-written draft that
+    populated inputs behind their back would take it away. `partial.completed_fields` is what makes
+    the distinction safe rather than hopeful: it reports a value only once it has been closed, so
+    nothing shown here can change afterwards.
+    """
+    agent = _poster_agent(factory)
+    text = ""
+    sent: set[str] = set()
+
+    async for update in factory.run_stream(agent, _poster_message(request)):
+        piece = getattr(update, "text", "") or ""
+        if not piece:
+            continue
+        text += piece
+        for name, value in completed_fields(text).items():
+            if name in sent or name not in STREAMED_FIELDS or value is None or value == "":
+                continue
+            sent.add(name)
+            yield "field", ExtractedField(name=name, value=str(value))
+
+    if not text.strip():
+        # An empty stream is the content filter, or a model that said nothing at all. Both leave the
+        # person in front of a form they can fill in themselves, which is this path's whole promise.
+        yield "event", _unreadable("heile biletet", "Biletet")
+        return
+
+    yield "event", ExtractedEvent.model_validate_json(text)
 
 
 async def extract_page(factory: AgentFactory, request: ExtractPageRequest) -> ExtractedEvent:

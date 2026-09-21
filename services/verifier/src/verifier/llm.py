@@ -148,6 +148,22 @@ class AgentFactory:
             agent.run(message), timeout=self._config.request_timeout_seconds
         )
 
+    async def run_stream(self, agent: Agent, message: "str | Message"):
+        """One agent, under the same deadline, handing back each update as it arrives.
+
+        `wait_for` takes a coroutine and this is a generator, so the budget is an `asyncio.timeout`
+        around the whole iteration — the same promise the blocking `run` makes: what is bounded is
+        the call from start to finish, and a caller that has gone away should not hold a model open.
+
+        Streaming changes how the answer is delivered and nothing about how it is produced.
+        Temperature, seed and the strict schema live on the agent and apply either way; the bytes
+        reassemble to exactly what the blocking call returns, which `tests/test_extract.py` asserts
+        rather than assumes.
+        """
+        async with asyncio.timeout(self._config.request_timeout_seconds):
+            async for update in agent.run(message, stream=True):
+                yield update
+
     async def run_workflow(self, workflow, task: str):
         """Same deadline, for an orchestration that runs several agents for us."""
         return await asyncio.wait_for(

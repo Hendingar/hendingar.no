@@ -4,11 +4,13 @@ import {
 	cropSuggestionSchema,
 	curatorSelectionSchema,
 	extractedEventSchema,
+	extractedFieldSchema,
 	improveDraftSchema,
 	improveReviewSchema,
 	improveSuggestionSchema,
 	type CuratorSelection,
 	type ExtractedEvent,
+	type ExtractedField,
 	type ImproveDraft,
 	type ImproveReview,
 	type ImproveSuggestion,
@@ -99,24 +101,6 @@ async function post<T>(path: string, body: unknown, timeoutMs: number): Promise<
 		throw new Error(`verifier ${path} responded ${res.status}: ${detail.slice(0, 200)}`);
 	}
 	return (await res.json()) as T;
-}
-
-/**
- * The service speaks snake_case (Python); our shared schema is camelCase. Translate and *validate*
- * at the boundary rather than trusting the response — a service returning a malformed date should
- * fail here, where the caller falls back to the manual form, not three layers deeper.
- */
-export async function extractPoster(
-	imageBase64: string,
-	mediaType: 'image/jpeg' | 'image/png' | 'image/webp',
-	today: string
-): Promise<ExtractedEvent> {
-	const raw = await post<Record<string, unknown>>(
-		'/extract',
-		{ image_base64: imageBase64, media_type: mediaType, today },
-		EXTRACT_TIMEOUT_MS
-	);
-	return toExtractedEvent(raw);
 }
 
 /**
@@ -212,6 +196,71 @@ export async function extractPage(
  * `suggestion` has been through every rule, and it is the only thing a caller may put behind an
  * accept button.
  */
+/**
+ * A poster being read, reported field by field.
+ *
+ * The longest single wait in the product — one vision call — in front of a panel that could say
+ * nothing true about it and so narrated stages on a timer. A strict-schema answer arrives in
+ * schema order, so the title is finished and correct while the organiser does not yet exist; this
+ * hands that over instead of a guess at how far along it is.
+ *
+ * `field` is for reading. Only `event` has been validated whole, and only it may fill the form.
+ */
+export type ExtractStreamEvent =
+	{ kind: 'field'; field: ExtractedField } | { kind: 'event'; event: ExtractedEvent };
+
+export async function* extractPosterStreaming(
+	imageBase64: string,
+	mediaType: 'image/jpeg' | 'image/png' | 'image/webp',
+	today: string
+): AsyncGenerator<ExtractStreamEvent> {
+	if (!VERIFIER_URL) throw new Error('verifier is not configured');
+
+	const response = await fetch(`${VERIFIER_URL.replace(/\/$/, '')}/extract/stream`, {
+		method: 'POST',
+		headers: { 'content-type': 'application/json', accept: 'text/event-stream' },
+		body: JSON.stringify({ image_base64: imageBase64, media_type: mediaType, today }),
+		signal: AbortSignal.timeout(EXTRACT_TIMEOUT_MS)
+	});
+
+	if (!response.ok || !response.body) {
+		const detail = await response.text().catch(() => '');
+		throw new Error(
+			`verifier /extract/stream responded ${response.status}: ${detail.slice(0, 200)}`
+		);
+	}
+
+	for await (const frame of sseFrames(response.body)) {
+		if (frame.event === 'field') {
+			const field = extractedFieldSchema.parse(frame.data);
+			// The service names its fields as its own schema does; everything past this line is
+			// camelCase, exactly as `toExtractedEvent` does for the finished object. A browser that
+			// had to know `start_time` would be the second place that knows Python's spelling.
+			yield { kind: 'field', field: { ...field, name: FIELD_NAMES[field.name] ?? field.name } };
+		} else if (frame.event === 'event') {
+			yield { kind: 'event', event: toExtractedEvent(asRecord(frame.data)) };
+		} else if (frame.event === 'error') {
+			throw new Error('verifier reported a failure mid-stream');
+		}
+	}
+}
+
+/** snake_case to camelCase, for the field names only. The values are already strings. */
+const FIELD_NAMES: Record<string, string> = {
+	start_time: 'startTime',
+	end_time: 'endTime',
+	venue_name: 'venueName',
+	organizer_name: 'organizerName',
+	ticket_url: 'ticketUrl'
+};
+
+function asRecord(data: unknown): Record<string, unknown> {
+	if (typeof data !== 'object' || data === null || Array.isArray(data)) {
+		throw new Error('verifier sent something that is not an event');
+	}
+	return Object.fromEntries(Object.entries(data));
+}
+
 export type ImproveStreamEvent =
 	| { kind: 'draft'; draft: ImproveDraft }
 	| { kind: 'review'; review: ImproveReview }

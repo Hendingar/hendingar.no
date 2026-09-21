@@ -235,3 +235,62 @@ def test_streamed_turn_fields_match_the_shared_schema():
             if not re.search(rf"^\s*{re.escape(field)}\s*:", schema, re.MULTILINE)
         ]
         assert not missing, f"named by the verifier but not by {schema_name}: {missing}"
+
+
+def test_streamed_field_matches_the_shared_schema():
+    """The field frames cross the boundary too, and Zod strips what a schema does not name.
+
+    Both keys are load-bearing here in a way the others are not: a frame that lost `value` would
+    render a label with nothing beside it, which reads as a field the model could not make out
+    rather than as a frame we mishandled.
+    """
+    from verifier.models import ExtractedField
+
+    validation = (
+        Path(__file__).resolve().parents[3] / "packages" / "core" / "src" / "validation.ts"
+    ).read_text(encoding="utf-8")
+    schema = validation.split("export const extractedFieldSchema", 1)[1].split("\n});", 1)[0]
+
+    missing = [
+        field
+        for field in ExtractedField.model_fields
+        if not re.search(rf"^\s*{re.escape(field)}\s*:", schema, re.MULTILINE)
+    ]
+    assert not missing, f"named by the verifier but not by extractedFieldSchema: {missing}"
+
+
+def test_every_streamed_field_is_one_the_app_can_label():
+    """A field arriving under a name the browser has no label for would render as `start_time`.
+
+    The service emits its own schema's names and `server/verifier.ts` maps them to the camelCase the
+    rest of the boundary speaks. This asserts the map covers everything that can actually arrive —
+    the failure it guards is cosmetic, and it is the kind nobody notices until a screenshot.
+    """
+    from verifier.extract import STREAMED_FIELDS
+
+    client = (
+        Path(__file__).resolve().parents[3] / "app" / "src" / "lib" / "server" / "verifier.ts"
+    ).read_text(encoding="utf-8")
+    # Bounded to the declaration: everything after it is ordinary code with `key: 'value'` in it,
+    # and an unbounded split reads `method: 'POST'` as a field rename.
+    names_block = client.split("const FIELD_NAMES", 1)[1].split("\n};", 1)[0]
+    mapped = set(re.findall(r"^\s*(\w+): '(\w+)'", names_block, re.MULTILINE))
+    renamed = {source for source, _ in mapped}
+
+    component = (
+        Path(__file__).resolve().parents[3]
+        / "app"
+        / "src"
+        / "lib"
+        / "components"
+        / "submit"
+        / "PhotoCapture.svelte"
+    ).read_text(encoding="utf-8")
+    labels_block = component.split("FIELD_LABEL", 1)[1].split("\n\t};", 1)[0]
+    labels = set(re.findall(r"^\s*(\w+): '", labels_block, re.MULTILINE))
+
+    for field in STREAMED_FIELDS:
+        expected = dict(mapped).get(field, field)
+        assert expected in labels, f"{field} arrives as {expected!r} and has no label"
+    # And nothing is renamed that does not need to be.
+    assert renamed <= set(STREAMED_FIELDS)
