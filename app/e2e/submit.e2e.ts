@@ -548,6 +548,121 @@ test('the photo panel can be opened straight from a URL', async ({ page }) => {
 	await expect(page.locator('.capture input[type="file"]')).toBeVisible();
 });
 
+/*
+ * Reading a poster, served as a canned stream.
+ *
+ * CI has no verifier, so the photo panel could only ever be tested for being *absent* or for
+ * failing politely. Fulfilling the route ourselves tests what is actually new: that the browser
+ * shows the fields the model has finished writing while the rest is still arriving, instead of a
+ * bar narrating stages on a timer.
+ *
+ * The bytes are exactly what `services/verifier` writes after `server/verifier.ts` renames the
+ * fields to camelCase, and `tests/test_extract.py` asserts that shape from the other side.
+ */
+function readStream(frames: [string, unknown][]): string {
+	return frames
+		.map(([event, data]) => `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`)
+		.join('');
+}
+
+/** A 1×1 PNG, so the browser has a real file to downscale before anything is sent. */
+const TINY_PNG =
+	'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
+
+async function dropAPoster(page: Page) {
+	await page.goto('/send-inn?med=bilete');
+	await page.locator('.capture input[type="file"]').setInputFiles({
+		name: 'plakat.png',
+		mimeType: 'image/png',
+		buffer: Buffer.from(TINY_PNG, 'base64')
+	});
+}
+
+const POSTER_FRAMES: [string, unknown][] = [
+	['field', { name: 'title', value: 'Pokémontreff i biblioteket' }],
+	['field', { name: 'date', value: '2026-09-21' }],
+	['field', { name: 'startTime', value: '16:00' }],
+	['field', { name: 'venueName', value: 'Bømlo folkebibliotek' }],
+	[
+		'event',
+		{
+			title: 'Pokémontreff i biblioteket',
+			description: 'Eit nytt tilbod i biblioteket i samarbeid med Bømlo TCG.',
+			category: 'anna',
+			date: '2026-09-21',
+			startTime: '16:00',
+			endTime: '17:00',
+			recurrence: null,
+			dates: [],
+			venueName: 'Bømlo folkebibliotek',
+			municipality: 'Bømlo',
+			organizerName: 'Bømlo TCG',
+			ticketUrl: null,
+			confidence: 92,
+			unreadable: [],
+			note: 'Lese frå skjermbiletet.',
+			thumbnail: null
+		}
+	]
+];
+
+test('the poster read shows the fields as they land, not a narration', async ({ page }) => {
+	await page.route('**/send-inn/lesing', async (route) => {
+		await route.fulfill({
+			status: 200,
+			headers: { 'content-type': 'text/event-stream' },
+			body: readStream(POSTER_FRAMES)
+		});
+	});
+
+	await dropAPoster(page);
+
+	/*
+	 * The fields the model finished writing, shown as its own list.
+	 *
+	 * Playwright fulfils a route atomically, so the whole stream lands in one read and the
+	 * transient ordering cannot be observed here — `tests/test_extract.py` is where "title first,
+	 * in schema order" is asserted. What this proves is the half that only exists in the browser:
+	 * the frames were parsed and rendered as fields rather than dropped.
+	 */
+	const read = page.locator('.read');
+	await expect(read).toContainText('Pokémontreff i biblioteket');
+	await expect(read).toContainText('Bømlo folkebibliotek');
+	await expect(read.locator('.read__row')).toHaveCount(4);
+
+	// And the finished draft reaches the form, which is the only thing that ever may.
+	await expect(page.locator('#title')).toHaveValue('Pokémontreff i biblioteket');
+	await expect(page.locator('#venueName')).toHaveValue('Bømlo folkebibliotek');
+});
+
+test('a read that dies mid-stream leaves the form and the picture alone', async ({ page }) => {
+	/*
+	 * Fields were shown and then the socket failed. Each of them was complete when it was shown —
+	 * that is what `partial.completed_fields` guarantees — but the draft is not, so nothing may be
+	 * written into the form. The person fills it in themselves, with their photograph still held.
+	 */
+	await page.route('**/send-inn/lesing', async (route) => {
+		await route.fulfill({
+			status: 200,
+			headers: { 'content-type': 'text/event-stream' },
+			body: readStream([
+				['field', { name: 'title', value: 'Pokémontreff i biblioteket' }],
+				['error', {}]
+			])
+		});
+	});
+
+	await dropAPoster(page);
+
+	await expect(page.getByText(/Kunne ikkje lese plakaten/)).toBeVisible();
+	// What was read before it died is still on screen — "we got this far".
+	await expect(page.locator('.read')).toContainText('Pokémontreff i biblioteket');
+	// And none of it reached the form, because only a validated whole ever may.
+	await expect(page.locator('#title')).toHaveValue('');
+	// The promise that outlives a failed read: the picture they chose is still ours to use.
+	await expect(page.getByText(/Biletet er teke vare på/)).toBeVisible();
+});
+
 /**
  * The third way in: paste a link, we read the page.
  *

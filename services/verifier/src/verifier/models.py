@@ -170,6 +170,19 @@ class ExtractedEvent(BaseModel):
     )
 
 
+class ExtractedField(BaseModel):
+    """One field of a draft, the moment the model finished writing it.
+
+    A *report*, not a value to use. It is `str` on purpose: this exists to be read while the rest
+    of the answer is still arriving, and the typed, validated `ExtractedEvent` at the end is the
+    only thing that ever reaches a form. Anything that treats one of these as data has confused a
+    progress indicator with an answer.
+    """
+
+    name: str
+    value: str
+
+
 class CandidateEvent(BaseModel):
     """An event already in the database, for the duplicate check to compare against."""
 

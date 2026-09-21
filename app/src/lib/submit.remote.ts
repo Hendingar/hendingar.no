@@ -36,7 +36,6 @@ import {
 import { db } from './server/db';
 import {
 	extractPage,
-	extractPoster,
 	suggestCrop,
 	verifierEnabled,
 	verifyEvent,
@@ -796,29 +795,6 @@ const photoSchema = z.object({
 	mediaType: z.enum(['image/jpeg', 'image/png', 'image/webp']),
 	/** The photographer's local date, so "laurdag 14." resolves to the right year. */
 	today: z.string().regex(/^\d{4}-\d{2}-\d{2}$/)
-});
-
-/**
- * Read a photographed poster into a draft. The result pre-fills the form — it is never submitted
- * on the person's behalf. That review step is what makes reading a poster with a model safe.
- */
-export const extractFromPhoto = command(photoSchema, async ({ imageBase64, mediaType, today }) => {
-	if (!verifierEnabled()) {
-		return { ok: false as const, error: 'Bilettolking er ikkje slått på her.' };
-	}
-	try {
-		const draft = await extractPoster(imageBase64, mediaType, today);
-		return { ok: true as const, draft };
-	} catch (error) {
-		// A failed extraction is not a failed submission — the person types it in instead.
-		return {
-			ok: false as const,
-			error:
-				error instanceof Error && error.name === 'TimeoutError'
-					? 'Tolkinga tok for lang tid. Fyll inn skjemaet under.'
-					: 'Kunne ikkje lese plakaten. Fyll inn skjemaet under.'
-		};
-	}
 });
 
 /**

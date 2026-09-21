@@ -8,7 +8,7 @@ from fastapi.responses import StreamingResponse
 from .appeal import JURORS, QUORUM, judge_appeal, juror_by_id
 from .config import Config, load_config
 from .crop import suggest_crop
-from .extract import extract_page, extract_poster
+from .extract import extract_page, extract_poster, extract_poster_stream
 from .improve import improve as run_improve
 from .improve import improve_stream as run_improve_stream
 from .kurator import curate as run_curate
@@ -64,6 +64,39 @@ def create_app(config: Config | None = None, factory: AgentFactory | None = None
         except Exception as exc:
             log.exception("extraction failed")
             raise HTTPException(status_code=502, detail=f"extraction failed: {exc}") from exc
+
+    @app.post("/extract/stream")
+    async def extract_streaming(request: ExtractRequest) -> StreamingResponse:
+        """The same read as `/extract`, reported field by field as the model writes them.
+
+        This is the longest single wait in the product — one vision call, five to fifteen seconds —
+        and the page in front of it could say nothing true about what was happening, so it narrated
+        stages on a timer. A strict-schema answer arrives in schema order, so there is a real answer
+        to show: the title is finished while the organiser does not yet exist.
+
+        `/extract` above is unchanged and stays unchanged. The extraction evals score that function
+        against the live model, and ADR 0016 kept its wire payload byte-for-byte so nothing measured
+        would have to be re-measured. This is the same agent, prompt and schema over a different
+        transport; `tests/test_extract.py` asserts the two reassemble identically.
+
+        A `field` frame is for reading. Only `event` — validated, whole — may reach a form.
+        """
+        if len(request.image_base64) > MAX_IMAGE_BASE64_BYTES:
+            raise HTTPException(status_code=413, detail="image too large; downscale before sending")
+
+        async def frames():
+            try:
+                async for kind, payload in extract_poster_stream(factory, request):
+                    yield f"event: {kind}\ndata: {payload.model_dump_json()}\n\n"
+            except Exception as exc:
+                log.exception("streamed extraction failed")
+                yield f'event: error\ndata: {{"detail": "{type(exc).__name__}"}}\n\n'
+
+        return StreamingResponse(
+            frames(),
+            media_type="text/event-stream",
+            headers={"cache-control": "no-store", "x-accel-buffering": "no"},
+        )
 
     @app.post("/crop", response_model=CropSuggestion)
     async def crop(request: CropRequest) -> CropSuggestion:

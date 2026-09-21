@@ -338,6 +338,20 @@ export type CropSuggestion = z.infer<typeof cropSuggestionSchema>;
  * that reads this may put it in front of an accept button. The only acceptable text is the one in
  * `improveSuggestionSchema`, which is what survived every rule (ADR 0017).
  */
+/**
+ * One field of a draft, the moment the reader finished writing it.
+ *
+ * A report and never a value to use: it exists to be read while the rest of the answer is still
+ * arriving. The typed, validated `ExtractedEvent` at the end is the only thing that may reach a
+ * form, and only a person pressing a button puts it there.
+ */
+export const extractedFieldSchema = z.object({
+	name: z.string().min(1),
+	value: z.string().default('')
+});
+
+export type ExtractedField = z.infer<typeof extractedFieldSchema>;
+
 export const improveDraftSchema = z.object({
 	description: z.string().default(''),
 	missing: z.array(z.string()).default([])

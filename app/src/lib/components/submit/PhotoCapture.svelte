@@ -1,8 +1,9 @@
 <script lang="ts">
 	import { CHECK_COUNT_WORD } from '../../checks.ts';
-	import { extractFromPhoto } from '../../submit.remote';
 	import { downscaleForUpload, type CapturedImage } from '../../poster.ts';
-	import type { ExtractedEvent } from '@hendingar/core/validation';
+	import type { ExtractedEvent, ExtractedField } from '@hendingar/core/validation';
+	import { CATEGORY_SLUGS } from '@hendingar/core/taxonomy';
+	import { RECURRENCE_FREQUENCIES, WEEKDAYS } from '@hendingar/core/recurrence';
 
 	let {
 		enabled = true,
@@ -45,34 +46,47 @@
 	};
 
 	/**
-	 * What the wait is actually doing, told in order.
+	 * What the model has finished writing, in the order it wrote it.
 	 *
-	 * The model gives us one answer at the end and nothing in between — there is no token stream to
-	 * follow for a strict-schema extraction — so this narrates the stages we genuinely know the
-	 * request passes through rather than inventing sub-progress. It changes because a line of text
-	 * that never moves for fifteen seconds is how a page reads as hung.
+	 * This replaced a narration on a timer — "Les tittel og dato…" at three seconds, whether or not
+	 * that had happened — and the note beside it saying there was no token stream to follow for a
+	 * strict-schema extraction. There is. The answer is emitted in schema order, so the title is
+	 * complete and correct while the organiser does not yet exist, and `partial.completed_fields` in
+	 * the service reports a value only once it has been closed. Nothing shown here is ever corrected
+	 * afterwards.
+	 *
+	 * **These are for reading and never for filling in.** `onextract` is called once, with the
+	 * validated whole, and the person still reviews every field before anything is sent — that
+	 * review step is what makes reading somebody's poster with a model defensible. A panel that
+	 * populated inputs as the tokens arrived would have taken it away.
 	 */
-	const READING_STEPS: readonly { at: number; text: string }[] = [
-		{ at: 0, text: 'Sender biletet til tolkinga…' },
-		{ at: 3, text: 'Les tittel og dato…' },
-		{ at: 7, text: 'Finn stad og arrangør…' },
-		{ at: 12, text: 'Ryddar og set saman forslaget…' },
-		{ at: 20, text: 'Tek lengre tid enn vanleg. Vi held på.' }
-	];
+	let fields = $state<ExtractedField[]>([]);
 
-	const readingStep = $derived(
-		[...READING_STEPS].reverse().find((step) => elapsed >= step.at)?.text ?? READING_STEPS[0]!.text
-	);
+	/** What each field is called where a reader can see it. Not the schema's name for it. */
+	const FIELD_LABEL: Record<string, string> = {
+		title: 'Tittel',
+		description: 'Skildring',
+		category: 'Kategori',
+		date: 'Dato',
+		startTime: 'Frå',
+		endTime: 'Til',
+		venueName: 'Stad',
+		municipality: 'Kommune',
+		organizerName: 'Arrangør',
+		ticketUrl: 'Billettar'
+	};
 
 	/**
-	 * A bar that approaches the end without reaching it.
+	 * How far along, from what has actually arrived.
 	 *
-	 * Extraction usually lands between five and fifteen seconds, and we cannot know where in that
-	 * range a given request will fall — so the fill follows `1 - 0.5^(t/8)`, which is fast early,
-	 * slows as it goes, and never claims to be finished. A bar that sticks at 90% is a lie a reader
-	 * learns to distrust; one that keeps creeping is honest about "still working".
+	 * The bar used to follow `1 - 0.5^(t/8)` — an elapsed-time curve that slowed as it went and
+	 * never reached the end, because we could not know where in a five-to-fifteen-second range a
+	 * given read would land. We can now: a poster answers with six or seven of these fields, so
+	 * counting them is a measurement rather than a shape. It still never claims to be finished —
+	 * the last step is the validated object, which arrives after the last field.
 	 */
-	const progress = $derived(Math.round((1 - Math.pow(0.5, elapsed / 8)) * 100));
+	const EXPECTED_FIELDS = 7;
+	const progress = $derived(Math.min(95, Math.round((fields.length / EXPECTED_FIELDS) * 100)));
 
 	const busy = $derived(phase === 'shrinking' || phase === 'reading');
 
@@ -120,6 +134,114 @@
 		if (file) handle(file);
 	}
 
+	/*
+	 * Read out of the frame by hand rather than cast into shape.
+	 *
+	 * The route has already validated every frame against the shared Zod schema, so this is not a
+	 * second guard against the service — it is how the values get a type without an `as` (CLAUDE.md
+	 * rule 4) and without pulling the schemas, and Zod with them, into the browser bundle.
+	 */
+	function readField(data: unknown): ExtractedField | null {
+		if (typeof data !== 'object' || data === null) return null;
+		if (!('name' in data) || typeof data.name !== 'string') return null;
+		if (!('value' in data) || typeof data.value !== 'string') return null;
+		return { name: data.name, value: data.value };
+	}
+
+	/*
+	 * The finished draft, read out field by field.
+	 *
+	 * Long, and deliberately so. The alternative is one `as ExtractedEvent` over data the route has
+	 * already validated — which would be true today and is exactly the escape hatch CLAUDE.md rule 4
+	 * refuses, because it stops being true the moment either side of the boundary moves. Validating
+	 * again with the Zod schema is the other option and would put Zod in the browser bundle for the
+	 * first time, on a page most visitors open and most never use this panel on.
+	 *
+	 * Null for anything missing or of the wrong type, so a malformed frame degrades to a form the
+	 * person fills in themselves — which is this whole path's promise anyway.
+	 */
+	function text(source: object, key: string): string | null {
+		return key in source && typeof (source as Record<string, unknown>)[key] === 'string'
+			? ((source as Record<string, unknown>)[key] as string)
+			: null;
+	}
+
+	function readEvent(data: unknown): ExtractedEvent | null {
+		if (typeof data !== 'object' || data === null) return null;
+		if (!('confidence' in data) || typeof data.confidence !== 'number') return null;
+
+		return {
+			title: text(data, 'title'),
+			description: text(data, 'description'),
+			category: readCategory(data),
+			date: text(data, 'date'),
+			startTime: text(data, 'startTime'),
+			endTime: text(data, 'endTime'),
+			recurrence: readRecurrence(data),
+			venueName: text(data, 'venueName'),
+			municipality: text(data, 'municipality'),
+			organizerName: text(data, 'organizerName'),
+			ticketUrl: text(data, 'ticketUrl'),
+			confidence: data.confidence,
+			unreadable: 'unreadable' in data ? strings(data.unreadable) : [],
+			dates: 'dates' in data ? strings(data.dates) : [],
+			note: text(data, 'note') ?? '',
+			thumbnail: readThumbnail(data)
+		};
+	}
+
+	function strings(value: unknown): string[] {
+		return Array.isArray(value)
+			? value.filter((item): item is string => typeof item === 'string')
+			: [];
+	}
+
+	function readCategory(data: object): ExtractedEvent['category'] {
+		const slug = text(data, 'category');
+		return slug !== null && (CATEGORY_SLUGS as readonly string[]).includes(slug)
+			? (slug as ExtractedEvent['category'])
+			: null;
+	}
+
+	/*
+	 * The two nested structures, each read only when it is whole.
+	 *
+	 * Both drive behaviour rather than display — `recurrence` opens the repeat fields and decides
+	 * how many evenings get created, `thumbnail` decides how the card is cropped — so a partly-read
+	 * one is worse than none. Either is a perfectly ordinary null: most posters state a single date
+	 * and the crop is best-effort by design.
+	 */
+	function readRecurrence(data: object): ExtractedEvent['recurrence'] {
+		const value = 'recurrence' in data ? (data as Record<string, unknown>).recurrence : null;
+		if (typeof value !== 'object' || value === null) return null;
+		const freq = text(value, 'freq');
+		if (freq === null || !(RECURRENCE_FREQUENCIES as readonly string[]).includes(freq)) return null;
+		const raw = value as Record<string, unknown>;
+		return {
+			freq: freq as (typeof RECURRENCE_FREQUENCIES)[number],
+			interval: typeof raw.interval === 'number' ? raw.interval : 1,
+			// Narrowed against the taxonomy rather than to `number`: the schema's weekdays are 1–7,
+			// and a model that answered 0 or 8 would otherwise reach the recurrence expander as a
+			// day that does not exist. The type was telling us that (CLAUDE.md rule 4).
+			weekdays: Array.isArray(raw.weekdays)
+				? raw.weekdays.filter((d): d is (typeof WEEKDAYS)[number] =>
+						(WEEKDAYS as readonly number[]).includes(d as number)
+					)
+				: [],
+			nth: typeof raw.nth === 'number' ? raw.nth : null,
+			until: text(value, 'until')
+		};
+	}
+
+	function readThumbnail(data: object): ExtractedEvent['thumbnail'] {
+		const value = 'thumbnail' in data ? (data as Record<string, unknown>).thumbnail : null;
+		if (typeof value !== 'object' || value === null) return null;
+		const raw = value as Record<string, unknown>;
+		const box = [raw.x, raw.y, raw.width, raw.height];
+		if (!box.every((n): n is number => typeof n === 'number')) return null;
+		return { x: box[0]!, y: box[1]!, width: box[2]!, height: box[3]! };
+	}
+
 	async function handle(file: File) {
 		if (!file.type.startsWith('image/')) {
 			phase = 'error';
@@ -128,6 +250,7 @@
 		}
 		phase = 'shrinking';
 		message = '';
+		fields = [];
 		startTimer();
 		try {
 			const image = await downscaleForUpload(file);
@@ -145,16 +268,61 @@
 
 			// The photographer's local date, so "laurdag 14." resolves to the right year.
 			const today = new Date().toLocaleDateString('sv-SE'); // sv-SE renders as YYYY-MM-DD
-			const result = await extractFromPhoto({ imageBase64: base64, mediaType, today });
 
-			if (!result.ok) {
+			const response = await fetch('/send-inn/lesing', {
+				method: 'POST',
+				headers: { 'content-type': 'application/json' },
+				body: JSON.stringify({ imageBase64: base64, mediaType, today })
+			});
+
+			if (!response.ok || !response.body) {
 				phase = 'error';
-				message = result.error;
+				message = 'Kunne ikkje lese plakaten. Fyll inn skjemaet under.';
 				return;
 			}
+
+			/*
+			 * Read by hand rather than with `EventSource`, which only speaks GET — and this is a POST
+			 * carrying the photograph. Frames are separated by a blank line, so whatever follows the
+			 * last one is incomplete and stays in the buffer. Same reader as `AppealPanel.svelte`.
+			 */
+			const reader = response.body.getReader();
+			const decoder = new TextDecoder();
+			let buffer = '';
+			let draft: ExtractedEvent | null = null;
+
+			for (;;) {
+				const { value, done } = await reader.read();
+				if (done) break;
+				buffer += decoder.decode(value, { stream: true });
+
+				let split = buffer.indexOf('\n\n');
+				while (split !== -1) {
+					const frame = buffer.slice(0, split);
+					buffer = buffer.slice(split + 2);
+					const name = /^event: (.+)$/m.exec(frame)?.[1];
+					const raw = /^data: (.+)$/m.exec(frame)?.[1];
+					if (name && raw) {
+						const data: unknown = JSON.parse(raw);
+						if (name === 'field') {
+							const field = readField(data);
+							if (field) fields = [...fields, field];
+						} else if (name === 'event') draft = readEvent(data);
+						else if (name === 'error') draft = null;
+					}
+					split = buffer.indexOf('\n\n');
+				}
+			}
+
+			if (!draft) {
+				phase = 'error';
+				message = 'Kunne ikkje lese plakaten. Fyll inn skjemaet under.';
+				return;
+			}
+
 			phase = 'idle';
-			onextract(result.draft, preview);
-			message = result.draft.note;
+			onextract(draft, preview);
+			message = draft.note;
 		} catch (error) {
 			phase = 'error';
 			message =
@@ -237,13 +405,38 @@
 						aria-valuenow={phase === 'reading' ? progress : undefined}
 						style:--fill="{phase === 'reading' ? progress : 8}%"
 					></div>
-					<p class="prog__text" aria-live="polite">
-						{phase === 'reading' ? readingStep : STAGE_TEXT.shrinking}
+					<p class="prog__text">
+						{phase === 'reading' ? STAGE_TEXT.reading : STAGE_TEXT.shrinking}
 						<span class="prog__t">{elapsed}s</span>
 					</p>
 				</div>
 			{:else if message}
 				<p class="capture__status" aria-live="polite">{message}</p>
+			{/if}
+
+			{#if fields.length > 0}
+				<!--
+					What the model has actually written, as it writes it.
+
+					Outside the `busy` branch on purpose, so it survives the read it belongs to. A read
+					that dies halfway leaves whatever was already finished on screen — "we got this
+					far" is worth more to somebody deciding whether to retry or type it in than an
+					error alone, and every line of it was complete when it was shown.
+
+					`aria-live="polite"` because a field landing is worth announcing and never urgent,
+					and this sits inside a form somebody may be typing in.
+
+					These are shown, never used. `onextract` is called once, with the validated whole,
+					and the person reviews every field before anything is sent.
+				-->
+				<dl class="read" aria-live="polite">
+					{#each fields as field (field.name)}
+						<div class="read__row">
+							<dt>{FIELD_LABEL[field.name] ?? field.name}</dt>
+							<dd>{field.value}</dd>
+						</div>
+					{/each}
+				</dl>
 			{/if}
 
 			{#if phase === 'error' && preview}
@@ -355,6 +548,39 @@
 		font-family: var(--font-mono);
 		font-size: var(--step-micro);
 		color: var(--peach-dim);
+	}
+
+	/*
+	 * The fields as they land.
+	 *
+	 * A definition list because that is what it is: a label and the value read off the poster. It
+	 * grows downward while the read runs, which is the whole point — the answer assembling is the
+	 * progress indicator, and by the time the request finishes most people have already read it.
+	 */
+	.read {
+		margin: 0.75rem 0 0;
+		display: grid;
+		gap: 0.3rem;
+		max-inline-size: 60ch;
+	}
+	.read__row {
+		display: grid;
+		grid-template-columns: 6rem minmax(0, 1fr);
+		gap: 0.75rem;
+		align-items: baseline;
+	}
+	.read dt {
+		font-family: var(--font-mono);
+		font-size: var(--step-micro);
+		text-transform: uppercase;
+		letter-spacing: 0.06em;
+		color: var(--peach-dim);
+	}
+	.read dd {
+		margin: 0;
+		font-size: 0.9375rem;
+		/* A description can be a paragraph; it must not push the panel sideways. */
+		overflow-wrap: anywhere;
 	}
 
 	/* A small travelling tick, so the caption reads as "in progress" and not as a label. */
