@@ -657,3 +657,65 @@ class TestARuleFailureStopsBeforeTheModel:
         reported = {c.check for c in response.checks}
         assert "categorisation" in reported
         assert len(reported) == 6
+
+
+class TestWhatTheCallsCost:
+    """`/datasamling` can account for every imported event and says nothing about the judging half.
+
+    This service has no database — it takes a request and returns a verdict — so the only way what
+    the agents did can be published is for it to travel back on the verdict. Middleware in
+    `llm.py` measures it, which is the point: there are six places an agent is built here and none
+    of them should have to remember to time itself.
+    """
+
+    @staticmethod
+    def _payload() -> str:
+        return json.dumps({"verdict": "pass", "confidence": 90, "reasoning": "Ser ekte ut."})
+
+    async def test_the_calls_behind_a_verdict_are_reported(self):
+        fake = FakeOpenAI(self._payload())
+        response = await verify(factory_for(fake), _request(source_url="https://example.no/x"))
+
+        assert {call.agent for call in response.calls} == {"plausibility", "categorisation"}
+        assert all(call.duration_ms >= 0 for call in response.calls)
+        assert all(call.finish_reason == "stop" for call in response.calls)
+
+    async def test_tokens_are_null_rather_than_guessed_at(self):
+        """The fake reports no usage, which is also what a provider may do. Null, never zero.
+
+        Zero is a measurement. An average over rows that recorded a call that never reported its
+        size would be an average of a number nobody produced.
+        """
+        fake = FakeOpenAI(self._payload())
+        response = await verify(factory_for(fake), _request(source_url="https://example.no/x"))
+
+        assert all(call.tokens is None for call in response.calls)
+
+    async def test_a_submission_a_rule_refused_cost_nothing(self):
+        """And says so. An empty list here is the measurement, not a gap in it."""
+        fake = FakeOpenAI(self._payload())
+        response = await verify(factory_for(fake), _request(municipality="Bergen"))
+
+        assert response.calls == []
+
+    async def test_no_model_configured_costs_nothing(self):
+        assert (await verify(None, _request())).calls == []
+
+    async def test_two_submissions_at_once_do_not_share_a_tally(self):
+        """The property the `ContextVar` is for, and the one an attribute would have got wrong.
+
+        One `AgentFactory` is shared across every request on this event loop. A counter hanging off
+        it would hand whoever finished second the sum of both.
+        """
+        import asyncio
+
+        fake = FakeOpenAI(self._payload())
+        factory = factory_for(fake)
+
+        first, second = await asyncio.gather(
+            verify(factory, _request(source_url="https://example.no/a")),
+            verify(factory, _request(source_url="https://example.no/b")),
+        )
+
+        assert len(first.calls) == 2
+        assert len(second.calls) == 2

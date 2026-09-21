@@ -19,15 +19,20 @@ documents as safe.
 """
 
 import asyncio
+import contextvars
 import logging
+import time
+from collections.abc import Awaitable, Callable, Iterator
+from contextlib import contextmanager
 from typing import TYPE_CHECKING
 
-from agent_framework import Agent, AgentResponse
+from agent_framework import Agent, AgentResponse, ChatContext, chat_middleware
 from agent_framework.openai import OpenAIChatCompletionClient
 from azure.identity import AzureCliCredential, DefaultAzureCredential, ManagedIdentityCredential
 from pydantic import BaseModel
 
 from .config import Config
+from .models import AgentCall
 
 if TYPE_CHECKING:
     from agent_framework import Message
@@ -57,6 +62,28 @@ def get_credential(client_id: str | None = None, tenant_id: str | None = None):
     if tenant_id:
         return AzureCliCredential(tenant_id=tenant_id)
     return DefaultAzureCredential()
+
+
+_CALLS: contextvars.ContextVar[list[AgentCall] | None] = contextvars.ContextVar(
+    "verifier_agent_calls", default=None
+)
+
+
+@contextmanager
+def recording() -> Iterator[list[AgentCall]]:
+    """Collect every agent call made inside this block.
+
+    A `ContextVar` rather than an attribute on the factory, because the factory is shared across
+    concurrent requests on one event loop and an attribute would mix two submissions' numbers
+    together. The context copies into the tasks an orchestration spawns, so a fan-out is counted
+    correctly and a request that forgot to open a block simply records nothing.
+    """
+    calls: list[AgentCall] = []
+    token = _CALLS.set(calls)
+    try:
+        yield calls
+    finally:
+        _CALLS.reset(token)
 
 
 class AgentFactory:
@@ -105,6 +132,7 @@ class AgentFactory:
                 "seed": SEED,
                 "max_tokens": max_tokens,
             },
+            middleware=[_recorder(name)],
         )
 
     async def run(self, agent: Agent, message: "str | Message") -> AgentResponse:
@@ -146,3 +174,55 @@ class AgentFactory:
         async with asyncio.timeout(self._config.request_timeout_seconds):
             async for event in workflow.run(task, stream=True):
                 yield event
+
+
+def _recorder(name: str):
+    """Chat middleware that times one agent's call and files it under that agent's name.
+
+    The name is closed over rather than read from the context, because the context describes a
+    chat request and knows nothing about which of our six agents made it — and the name is the
+    whole value here. `plausibility` and `categorisation` are asked the same way about the same
+    record, so an aggregate that could not tell them apart would answer nothing.
+    """
+
+    @chat_middleware
+    async def record(context: ChatContext, call_next: Callable[[], Awaitable[None]]) -> None:
+        started = time.monotonic()
+        try:
+            await call_next()
+        finally:
+            # In a `finally` so a call that failed is still counted — a check that keeps timing
+            # out is exactly what an aggregate should be able to show. The work is in a function
+            # of its own because a `return` inside a `finally` silences the exception passing
+            # through it, which would turn an accounting problem into a submission that appeared
+            # to succeed.
+            _remember(name, context, started)
+
+    return record
+
+
+def _remember(name: str, context: ChatContext, started: float) -> None:
+    """File one call, reading nothing the provider did not actually send.
+
+    Every value is checked rather than trusted, so this cannot raise: it runs on the way out of a
+    model call, and an exception here would replace a verdict with an accounting error. Rule 8
+    puts that the other way round — nothing about verification may cost somebody their submission,
+    and least of all the part that is only counting.
+    """
+    calls = _CALLS.get()
+    if calls is None:
+        return
+
+    result = getattr(context, "result", None)
+    usage = getattr(result, "usage_details", None)
+    total = usage.get("total_token_count") if isinstance(usage, dict) else None
+    finish = getattr(result, "finish_reason", None)
+
+    calls.append(
+        AgentCall(
+            agent=name,
+            duration_ms=max(0, round((time.monotonic() - started) * 1000)),
+            tokens=total if isinstance(total, int) else None,
+            finish_reason=str(finish) if finish is not None else None,
+        )
+    )

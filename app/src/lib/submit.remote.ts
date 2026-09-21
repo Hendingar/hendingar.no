@@ -39,7 +39,8 @@ import {
 	extractPoster,
 	suggestCrop,
 	verifierEnabled,
-	verifyEvent
+	verifyEvent,
+	type AgentCall
 } from './server/verifier';
 import { fetchPublicPage, type SafeFetchFailure } from './server/safe-fetch';
 import { extractEventFromPage } from './server/page-event';
@@ -1353,7 +1354,8 @@ async function contributeToEvent(
 					confidence: check.confidence,
 					reasoning: check.reasoning,
 					model: check.model,
-					deterministic: check.deterministic
+					deterministic: check.deterministic,
+					...costOf(verdict, check.check)
 				}))
 			);
 		}
@@ -1445,6 +1447,23 @@ async function contributeToEvent(
  * before it can read `outcome` — and a field one branch forgets becomes a property that silently
  * does not exist on some results. `sourceUrl` was already missing from one of them.
  */
+/**
+ * What one check's model call cost, matched to the check by the agent's name.
+ *
+ * The verifier names each agent after the check it answers, so the join is on that name and not on
+ * position — the two model checks run concurrently and come back in whichever order they finish.
+ * A check with no matching call gets nothing written, which is every rule check and every check a
+ * rule refused before the model was reached. Null rather than zero, deliberately: an unknown and a
+ * measured nothing are different facts, and `/datasamling` averages only what was measured.
+ */
+function costOf(
+	verdict: { calls: AgentCall[] },
+	check: string
+): { durationMs: number; tokens: number | null } | Record<string, never> {
+	const call = verdict.calls.find((c) => c.agent === check);
+	return call ? { durationMs: call.durationMs, tokens: call.tokens } : {};
+}
+
 export const submitEvent = form(eventFormSchema, async (submission): Promise<SubmitResult> => {
 	const database = db();
 	// A poster gives a wall clock, not an instant. Resolve it in the venue's zone, not the
@@ -1786,7 +1805,8 @@ export const submitEvent = form(eventFormSchema, async (submission): Promise<Sub
 				confidence: check.confidence,
 				reasoning: check.reasoning,
 				model: check.model,
-				deterministic: check.deterministic
+				deterministic: check.deterministic,
+				...costOf(verdict, check.check)
 			}))
 		);
 	}

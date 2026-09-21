@@ -35,10 +35,29 @@ export type CheckResult = {
 	model: string | null;
 };
 
+/**
+ * One model call, as the verifier's middleware measured it.
+ *
+ * The service has no database — it takes a request and returns a verdict — so the only way this
+ * can be published is for it to travel back on the verdict and be stored here. `/datasamling` can
+ * say exactly how every source is collected and, until this existed, nothing whatever about what
+ * the agents did.
+ */
+export type AgentCall = {
+	/** The check the call was for: `plausibility` or `categorisation`. */
+	agent: string;
+	durationMs: number;
+	/** Null when the provider reported no usage. Never guessed at. */
+	tokens: number | null;
+	finishReason: string | null;
+};
+
 export type VerifyResponse = {
 	checks: CheckResult[];
 	recommendation: 'publish' | 'review' | 'reject';
 	summary: string;
+	/** Empty whenever no model was asked — every rule check, and every rule-refused submission. */
+	calls: AgentCall[];
 };
 
 export function verifierEnabled(): boolean {
@@ -384,14 +403,25 @@ export async function verifyEvent(input: VerifyInput): Promise<VerifyResponse> {
 			],
 			recommendation: 'review',
 			summary:
-				'Kontrollen var ikkje tilgjengeleg, så hendinga blei ikkje lagt ut. Ho ligg i køen din.'
+				'Kontrollen var ikkje tilgjengeleg, så hendinga blei ikkje lagt ut. Ho ligg i køen din.',
+			// Nothing was asked, so nothing was spent. An empty list is the measurement.
+			calls: []
 		};
 	};
 
 	if (!VERIFIER_URL) return unavailable('VERIFIER_URL is not set');
 
 	try {
-		return await post<VerifyResponse>(
+		const raw = await post<
+			Omit<VerifyResponse, 'calls'> & {
+				calls?: {
+					agent: string;
+					duration_ms: number;
+					tokens: number | null;
+					finish_reason: string | null;
+				}[];
+			}
+		>(
 			'/verify',
 			{
 				title: input.title,
@@ -412,6 +442,16 @@ export async function verifyEvent(input: VerifyInput): Promise<VerifyResponse> {
 			},
 			VERIFY_TIMEOUT_MS
 		);
+		return {
+			...raw,
+			// The service speaks snake_case (Python); everything above this line is camelCase.
+			calls: (raw.calls ?? []).map((call) => ({
+				agent: call.agent,
+				durationMs: call.duration_ms,
+				tokens: call.tokens,
+				finishReason: call.finish_reason
+			}))
+		};
 	} catch (error) {
 		return unavailable(error instanceof Error ? error.message : String(error));
 	}

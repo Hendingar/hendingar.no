@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { VERIFICATION_CHECKS, VERIFICATION_CHECK_LABELS } from '@hendingar/core/verification';
 
 /** The front-page grid and the status board — both must be real without JavaScript. */
 
@@ -308,4 +309,35 @@ test('no horizontal overflow on the new pages', async ({ page }) => {
 		);
 		expect(overflow, `${path} at 320px`).toBe(0);
 	}
+});
+
+test('the status board accounts for the checks, not only the sources', async ({ request }) => {
+	/*
+	 * /datasamling could say exactly how every source is collected and nothing whatever about the
+	 * half of the pipeline that judges — so the page that exists to show its work showed half of it.
+	 *
+	 * Requested without a browser for the same reason as every other assertion on this page: it is
+	 * built on a top-level `await`, and a query moved behind a `.loading` flag would put a
+	 * placeholder in the HTML and ship no data (CLAUDE.md). A crawler and a no-JS reader would find
+	 * the heading and an empty box.
+	 */
+	const html = await (await request.get('/datasamling')).text();
+	expect(html).not.toContain('Lastar…');
+
+	const section = html.match(/<section[^>]*aria-labelledby="h-checks"[\s\S]*?<\/section>/)?.[0];
+	expect(section, 'the checks section must be server-rendered').toBeTruthy();
+	expect(section).toContain('Kva kontrollane har avgjort');
+
+	/*
+	 * Either a row per check or the sentence saying there is nothing to count — never neither.
+	 *
+	 * Written to hold in both states on purpose. Whether this database has had a submission
+	 * depends on which specs ran first, and a spec that only passes in one order is worse than no
+	 * spec (CLAUDE.md rule 6).
+	 */
+	const counted = VERIFICATION_CHECKS.every((check) =>
+		section!.includes(VERIFICATION_CHECK_LABELS[check])
+	);
+	const empty = section!.includes('ingenting å telje');
+	expect(counted || empty, 'the ledger must name every check or say it has nothing').toBe(true);
 });

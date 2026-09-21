@@ -203,11 +203,37 @@ class CheckResult(BaseModel):
     model: str | None = None
 
 
+#: What one model call cost, recorded for every call this service makes.
+#:
+#: Collected by middleware rather than at the call sites, which is the point: there are six places
+#: an agent is built and none of them should have to remember to time itself. `/datasamling` is a
+#: public status board that can say exactly how each source is collected and nothing at all about
+#: what the agents did — this is the missing half, and both ADR 0017 and ADR 0018 name a
+#: falsification condition that nobody could check because nothing was counted.
+class AgentCall(BaseModel):
+    """One agent, one call."""
+
+    agent: str
+    duration_ms: int
+    #: Null when the provider did not report usage, which is the case for a streamed run without
+    #: `include_usage` and for every test that fakes the socket. Never guessed at.
+    tokens: int | None = None
+    #: `stop`, `length`, `content_filter` — why the model stopped. Worth publishing: a check that
+    #: keeps being cut off is a different problem from one that keeps saying no.
+    finish_reason: str | None = None
+
+
 class VerifyResponse(BaseModel):
     checks: list[CheckResult]
     # 'published' only when every check passes with enough confidence; otherwise a human decides.
     recommendation: Literal["publish", "review", "reject"]
     summary: str
+    #: What the model calls behind this verdict cost, one row per call.
+    #:
+    #: Reported rather than logged, because the caller is the only thing here with a database and
+    #: `/datasamling` is the only page that can publish it. Empty whenever no model was asked —
+    #: every rule check, and every submission a rule refused before the model calls were reached.
+    calls: list[AgentCall] = Field(default_factory=list)
 
 
 class CuratorCandidate(BaseModel):
