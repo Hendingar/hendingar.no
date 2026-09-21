@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 import { VERIFICATION_CHECK_LABELS, VERIFICATION_CHECKS } from '@hendingar/core/verification';
 import { CHECK_COUNT_WORD_LEADING, PIPELINE } from '../src/lib/checks.ts';
 
@@ -115,6 +115,105 @@ test('an unreachable writing help is a sentence, never a hang', async ({ page })
 	// And the point of that promise: whatever they typed is still theirs, untouched.
 	await expect(page.locator('#description')).toHaveValue('film på laurdag, ta med ungane');
 	await expect(page.getByRole('button', { name: /Få hjelp med teksten/ })).toBeEnabled();
+});
+
+/*
+ * The two specs below serve the writing help a canned stream.
+ *
+ * CI has no verifier, so the only thing an end-to-end run could otherwise assert about this panel
+ * is that it fails politely — which is the spec above, and which was the whole of its coverage.
+ * Fulfilling the route ourselves tests the half that is actually new: that the browser reads SSE
+ * frames as they arrive, and renders the argument rather than a spinner.
+ *
+ * The bytes are exactly what `services/verifier` writes; `tests/test_app.py` asserts that shape
+ * from the other side, so the two meet in the middle rather than agreeing with themselves.
+ */
+function sse(frames: [string, unknown][]): string {
+	return frames
+		.map(([event, data]) => `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`)
+		.join('');
+}
+
+async function fillEnoughToAsk(page: Page) {
+	await page.goto('/send-inn');
+	await page.locator('#title').fill('Bygdekino i Sagvåg');
+	await page.locator('#category').selectOption('show');
+	await page.locator('#date').fill('2027-05-19');
+	await page.locator('#startTime').fill('18:00');
+	await page.locator('#description').fill('film på laurdag, ta med ungane');
+}
+
+test('the writing help shows the turns, not a spinner', async ({ page }) => {
+	await page.route('**/send-inn/skrivehjelp', async (route) => {
+		await route.fulfill({
+			status: 200,
+			headers: { 'content-type': 'text/event-stream' },
+			body: sse([
+				['draft', { description: 'Ein årviss bygdekino, gratis for alle.', missing: [] }],
+				['review', { approved: false, problems: ['«gratis» står ikkje i innsendinga'] }],
+				[
+					'draft',
+					{ description: 'Bygdekino i grendahuset i Sagvåg.', missing: ['kva det kostar'] }
+				],
+				['review', { approved: true, problems: [] }],
+				[
+					'suggestion',
+					{
+						description: 'Bygdekino i grendahuset i Sagvåg.',
+						removed: ['«gratis» står ikkje i innsendinga'],
+						missing: ['kva det kostar'],
+						note: 'Framlegget byggjer berre på det du har skrive.',
+						rounds: 4
+					}
+				]
+			])
+		});
+	});
+
+	await fillEnoughToAsk(page);
+	await page.getByRole('button', { name: /Få hjelp med teksten/ }).click();
+
+	// Both turns of the argument, including the draft that did not survive it.
+	await expect(page.getByText('Ein årviss bygdekino, gratis for alle.')).toBeVisible();
+	await expect(page.getByText('«gratis» står ikkje i innsendinga').first()).toBeVisible();
+	// And the verdict, with the accept button that only the final suggestion ever gets.
+	await expect(page.getByRole('button', { name: /Bruk denne teksten/ })).toBeVisible();
+});
+
+test('a struck draft is shown but can never be accepted', async ({ page }) => {
+	/*
+	 * The one way streaming could have made this feature less safe: putting a sentence on screen
+	 * and then deciding it was not allowed. A turn is a report — the accept button belongs to the
+	 * final suggestion alone, and here there is none.
+	 */
+	await page.route('**/send-inn/skrivehjelp', async (route) => {
+		await route.fulfill({
+			status: 200,
+			headers: { 'content-type': 'text/event-stream' },
+			body: sse([
+				['draft', { description: 'Ein årviss bygdekino, gratis for alle.', missing: [] }],
+				['review', { approved: false, problems: ['«gratis» står ikkje i innsendinga'] }],
+				[
+					'suggestion',
+					{
+						description: null,
+						removed: ['«gratis» står ikkje i innsendinga'],
+						missing: [],
+						note: 'Vi skreiv eit framlegg, men faktasjekken held det tilbake.',
+						rounds: 2
+					}
+				]
+			])
+		});
+	});
+
+	await fillEnoughToAsk(page);
+	await page.getByRole('button', { name: /Få hjelp med teksten/ }).click();
+
+	await expect(page.getByText('Ein årviss bygdekino, gratis for alle.')).toBeVisible();
+	await expect(page.getByRole('button', { name: /Bruk denne teksten/ })).toHaveCount(0);
+	// And what they wrote is still theirs.
+	await expect(page.locator('#description')).toHaveValue('film på laurdag, ta med ungane');
 });
 
 /**

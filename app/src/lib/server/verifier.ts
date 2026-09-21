@@ -4,9 +4,13 @@ import {
 	cropSuggestionSchema,
 	curatorSelectionSchema,
 	extractedEventSchema,
+	improveDraftSchema,
+	improveReviewSchema,
 	improveSuggestionSchema,
 	type CuratorSelection,
 	type ExtractedEvent,
+	type ImproveDraft,
+	type ImproveReview,
 	type ImproveSuggestion,
 	type ThumbnailCrop
 } from '@hendingar/core/validation';
@@ -170,21 +174,40 @@ export async function extractPage(
 }
 
 /**
- * A better description for a submission, written and then audited by the verifier (ADR 0017).
+ * A better description for a submission, written and then audited by the verifier (ADR 0017) —
+ * reported turn by turn, because the turns are the answer as often as the text is.
+ *
+ * `description` on the final suggestion is null far more often than it is set, and that is the
+ * design: the service holds back any draft whose claims it could not trace back to the submission.
+ * Delivered as one response, that design reads as a very long wait for a refusal. Delivered as it
+ * happens, it reads as what it is — a draft, the claims struck out of it, another draft — which is
+ * what ADR 0017 means when it says the reasoning is the product.
  *
  * Throws, unlike `suggestCrop`, and that is the difference between the two: a crop is asked for by
  * the browser after a verdict and nobody is waiting on it, whereas this is asked by a person who
  * pressed a button and is owed an answer — including "that did not work". The caller turns the
  * failure into a sentence; it never blocks the submission, which is what the form was for.
  *
- * A `description` of null is the ordinary outcome rather than an error: the service holds back any
- * draft whose claims it could not trace back to the submission. The note says so, in Nynorsk, and
- * `missing` is worth showing either way.
+ * **A yielded draft is a report and never an offer.** It may be one the fact-checker goes on to
+ * strike, or one the number rule refuses after the checker waved it through. Only the final
+ * `suggestion` has been through every rule, and it is the only thing a caller may put behind an
+ * accept button.
  */
-export async function improveDescription(input: ImproveInput): Promise<ImproveSuggestion> {
-	const raw = await post<Record<string, unknown>>(
-		'/improve',
-		{
+export type ImproveStreamEvent =
+	| { kind: 'draft'; draft: ImproveDraft }
+	| { kind: 'review'; review: ImproveReview }
+	| { kind: 'suggestion'; suggestion: ImproveSuggestion };
+
+export async function* improveDescriptionStreaming(
+	input: ImproveInput,
+	signal?: AbortSignal
+): AsyncGenerator<ImproveStreamEvent> {
+	if (!VERIFIER_URL) throw new Error('verifier is not configured');
+
+	const response = await fetch(`${VERIFIER_URL.replace(/\/$/, '')}/improve/stream`, {
+		method: 'POST',
+		headers: { 'content-type': 'application/json', accept: 'text/event-stream' },
+		body: JSON.stringify({
 			title: input.title,
 			description: input.description ?? null,
 			category: input.category,
@@ -194,10 +217,68 @@ export async function improveDescription(input: ImproveInput): Promise<ImproveSu
 			municipality: input.municipality ?? null,
 			organizer_name: input.organizerName ?? null,
 			source_url: input.sourceUrl ?? null
-		},
-		IMPROVE_TIMEOUT_MS
-	);
-	return improveSuggestionSchema.parse(raw);
+		}),
+		signal: signal ?? AbortSignal.timeout(IMPROVE_TIMEOUT_MS)
+	});
+
+	if (!response.ok || !response.body) {
+		const detail = await response.text().catch(() => '');
+		throw new Error(
+			`verifier /improve/stream responded ${response.status}: ${detail.slice(0, 200)}`
+		);
+	}
+
+	for await (const frame of sseFrames(response.body)) {
+		/*
+		 * Validated frame by frame, for the reason the whole boundary is validated: Zod strips what
+		 * a schema does not name, and a `problems` list that quietly stopped arriving would leave a
+		 * reader watching a fact-checker approve things with nothing to say — which is exactly the
+		 * half of the argument this feature exists to show.
+		 */
+		if (frame.event === 'draft')
+			yield { kind: 'draft', draft: improveDraftSchema.parse(frame.data) };
+		else if (frame.event === 'review')
+			yield { kind: 'review', review: improveReviewSchema.parse(frame.data) };
+		else if (frame.event === 'suggestion')
+			yield { kind: 'suggestion', suggestion: improveSuggestionSchema.parse(frame.data) };
+		else if (frame.event === 'error') throw new Error('verifier reported a failure mid-stream');
+	}
+}
+
+/**
+ * Server-sent events off a byte stream, one frame at a time.
+ *
+ * By hand rather than with `EventSource`, which only speaks GET — and this is a POST carrying the
+ * submission. Frames are separated by a blank line, so whatever follows the last one is an
+ * incomplete frame and stays in the buffer. Same parse as `AppealPanel.svelte` does in the browser,
+ * one layer further in.
+ */
+async function* sseFrames(
+	body: ReadableStream<Uint8Array>
+): AsyncGenerator<{ event: string; data: unknown }> {
+	const reader = body.getReader();
+	const decoder = new TextDecoder();
+	let buffer = '';
+
+	try {
+		for (;;) {
+			const { value, done } = await reader.read();
+			if (done) break;
+			buffer += decoder.decode(value, { stream: true });
+
+			let split = buffer.indexOf('\n\n');
+			while (split !== -1) {
+				const frame = buffer.slice(0, split);
+				buffer = buffer.slice(split + 2);
+				const event = /^event: (.+)$/m.exec(frame)?.[1];
+				const raw = /^data: (.+)$/m.exec(frame)?.[1];
+				if (event && raw) yield { event, data: JSON.parse(raw) as unknown };
+				split = buffer.indexOf('\n\n');
+			}
+		}
+	} finally {
+		await reader.cancel().catch(() => {});
+	}
 }
 
 export type ImproveInput = {

@@ -3,12 +3,14 @@
 import logging
 
 from fastapi import FastAPI, HTTPException
+from fastapi.responses import StreamingResponse
 
 from .appeal import JURORS, QUORUM, judge_appeal, juror_by_id
 from .config import Config, load_config
 from .crop import suggest_crop
 from .extract import extract_page, extract_poster
 from .improve import improve as run_improve
+from .improve import improve_stream as run_improve_stream
 from .kurator import curate as run_curate
 from .llm import AgentFactory
 from .models import (
@@ -124,6 +126,43 @@ def create_app(config: Config | None = None, factory: AgentFactory | None = None
         except Exception as exc:
             log.exception("improvement failed")
             raise HTTPException(status_code=502, detail=f"improve failed: {exc}") from exc
+
+    @app.post("/improve/stream")
+    async def improve_streaming(request: ImproveRequest) -> StreamingResponse:
+        """The same two agents, reported as they take their turns.
+
+        `/improve` above answers in one piece and is what the CLI, the evals and any caller that
+        cannot hold a socket open still use. This is for the person in front of the form, because
+        that is where the wait is: up to four sequential model calls whose usual answer is *no
+        text*, which as a single response is fifteen seconds of nothing ending in a refusal. The
+        turns are the argument for that refusal, and they exist either way — this endpoint is
+        the difference between showing them and throwing them away.
+
+        Both routes run the same `improve_stream`, so the verdict cannot depend on which one asked.
+
+        Errors are frames, not statuses. By the time anything can fail the headers are long gone,
+        so a failure is an `error` event and the caller degrades exactly as it does for a 502: the
+        person keeps the words they wrote, which is what this feature protects anyway.
+        """
+
+        async def frames():
+            try:
+                async for kind, payload in run_improve_stream(factory, request):
+                    yield f"event: {kind}\ndata: {payload.model_dump_json()}\n\n"
+            except Exception as exc:
+                log.exception("streamed improvement failed")
+                yield f'event: error\ndata: {{"detail": "{type(exc).__name__}"}}\n\n'
+
+        return StreamingResponse(
+            frames(),
+            media_type="text/event-stream",
+            headers={
+                "cache-control": "no-store",
+                # A proxy that buffers holds the whole stream and delivers it at once, which is
+                # precisely the experience this endpoint exists to avoid.
+                "x-accel-buffering": "no",
+            },
+        )
 
     @app.post("/kurator", response_model=CuratorSelection)
     async def kurator(request: CuratorRequest) -> CuratorSelection:

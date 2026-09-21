@@ -17,7 +17,9 @@ from verifier.improve import (
     MAX_DESCRIPTION_CHARS,
     _numbers_are_grounded,
     improve,
+    improve_stream,
 )
+from verifier.llm import SEED, TEMPERATURE
 from verifier.models import ImproveRequest
 
 
@@ -163,3 +165,144 @@ class TestTheNumberRule:
     def test_the_cap_is_a_number_a_reader_could_meet(self):
         # Four sentences about a village concert, not a tenth of what the form allows.
         assert 200 < MAX_DESCRIPTION_CHARS < 5000
+
+
+async def _collect(fake: FakeOpenAI, request: ImproveRequest) -> list[tuple[str, object]]:
+    return [event async for event in improve_stream(factory_for(fake), request)]
+
+
+class TestTheRunIsReportedAsItHappens:
+    """Refusal is the ordinary outcome, and up to four sequential model calls stand in front of it.
+
+    As one response that is fifteen seconds of nothing ending in "we could not do this safely" —
+    on a feature whose whole claim (ADR 0017) is that the reasoning is the product. The turns are
+    that reasoning. They were always produced; they were simply thrown away.
+
+    What these assert is that showing them changed nothing about what is decided.
+    """
+
+    async def test_the_turns_arrive_in_order_and_the_verdict_is_last(self):
+        fake = FakeOpenAI(
+            _draft("Utkast ein, med noko oppdikta.", ["kva det kostar"]),
+            _review(False, ["«gratis» står ikkje i innsendinga"]),
+            _draft("Bygdekino i grendahuset i Sagvåg."),
+            _review(True),
+        )
+        events = await _collect(fake, _request())
+
+        assert [kind for kind, _ in events] == [
+            "draft",
+            "review",
+            "draft",
+            "review",
+            "suggestion",
+        ]
+        assert events[0][1].description == "Utkast ein, med noko oppdikta."
+        assert events[1][1].problems == ["«gratis» står ikkje i innsendinga"]
+        assert events[3][1].approved is True
+        assert events[-1][1].description == "Bygdekino i grendahuset i Sagvåg."
+
+    async def test_a_refused_draft_still_shows_the_argument_that_refused_it(self):
+        """The case this exists for: no text at the end, and something to read on the way there."""
+        fake = FakeOpenAI(
+            _draft("Ein årviss og svært populær bygdekino, gratis for alle."),
+            _review(False, ["«gratis» står ikkje i innsendinga", "«årviss» er ei vurdering"]),
+        )
+        events = await _collect(fake, _request())
+
+        kinds = [kind for kind, _ in events]
+        assert kinds.count("draft") >= 1
+        assert kinds.count("review") >= 1
+        suggestion = events[-1][1]
+        assert suggestion.description is None
+        assert "gratis" in " ".join(suggestion.removed)
+
+    async def test_the_draft_a_reader_watches_is_never_one_they_can_accept(self):
+        """A struck draft goes past on the wire and must not come back as the offer.
+
+        This is the one way streaming could have made the feature less safe: showing somebody a
+        sentence and then deciding it was not allowed. What is shown is a report of a turn; the
+        only thing that can be taken is the final suggestion, and it is still the one that survived
+        every rule.
+        """
+        fake = FakeOpenAI(
+            _draft("Bygdekino, 250 kroner i døra."),
+            _review(True),
+        )
+        events = await _collect(fake, _request())
+
+        streamed = [payload.description for kind, payload in events if kind == "draft"]
+        assert streamed == ["Bygdekino, 250 kroner i døra."]
+        # Approved by the checker and refused by the number rule all the same.
+        assert events[-1][1].description is None
+
+    async def test_the_blocking_route_returns_exactly_what_the_stream_decided(self):
+        """One code path, asserted rather than assumed.
+
+        Two routes that reached a verdict separately could disagree about one submission, and
+        nobody would find it until two people got different text for the same words.
+        """
+        payloads = (_draft("Bygdekino i grendahuset i Sagvåg."), _review(True))
+
+        streamed = await _collect(FakeOpenAI(*payloads), _request())
+        blocking = await improve(factory_for(FakeOpenAI(*payloads)), _request())
+
+        assert streamed[-1][0] == "suggestion"
+        assert streamed[-1][1].model_dump() == blocking.model_dump()
+
+
+class TestTheWirePayload:
+    """ADR 0016 pinned this payload on purpose, so a change to it is asserted, not discovered."""
+
+    async def test_streaming_pins_temperature_and_seed_like_everything_else(self):
+        fake = FakeOpenAI(_draft("Bygdekino i grendahuset."), _review(True))
+        await _collect(fake, _request())
+
+        assert len(fake.calls) == 2
+        for call in fake.calls:
+            assert call["temperature"] == TEMPERATURE == 0.0
+            assert call["seed"] == SEED
+            assert call["response_format"]["json_schema"]["strict"] is True
+
+    async def test_the_run_asks_the_socket_to_stream(self):
+        """The one thing that does change, recorded here rather than left to be noticed.
+
+        Running an orchestration streamed puts every participant's client into streaming mode, so
+        `stream: true` goes on the wire for this endpoint — and only this one. Sampling is
+        untouched, which is what the test above is for; determinism is a property of temperature
+        and seed, not of how the bytes arrive.
+        """
+        fake = FakeOpenAI(_draft("Bygdekino i grendahuset."), _review(True))
+        await _collect(fake, _request())
+
+        assert all(call.get("stream") is True for call in fake.calls)
+
+    async def test_extraction_is_untouched_by_any_of_this(self):
+        """`/extract` is not a group chat and must still send a plain completion."""
+        from verifier.extract import extract_poster
+        from verifier.models import ExtractRequest
+
+        payload = json.dumps(
+            {
+                "title": "Konsert",
+                "description": None,
+                "category": "musikk",
+                "date": "2027-01-01",
+                "start_time": "20:00",
+                "end_time": None,
+                "venue_name": "Stord kulturhus",
+                "municipality": None,
+                "organizer_name": None,
+                "ticket_url": None,
+                "confidence": 90,
+                "unreadable": [],
+                "note": "Lese frå plakaten.",
+            }
+        )
+        fake = FakeOpenAI(payload)
+        await extract_poster(
+            factory_for(fake),
+            ExtractRequest(image_base64="A" * 200, media_type="image/jpeg", today="2026-08-28"),
+        )
+        (call,) = fake.calls
+        assert not call.get("stream")

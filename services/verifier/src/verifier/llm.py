@@ -125,3 +125,24 @@ class AgentFactory:
         return await asyncio.wait_for(
             workflow.run(task), timeout=self._config.request_timeout_seconds
         )
+
+    async def run_workflow_stream(self, workflow, task: str):
+        """The same orchestration, under the same deadline, handing back each event as it lands.
+
+        `wait_for` cannot wrap an async generator — it awaits one coroutine — so the budget is an
+        `asyncio.timeout` around the whole iteration. That is the same promise the non-streaming
+        version makes and not a weaker one: what is bounded is the call, start to finish, rather
+        than any single step inside it.
+
+        It does mean a consumer that stalls between events spends the caller's budget. For the one
+        thing this streams that is what we want — the budget belongs to the person waiting at the
+        other end of the socket, and a reader who has gone away should not hold an agent open.
+
+        Running a workflow this way puts every participant's chat client into streaming mode
+        (`ctx.is_streaming()` in the framework's `AgentExecutor`), so `stream: true` goes on the
+        wire. Sampling is untouched — temperature, seed and the strict schema are set on the agent
+        — and `tests/test_improve.py` asserts that, because ADR 0016 pinned this payload on purpose.
+        """
+        async with asyncio.timeout(self._config.request_timeout_seconds):
+            async for event in workflow.run(task, stream=True):
+                yield event

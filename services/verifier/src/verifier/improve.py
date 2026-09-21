@@ -31,15 +31,22 @@ from __future__ import annotations
 
 import logging
 import re
-from typing import Any
+from collections.abc import AsyncIterator
+from typing import Any, Literal
 
 from agent_framework.orchestrations import GroupChatBuilder
 from pydantic import BaseModel
 
 from .llm import AgentFactory
-from .models import ImproveRequest, ImproveSuggestion
+from .models import ImproveDraft, ImproveRequest, ImproveReview, ImproveSuggestion
 
 log = logging.getLogger(__name__)
+
+#: One turn, as the panel hands it back.
+type Turn = tuple[Literal["draft"], ImproveDraft] | tuple[Literal["review"], ImproveReview]
+
+#: What `improve_stream` yields: the turns, and then exactly one verdict, always last.
+type ImproveEvent = Turn | tuple[Literal["suggestion"], ImproveSuggestion]
 
 #: Writer, checker, writer, checker. Two drafts is enough to fix what one round finds; a third
 #: round has never changed a verdict that the second did not, and every round is a model call
@@ -93,20 +100,6 @@ din, og eit utkast du sender tilbake for språkets skuld kostar berre ei runde.
 nynorsk. Innsendaren får lese dei, så skriv til dei — ikkje om dei.
 
 Er alt dekt, set `approved` til true og la `problems` stå tom."""
-
-
-class _Draft(BaseModel):
-    """The writer's turn."""
-
-    description: str
-    missing: list[str]
-
-
-class _Review(BaseModel):
-    """The fact-checker's turn."""
-
-    approved: bool
-    problems: list[str]
 
 
 def _record(request: ImproveRequest) -> str:
@@ -169,22 +162,54 @@ def _merged(lists: Any) -> list[str]:
 
 
 class _Panel:
-    """The termination condition, which is also how the conversation is read back.
+    """The termination condition, which is also how the conversation is read back — and out.
 
-    The group chat's own output is the orchestrator's closing line, and the per-participant
-    messages only surface as events on a *streamed* run. Nothing here streams — the caller asks one
-    question and waits for one answer — so this doubles as the collector: the predicate is the one
-    place the framework hands over the whole conversation without being asked for a stream.
+    The group chat's own output is the orchestrator's closing line, so the per-participant turns
+    have to be recovered from somewhere. This predicate is that somewhere: the framework hands it
+    the whole conversation after every turn, which makes it both the collector and the earliest
+    point at which a new turn is known.
+
+    `drain` is what makes the streaming endpoint possible. The run's own `executor_completed`
+    events fire *before* this predicate is next called, so reading `drafts` on one of them is
+    reliably one turn behind — measured, not assumed. Draining after every event instead asks the
+    only object that actually knows, and costs nothing when there is nothing new.
     """
 
     def __init__(self) -> None:
-        self.drafts: list[_Draft] = []
-        self.reviews: list[_Review] = []
+        self.drafts: list[ImproveDraft] = []
+        self.reviews: list[ImproveReview] = []
+        self._drafts_out = 0
+        self._reviews_out = 0
 
     def __call__(self, conversation: Any) -> bool:
-        self.drafts = [d for d in (_parse(m, WRITER, _Draft) for m in conversation) if d]
-        self.reviews = [r for r in (_parse(m, CHECKER, _Review) for m in conversation) if r]
+        self.drafts = [d for d in (_parse(m, WRITER, ImproveDraft) for m in conversation) if d]
+        self.reviews = [r for r in (_parse(m, CHECKER, ImproveReview) for m in conversation) if r]
         return bool(self.reviews) and self.reviews[-1].approved
+
+    def drain(self) -> list[Turn]:
+        """Every turn parsed since the last call, oldest first.
+
+        Interleaved rather than concatenated, because the order a reader sees them in *is* the
+        argument: a draft, then what was struck out of it, then the next draft. The speakers
+        strictly alternate (`speaker`, below), so whose turn is due follows from how many of each
+        have gone out.
+
+        Written against the counters rather than against a single index so that a turn nobody could
+        parse cannot put this out of step with itself. `_parse` skipping one is close to unreachable
+        behind a strict schema; if it ever happens, the cost here is a line missing from a progress
+        display, and never a wrong suggestion — the answer at the end is computed from the lists
+        directly and does not go through here at all.
+        """
+        turns: list[Turn] = []
+        while True:
+            if self._drafts_out <= self._reviews_out and self._drafts_out < len(self.drafts):
+                turns.append(("draft", self.drafts[self._drafts_out]))
+                self._drafts_out += 1
+            elif self._reviews_out < self._drafts_out and self._reviews_out < len(self.reviews):
+                turns.append(("review", self.reviews[self._reviews_out]))
+                self._reviews_out += 1
+            else:
+                return turns
 
     @property
     def rounds(self) -> int:
@@ -235,13 +260,31 @@ def _nothing(note: str, panel: _Panel | None = None) -> ImproveSuggestion:
     )
 
 
-async def improve(factory: AgentFactory, request: ImproveRequest) -> ImproveSuggestion:
-    """Run the two agents over one submission and return what survived."""
+async def improve_stream(
+    factory: AgentFactory, request: ImproveRequest
+) -> AsyncIterator[ImproveEvent]:
+    """The two agents over one submission, reported turn by turn and then decided.
+
+    **Why this streams at all.** Refusal is the ordinary outcome here (ADR 0017), and up to four
+    sequential model calls stand between pressing the button and being told so. As one request that
+    is ten to twenty seconds of nothing ending in "we could not do this safely" — the worst
+    wait-to-answer ratio in the product, on a feature whose whole claim is that the reasoning *is*
+    the product. Streamed, the same refusal is an argument somebody watched happen: a draft, the
+    claims struck out of it, another draft.
+
+    Nothing about the decision moves. `_decide` below is the code that was here before, unchanged,
+    and the turns yielded on the way are a report rather than an offer — no draft a reader sees mid
+    run is a draft they can accept. The only thing that can be taken is the final suggestion, and it
+    is still the one that survived every rule.
+    """
     writer = factory.agent(
-        name=WRITER, instructions=WRITER_BRIEF, response_format=_Draft, max_tokens=MAX_TOKENS
+        name=WRITER, instructions=WRITER_BRIEF, response_format=ImproveDraft, max_tokens=MAX_TOKENS
     )
     checker = factory.agent(
-        name=CHECKER, instructions=CHECKER_BRIEF, response_format=_Review, max_tokens=MAX_TOKENS
+        name=CHECKER,
+        instructions=CHECKER_BRIEF,
+        response_format=ImproveReview,
+        max_tokens=MAX_TOKENS,
     )
 
     panel = _Panel()
@@ -259,8 +302,24 @@ async def improve(factory: AgentFactory, request: ImproveRequest) -> ImproveSugg
     ).build()
 
     record = _record(request)
-    await factory.run_workflow(workflow, record)
 
+    # Drained after every event rather than on the participants' own `executor_completed`, which
+    # fires before the predicate that parses the turn and is therefore one behind. See `drain`.
+    async for _ in factory.run_workflow_stream(workflow, record):
+        for turn in panel.drain():
+            yield turn
+    for turn in panel.drain():
+        yield turn
+
+    yield "suggestion", _decide(panel, request, record)
+
+
+def _decide(panel: _Panel, request: ImproveRequest, record: str) -> ImproveSuggestion:
+    """What survived: the last draft, or one of five honest refusals.
+
+    Unchanged from when this was the tail of `improve`. It reads the panel and nothing else, so it
+    cannot be influenced by whether anybody was watching the turns go past.
+    """
     if not panel.drafts:
         return _nothing("Vi fekk ikkje skrive eit framlegg denne gongen.", panel)
 
@@ -300,3 +359,18 @@ async def improve(factory: AgentFactory, request: ImproveRequest) -> ImproveSugg
         ),
         rounds=panel.rounds,
     )
+
+
+async def improve(factory: AgentFactory, request: ImproveRequest) -> ImproveSuggestion:
+    """The same run, collapsed to the one answer — for callers that cannot watch it happen.
+
+    `/improve` is still this, and so are the CLI and the evals. One code path rather than two on
+    purpose: a streaming endpoint and a blocking one that reached the verdict by different routes
+    could disagree about the same submission, which is the bug nobody would find until somebody
+    with JavaScript off and somebody without got different text.
+    """
+    async for kind, payload in improve_stream(factory, request):
+        if kind == "suggestion":
+            return payload
+    # Unreachable: `improve_stream` yields a suggestion on every path, including every refusal.
+    raise RuntimeError("improve_stream finished without deciding")

@@ -285,6 +285,29 @@ class ImproveRequest(BaseModel):
     source_url: str | None = None
 
 
+class ImproveDraft(BaseModel):
+    """One turn from the writer: what it proposes, and what it noticed nobody had said.
+
+    Public, and the agent's `response_format`, because it is now also what goes over the wire. A
+    reader watching `/improve/stream` is shown each draft as it is written — including the ones the
+    fact-checker goes on to strike, which is the whole argument the panel makes visible.
+    """
+
+    description: str = Field(description="The draft, built only from what the submission says")
+    missing: list[str] = Field(
+        description="What a reader would want that the submission does not state. Questions, not guesses"
+    )
+
+
+class ImproveReview(BaseModel):
+    """One turn from the fact-checker: whether the draft stands, and what it could not trace."""
+
+    approved: bool
+    problems: list[str] = Field(
+        description="One line per claim with no cover in the submission, quoting the draft"
+    )
+
+
 class ImproveSuggestion(BaseModel):
     """A description the sender may take or leave, and what was learned either way.
 
