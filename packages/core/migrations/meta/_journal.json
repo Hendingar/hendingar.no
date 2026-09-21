@@ -162,6 +162,13 @@
       "when": 1789472744743,
       "tag": "0022_fresh_lifeguard",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1789978177997,
+      "tag": "0023_famous_ego",
+      "breakpoints": true
     }
   ]
 }

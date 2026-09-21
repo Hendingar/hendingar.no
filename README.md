@@ -18,6 +18,8 @@ lock-in — community-owned infrastructure for public-good information.
 - **Aggregates local events** — one searchable, geotagged listing instead of a dozen silos
 - **Shows its work** — [`/datasamling`](https://ca-hendingar-dev.whitewave-5f5b53f5.swedencentral.azurecontainerapps.io/datasamling)
   is a public status board: every source, how it is collected, how often, and what the last run did
+  — and, since the same page was silent about the half of the pipeline that judges, what each of
+  the six checks has actually decided, how sure it was, and what the two that call a model cost
 - **Accepts submissions from anyone** — no account required to add an event
 - **Lets anyone improve an event that is already there** — a photograph for a row that has no
   poster, a second source, a ticket link. Gaps only: nothing already on an event is overwritten,

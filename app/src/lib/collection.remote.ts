@@ -1,6 +1,13 @@
 import { query } from '$app/server';
 import { and, count, desc, eq, gte, or, sql } from 'drizzle-orm';
-import { events, ingestRuns, sources, venues } from '@hendingar/core/schema';
+import {
+	curatorPicks,
+	events,
+	ingestRuns,
+	sources,
+	venues,
+	verifications
+} from '@hendingar/core/schema';
 import { publicSubmissionTitle } from '@hendingar/core/verification';
 import { db } from './server/db';
 
@@ -158,6 +165,57 @@ export const listCollection = query(async () => {
 			)
 		);
 
+	/*
+	 * What the checks actually decided, across every submission we have ever had.
+	 *
+	 * The page could already say exactly how each source is collected and nothing whatever about
+	 * the half of the pipeline that judges. That is the wrong half to be quiet about: the README
+	 * promises the agents' reasoning is auditable, and "auditable" has meant "readable one
+	 * submission at a time" — you could see why *your* event was declined and never whether the
+	 * checks are any good.
+	 *
+	 * Both ADR 0017 and ADR 0018 name a falsification condition that needs numbers nobody was
+	 * keeping. This is the shape of that: per check, what it decided and how sure it was, and — for
+	 * the two that call a model — what the calls cost.
+	 *
+	 * `duration_ms` and `tokens` are averaged over the rows that have them rather than over all of
+	 * them. They are null for every rule check and for every check a rule refused before the model
+	 * was reached, and counting those as zero would flatter the average with calls that never
+	 * happened.
+	 */
+	const checkStats = await database
+		.select({
+			check: verifications.check,
+			total: count(),
+			passed: sql<number>`count(*) filter (where ${verifications.verdict} = 'pass')::int`,
+			uncertain: sql<number>`count(*) filter (where ${verifications.verdict} = 'uncertain')::int`,
+			failed: sql<number>`count(*) filter (where ${verifications.verdict} = 'fail')::int`,
+			/** Of the rows that carry one — see above. */
+			meanConfidence: sql<number | null>`round(avg(${verifications.confidence}))::int`,
+			/** Null for every rule check, which is how the page tells the two kinds apart. */
+			meanDurationMs: sql<number | null>`round(avg(${verifications.durationMs}))::int`,
+			totalTokens: sql<number | null>`sum(${verifications.tokens})::int`,
+			calls: sql<number>`count(${verifications.durationMs})::int`
+		})
+		.from(verifications)
+		.groupBy(verifications.check);
+
+	/*
+	 * The kurator's record: how often it stood behind anything at all.
+	 *
+	 * Three is the ceiling, never a target — ADR 0018 says nothing is back-filled to reach it, and
+	 * an empty night is an honest answer. So the number worth publishing is how many nights it ran
+	 * and how many picks it made, not an average dressed up as a score. No hearts, no views, no
+	 * measure of attention: those never reach the selection and they do not reach this either.
+	 */
+	const [curator] = await database
+		.select({
+			nights: sql<number>`count(distinct ${curatorPicks.forDate})::int`,
+			picks: count(),
+			latest: sql<string | null>`max(${curatorPicks.forDate})`
+		})
+		.from(curatorPicks);
+
 	return {
 		generatedAt: now,
 		sources: collected,
@@ -168,11 +226,15 @@ export const listCollection = query(async () => {
 		submissions: submissions.map((row) => ({
 			...row,
 			title: publicSubmissionTitle(row.status, row.title)
-		}))
+		})),
+		/** Per check, what it has decided — and for the two that call a model, what that cost. */
+		checks: checkStats,
+		curator: curator ?? { nights: 0, picks: 0, latest: null }
 	};
 });
 
 export type Collection = Awaited<ReturnType<typeof listCollection>>;
 export type SubmissionLogRow = Collection['submissions'][number];
 export type CollectedSource = Collection['sources'][number];
+export type CheckStats = Collection['checks'][number];
 export type IngestRunSummary = CollectedSource['runs'][number];

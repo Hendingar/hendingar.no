@@ -618,9 +618,30 @@ export const verifications = pgTable(
 		model: text('model'),
 		/** Set when a check is decided by code rather than a model — e.g. duplicate matching. */
 		deterministic: boolean('deterministic').notNull().default(false),
+		/**
+		 * What the model call behind this check cost, when there was one.
+		 *
+		 * Both null for every rule check, and for every check a rule refused before the model was
+		 * reached — which is the honest reading rather than a gap: a submission stopped by coverage
+		 * cost nothing to stop. Null rather than zero for the same reason `/datasamling` shows what
+		 * a run actually did instead of what a config file says it should: an unknown and a measured
+		 * nothing are different facts, and averaging them together would quietly flatter us.
+		 *
+		 * Recorded by middleware in `services/verifier/src/verifier/llm.py`, which is the only thing
+		 * that can see a model call, and reported back on the verdict because the verifier has no
+		 * database of its own. Published on /datasamling: the page can say exactly how each source
+		 * is collected and, until now, nothing at all about what the agents did.
+		 */
+		durationMs: integer('duration_ms'),
+		/** Total tokens for that call. Null when the provider did not report usage — never guessed. */
+		tokens: integer('tokens'),
 		createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
 	},
-	(t) => [index('verifications_event_idx').on(t.eventId)]
+	(t) => [
+		index('verifications_event_idx').on(t.eventId),
+		// The aggregate /datasamling draws: every row for one check, newest first.
+		index('verifications_check_created_idx').on(t.check, t.createdAt)
+	]
 );
 
 /**

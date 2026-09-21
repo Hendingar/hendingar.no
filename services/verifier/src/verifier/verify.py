@@ -15,8 +15,8 @@ from agent_framework.orchestrations import ConcurrentBuilder
 from pydantic import BaseModel
 
 from .coverage import classify_coverage, covered_sentence
-from .llm import AgentFactory
-from .models import CheckName, CheckResult, Verdict, VerifyRequest, VerifyResponse
+from .llm import AgentFactory, recording
+from .models import AgentCall, CheckName, CheckResult, Verdict, VerifyRequest, VerifyResponse
 
 log = logging.getLogger(__name__)
 
@@ -495,6 +495,10 @@ async def verify(factory: AgentFactory | None, request: VerifyRequest) -> Verify
     #: circle, and it would land in front of the one sentence that says what to fix.
     unasked: frozenset[str] = frozenset()
 
+    #: What the model calls behind this verdict cost. Empty on both branches that make none,
+    #: which is the honest reading: a submission a rule refused cost nothing to refuse.
+    calls: list[AgentCall] = []
+
     if factory is None:
         # Both of them, not just the blocking one. `plausibility` alone was enough to force
         # `review` and so was all this branch ever emitted, which left the sender in an
@@ -504,7 +508,9 @@ async def verify(factory: AgentFactory | None, request: VerifyRequest) -> Verify
         unasked = frozenset(check.check for check in _MODEL_CHECKS)
         checks.extend(_not_asked(check.check) for check in _MODEL_CHECKS)
     else:
-        checks.extend(await model_checks(factory, request))
+        with recording() as recorded:
+            checks.extend(await model_checks(factory, request))
+        calls = recorded
 
     if any(c.verdict == "fail" for c in checks):
         recommendation = "reject"
@@ -532,4 +538,6 @@ async def verify(factory: AgentFactory | None, request: VerifyRequest) -> Verify
         summary = "Alle avgjerande sjekkar gjekk gjennom. " + " ".join(c.reasoning for c in caveats)
     else:
         summary = "Alle sjekkar gjekk gjennom."
-    return VerifyResponse(checks=checks, recommendation=recommendation, summary=summary)
+    return VerifyResponse(
+        checks=checks, recommendation=recommendation, summary=summary, calls=calls
+    )

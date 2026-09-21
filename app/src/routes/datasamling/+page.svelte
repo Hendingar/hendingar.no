@@ -5,6 +5,7 @@
 	import PlatformGroup from '../../lib/components/collection/PlatformGroup.svelte';
 	import { SOURCE_PLATFORMS, platformOf } from '@hendingar/core/directory';
 	import SubmissionLog from '../../lib/components/collection/SubmissionLog.svelte';
+	import CheckLedger from '../../lib/components/collection/CheckLedger.svelte';
 	import PageMeta from '../../lib/components/PageMeta.svelte';
 	import { listCollection } from '../../lib/collection.remote';
 	import { CHECK_COUNT_WORD } from '../../lib/checks.ts';
@@ -181,6 +182,17 @@
 			</a>
 		</p>
 	{/if}
+</section>
+
+<section class="shell block" aria-labelledby="h-checks">
+	<p class="label">Kontrollane</p>
+	<h2 id="h-checks" class="display block__h">Kva kontrollane har avgjort</h2>
+	<p class="block__lede">
+		Kvar innsending blir lesen av {CHECK_COUNT_WORD} kontrollar, og kvar av dei skriv ned kva ho fann.
+		Den som sender inn får lese si eiga grunngjeving — dette er dei same avgjerdene talde opp, så det
+		går an å sjå om kontrollane er gode og ikkje berre at dei finst.
+	</p>
+	<CheckLedger checks={data.checks} curator={data.curator} />
 </section>
 
 <section class="shell block" aria-labelledby="h-sources">
