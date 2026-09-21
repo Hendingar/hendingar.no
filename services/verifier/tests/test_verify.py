@@ -550,3 +550,110 @@ class TestModelChecks:
         assert results[0].verdict == "uncertain"
         assert results[0].confidence == 0
         assert results[1].verdict == "pass"
+
+
+class TestARuleFailureStopsBeforeTheModel:
+    """A `fail` from a rule is `reject`, so the two model calls after it cannot change anything.
+
+    They used to run anyway. The Bergen concert is the case that shows what that cost: `coverage`
+    refuses it (ADR 0015), and the questions still put to a model were "does this look genuine" and
+    "is the category right" — both yes, both true, neither able to move the outcome, and the sender
+    waited on the submit button for the slower of them before being told about Sunnhordland.
+
+    What must survive the short cut is everything the sender is shown: six checks, a summary that
+    names what to fix, and the same recommendation as before.
+    """
+
+    @staticmethod
+    def _payload(verdict: str = "pass") -> str:
+        return json.dumps({"verdict": verdict, "confidence": 95, "reasoning": "Ser ekte ut."})
+
+    async def test_a_refused_event_costs_no_model_call(self):
+        fake = FakeOpenAI(self._payload())
+        response = await verify(
+            factory_for(fake), _request(municipality="Bergen", venue_name="Grieghallen")
+        )
+
+        assert fake.calls == [], "coverage had already refused it; nothing was worth asking"
+        assert response.recommendation == "reject"
+
+    async def test_an_unreadable_date_costs_no_model_call(self):
+        """The other rule that can fail outright, so the guard is not about coverage alone."""
+        fake = FakeOpenAI(self._payload())
+        response = await verify(factory_for(fake), _request(starts_at="ikkje ein dato"))
+
+        assert fake.calls == []
+        assert response.recommendation == "reject"
+
+    async def test_a_clean_submission_is_still_asked_both_questions(self):
+        """The half of the branch that must not be lost: nothing changes for an ordinary event."""
+        fake = FakeOpenAI(self._payload())
+        response = await verify(factory_for(fake), _request(source_url="https://example.no/x"))
+
+        assert len(fake.calls) == 2
+        assert response.recommendation == "publish"
+
+    async def test_the_checks_that_were_not_asked_still_appear(self):
+        """A check missing from the list reads downstream as one that passed."""
+        fake = FakeOpenAI(self._payload())
+        response = await verify(factory_for(fake), _request(municipality="Bergen"))
+
+        by_name = {c.check: c for c in response.checks}
+        assert set(by_name) == {
+            "normalisation",
+            "duplicate",
+            "coverage",
+            "corroboration",
+            "plausibility",
+            "categorisation",
+        }
+        for check in ("plausibility", "categorisation"):
+            assert by_name[check].verdict == "uncertain"
+            assert by_name[check].confidence == 0
+            # A rule decided not to ask, and no model was called — so the badge the sender reads
+            # must say "Regel", never a deployment name for a request that never happened.
+            assert by_name[check].deterministic is True
+            assert by_name[check].model is None
+            assert "ikkje vurdert" in by_name[check].reasoning
+
+    async def test_the_summary_says_what_to_fix_and_not_what_was_skipped(self):
+        """`plausibility` is a blocking check, so an unasked one would otherwise talk.
+
+        Its sentence is "this was not assessed", appended to the reason it was not assessed. That
+        is a circle, and it lands in front of the one sentence that tells somebody about
+        Sunnhordland.
+        """
+        fake = FakeOpenAI(self._payload())
+        response = await verify(
+            factory_for(fake), _request(municipality="Bergen", venue_name="Grieghallen")
+        )
+
+        assert "Bergen" in response.summary
+        assert "Stord" in response.summary
+        assert "ikkje vurdert" not in response.summary
+
+    async def test_an_uncertain_rule_is_not_a_short_cut(self):
+        """Only `fail` settles the outcome. `uncertain` is exactly what a model call is for.
+
+        A submission with no kommune stated is the commonest one there is (ADR 0015), and it comes
+        back `uncertain` from coverage. If that were treated as a refusal the short cut would
+        silence the model on most of the traffic.
+        """
+        fake = FakeOpenAI(self._payload())
+        response = await verify(factory_for(fake), _request(municipality=None, venue_name="Huset"))
+
+        assert len(fake.calls) == 2
+        assert response.recommendation == "review"
+
+    async def test_without_a_model_both_judged_checks_are_reported(self):
+        """Six rows, in every environment.
+
+        This branch only ever emitted `plausibility` — enough to force `review`, which is why it
+        went unnoticed — so an environment with no verifier showed five checks under a page that
+        promises six.
+        """
+        response = await verify(None, _request())
+
+        reported = {c.check for c in response.checks}
+        assert "categorisation" in reported
+        assert len(reported) == 6
