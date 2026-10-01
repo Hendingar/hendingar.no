@@ -3,13 +3,14 @@ import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { CATEGORY_SLUGS } from '@hendingar/core/taxonomy';
 import { orNull, parseEvents, parseFilters, parseLocations } from '../src/api.ts';
-import type { UpstreamEvent } from '../src/api.ts';
+import type { UpstreamEvent, UpstreamUpload } from '../src/api.ts';
 import { SITES, eventUrl, siteBySlug } from '../src/sites.ts';
 import {
 	isFailure,
 	isPublishableEvent,
 	mapCategory,
 	mapEvent,
+	posterSrcsetFrom,
 	slugifyVenue,
 	toInstant
 } from '../src/map.ts';
@@ -186,18 +187,6 @@ describe('mapEvent', () => {
 		expect(mapped.sourceUrl).toMatch(/^https:\/\/bomlo\.aktivitetforalle\.no\/arrangement\/\d+$/);
 	});
 
-	it('takes the poster the API already built, and claims no rights to it', () => {
-		const withPoster = publishable
-			.map((r) => mapEvent(r, site, vocabulary, locations))
-			.filter((m) => !isFailure(m) && m.posterUrl);
-		expect(withPoster.length).toBeGreaterThan(100);
-		for (const mapped of withPoster) {
-			if (isFailure(mapped)) continue;
-			expect(mapped.posterUrl).toMatch(/^https:\/\/.+\/uploads\/.+/);
-			expect(mapped.posterRightsVerified).toBe(false);
-		}
-	});
-
 	it('rejects an unusable start rather than inventing one', () => {
 		const mapped = mapEvent(
 			row({ event_id: 1, event_title: 'x', event_from: 'None' }),
@@ -222,6 +211,189 @@ describe('mapEvent', () => {
 		);
 		if (isFailure(mapped)) throw new Error(mapped.problem);
 		expect(mapped.endsAt).toBeNull();
+	});
+});
+
+/**
+ * The same endpoint, re-read on 2026-10-01, trimmed to the four rows whose uploads differ in shape:
+ * the event this was reported against, an upload from before the platform's redesign, one with no
+ * ladder at all, and one with no picture.
+ *
+ * It is a second fixture rather than a replacement because `events.json` is the only committed
+ * record of the response as it was — `archived` rows, absolute upload URLs — and the point of the
+ * pair is that both spellings have to map to a poster.
+ */
+const today = parseEvents(fixture('events-2026-10.json'));
+const byId = (id: string) => today.rows.find((r) => String(r.event_id) === id)!;
+const mapToday = (id: string) => {
+	const mapped = mapEvent(byId(id), site, vocabulary, locations);
+	if (isFailure(mapped)) throw new Error(mapped.problem);
+	return mapped;
+};
+
+describe('the poster', () => {
+	it('resolves an upload URL the portal spells relative to its own root', () => {
+		/*
+		 * What this was reported as: an event with a picture on the portal and a generated tile
+		 * here. `upload_url` was absolute when this importer was written and is `/uploads/…` now,
+		 * on every upload the portal holds. `new URL()` threw, the mapper read that as "no poster",
+		 * and the run still reported success — so 81 of 82 events lost their picture in silence.
+		 */
+		expect(orNull(byId('19999').event_thumbnail?.upload_url)).toBe(
+			'/uploads/bomlo/event/2026/09/1ae4f3ebd5a344799886eb697c67e629/original.jpg'
+		);
+		expect(mapToday('19999').posterUrl).toBe(
+			'https://bomlo.aktivitetforalle.no/uploads/bomlo/event/2026/09/1ae4f3ebd5a344799886eb697c67e629/original.jpg'
+		);
+	});
+
+	it('still takes an absolute one, which is how the portal used to spell it', () => {
+		// The older fixture, unchanged. A base is only ever applied to a relative path, so making
+		// the mapper tolerant of one spelling did not make it blind to the other.
+		const withPoster = publishable
+			.map((r) => mapEvent(r, site, vocabulary, locations))
+			.filter((m) => !isFailure(m) && m.posterUrl);
+		expect(withPoster.length).toBeGreaterThan(100);
+		for (const mapped of withPoster) {
+			if (isFailure(mapped)) continue;
+			// Case-insensitive: one upload is named `original.PNG`, which is the portal keeping
+			// whatever the organiser's phone called the file.
+			expect(mapped.posterUrl).toMatch(
+				/^https:\/\/bomlo\.aktivitetforalle\.no\/uploads\/.+\.(jpg|jpeg|png)$/i
+			);
+			expect(mapped.posterRightsVerified).toBe(false);
+		}
+	});
+
+	it('builds the ladder from one format, beside the original', () => {
+		/*
+		 * webp where the portal renders webp: a `srcset` candidate is chosen on width alone, so a
+		 * ladder that mixes formats tells the browser two files are interchangeable when only one
+		 * of them may be decodable.
+		 */
+		const srcset = mapToday('19999').posterSrcset!;
+		const candidates = srcset.split(', ');
+		expect(candidates).toHaveLength(7);
+		expect(candidates[0]).toBe(
+			'https://bomlo.aktivitetforalle.no/uploads/bomlo/event/2026/09/1ae4f3ebd5a344799886eb697c67e629/original-384w.webp 384w'
+		);
+		expect(srcset).toContain('original-1920w.webp 1920w');
+		expect(srcset).not.toMatch(/\.(avif|jpeg)/);
+		// Ascending, which is what a browser's candidate list is read as.
+		const widths = candidates.map((c) => Number(c.split(' ')[1]!.replace('w', '')));
+		expect([...widths].sort((a, b) => a - b)).toEqual(widths);
+	});
+
+	it('falls back to avif for the uploads that have nothing else', () => {
+		/*
+		 * The renditions from before the redesign are avif and nothing else, and the alternative is
+		 * hotlinking a 1.4 MB PNG into an 88px square on a phone. avif is last in the order, not
+		 * absent from it — and a browser that cannot decode one shows `EventThumb`'s generated tile
+		 * rather than a broken image.
+		 */
+		const mapped = mapToday('66');
+		expect(mapped.posterUrl).toMatch(/\/original\.png$/);
+		expect(mapped.posterSrcset).toMatch(/w384\.avif 384w/);
+		expect(mapped.posterSrcset).toMatch(/w1280\.avif 1280w$/);
+	});
+
+	it('leaves the srcset null where the portal renders only one size', () => {
+		// A 244×163 upload with no renditions at all. One candidate is not a ladder; the tile falls
+		// back to a plain `src`, which is what EventThumb does with a null srcset.
+		const mapped = mapToday('65');
+		expect(mapped.posterUrl).toMatch(/\/original\.png$/);
+		expect(mapped.posterSrcset).toBeNull();
+	});
+
+	it('is absent, not invented, for an event with no picture', () => {
+		const mapped = mapToday('2974');
+		expect(mapped.posterUrl).toBeNull();
+		expect(mapped.posterSrcset).toBeNull();
+	});
+
+	it('drops an upload the portal says it no longer holds', () => {
+		const mapped = mapEvent(
+			row({
+				event_id: 3,
+				event_title: 'x',
+				event_from: '2026-09-18 19:00:00',
+				event_thumbnail: { upload_url: '/uploads/gone/original.jpg', upload_exists: false }
+			}),
+			site,
+			vocabulary,
+			locations
+		);
+		if (isFailure(mapped)) throw new Error(mapped.problem);
+		expect(mapped.posterUrl).toBeNull();
+	});
+});
+
+describe('posterSrcsetFrom', () => {
+	type Variant = NonNullable<UpstreamUpload['upload_variants']>[number];
+	const ladder = (variants: Variant[], resolution = '1000x500') => ({
+		upload_url: '/uploads/x/original.jpg',
+		upload_resolution: resolution,
+		upload_variants: variants
+	});
+
+	it('refuses a rendition that is a crop rather than a resize', () => {
+		/*
+		 * Measured, not excluded by name: a square thumbnail of a landscape poster is a different
+		 * picture, and offering it as a smaller version of the same one is how a face gets cut in
+		 * half at one breakpoint and not the next.
+		 */
+		const srcset = posterSrcsetFrom(
+			ladder([
+				{ name: 'original-400w.webp', width: 400, height: 200, format: 'webp' },
+				{ name: 'original-800w.webp', width: 800, height: 400, format: 'webp' },
+				{ name: 'square.webp', width: 300, height: 300, format: 'webp' }
+			]),
+			'https://bomlo.aktivitetforalle.no/uploads/x/original.jpg'
+		);
+		expect(srcset).toBe(
+			'https://bomlo.aktivitetforalle.no/uploads/x/original-400w.webp 400w, ' +
+				'https://bomlo.aktivitetforalle.no/uploads/x/original-800w.webp 800w'
+		);
+	});
+
+	it('keeps every rendition when the portal states no resolution to judge them by', () => {
+		const srcset = posterSrcsetFrom(
+			ladder(
+				[
+					{ name: 'a.webp', width: 400, height: 200, format: 'webp' },
+					{ name: 'b.webp', width: 800, height: 400, format: 'webp' }
+				],
+				'None'
+			),
+			'https://bomlo.aktivitetforalle.no/uploads/x/original.jpg'
+		);
+		expect(srcset).toContain('a.webp 400w');
+		expect(srcset).toContain('b.webp 800w');
+	});
+
+	it('survives a ladder it cannot read', () => {
+		// A poster is worth more than a srcset: an unreadable `upload_variants` must cost the
+		// ladder and nothing else, which is what the `.catch` on the schema is for.
+		const parsed = parseEvents({
+			data: [
+				{
+					event_id: 9,
+					event_title: 'x',
+					event_status: 'public',
+					event_type: 'arrangement',
+					event_from: '2026-09-18 19:00:00',
+					event_thumbnail: {
+						upload_url: '/uploads/x/original.jpg',
+						upload_variants: 'nope'
+					}
+				}
+			]
+		});
+		expect(parsed.rejected).toEqual([]);
+		const mapped = mapEvent(parsed.rows[0]!, site, vocabulary, locations);
+		if (isFailure(mapped)) throw new Error(mapped.problem);
+		expect(mapped.posterUrl).toBe('https://bomlo.aktivitetforalle.no/uploads/x/original.jpg');
+		expect(mapped.posterSrcset).toBeNull();
 	});
 });
 

@@ -204,6 +204,7 @@ export async function ingestSite(
 				venueId,
 				ctaUrl: mapped.ctaUrl,
 				posterUrl: mapped.posterUrl,
+				posterSrcset: mapped.posterSrcset,
 				posterRightsVerified: mapped.posterRightsVerified,
 				status: source.trusted ? ('published' as const) : ('pending' as const)
 			};
@@ -221,6 +222,7 @@ export async function ingestSite(
 					venueId: events.venueId,
 					ctaUrl: events.ctaUrl,
 					posterUrl: events.posterUrl,
+					posterSrcset: events.posterSrcset,
 					posterRightsVerified: events.posterRightsVerified,
 					status: events.status,
 					sourceUrl: events.sourceUrl
@@ -244,6 +246,7 @@ export async function ingestSite(
 				existing.venueId === values.venueId &&
 				existing.ctaUrl === values.ctaUrl &&
 				existing.posterUrl === values.posterUrl &&
+				existing.posterSrcset === values.posterSrcset &&
 				existing.posterRightsVerified === values.posterRightsVerified &&
 				existing.status === values.status &&
 				existing.sourceUrl === values.sourceUrl;

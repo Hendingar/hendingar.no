@@ -27,14 +27,48 @@ export function orNull(value: unknown): string | null {
 
 const nullish = z.preprocess(orNull, z.string().nullable());
 
+/**
+ * One rendition of an upload: the same picture, resized.
+ *
+ * The platform generates a ladder per upload and names the files beside the original, so the name
+ * is all we need to address one — see `posterSrcsetFrom` in map.ts. Validated loosely and with a
+ * `.catch` on the array below: a ladder we cannot read costs a `srcset`, and must never cost the
+ * event.
+ */
+const variantSchema = z.object({
+	/** A file name beside the original: `original-640w.webp`, or `w640.avif` on older uploads. */
+	name: z.string(),
+	width: z.number().nullish(),
+	height: z.number().nullish(),
+	mime: z.string().nullish(),
+	format: z.string().nullish(),
+	upload_exists: z.boolean().nullish()
+});
+
 const uploadSchema = z
 	.object({
-		/** Absolute, and already built by the API — do not construct it from `upload_path`. */
+		/**
+		 * The file — and **not reliably absolute**, whatever an older comment here claimed.
+		 *
+		 * It was `https://bomlo.aktivitetforalle.no/uploads/…` when this importer was written and is
+		 * `/uploads/…` now, on every one of the 180 uploads the portal holds. Nothing announced the
+		 * change and nothing failed: `new URL()` threw on the relative path, the mapper swallowed it
+		 * as "no poster", and 81 of 82 events quietly lost their picture while every run still
+		 * reported success. Resolve it against the site's origin, which is right either way.
+		 */
 		upload_url: z.string().nullish(),
 		upload_mime: z.string().nullish(),
-		upload_public: z.boolean().nullish()
+		upload_public: z.boolean().nullish(),
+		/** The portal's own flag for a file it no longer has. */
+		upload_exists: z.boolean().nullish(),
+		/** `"1920x1005"` — the original's pixels, which is how a resize is told from a crop. */
+		upload_resolution: z.string().nullish(),
+		upload_variants: z.array(variantSchema).nullish().catch(null)
 	})
 	.nullish();
+
+/** The thumbnail object as the API sends it. `map.ts` reads the ladder out of this. */
+export type UpstreamUpload = NonNullable<z.infer<typeof uploadSchema>>;
 
 const eventSchema = z.object({
 	event_id: z.union([z.string(), z.number()]),
