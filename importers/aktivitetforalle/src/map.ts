@@ -1,6 +1,6 @@
 import { zonedWallClockToInstant } from '@hendingar/core/datetime';
 import type { CategorySlug } from '@hendingar/core/taxonomy';
-import { orNull, type FilterVocabulary, type UpstreamEvent } from './api.ts';
+import { orNull, type FilterVocabulary, type UpstreamEvent, type UpstreamUpload } from './api.ts';
 import { eventUrl, listingUrl, type AfaSite } from './sites.ts';
 import { fromParts, type ParsedAddress } from '@hendingar/core/address';
 
@@ -122,6 +122,8 @@ export type MappedEvent = {
 	description: string | null;
 	ctaUrl: string | null;
 	posterUrl: string | null;
+	/** The same poster at every width the portal renders it, or null where it renders only one. */
+	posterSrcset: string | null;
 	posterRightsVerified: boolean;
 	sourceUrl: string;
 };
@@ -132,14 +134,101 @@ export function isFailure(v: MappedEvent | MapFailure): v is MapFailure {
 	return 'problem' in v;
 }
 
-function safeUrl(value: string | null): string | null {
+/**
+ * A URL the portal gave us, made absolute.
+ *
+ * `base` is not a convenience. The upload URLs were absolute when this importer was written and are
+ * root-relative now, and without a base `new URL('/uploads/…')` throws — which this function used
+ * to answer with `null`, i.e. "no poster", for every event on the portal. A base makes both spellings
+ * resolve to the same address, so the next change of mind upstream costs nothing.
+ */
+function safeUrl(value: string | null, base?: string): string | null {
 	if (!value) return null;
 	try {
-		const u = new URL(value);
+		const u = base ? new URL(value, base) : new URL(value);
 		return u.protocol === 'http:' || u.protocol === 'https:' ? u.toString() : null;
 	} catch {
 		return null;
 	}
+}
+
+/** "1920x1005" → 1.910…, and null for anything else. The original's shape, to catch a crop. */
+function aspectOf(resolution: string | null): number | null {
+	const match = /^(\d+)\s*[x×]\s*(\d+)$/.exec((resolution ?? '').trim());
+	if (!match) return null;
+	const width = Number(match[1]);
+	const height = Number(match[2]);
+	return width > 0 && height > 0 ? width / height : null;
+}
+
+/**
+ * Which rendition format to build the ladder from, best first.
+ *
+ * **One format for the whole ladder.** A browser picks a `srcset` candidate on width alone: list a
+ * webp beside a jpeg and you have told it the two are interchangeable, which they are not for
+ * anything that cannot decode the one it happens to choose.
+ *
+ * webp first — every browser that understands `srcset` understands webp, and the portal serves it
+ * with its real media type. avif last, not never: the uploads from before the platform's redesign
+ * have an avif ladder and nothing else, and the alternative for those is hotlinking the original,
+ * one of which is a 1.4 MB PNG painted into an 88px square on a phone. The portal mislabels avif as
+ * `application/octet-stream`, which browsers sniff past; a rendition that does fail to decode
+ * leaves `EventThumb` showing its generated tile, not a broken image.
+ */
+const FORMAT_RANK = ['webp', 'jpeg', 'jpg', 'png', 'avif'];
+
+function formatOf(variant: { name: string; mime?: string | null; format?: string | null }): string {
+	const fromMime = variant.mime?.trim().toLowerCase().replace('image/', '');
+	const fromName = /\.([a-z0-9]+)$/i.exec(variant.name)?.[1]?.toLowerCase();
+	return (variant.format?.trim().toLowerCase() || fromMime || fromName) ?? '';
+}
+
+/**
+ * The platform's rendition ladder as an `<img srcset>`.
+ *
+ * The widest a card is ever painted is 434 CSS pixels — 868 device pixels on a 2× screen — and the
+ * originals here run to 1920px and a megabyte and a half. The ladder is listed in the same response
+ * as the event, and every rendition sits beside the original under the same hashed directory, so
+ * addressing one costs no extra request: `original-640w.webp` resolves against the original's URL.
+ *
+ * A rendition is kept only when its proportions match the original's. The platform has only ever
+ * generated resizes, but `upload_resolution` is right there, and a `srcset` that quietly offers a
+ * square crop as a smaller version of a landscape poster is the kind of thing nobody notices until
+ * a face is cut in half.
+ */
+export function posterSrcsetFrom(upload: UpstreamUpload, posterUrl: string): string | null {
+	const variants = upload.upload_variants ?? [];
+	if (variants.length === 0) return null;
+
+	const original = aspectOf(orNull(upload.upload_resolution));
+
+	const byFormat = new Map<string, Map<number, string>>();
+	for (const variant of variants) {
+		if (variant.upload_exists === false) continue;
+		const width = variant.width ?? null;
+		if (!width || width <= 0) continue;
+		if (original && variant.height) {
+			const ratio = width / variant.height;
+			if (Math.abs(ratio - original) / original > 0.02) continue;
+		}
+		const url = safeUrl(variant.name, posterUrl);
+		if (!url) continue;
+		const format = formatOf(variant);
+		const ladder = byFormat.get(format) ?? new Map<number, string>();
+		ladder.set(width, url);
+		byFormat.set(format, ladder);
+	}
+
+	for (const format of FORMAT_RANK) {
+		const ladder = byFormat.get(format);
+		// One candidate is not a ladder: it only costs bytes to send a browser a choice of one.
+		if (!ladder || ladder.size < 2) continue;
+		return [...ladder.entries()]
+			.sort((a, b) => a[0] - b[0])
+			.map(([width, url]) => `${url} ${width}w`)
+			.join(', ');
+	}
+	return null;
 }
 
 /**
@@ -191,9 +280,17 @@ export function mapEvent(
 			? (locations.get(String(input.event_location_id)) ?? null)
 			: null);
 
+	/*
+	 * Resolved against the site's origin, because the portal spells these two ways — see
+	 * `upload_url` in api.ts for what that cost. `upload_exists` is the portal's own word for a file
+	 * it no longer holds, and linking one is a broken image on a card.
+	 */
 	const thumbnail = input.event_thumbnail;
-	const poster =
-		thumbnail && thumbnail.upload_public !== false ? safeUrl(orNull(thumbnail.upload_url)) : null;
+	const usable =
+		thumbnail && thumbnail.upload_public !== false && thumbnail.upload_exists !== false
+			? thumbnail
+			: null;
+	const poster = usable ? safeUrl(orNull(usable.upload_url), site.origin) : null;
 
 	const filterIds = (input.event_filter_ids ?? []).map(String);
 
@@ -220,6 +317,7 @@ export function mapEvent(
 		description: orNull(input.event_description) ?? orNull(input.event_summary),
 		ctaUrl: safeUrl(orNull(input.event_ticket_link)),
 		posterUrl: poster,
+		posterSrcset: usable && poster ? posterSrcsetFrom(usable, poster) : null,
 		/*
 		 * Hotlinked, and recorded as unverified.
 		 *
