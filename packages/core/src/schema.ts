@@ -339,6 +339,30 @@ export const events = pgTable(
 		 */
 		duplicateOfId: integer('duplicate_of_id'),
 
+		/**
+		 * When a run first found this event gone from the source that reported it.
+		 *
+		 * Null while the source still lists it, which is almost always. Set by an importer whose
+		 * fetch covers the WHOLE of what the source publishes — see `markGoneUpstream`, which is
+		 * also where the reason that qualification matters is written down.
+		 *
+		 * ## Why a mark and not a delete
+		 *
+		 * An event cancelled upstream used to stay here until its date passed, which is the site
+		 * telling somebody to turn up to something that is not happening. Deleting the row instead
+		 * would answer that with a 404 and no explanation, take its hearts and views with it (both
+		 * cascade), and break every link anybody had shared. A mark keeps the page, lets it say
+		 * what happened, and drops the row out of every listing.
+		 *
+		 * ## Why a timestamp and not a boolean
+		 *
+		 * The page can say *when* we noticed, which is the difference between "this is off" and a
+		 * reader wondering whether we are out of date. It is also what makes the flag self-healing
+		 * readable: a source that blips for one run and comes back clears this on the next, and the
+		 * timestamp is how anyone looking at the data can tell a blip from a cancellation.
+		 */
+		removedUpstreamAt: timestamp('removed_upstream_at', { withTimezone: true }),
+
 		status: eventStatusEnum('status').notNull().default('pending'),
 		/** Why the verification agent reached its conclusion — auditable, not a black box. */
 		verificationNotes: text('verification_notes'),

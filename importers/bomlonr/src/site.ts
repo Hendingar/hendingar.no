@@ -26,7 +26,15 @@ export const SITE = {
 	timezone: 'Europe/Oslo',
 	scheduleCron: '0 5 * * *',
 	iconUrl: 'https://www.bomlonr.no/favicon.ico',
-	trusted: true
+	trusted: true,
+	/**
+	 * Does one run see everything this site publishes?
+	 *
+	 * True: the `__NEXT_DATA__` blob carries the site's whole event archive — a hundred rows, past
+	 * and future, in the one response. That is what licenses the gone-upstream sweep. A source read
+	 * through a window must never claim it.
+	 */
+	listingIsComplete: true
 } as const;
 
 /** The listing a reader can open, and the one page this importer fetches. */

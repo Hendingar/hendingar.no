@@ -15,6 +15,7 @@ import {
 	type Candidate
 } from '../src/consolidate.ts';
 import { events, sources, venues } from '../src/schema.ts';
+import { stillListedUpstream } from '../src/gone-upstream.ts';
 
 const url = process.env.DATABASE_URL;
 if (!url) {
@@ -47,7 +48,13 @@ const rows = await db
 	.leftJoin(venues, eq(events.venueId, venues.id))
 	.leftJoin(sources, eq(events.sourceId, sources.id))
 	.where(
-		and(eq(events.status, 'published'), or(gte(events.startsAt, now), gte(events.endsAt, now)))
+		and(
+			eq(events.status, 'published'),
+			// A row the source has withdrawn must not become anybody's canonical: the duplicates
+			// would point at an event that no longer appears anywhere.
+			stillListedUpstream(),
+			or(gte(events.startsAt, now), gte(events.endsAt, now))
+		)
 	);
 
 const candidates: Candidate[] = rows.map((r) => ({

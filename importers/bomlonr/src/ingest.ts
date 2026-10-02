@@ -1,6 +1,7 @@
 import { and, eq } from 'drizzle-orm';
 import { createDb, type Db } from '@hendingar/core/db';
 import { events, ingestRuns, organizers, sources, venues } from '@hendingar/core/schema';
+import { markGoneUpstream } from '@hendingar/core/gone-upstream';
 import { parseListing, read as fetchListing, type Read } from './api.ts';
 import { SITE, listingUrl } from './site.ts';
 import { isFailure, mapEvent, type MappedEvent } from './map.ts';
@@ -165,6 +166,15 @@ export async function ingest(
 		// The listing carries the whole archive, so the same id cannot appear twice — but the set
 		// is what keeps the counts honest if that ever stops being true.
 		const seen = new Set<string>();
+		/*
+		 * Every event the site still lists.
+		 *
+		 * The same set as `seen` here, because this source publishes no status and we import every
+		 * row it carries — but kept separate because they answer different questions, and the day
+		 * this importer starts declining a row for a reason of its own, the sweep must not read
+		 * that as the site having removed it.
+		 */
+		const present = new Set(parsed.rows.map((row) => row.id.trim()).filter(Boolean));
 
 		{
 			for (const raw of parsed.rows) {
@@ -252,10 +262,24 @@ export async function ingest(
 			}
 		}
 
+		/*
+		 * What the site has stopped listing. Safe because one response carries the whole archive —
+		 * `listingIsComplete` says so beside the URL that makes it true. Nothing is deleted.
+		 */
+		let swept = { marked: 0, restored: 0 };
+		if (SITE.listingIsComplete && !dryRun) {
+			swept = await markGoneUpstream(db, { sourceId: source.id, seen: present, now: now() });
+		}
+
 		const status: IngestResult['status'] = rejected > 0 ? 'partial' : 'success';
 		const finishedAt = now();
 		const durationMs = finishedAt.getTime() - startedAt.getTime();
-		const message = problems.length ? problems.join('; ').slice(0, 2000) : null;
+		const notes = [
+			swept.marked > 0 ? `${swept.marked} no longer listed by the source` : null,
+			swept.restored > 0 ? `${swept.restored} listed again` : null,
+			...problems
+		].filter(Boolean);
+		const message = notes.length ? notes.join('; ').slice(0, 2000) : null;
 
 		if (!dryRun) {
 			await db

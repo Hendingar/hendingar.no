@@ -29,6 +29,7 @@ import {
 	venues,
 	verifications
 } from '@hendingar/core/schema';
+import { stillListedUpstream } from '@hendingar/core/gone-upstream';
 import { isContributableField } from '@hendingar/core/contribution';
 import {
 	calendarDateSchema,
@@ -91,6 +92,18 @@ import { withStartsIn } from './starts-in.ts';
  * See packages/core/src/standing.ts and docs/decisions/0013-standing-offers.md.
  */
 const datedOnly = eq(events.kind, 'dated');
+
+/**
+ * Still listed by the source that reported it.
+ *
+ * Beside `datedOnly` rather than written out in each query below, for the same reason: this is a
+ * clause that gets added to eighteen places and forgotten in the nineteenth, where it shows up as
+ * one page still advertising something that was cancelled a week ago.
+ *
+ * `getEvent` deliberately does NOT use it. A row that has gone from its source keeps its own page —
+ * with a line saying so — because people have the link, and some of them hearted it.
+ */
+const stillListed = stillListedUpstream();
 
 /** One source's mark on a tile. Its name is the tooltip; the icon is what a reader recognises. */
 export type SourceMark = {
@@ -210,6 +223,7 @@ export const listEvents = query(
 			.where(
 				and(
 					eq(events.status, 'published'),
+					stillListed,
 					/*
 					 * Only canonical rows.
 					 *
@@ -293,6 +307,7 @@ export const listSourceCounts = query(async () => {
 		.where(
 			and(
 				eq(events.status, 'published'),
+				stillListed,
 				isNull(events.duplicateOfId),
 				datedOnly,
 				or(gte(events.startsAt, now), gte(events.endsAt, now))
@@ -313,6 +328,7 @@ export const listSourceCounts = query(async () => {
 		.where(
 			and(
 				eq(events.status, 'published'),
+				stillListed,
 				isNull(events.duplicateOfId),
 				datedOnly,
 				isNull(events.sourceId),
@@ -353,6 +369,7 @@ export const siteStatus = query(async () => {
 		.where(
 			and(
 				eq(events.status, 'published'),
+				stillListed,
 				isNull(events.duplicateOfId),
 				datedOnly,
 				or(gte(events.startsAt, now), gte(events.endsAt, now))
@@ -385,6 +402,7 @@ export const siteStatus = query(async () => {
 		.where(
 			and(
 				eq(events.status, 'published'),
+				stillListed,
 				isNull(events.duplicateOfId),
 				eq(events.kind, 'standing'),
 				gte(events.endsAt, now)
@@ -437,6 +455,7 @@ export const searchSuggestions = query(searchTermSchema, async (term) => {
 	const live = () =>
 		and(
 			eq(events.status, 'published'),
+			stillListed,
 			isNull(events.duplicateOfId),
 			datedOnly,
 			or(gte(events.startsAt, now), gte(events.endsAt, now))
@@ -541,6 +560,7 @@ export const listCategoryCounts = query(async () => {
 		.where(
 			and(
 				eq(events.status, 'published'),
+				stillListed,
 				isNull(events.duplicateOfId),
 				datedOnly,
 				or(gte(events.startsAt, now), gte(events.endsAt, now))
@@ -596,6 +616,7 @@ export const waysInCounts = query(async () => {
 		.where(
 			and(
 				eq(events.status, 'published'),
+				stillListed,
 				isNull(events.duplicateOfId),
 				datedOnly,
 				or(gte(events.startsAt, now), gte(events.endsAt, now))
@@ -667,6 +688,7 @@ export const standingOffers = query(async () => {
 		.where(
 			and(
 				eq(events.status, 'published'),
+				stillListed,
 				isNull(events.duplicateOfId),
 				eq(events.kind, 'standing'),
 				gte(events.endsAt, new Date())
@@ -725,6 +747,7 @@ export const listUpcoming = query(z.number().int().min(1).max(60).default(24), a
 		.where(
 			and(
 				eq(events.status, 'published'),
+				stillListed,
 				// One row per event — see listEvents.
 				isNull(events.duplicateOfId),
 				datedOnly,
@@ -808,6 +831,7 @@ export const listPopular = query(
 			.where(
 				and(
 					eq(events.status, 'published'),
+					stillListed,
 					isNull(events.duplicateOfId),
 					datedOnly,
 					or(gte(events.startsAt, now), gte(events.endsAt, now))
@@ -880,7 +904,9 @@ export const calendarRange = query(async () => {
 	const [row] = await db()
 		.select({ earliest: min(events.startsAt), latest: max(events.startsAt) })
 		.from(events)
-		.where(and(eq(events.status, 'published'), isNull(events.duplicateOfId), datedOnly));
+		.where(
+			and(eq(events.status, 'published'), stillListed, isNull(events.duplicateOfId), datedOnly)
+		);
 
 	const today = localDayKey(new Date(), DEFAULT_TIME_ZONE);
 	const current = monthKeyOf(today);
@@ -920,6 +946,7 @@ export const dayCounts = query(calendarSpanSchema, async ({ from: fromMonth, to:
 		.where(
 			and(
 				eq(events.status, 'published'),
+				stillListed,
 				isNull(events.duplicateOfId),
 				datedOnly,
 				// A window on the indexed instant, deliberately a day wider than the span at each
@@ -978,6 +1005,7 @@ export const listEventsOnDate = query(calendarDateSchema, async (date) => {
 		.where(
 			and(
 				eq(events.status, 'published'),
+				stillListed,
 				isNull(events.duplicateOfId),
 				datedOnly,
 				gte(events.startsAt, from),
@@ -1050,6 +1078,7 @@ export const weekendEvents = query(weekendSchema, async (which) => {
 		.where(
 			and(
 				eq(events.status, 'published'),
+				stillListed,
 				isNull(events.duplicateOfId),
 				datedOnly,
 				gte(events.startsAt, from),
@@ -1110,6 +1139,7 @@ export const adjacentEventDays = query(calendarDateSchema, async (date) => {
 		.where(
 			and(
 				eq(events.status, 'published'),
+				stillListed,
 				isNull(events.duplicateOfId),
 				datedOnly,
 				gte(events.startsAt, from),
@@ -1158,6 +1188,7 @@ export const horizonWeeks = query(
 			.where(
 				and(
 					eq(events.status, 'published'),
+					stillListed,
 					isNull(events.duplicateOfId),
 					datedOnly,
 					gte(events.startsAt, from),
@@ -1244,6 +1275,7 @@ export const weekEvents = query(calendarWeekSchema, async (weekKey) => {
 		.where(
 			and(
 				eq(events.status, 'published'),
+				stillListed,
 				isNull(events.duplicateOfId),
 				datedOnly,
 				/*
@@ -1332,6 +1364,7 @@ export const placeCounts = query(calendarSpanSchema, async ({ from: fromMonth, t
 		.where(
 			and(
 				eq(events.status, 'published'),
+				stillListed,
 				isNull(events.duplicateOfId),
 				datedOnly,
 				gte(events.startsAt, from),
@@ -1412,6 +1445,14 @@ export const getEvent = query(z.number().int().positive(), async (id) => {
 			 * and asked to be indexed alongside the row it duplicates.
 			 */
 			duplicateOfId: events.duplicateOfId,
+			/*
+			 * Set when a run found the source no longer listing this event.
+			 *
+			 * The page keeps working — people have the link, and some of them hearted it — and says
+			 * so instead of quietly advertising something that is not happening. Every listing
+			 * drops it; see `stillListed`.
+			 */
+			removedUpstreamAt: events.removedUpstreamAt,
 			duplicateOfTitle: canonicalEvent.title
 		})
 		.from(events)

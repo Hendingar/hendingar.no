@@ -1,5 +1,6 @@
 import { and, asc, desc, eq, gte, isNull, lte, or } from 'drizzle-orm';
 import { curatorPicks, events, organizers, sources, venues } from '@hendingar/core/schema';
+import { stillListedUpstream } from '@hendingar/core/gone-upstream';
 import { DEFAULT_TIME_ZONE, weekendAhead } from '@hendingar/core/datetime';
 import { instantWindowForDays, localDayKey } from '../calendar.ts';
 import { currentSelection } from '../kurator.ts';
@@ -85,6 +86,8 @@ async function candidates() {
 		.where(
 			and(
 				eq(events.status, 'published'),
+				// Never a weekend pick that the source has since withdrawn.
+				stillListedUpstream(),
 				isNull(events.duplicateOfId),
 				// A place that is open is not an event that happens (ADR 0013), and a kurator asked
 				// what is worth going out for on Saturday must not answer with the library's

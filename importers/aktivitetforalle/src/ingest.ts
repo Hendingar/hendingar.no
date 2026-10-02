@@ -1,7 +1,8 @@
 import { and, eq } from 'drizzle-orm';
 import { createDb, type Db } from '@hendingar/core/db';
 import { events, ingestRuns, sources, venues } from '@hendingar/core/schema';
-import { parseEvents, parseFilters, parseLocations, read, type Read } from './api.ts';
+import { markGoneUpstream } from '@hendingar/core/gone-upstream';
+import { orNull, parseEvents, parseFilters, parseLocations, read, type Read } from './api.ts';
 import { SITES, listingUrl, eventsUrl, type AfaSite } from './sites.ts';
 import { isFailure, isPublishableEvent, mapEvent, type MappedEvent } from './map.ts';
 
@@ -159,8 +160,19 @@ export async function ingestSite(
 		}
 
 		const seen = new Set<string>();
+		/*
+		 * Every event the portal still lists, which is not the same set as the ones we import.
+		 *
+		 * `public` and nothing else: an archived or draft row is one the portal has taken down, and
+		 * that is exactly what the sweep below is for. But a public row we decline to import — the
+		 * one with no start time, the standing weekly activities — is still being published, so
+		 * counting it present is what stops the sweep marking a live event gone on a technicality.
+		 */
+		const present = new Set<string>();
 
 		for (const raw of parsed.rows) {
+			if (orNull(raw.event_status) === 'public') present.add(String(raw.event_id));
+
 			/*
 			 * Archived and draft rows, the standing weekly activities, and the one public event
 			 * that never got a start time.
@@ -263,6 +275,18 @@ export async function ingestSite(
 			updated += 1;
 		}
 
+		/*
+		 * What the portal has stopped listing.
+		 *
+		 * Safe here because one request returns the whole collection — `listingIsComplete` says so
+		 * beside the URL that makes it true. Nothing is deleted: the row keeps its page, its hearts
+		 * and its views, and only drops out of the listings. See `markGoneUpstream`.
+		 */
+		let swept = { marked: 0, restored: 0 };
+		if (site.listingIsComplete && !dryRun) {
+			swept = await markGoneUpstream(db, { sourceId: source.id, seen: present, now: now() });
+		}
+
 		const status: IngestResult['status'] = rejected > 0 ? 'partial' : 'success';
 		const finishedAt = now();
 		const durationMs = finishedAt.getTime() - startedAt.getTime();
@@ -275,6 +299,10 @@ export async function ingestSite(
 			skipped > 0
 				? `${skipped} rows skipped (archived, draft, standing activity or undated)`
 				: null,
+			// Said out loud on the run, because a row leaving the site should never be something
+			// only the database knows about.
+			swept.marked > 0 ? `${swept.marked} no longer listed by the source` : null,
+			swept.restored > 0 ? `${swept.restored} listed again` : null,
 			...problems
 		].filter(Boolean);
 		const message = notes.length ? notes.join('; ').slice(0, 2000) : null;
