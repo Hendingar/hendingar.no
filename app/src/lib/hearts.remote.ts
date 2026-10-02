@@ -4,6 +4,7 @@ import { and, count, eq, inArray, sql } from 'drizzle-orm';
 import { eventHearts, events, sources, venues } from '@hendingar/core/schema';
 import { db } from './server/db';
 import { withStartsIn } from './starts-in.ts';
+import type { SourceMark } from './events.remote';
 
 /**
  * Hearts: the count, and the toggle.
@@ -118,11 +119,11 @@ export const listHearted = query(
 				municipality: venues.municipality,
 				posterUrl: events.posterUrl,
 				posterSrcset: events.posterSrcset,
-				sourceMarks: sql<{ name: string; iconUrl: string | null }[]>`
+				sourceMarks: sql<SourceMark[]>`
 					coalesce((
 						select json_agg(m order by m.name)
 						from (
-							select distinct ${sources.name} as name, ${sources.iconUrl} as "iconUrl"
+							select distinct ${sources.slug} as slug, ${sources.name} as name, ${sources.iconUrl} as "iconUrl"
 							from ${events} dup
 							join ${sources} on ${sources.id} = dup.source_id
 							where dup.id = ${events.id} or dup.duplicate_of_id = ${events.id}

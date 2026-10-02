@@ -14,6 +14,8 @@
 	import { parseFixture } from '@hendingar/core/fixture';
 	import VersusTile from './VersusTile.svelte';
 	import { artworkFor } from '../church-art.ts';
+	import { hasGardenSource } from '../garden-sources.ts';
+	import GardenTile from './GardenTile.svelte';
 
 	let {
 		id,
@@ -21,6 +23,7 @@
 		posterSrcset = null,
 		title,
 		category = '',
+		sourceSlugs,
 		sizes
 	}: {
 		id: number;
@@ -38,6 +41,14 @@
 		 * before. Nothing here fails for want of one.
 		 */
 		category?: string;
+		/**
+		 * The sources that reported this event, by slug.
+		 *
+		 * For the one or two whose events never have a picture and never will — a hagelag's
+		 * activity page carries none at all — so the card can be theirs rather than a pattern.
+		 * Undefined by default: a caller that does not know gets what it got before.
+		 */
+		sourceSlugs?: readonly string[];
 		/**
 		 * How wide this thumbnail is painted, when it is NOT a tile in the listing grid.
 		 *
@@ -79,6 +90,7 @@
 	 * it says out loud that the painting is not a claim about the service.
 	 */
 	const artwork = $derived(artworkFor(id, category));
+	const garden = $derived(hasGardenSource(sourceSlugs));
 
 	/**
 	 * How wide this thumbnail actually is, per breakpoint. **Measured, not guessed.**
@@ -143,6 +155,8 @@
 	/>
 {:else if fixture}
 	<VersusTile {id} {fixture} />
+{:else if garden}
+	<GardenTile {id} />
 {:else if artwork}
 	<!--
 		Named in `alt`, never `alt=""`: this one is not decoration. The event's own page carries the

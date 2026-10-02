@@ -52,6 +52,20 @@
 	--navy-dim: rgb(22 34 59 / 78%);
 	--navy-line: rgb(22 34 59 / 30%); /* hairlines on peach — decorative, never text */
 
+	/*
+	 * The one light surface.
+	 *
+	 * Everything on this site is navy and peach, and that is the point — but a borrowed mark is
+	 * drawn for a white letterhead and loses its meaning on anything else. `--paper` exists so the
+	 * exception is a token somebody can find, rather than a `#fff` buried in one component's
+	 * styles. The leaf and bloom below belong to the same exception: they are a garden, and a
+	 * garden is not peach.
+	 */
+	--paper: #ffffff;
+	--leaf: #2f7d4f;
+	--bloom: #f7a98a;
+	--bloom-heart: #e8842f;
+
 	/* --- type --- */
 	--font-display: 'Archivo Variable', 'Archivo', system-ui, sans-serif;
 	--font-mono: 'Space Mono', ui-monospace, 'SF Mono', monospace;

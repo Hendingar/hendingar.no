@@ -93,7 +93,12 @@ import { withStartsIn } from './starts-in.ts';
 const datedOnly = eq(events.kind, 'dated');
 
 /** One source's mark on a tile. Its name is the tooltip; the icon is what a reader recognises. */
-export type SourceMark = { name: string; iconUrl: string | null };
+export type SourceMark = {
+	/** The source's own slug. What a tile keys on when a source has a card of its own. */
+	slug: string;
+	name: string;
+	iconUrl: string | null;
+};
 
 /**
  * Every source that reported an event, as one JSON array per listing row.
@@ -114,7 +119,7 @@ function sourceMarksFor(eventId: SQL | AnyColumn) {
 		coalesce((
 			select json_agg(m order by m.name)
 			from (
-				select distinct ${sources.name} as name, ${sources.iconUrl} as "iconUrl"
+				select distinct ${sources.slug} as slug, ${sources.name} as name, ${sources.iconUrl} as "iconUrl"
 				from ${events} dup
 				join ${sources} on ${sources.id} = dup.source_id
 				where dup.id = ${eventId} or dup.duplicate_of_id = ${eventId}
