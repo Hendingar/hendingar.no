@@ -37,18 +37,57 @@
 
 	const tile = $derived(fixtureTile(fixture));
 
-	/** Baselines, counted from the top for the home side and up from the bottom for the away one. */
+	/**
+	 * Baselines, counted from the top for the home side and up from the bottom for the away one.
+	 *
+	 * The numbers clear the crest band, which is 72 units tall either side of the mark at y=112.
+	 * Two lines of the largest size ink from 15 to 68 at the top and from 153 to 206 at the bottom,
+	 * so a name never crosses a crest however long the club's name is.
+	 */
 	const LINE = 0.86;
 	const homeLines = $derived(
-		tile.home.lines.map((line, i) => ({ line, y: 48 + i * tile.home.fontSize * LINE }))
+		tile.home.lines.map((line, i) => ({ line, y: 40 + i * tile.home.fontSize * LINE }))
 	);
 	const awayLines = $derived(
 		tile.away.lines.map((line, i) => ({
 			line,
-			y: 202 - (tile.away.lines.length - 1 - i) * tile.away.fontSize * LINE
+			y: 206 - (tile.away.lines.length - 1 - i) * tile.away.fontSize * LINE
 		}))
 	);
+
+	/**
+	 * Crests only on the card an event page shows, never on a thumbnail in a listing.
+	 *
+	 * Measured, not taste: NFF's crests are PNGs averaging 33 KB and running to 82 KB, so a pair of
+	 * them is five to twenty times what the whole rest of this card costs — and on the 88px row a
+	 * phone draws, a crest is four millimetres of mush. The listing keeps the wordmark it already
+	 * had, and the page somebody chose to open gets the full thing.
+	 */
+	const crests = $derived(feature ? { home: tile.home.crest, away: tile.away.crest } : null);
 </script>
+
+{#snippet crest(href: string, x: number, label: string)}
+	<!--
+		A light chip behind every crest.
+
+		Club crests are drawn for white letterheads: several of these are navy-on-transparent and
+		vanish on our navy. The chip is `--peach-hi`, the lightest thing in the palette, so the crest
+		reads whatever it is made of — and a crest that 404s leaves a chip that still looks like part
+		of the card rather than a broken image.
+	-->
+	<g>
+		<rect {x} y="76" width="72" height="72" rx="12" fill="var(--peach-hi)" />
+		<image
+			{href}
+			x={x + 8}
+			y="84"
+			width="56"
+			height="56"
+			preserveAspectRatio="xMidYMid meet"
+			aria-label={label}
+		/>
+	</g>
+{/snippet}
 
 <!--
 	`thumb` as well as `vs`: EventTile, StandingCard and WeekendPicks all reach into their thumbnail
@@ -115,6 +154,13 @@
 
 			{#if tile.grade}
 				<text class="vs__grade" x="380" y="30" text-anchor="end">{tile.grade.toUpperCase()}</text>
+			{/if}
+
+			{#if crests?.home}
+				{@render crest(crests.home, 56, tile.home.lines.join(' '))}
+			{/if}
+			{#if crests?.away}
+				{@render crest(crests.away, 272, tile.away.lines.join(' '))}
 			{/if}
 
 			<g transform="translate(200 112)">

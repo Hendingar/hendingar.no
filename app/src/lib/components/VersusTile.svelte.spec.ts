@@ -58,6 +58,57 @@ describe('VersusTile', () => {
 		]);
 	});
 
+	it('puts the crests beside the mark, clear of both names', () => {
+		/*
+		 * The one thing that can go wrong here and look like a design choice: a long club name
+		 * running under its own crest. Measured rather than eyeballed, so a change to either the
+		 * baselines or the chip geometry fails instead of shipping.
+		 */
+		render(VersusTile, {
+			id: 5,
+			fixture: fixture('Bremnes Menn Senior A - Juristforeningen Studentidrettslag Menn senior A'),
+			feature: true
+		});
+		const svg = document.querySelector('.vs svg') as SVGSVGElement;
+		const chips = [...svg.querySelectorAll<SVGImageElement>('image')];
+		expect(chips).toHaveLength(2);
+		for (const name of svg.querySelectorAll<SVGTextElement>('.vs__name')) {
+			const text = name.getBBox();
+			for (const chip of chips) {
+				const crest = chip.getBBox();
+				const overlaps =
+					text.x < crest.x + crest.width &&
+					crest.x < text.x + text.width &&
+					text.y < crest.y + crest.height &&
+					crest.y < text.y + text.height;
+				expect(overlaps, `${name.textContent} over a crest`).toBe(false);
+			}
+		}
+	});
+
+	it('leaves the crests off a listing thumbnail', () => {
+		/*
+		 * Not a style rule, a weight one: NFF's crests average 33 KB and run to 82 KB, which is
+		 * five to twenty times the rest of the card. A listing full of them would be the one part
+		 * of this site that costs real bytes, and at 88px a crest is unreadable anyway.
+		 */
+		const { container } = render(VersusTile, {
+			id: 6,
+			fixture: fixture('Stord Fotball Menn Senior A - Vard Haugesund')
+		});
+		expect(container.querySelectorAll('image')).toHaveLength(0);
+	});
+
+	it('draws the wordmark alone for a club we have no crest for', () => {
+		const { container } = render(VersusTile, {
+			id: 7,
+			fixture: fixture('Stord Fotball Menn Senior A - Ukjend Ballklubb Menn Senior A'),
+			feature: true
+		});
+		// One crest, not none and not a placeholder: the half we know is still worth drawing.
+		expect(container.querySelectorAll('image')).toHaveLength(1);
+	});
+
 	it('only moves when it is the card on an event page', async () => {
 		const still = render(VersusTile, {
 			id: 3,

@@ -3,6 +3,7 @@ import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { parseFixture } from '@hendingar/core/fixture';
 import { fixtureTile, layoutClubName } from './fixture-tile.ts';
+import { crestUrl } from './club-crests.ts';
 
 /**
  * The arithmetic behind the versus tile.
@@ -75,6 +76,28 @@ describe('layoutClubName', () => {
 	it('never goes below the floor, however long the name', () => {
 		const { fontSize } = layoutClubName('Sunnhordlandsmeisterskapen');
 		expect(fontSize).toBeGreaterThanOrEqual(13);
+	});
+});
+
+describe('the crest table', () => {
+	it('covers every club in the committed feeds', () => {
+		/*
+		 * The table is hand-written, so this is the thing that tells us it has gone stale: a new
+		 * opponent next season draws its wordmark and no crest, which is the designed fallback —
+		 * but it should be a decision someone took, not one nobody noticed.
+		 */
+		const missing = clubs.filter((club) => crestUrl(club) === null);
+		expect(missing).toEqual([]);
+	});
+
+	it('answers null for a club nobody has written down', () => {
+		expect(crestUrl('Ukjend Ballklubb')).toBeNull();
+	});
+
+	it('addresses the image host, never the page the id came from', () => {
+		// fotball.no is Disallow: / for everyone. images.fotball.no is where the match page itself
+		// loads these from, and a reader's browser is what fetches them.
+		expect(crestUrl('Stord Fotball')).toBe('https://images.fotball.no/clublogos/3076.png');
 	});
 });
 
