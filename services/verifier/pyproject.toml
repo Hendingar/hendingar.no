@@ -9,8 +9,21 @@ dependencies = [
     # Microsoft Agent Framework. `core` is the Agent and the workflow graph, `openai` the chat
     # client that reaches Azure AI Foundry with an Entra credential, `orchestrations` the
     # multi-agent builders. See docs/decisions/0016-agent-framework.md.
-    "agent-framework-core>=1.18",
-    "agent-framework-openai>=1.14",
+    #
+    # Held below 1.20 / 1.15 since 2026-10-02. Those two were published at 12:41 UTC that day and
+    # broke every streaming test in this service within the hour — `_chat_completion_client.py`
+    # does `async with await client.chat.completions.create(...)`, which raises
+    # `TypeError: 'async_generator' object does not support the asynchronous context manager
+    # protocol`. 24 of 202 tests fail, and the submission path answers an `error` frame where the
+    # draft should be.
+    #
+    # It is not the OpenAI SDK moving underneath them: with these two held and `openai` at the
+    # newest 3.23.0, all 202 pass. Measured both ways before writing the bound.
+    #
+    # To lift it: raise the ceiling, run `pytest -q` in this directory, and keep the change if it
+    # is green. Nothing here depends on the new versions.
+    "agent-framework-core>=1.18,<1.20",
+    "agent-framework-openai>=1.14,<1.15",
     "agent-framework-orchestrations>=1.1",
     # Reached through the framework rather than directly, but it is what the wire types are and
     # what the tests construct their fake responses from, so the floor is ours to state.
