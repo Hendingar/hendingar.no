@@ -27,7 +27,8 @@
 		"./contribution": "./src/contribution.ts",
 		"./coverage": "./src/coverage.ts",
 		"./fixture": "./src/fixture.ts",
-		"./gone-upstream": "./src/gone-upstream.ts"
+		"./gone-upstream": "./src/gone-upstream.ts",
+		"./weekly-hours": "./src/weekly-hours.ts"
 	},
 	"scripts": {
 		"typecheck": "tsc --noEmit",

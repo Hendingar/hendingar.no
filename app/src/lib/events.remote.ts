@@ -9,6 +9,7 @@ import {
 	eq,
 	gte,
 	ilike,
+	isNotNull,
 	isNull,
 	lte,
 	max,
@@ -405,6 +406,9 @@ export const siteStatus = query(async () => {
 				stillListed,
 				isNull(events.duplicateOfId),
 				eq(events.kind, 'standing'),
+				// Places only. The weekly activities are a club directory, not "stader som alltid
+				// er opne", and counting a football squad as a place would make this line untrue.
+				isNull(events.weeklyHours),
 				gte(events.endsAt, now)
 			)
 		);
@@ -668,6 +672,11 @@ export const waysInCounts = query(async () => {
  *
  * No date filter beyond "not finished": a standing offer that has genuinely closed should drop off,
  * and `ends_at >= now()` is what says so.
+ *
+ * **Places only — not the weekly activities.** A standing row with a timetable is a club's training
+ * or a choir's rehearsal, and there are a hundred of them; served here they would make every
+ * consumer of this query — the front-page band, the "Òg ope denne dagen" line — a list of football
+ * squads. `weeklyActivities` serves them, grouped. See ADR 0021.
  */
 export const standingOffers = query(async () => {
 	return db()
@@ -691,6 +700,7 @@ export const standingOffers = query(async () => {
 				stillListed,
 				isNull(events.duplicateOfId),
 				eq(events.kind, 'standing'),
+				isNull(events.weeklyHours),
 				gte(events.endsAt, new Date())
 			)
 		)
@@ -698,6 +708,79 @@ export const standingOffers = query(async () => {
 });
 
 export type StandingOffer = Awaited<ReturnType<typeof standingOffers>>[number];
+
+/**
+ * Titles sort as people read them: "G7" before "G12", and "Ø" after "Z".
+ *
+ * `numeric` because a club's squads are numbered by age, and plain collation files "Bremnes G12"
+ * before "Bremnes G7". Norwegian because Postgres's collation here is whatever the server was
+ * built with, and "Øvre" belongs last. Server-only, where Node's ICU resolves `nb`; this never
+ * reaches the browser, where it might not (CLAUDE.md, on `nn-NO`).
+ */
+const byReadingOrder = new Intl.Collator('nb', { numeric: true, sensitivity: 'base' });
+
+/**
+ * The clubs, choirs and groups that meet every week, grouped by who runs them.
+ *
+ * "Bremnes G12, tysdag og onsdag 18:00" is something you join for a season rather than somewhere
+ * you walk into this afternoon, and there are a hundred of them from one portal alone — mostly one
+ * per age group per club. As a flat list they bury everything else on `/alltid-ope` (ADR 0013
+ * measured it); grouped by organiser they are twenty-odd entries a parent can scan for the club
+ * they already know.
+ *
+ * Grouped here rather than in the component so the page renders what it is given, and the rule for
+ * what belongs together has one home. An activity whose source names no organiser is not dropped:
+ * it goes in a last group of its own, with a null name for the page to word.
+ *
+ * Organisers alphabetically, like `standingOffers`: no order here should imply a ranking.
+ */
+export const weeklyActivities = query(async () => {
+	const rows = await db()
+		.select({
+			id: events.id,
+			title: events.title,
+			category: events.category,
+			weeklyHours: events.weeklyHours,
+			endsAt: events.endsAt,
+			venueName: venues.name,
+			organizerName: organizers.name
+		})
+		.from(events)
+		.leftJoin(venues, eq(events.venueId, venues.id))
+		.leftJoin(organizers, eq(events.organizerId, organizers.id))
+		.where(
+			and(
+				eq(events.status, 'published'),
+				stillListed,
+				isNull(events.duplicateOfId),
+				eq(events.kind, 'standing'),
+				isNotNull(events.weeklyHours),
+				gte(events.endsAt, new Date())
+			)
+		);
+
+	const groups = new Map<string | null, typeof rows>();
+	for (const row of rows) {
+		const group = groups.get(row.organizerName) ?? [];
+		group.push(row);
+		groups.set(row.organizerName, group);
+	}
+
+	return [...groups.entries()]
+		.map(([organizer, activities]) => ({
+			organizer,
+			activities: activities.sort((a, b) => byReadingOrder.compare(a.title, b.title))
+		}))
+		.sort((a, b) =>
+			a.organizer === null
+				? 1
+				: b.organizer === null
+					? -1
+					: byReadingOrder.compare(a.organizer, b.organizer)
+		);
+});
+
+export type WeeklyActivityGroup = Awaited<ReturnType<typeof weeklyActivities>>[number];
 
 /** The row shape callers get, derived from the query rather than hand-written. */
 export type EventSummary = Awaited<ReturnType<typeof listEvents>>[number];
@@ -1431,6 +1514,8 @@ export const getEvent = query(z.number().int().positive(), async (id) => {
 			venueLongitude: venues.longitude,
 			venueTimeZone: venues.timezone,
 			organizerName: organizers.name,
+			/** A standing activity's timetable — shown in place of a start time it does not have. */
+			weeklyHours: events.weeklyHours,
 			sourceName: sources.name,
 			sourceAttribution: sources.attribution,
 			sourceSiteUrl: sources.url,

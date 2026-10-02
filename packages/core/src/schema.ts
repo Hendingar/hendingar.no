@@ -4,6 +4,7 @@ import {
 	doublePrecision,
 	index,
 	integer,
+	jsonb,
 	pgEnum,
 	pgTable,
 	serial,
@@ -15,6 +16,7 @@ import { sql } from 'drizzle-orm';
 import { CATEGORY_SLUGS } from './taxonomy.ts';
 import { STANDING_SPAN_DAYS, type EventKind } from './standing.ts';
 import { RECURRENCE_FREQUENCIES } from './recurrence.ts';
+import type { WeeklyHours } from './weekly-hours.ts';
 import { VERIFICATION_CHECKS, VERIFICATION_VERDICTS } from './verification.ts';
 
 /** Derived from taxonomy.ts — never write this list out by hand. */
@@ -302,6 +304,15 @@ export const events = pgTable(
 		 * have siblings, which is the whole point of materialising rather than expanding on read.
 		 */
 		seriesId: integer('series_id').references(() => eventSeries.id, { onDelete: 'cascade' }),
+		/**
+		 * When a standing activity meets — "tysdag og onsdag 18:00–19:30". Null for everything else.
+		 *
+		 * Not a `seriesId`: a series is materialised into the day list, and these must stay out of
+		 * it (ADR 0013). This is a timetable to show, never expanded into dates. Its presence is also
+		 * what tells a club's weekly training apart from a museum on `/alltid-ope`. See
+		 * src/weekly-hours.ts and docs/decisions/0021-weekly-activities.md.
+		 */
+		weeklyHours: jsonb('weekly_hours').$type<WeeklyHours>(),
 
 		/** Outbound ticket link. We never sell tickets — see README non-goals. */
 		ctaUrl: text('cta_url'),

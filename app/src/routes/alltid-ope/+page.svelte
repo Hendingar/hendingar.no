@@ -2,10 +2,11 @@
 	import { page } from '$app/state';
 	import { eventPath } from '@hendingar/core/slug';
 	import StandingGrid from '../../lib/components/StandingGrid.svelte';
+	import WeeklyActivities from '../../lib/components/alltid-ope/WeeklyActivities.svelte';
 	import PageMeta from '../../lib/components/PageMeta.svelte';
 	import { canonicalUrl } from '../../lib/origin.ts';
 	import { breadcrumbJsonLd, itemListJsonLd, jsonLdScript } from '../../lib/jsonld.ts';
-	import { standingOffers } from '../../lib/events.remote';
+	import { standingOffers, weeklyActivities } from '../../lib/events.remote';
 
 	/**
 	 * Everything that is open rather than happening.
@@ -22,6 +23,11 @@
 	 * Top-level await, so it is real HTML for crawlers and for readers without JavaScript.
 	 */
 	const offers = await standingOffers();
+	/**
+	 * The weekly activities, below the places and apart from them: a different kind of answer to
+	 * the same question. See ADR 0021.
+	 */
+	const groups = await weeklyActivities();
 
 	const jsonLd = $derived([
 		itemListJsonLd(
@@ -75,6 +81,8 @@
 			<a href="/send-inn">Send det inn</a> — eller <a href="/datasamling">sjå kva vi hentar inn</a>.
 		</p>
 	{/if}
+
+	<WeeklyActivities {groups} />
 </div>
 
 <style>

@@ -66,8 +66,26 @@ export const locationsUrl = (site: AfaSite) => `${site.origin}/api/v1/locations`
 /** The tag vocabulary — categories, audiences, price types — keyed by the ids events carry. */
 export const filtersUrl = (site: AfaSite) => `${site.origin}/api/v1/filters`;
 
+/**
+ * Clubs, choirs, the kulturskule — who runs each event. Sixty-six of them; one request.
+ *
+ * Not linked from robots.txt or the sitemap: found in the site's own bundle, which reads it the same
+ * way. It is what names the organiser on every activity, where `event_organizer_name` is empty.
+ */
+export const organizersUrl = (site: AfaSite) => `${site.origin}/api/v1/organizers`;
+
 /** Where a reader lands. Only `public` events have a page; archived ids render "Ikkje funne". */
 export const eventUrl = (site: AfaSite, eventId: string) => `${site.origin}/arrangement/${eventId}`;
+
+/**
+ * An activity's own page. The portal's nav calls them "Aktivitetar" and routes them here.
+ *
+ * Checked in a browser: `/arrangement/<id>` renders an activity too, but `/aktivitetar/<id>` is
+ * the address the portal itself links, and `/aktivitet/<id>` — the obvious guess — is "Ikkje
+ * funne".
+ */
+export const activityUrl = (site: AfaSite, eventId: string) =>
+	`${site.origin}/aktivitetar/${eventId}`;
 
 export function siteBySlug(slug: string): AfaSite | undefined {
 	return SITES.find((s) => s.slug === slug);

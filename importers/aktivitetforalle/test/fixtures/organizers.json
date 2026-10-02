@@ -1,0 +1,336 @@
+{
+	"code": 200,
+	"status": "success",
+	"data": [
+		{
+			"organizer_id": 19,
+			"organizer_title": "Jms Musikk AS",
+			"organizer_public": true
+		},
+		{
+			"organizer_id": 21,
+			"organizer_title": "Randi Margaret Olsen",
+			"organizer_public": true
+		},
+		{
+			"organizer_id": 12,
+			"organizer_title": "Leite Aust Vel",
+			"organizer_public": true
+		},
+		{
+			"organizer_id": 22,
+			"organizer_title": "Bømlo Kulturhus Kf",
+			"organizer_public": true
+		},
+		{
+			"organizer_id": 23,
+			"organizer_title": "Laurhammer Indremisjon",
+			"organizer_public": true
+		},
+		{
+			"organizer_id": 24,
+			"organizer_title": "Meling Bedehus",
+			"organizer_public": true
+		},
+		{
+			"organizer_id": 26,
+			"organizer_title": "Rubbestadneset Nærmiljøsenter",
+			"organizer_public": true
+		},
+		{
+			"organizer_id": 25,
+			"organizer_title": "Langevåg Bygdatun AS",
+			"organizer_public": true
+		},
+		{
+			"organizer_id": 28,
+			"organizer_title": "Sion Mosterhamn, Kristent Felleskap Bømlo, Klippen Bremnes, Salem Mosterhamn",
+			"organizer_public": true
+		},
+		{
+			"organizer_id": 31,
+			"organizer_title": "Bømlo Janitsjar",
+			"organizer_public": true
+		},
+		{
+			"organizer_id": 32,
+			"organizer_title": "Finnås Kvinne & Familielag",
+			"organizer_public": true
+		},
+		{
+			"organizer_id": 33,
+			"organizer_title": "Hlf Bømlo Hørsellag",
+			"organizer_public": true
+		},
+		{
+			"organizer_id": 34,
+			"organizer_title": "Gåslandsmarkjo Grendalag",
+			"organizer_public": true
+		},
+		{
+			"organizer_id": 37,
+			"organizer_title": "Bømlo Indremisjon",
+			"organizer_public": true
+		},
+		{
+			"organizer_id": 40,
+			"organizer_title": "Evolan",
+			"organizer_public": true
+		},
+		{
+			"organizer_id": 42,
+			"organizer_title": "8.mars Initiativet - Bømlo",
+			"organizer_public": true
+		},
+		{
+			"organizer_id": 35,
+			"organizer_title": "BirdLife Sunnhordland",
+			"organizer_public": true
+		},
+		{
+			"organizer_id": 11,
+			"organizer_title": "Mannskoret Havdur",
+			"organizer_public": true
+		},
+		{
+			"organizer_id": 49,
+			"organizer_title": "Forening For Nyankommende Bømlinger",
+			"organizer_public": true
+		},
+		{
+			"organizer_id": 14,
+			"organizer_title": "Bømlo Husflidslag",
+			"organizer_public": true
+		},
+		{
+			"organizer_id": 17,
+			"organizer_title": "Bremnes Idrettslag",
+			"organizer_public": true
+		},
+		{
+			"organizer_id": 18,
+			"organizer_title": "Amcar Bømlo",
+			"organizer_public": true
+		},
+		{
+			"organizer_id": 45,
+			"organizer_title": "Moster Skulekorps",
+			"organizer_public": true
+		},
+		{
+			"organizer_id": 20,
+			"organizer_title": "Ståvo",
+			"organizer_public": true
+		},
+		{
+			"organizer_id": 44,
+			"organizer_title": "Sporty Bømlo AS",
+			"organizer_public": true
+		},
+		{
+			"organizer_id": 46,
+			"organizer_title": "Bømlo Skulekorps",
+			"organizer_public": true
+		},
+		{
+			"organizer_id": 41,
+			"organizer_title": "Bømlo Motorsportklubb",
+			"organizer_public": true
+		},
+		{
+			"organizer_id": 13,
+			"organizer_title": "Sunnhordland Padleklubb",
+			"organizer_public": true
+		},
+		{
+			"organizer_id": 16,
+			"organizer_title": "Finnås Sportsklubb",
+			"organizer_public": true
+		},
+		{
+			"organizer_id": 51,
+			"organizer_title": "Vestkysten Drillklubb",
+			"organizer_public": true
+		},
+		{
+			"organizer_id": 47,
+			"organizer_title": "Moster Drill",
+			"organizer_public": true
+		},
+		{
+			"organizer_id": 54,
+			"organizer_title": "Bømlo Symjeklubb",
+			"organizer_public": true
+		},
+		{
+			"organizer_id": 53,
+			"organizer_title": "Bømlo Kulturskule",
+			"organizer_public": true
+		},
+		{
+			"organizer_id": 43,
+			"organizer_title": "Rubbestadneset Idrettslag",
+			"organizer_public": true
+		},
+		{
+			"organizer_id": 55,
+			"organizer_title": "Våge Skulemusikklag",
+			"organizer_public": true
+		},
+		{
+			"organizer_id": 39,
+			"organizer_title": "Bremnes Drill",
+			"organizer_public": true
+		},
+		{
+			"organizer_id": 57,
+			"organizer_title": "Flowibe Diana Dimore",
+			"organizer_public": true
+		},
+		{
+			"organizer_id": 27,
+			"organizer_title": "Moster Idrettslag",
+			"organizer_public": true
+		},
+		{
+			"organizer_id": 60,
+			"organizer_title": "Meling Speidargruppe",
+			"organizer_public": true
+		},
+		{
+			"organizer_id": 29,
+			"organizer_title": "Ung på MC Bømlo",
+			"organizer_public": true
+		},
+		{
+			"organizer_id": 58,
+			"organizer_title": "Martha Kristensen, Atelier Lystrand",
+			"organizer_public": true
+		},
+		{
+			"organizer_id": 59,
+			"organizer_title": "Bømlo folkebibliotek",
+			"organizer_public": true
+		},
+		{
+			"organizer_id": 67,
+			"organizer_title": "Meling Krinslag",
+			"organizer_public": true
+		},
+		{
+			"organizer_id": 68,
+			"organizer_title": "Bømlo Arbeiderparti",
+			"organizer_public": true
+		},
+		{
+			"organizer_id": 70,
+			"organizer_title": "Bømlo Idrettslag",
+			"organizer_public": true
+		},
+		{
+			"organizer_id": 69,
+			"organizer_title": "Bømlo Skyttarlag",
+			"organizer_public": true
+		},
+		{
+			"organizer_id": 71,
+			"organizer_title": "Møteplassen Gamle BUS",
+			"organizer_public": true
+		},
+		{
+			"organizer_id": 38,
+			"organizer_title": "Gaasland Gard Fest og Basar AS",
+			"organizer_public": true
+		},
+		{
+			"organizer_id": 56,
+			"organizer_title": "Folk På Bømlo",
+			"organizer_public": true
+		},
+		{
+			"organizer_id": 72,
+			"organizer_title": "Brandasund Grendalag",
+			"organizer_public": true
+		},
+		{
+			"organizer_id": 74,
+			"organizer_title": "Bremnes Kvinne OG Familielag",
+			"organizer_public": true
+		},
+		{
+			"organizer_id": 30,
+			"organizer_title": "Rubbestadneset Grendautval",
+			"organizer_public": true
+		},
+		{
+			"organizer_id": 75,
+			"organizer_title": "Framtid For Lykling",
+			"organizer_public": true
+		},
+		{
+			"organizer_id": 73,
+			"organizer_title": "Foldrøy Speidergruppe",
+			"organizer_public": true
+		},
+		{
+			"organizer_id": 52,
+			"organizer_title": "Bømlo Shotokan Karateklubb",
+			"organizer_public": true
+		},
+		{
+			"organizer_id": 90,
+			"organizer_title": "Bømlapride",
+			"organizer_public": true
+		},
+		{
+			"organizer_id": 91,
+			"organizer_title": "Bømlo Turlag",
+			"organizer_public": true
+		},
+		{
+			"organizer_id": 15,
+			"organizer_title": "Zpirit",
+			"organizer_public": true
+		},
+		{
+			"organizer_id": 48,
+			"organizer_title": "Bømlo Røde Kors",
+			"organizer_public": true
+		},
+		{
+			"organizer_id": 92,
+			"organizer_title": "Bømlo Gospel",
+			"organizer_public": true
+		},
+		{
+			"organizer_id": 93,
+			"organizer_title": "Bømlo Frivilligsentral",
+			"organizer_public": true
+		},
+		{
+			"organizer_id": 94,
+			"organizer_title": "Bømlo Skyttarlag",
+			"organizer_public": true
+		},
+		{
+			"organizer_id": 10,
+			"organizer_title": "Bømlo Kyrkjelege Fellesråd",
+			"organizer_public": true
+		},
+		{
+			"organizer_id": 36,
+			"organizer_title": "Bremnes Pistolklubb",
+			"organizer_public": true
+		},
+		{
+			"organizer_id": 95,
+			"organizer_title": "Seniorgruppa på Foldrøy",
+			"organizer_public": true
+		},
+		{
+			"organizer_id": 2,
+			"organizer_title": "Bømlo kommune",
+			"organizer_public": true
+		}
+	]
+}

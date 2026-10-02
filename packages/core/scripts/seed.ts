@@ -7,7 +7,7 @@
  */
 import { eq, sql } from 'drizzle-orm';
 import { createDb } from '../src/db.ts';
-import { events, ingestRuns, sources, venues } from '../src/schema.ts';
+import { events, ingestRuns, organizers, sources, venues } from '../src/schema.ts';
 import type { CategorySlug } from '../src/taxonomy.ts';
 
 const url = process.env.DATABASE_URL;
@@ -444,6 +444,75 @@ await db
 			status: 'published',
 			posterUrl: null,
 			posterRightsVerified: false
+		}
+	])
+	.onConflictDoNothing({ target: [events.sourceId, events.externalId] });
+
+/*
+ * Three weekly activities from two organisers — what `/alltid-ope` groups as "Faste aktivitetar".
+ *
+ * Modelled on aktivitetforalle's `activity` rows: a season as the date range, so `kind` resolves to
+ * `standing`, and a timetable in `weekly_hours`. Two from one club so the grouping has something
+ * to group, one fortnightly so the cadence has something to say. Without them the section and
+ * every guard about it would pass against a page that could not show it — and, worse, the specs
+ * could not tell a training session leaking into the day list from one that never existed.
+ */
+const seedOrganizers = await db
+	.insert(organizers)
+	.values([
+		{ slug: 'seed-idrettslag', name: 'Seed Idrettslag' },
+		{ slug: 'seed-kyrkjelyd', name: 'Seed Kyrkjelyd' }
+	])
+	.onConflictDoUpdate({ target: organizers.slug, set: { name: sql`excluded.name` } })
+	.returning();
+const club = seedOrganizers.find((o) => o.slug === 'seed-idrettslag')!;
+const parish = seedOrganizers.find((o) => o.slug === 'seed-kyrkjelyd')!;
+
+await db
+	.insert(events)
+	.values([
+		{
+			sourceId: library.id,
+			externalId: 'seed-weekly-g12',
+			title: 'Fotball G12',
+			category: 'sport',
+			startsAt: daysFromNow(-60, 0),
+			endsAt: daysFromNow(200, 23, 59),
+			venueId: libraryVenue.id,
+			organizerId: club.id,
+			weeklyHours: {
+				cadence: 'weekly',
+				slots: [
+					{ weekday: 2, from: '18:00', to: '19:30' },
+					{ weekday: 3, from: '18:00', to: '19:30' },
+					{ weekday: 6, from: '11:30', to: '13:00' }
+				]
+			},
+			status: 'published'
+		},
+		{
+			sourceId: library.id,
+			externalId: 'seed-weekly-turn',
+			title: 'Turn 5-6 år',
+			category: 'sport',
+			startsAt: daysFromNow(-60, 0),
+			endsAt: daysFromNow(200, 23, 59),
+			venueId: libraryVenue.id,
+			organizerId: club.id,
+			weeklyHours: { cadence: 'weekly', slots: [{ weekday: 3, from: '16:30', to: '17:45' }] },
+			status: 'published'
+		},
+		{
+			sourceId: library.id,
+			externalId: 'seed-weekly-service',
+			title: 'Gudsteneste',
+			category: 'kyrkjeliv',
+			startsAt: daysFromNow(-60, 0),
+			endsAt: daysFromNow(200, 23, 59),
+			venueId: libraryVenue.id,
+			organizerId: parish.id,
+			weeklyHours: { cadence: 'even-weeks', slots: [{ weekday: 7, from: '11:00', to: '12:30' }] },
+			status: 'published'
 		}
 	])
 	.onConflictDoNothing({ target: [events.sourceId, events.externalId] });

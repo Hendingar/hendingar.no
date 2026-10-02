@@ -1,0 +1,1 @@
+ALTER TABLE "events" ADD COLUMN "weekly_hours" jsonb;

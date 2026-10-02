@@ -1,7 +1,14 @@
 import { zonedWallClockToInstant } from '@hendingar/core/datetime';
+import { classifyEventKind } from '@hendingar/core/standing';
 import type { CategorySlug } from '@hendingar/core/taxonomy';
+import type { Weekday } from '@hendingar/core/recurrence';
+import {
+	weeklyHoursSchema,
+	type WeeklyCadence,
+	type WeeklyHours
+} from '@hendingar/core/weekly-hours';
 import { orNull, type FilterVocabulary, type UpstreamEvent, type UpstreamUpload } from './api.ts';
-import { eventUrl, listingUrl, type AfaSite } from './sites.ts';
+import { activityUrl, eventUrl, listingUrl, type AfaSite } from './sites.ts';
 import { fromParts, type ParsedAddress } from '@hendingar/core/address';
 
 /**
@@ -37,7 +44,17 @@ const CATEGORY_BY_NAME: Record<string, CategorySlug> = {
 	'samfunn & politikk': 'mote',
 	foredrag: 'mote',
 	festival: 'festival',
-	feiring: 'festival'
+	feiring: 'festival',
+	/*
+	 * The activity vocabulary. Same platform, a second set of names: an `activity` is tagged
+	 * "Tru og livssyn" where an `arrangement` is tagged "Livssyn". "Fritid og sosialt", "Hobby",
+	 * "Kunst og handtverk", "Spill" and "Digitalt" are left to fall through — a knitting circle is
+	 * not an exhibition, and `anna` is more honest than the nearest wrong slug.
+	 */
+	'tru og livssyn': 'kyrkjeliv',
+	drama: 'teater',
+	friluftsliv: 'sport',
+	'samfunn og politikk': 'mote'
 };
 
 export function mapCategory(
@@ -67,33 +84,16 @@ export function slugifyVenue(name: string): string {
 }
 
 /**
- * Is this a dated event, or a standing offer?
+ * Is this a dated event we should list?
  *
- * The portal holds both, and only the first belongs in a what's-on listing. `activity` rows are
- * things like "Aqua gym, every Tuesday and Thursday, August to June" — a year-long weekly pattern
- * with a season as its date range. Materialising those would bury sixty real events under hundreds
- * of gym sessions.
+ * The portal holds two kinds of row, and says which: `arrangement` is a dated event — a concert,
+ * a quiz night — and `activity` is a standing weekly offer, see `isPublishableActivity`.
  *
  * Filtering on `event_type` rather than on the audience tags the portal's own URL uses. Those tags
  * happen to correlate — ids 81–85 sit on `arrangement` rows and 38–42 on `activity` rows — but the
  * correlation is not the rule: **fifty-six of the hundred and twenty-two public events carry no
  * audience tag at all**, and they include Sigvart Dagsland, Riksteatret and Teater Vestland. A
  * filter built on the tags silently drops half the programme, and the better half.
- *
- * ## Why they are still dropped now that /alltid-ope exists
- *
- * ADR 0013 gave standing offers a home, and these rows need no help to reach it: an `activity`
- * states a season as its date range, so `events.kind` classifies it `standing` on its own. So
- * importing them was tried, and measured. It admits 806 rows, of which **112 survive as live
- * standing offers, and most are youth football squads** — "Bremnes G12", "G13", "G14", "G15",
- * "G16", "G19", "J12", one per age group per season. A page called "Alltid ope" would have been
- * fifty training schedules with a museum somewhere in the middle.
- *
- * Which is the paragraph above happening again, one screen further on. These rows are real and
- * useful, but they are a club directory — something you join for a season, not somewhere you can
- * walk in this afternoon — and they need a page that says so and groups them by club or venue.
- * Until there is one, moving them from "buried in the day list" to "flooding a different page" is
- * not an improvement.
  */
 export function isPublishableEvent(input: UpstreamEvent, timeZone: string): boolean {
 	if (orNull(input.event_status) !== 'public') return false;
@@ -107,6 +107,98 @@ export function isPublishableEvent(input: UpstreamEvent, timeZone: string): bool
 	 * cannot be placed on a day, so there is nothing to list and nothing to report as broken.
 	 */
 	return toInstant(orNull(input.event_from), timeZone) !== null;
+}
+
+/**
+ * Is this a standing weekly activity we should list on /alltid-ope?
+ *
+ * "Bremnes G12, tysdag og onsdag 18:00–19:30, januar til desember." These were dropped for a long
+ * time, on purpose: imported as dated events they would bury sixty real events under hundreds of
+ * gym sessions, and imported as plain standing offers they made `/alltid-ope` fifty training
+ * schedules with a museum in the middle (ADR 0013). They come in now because they have somewhere
+ * of their own — one row each, with a timetable, grouped by who runs them. See
+ * docs/decisions/0021-weekly-activities.md.
+ *
+ * Three conditions beyond `public`, each of which keeps a row out of somewhere it would do harm:
+ *
+ * - **A season, not a date.** The row must classify as `standing` from its own dates, so it can
+ *   never land in a day list. The generated `events.kind` column decides that in the database; the
+ *   same rule is applied here so an activity that would come out `dated` — a fortnight's course —
+ *   is skipped rather than filed under midnight on its first day.
+ * - **A timetable.** Something that repeats without saying when — three such rows, "badebursdag"
+ *   among them — gives a reader nothing to go to. It stays with the source.
+ * - **A start and an end that parse**, for the same reason as an event's start above.
+ */
+export function isPublishableActivity(input: UpstreamEvent, timeZone: string): boolean {
+	if (orNull(input.event_status) !== 'public') return false;
+	if (orNull(input.event_type) !== 'activity') return false;
+	if (!Array.isArray(input.event_weekdays) || input.event_weekdays.length === 0) return false;
+	const from = toInstant(orNull(input.event_from), timeZone);
+	const to = toInstant(orNull(input.event_to), timeZone);
+	if (!from || !to) return false;
+	return classifyEventKind(from, to) === 'standing';
+}
+
+const WEEKDAY_BY_NAME: Record<string, Weekday> = {
+	monday: 1,
+	tuesday: 2,
+	wednesday: 3,
+	thursday: 4,
+	friday: 5,
+	saturday: 6,
+	sunday: 7
+};
+
+/**
+ * The platform's interval → ours. Null is "Kvar veke": that is what the portal's own page prints
+ * for the thirty-seven activities that leave it unset, checked in a browser rather than assumed.
+ */
+const CADENCE_BY_INTERVAL: Record<string, WeeklyCadence> = {
+	'each-week': 'weekly',
+	'even-weeks': 'even-weeks',
+	'odd-weeks': 'odd-weeks',
+	'first-of-month': 'first-of-month',
+	'last-of-month': 'last-of-month'
+};
+
+/** "18:00:00" → "18:00". The portal states seconds it never uses. */
+function hhmm(value: unknown): string | null {
+	const match = /^(\d{2}:\d{2})(:\d{2})?$/.exec(String(value ?? '').trim());
+	return match ? match[1]! : null;
+}
+
+/**
+ * `event_weekdays` + `event_week_interval` → a timetable, or the reason it is not one.
+ *
+ * Strict where `api.ts` is loose. An interval we have no word for is a failure, not a default: a
+ * fortnightly service shown as weekly sends someone to a locked church, so a new value must
+ * surface as a rejected row and be named, never quietly become "kvar veke".
+ *
+ * The times are a wall clock and stay one — the portal shows "Tysdag kl. 18:00 - 19:30", which is
+ * exactly what we store and exactly what we show. Nothing resolves them to an instant, so there is
+ * no offset to get wrong.
+ */
+export function mapWeeklyHours(input: UpstreamEvent): WeeklyHours | { problem: string } {
+	const interval = orNull(input.event_week_interval);
+	const cadence = interval === null ? 'weekly' : CADENCE_BY_INTERVAL[interval];
+	if (!cadence) return { problem: `unknown event_week_interval: ${interval}` };
+
+	const raw = Array.isArray(input.event_weekdays) ? input.event_weekdays : [];
+	const slots = raw.map((entry: unknown) => {
+		const record = typeof entry === 'object' && entry !== null ? entry : {};
+		const value = 'value' in record ? String(record.value).toLowerCase() : '';
+		return {
+			weekday: WEEKDAY_BY_NAME[value],
+			from: hhmm('from_time' in record ? record.from_time : null),
+			to: hhmm('to_time' in record ? record.to_time : null)
+		};
+	});
+
+	const parsed = weeklyHoursSchema.safeParse({ cadence, slots });
+	if (!parsed.success) {
+		return { problem: `unreadable event_weekdays: ${JSON.stringify(input.event_weekdays)}` };
+	}
+	return parsed.data;
 }
 
 export type MappedEvent = {
@@ -126,6 +218,10 @@ export type MappedEvent = {
 	posterSrcset: string | null;
 	posterRightsVerified: boolean;
 	sourceUrl: string;
+	/** Who runs it, by the name the portal shows. */
+	organizerName: string | null;
+	/** Set for an `activity`, null for an `arrangement` — see `isPublishableActivity`. */
+	weeklyHours: WeeklyHours | null;
 };
 
 export type MapFailure = { externalId: string; title: string; problem: string };
@@ -254,12 +350,21 @@ export function mapEvent(
 	input: UpstreamEvent,
 	site: AfaSite,
 	vocabulary: FilterVocabulary,
-	locations: Map<string, string>
+	locations: Map<string, string>,
+	organizers: Map<string, string> = new Map()
 ): MappedEvent | MapFailure {
 	const externalId = String(input.event_id);
 	const title = input.event_title.trim().replace(/\s+/g, ' ');
 
 	if (!title) return { externalId, title: '', problem: 'empty title' };
+
+	const isActivity = orNull(input.event_type) === 'activity';
+	let weeklyHours: WeeklyHours | null = null;
+	if (isActivity) {
+		const hours = mapWeeklyHours(input);
+		if ('problem' in hours) return { externalId, title, problem: hours.problem };
+		weeklyHours = hours;
+	}
 
 	const startsAt = toInstant(orNull(input.event_from), site.timezone);
 	if (!startsAt) {
@@ -333,6 +438,13 @@ export function mapEvent(
 		 * funne" once the script runs. Every id we import is `public`, which is exactly the set
 		 * whose pages resolve.
 		 */
-		sourceUrl: eventUrl(site, externalId) || listingUrl(site)
+		sourceUrl: isActivity
+			? activityUrl(site, externalId)
+			: eventUrl(site, externalId) || listingUrl(site),
+		organizerName:
+			input.organizer_id != null
+				? (organizers.get(String(input.organizer_id)) ?? orNull(input.event_organizer_name))
+				: orNull(input.event_organizer_name),
+		weeklyHours
 	};
 }
