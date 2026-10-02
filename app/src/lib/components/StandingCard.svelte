@@ -38,6 +38,7 @@
 		posterUrl={offer.posterUrl}
 		posterSrcset={offer.posterSrcset}
 		title={offer.title}
+		category={offer.category}
 	/>
 
 	<div class="card__body">

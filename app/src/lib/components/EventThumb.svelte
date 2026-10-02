@@ -13,12 +13,14 @@
 	 */
 	import { parseFixture } from '@hendingar/core/fixture';
 	import VersusTile from './VersusTile.svelte';
+	import { artworkFor } from '../church-art.ts';
 
 	let {
 		id,
 		posterUrl = null,
 		posterSrcset = null,
 		title,
+		category = '',
 		sizes
 	}: {
 		id: number;
@@ -29,6 +31,13 @@
 		 */
 		posterSrcset?: string | null;
 		title: string;
+		/**
+		 * The event's category, which decides whether there is something better than a pattern.
+		 *
+		 * Empty by default: a caller that does not know the category gets exactly what it got
+		 * before. Nothing here fails for want of one.
+		 */
+		category?: string;
 		/**
 		 * How wide this thumbnail is painted, when it is NOT a tile in the listing grid.
 		 *
@@ -60,6 +69,16 @@
 	 * refuses anything that is merely punctuated like one.
 	 */
 	const fixture = $derived(parseFixture(title));
+
+	/**
+	 * A painting, for a church notice that will never have a picture of its own.
+	 *
+	 * A parish calendar sends a title and a time, so every gudsteneste in the listing was the same
+	 * generated tile as the one above it. The painting is public domain, named and dated on the
+	 * event's own page, and chosen by the event id alone — see church-art.ts, which is also where
+	 * it says out loud that the painting is not a claim about the service.
+	 */
+	const artwork = $derived(artworkFor(id, category));
 
 	/**
 	 * How wide this thumbnail actually is, per breakpoint. **Measured, not guessed.**
@@ -124,6 +143,23 @@
 	/>
 {:else if fixture}
 	<VersusTile {id} {fixture} />
+{:else if artwork}
+	<!--
+		Named in `alt`, never `alt=""`: this one is not decoration. The event's own page carries the
+		artist, the year and the link; here the picture at least says what it is.
+	-->
+	<img
+		class="thumb"
+		src={artwork.src}
+		srcset={artwork.srcset}
+		sizes={artwork.srcset ? (sizes ?? SIZES) : undefined}
+		alt="{artwork.work} av {artwork.artist}"
+		loading="lazy"
+		decoding="async"
+		width="400"
+		height="225"
+		referrerpolicy="no-referrer"
+	/>
 {:else}
 	<div class="thumb thumb--generated" role="img" aria-label={`Illustrasjon for ${title}`}>
 		<svg viewBox="0 0 400 225" preserveAspectRatio="xMidYMid slice" aria-hidden="true">

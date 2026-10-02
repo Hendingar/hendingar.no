@@ -83,6 +83,7 @@
 		posterUrl={event.posterUrl}
 		posterSrcset={event.posterSrcset}
 		title={event.title}
+		category={event.category}
 	/>
 
 	<div class="tile__body">

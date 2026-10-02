@@ -23,6 +23,7 @@
 	import { track } from '../../../lib/analytics.ts';
 	import { parseFixture } from '@hendingar/core/fixture';
 	import VersusTile from '../../../lib/components/VersusTile.svelte';
+	import { artworkFor } from '../../../lib/church-art.ts';
 
 	const id = eventIdFromParam(page.params.slug ?? '');
 	if (id === null) error(404, 'Fann ikkje hendinga');
@@ -107,6 +108,14 @@
 	 * that is a fixture rather than a title with a dash in it.
 	 */
 	const fixture = $derived(parseFixture(event.title));
+	/*
+	 * A painting for a church notice, which is the one place its caption fits.
+	 *
+	 * The listing tile can only show the picture; here there is room to say what it is, who painted
+	 * it and where to read about it — which is the whole reason it is a named public-domain work
+	 * and not a texture.
+	 */
+	const artwork = $derived(artworkFor(event.id, event.category));
 
 	/**
 	 * One string for the search snippet and the share card both.
@@ -273,6 +282,36 @@
 					<!-- Drawn, not fetched — see VersusTile for why the club crests are off limits.
 					     `feature` is what makes this one move; the thumbnails in the listing do not. -->
 					<VersusTile id={event.id} {fixture} feature />
+				{:else if artwork}
+					<!--
+						A picture beside a church notice, and honest about being exactly that.
+
+						The caption names the work rather than the event: nothing here claims the
+						painting depicts this service, and the link is the point — somebody who
+						stops to look can go and read about it.
+					-->
+					<figure class="ev__art">
+						<img
+							class="ev__poster"
+							src={artwork.src}
+							srcset={artwork.srcset}
+							sizes={artwork.srcset
+								? '(width < 56.5rem) 92vw, (width < 88rem) 56vw, 760px'
+								: undefined}
+							alt="{artwork.work} av {artwork.artist}"
+							loading="eager"
+							decoding="async"
+							referrerpolicy="no-referrer"
+						/>
+						<figcaption>
+							<a href={artwork.articleUrl} rel="noopener noreferrer" target="_blank">
+								{artwork.work}
+							</a>
+							<span>
+								{artwork.artist}{artwork.year ? `, ${artwork.year}` : ''} · fellesarv, via Wikimedia Commons
+							</span>
+						</figcaption>
+					</figure>
 				{/if}
 
 				{#if prose}
@@ -548,6 +587,25 @@
 		background: var(--navy-900);
 		border: var(--rule) solid var(--peach-line);
 	}
+	/*
+	 * The caption under a borrowed painting.
+	 *
+	 * Small and quiet — it is provenance, not a headline — but it is a link and a link has to be
+	 * reachable, so it keeps the body size rather than dropping to the micro step.
+	 */
+	.ev__art {
+		margin: 0 0 1.5rem;
+	}
+	.ev__art figcaption {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.25rem 0.6rem;
+		margin-block-start: 0.5rem;
+		font-family: var(--font-mono);
+		font-size: var(--step-micro);
+		color: var(--peach-dim);
+	}
+
 	.ev__desc {
 		display: grid;
 		gap: 0.9em;
