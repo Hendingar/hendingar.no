@@ -11,6 +11,9 @@
 	 * event, same pattern, forever), costs no bytes, never 404s when a third party reorganises
 	 * their CDN, and looks like the rest of the site rather than like someone else's JPEG.
 	 */
+	import { parseFixture } from '@hendingar/core/fixture';
+	import VersusTile from './VersusTile.svelte';
+
 	let {
 		id,
 		posterUrl = null,
@@ -47,6 +50,16 @@
 	// any time, so a broken image must degrade to the generated tile rather than to a broken icon.
 	let posterFailed = $state(false);
 	const showPoster = $derived(Boolean(posterUrl) && !posterFailed);
+
+	/**
+	 * A football fixture, where the title is one.
+	 *
+	 * NFF's feed gives a match no picture at all, so every fixture in the listing fell through to
+	 * the generated tile and a column of them was four identical duotone shapes. The two clubs are
+	 * in the title and nowhere else — `parseFixture` is the rule for when that is true, and it
+	 * refuses anything that is merely punctuated like one.
+	 */
+	const fixture = $derived(parseFixture(title));
 
 	/**
 	 * How wide this thumbnail actually is, per breakpoint. **Measured, not guessed.**
@@ -109,6 +122,8 @@
 		referrerpolicy="no-referrer"
 		onerror={() => (posterFailed = true)}
 	/>
+{:else if fixture}
+	<VersusTile {id} {fixture} />
 {:else}
 	<div class="thumb thumb--generated" role="img" aria-label={`Illustrasjon for ${title}`}>
 		<svg viewBox="0 0 400 225" preserveAspectRatio="xMidYMid slice" aria-hidden="true">

@@ -21,6 +21,8 @@
 	import { breadcrumbJsonLd, eventJsonLd, jsonLdScript } from '../../../lib/jsonld.ts';
 	import { plainText } from '@hendingar/core/text';
 	import { track } from '../../../lib/analytics.ts';
+	import { parseFixture } from '@hendingar/core/fixture';
+	import VersusTile from '../../../lib/components/VersusTile.svelte';
 
 	const id = eventIdFromParam(page.params.slug ?? '');
 	if (id === null) error(404, 'Fann ikkje hendinga');
@@ -99,6 +101,12 @@
 	 * stop writing markup in the first place.
 	 */
 	const prose = $derived(plainText(event.description));
+	/*
+	 * A match has no poster anywhere in NFF's feed, so this page showed a fixture as a headline and
+	 * one line of competition. The two clubs are in the title; `parseFixture` is the rule for when
+	 * that is a fixture rather than a title with a dash in it.
+	 */
+	const fixture = $derived(parseFixture(event.title));
 
 	/**
 	 * One string for the search snippet and the share card both.
@@ -261,6 +269,10 @@
 						decoding="async"
 						referrerpolicy="no-referrer"
 					/>
+				{:else if fixture}
+					<!-- Drawn, not fetched — see VersusTile for why the club crests are off limits.
+					     `feature` is what makes this one move; the thumbnails in the listing do not. -->
+					<VersusTile id={event.id} {fixture} feature />
 				{/if}
 
 				{#if prose}
