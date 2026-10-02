@@ -41,6 +41,7 @@
 		posterUrl={event.posterUrl}
 		posterSrcset={event.posterSrcset}
 		title={event.title}
+		category={event.category}
 	/>
 	<div class="peek__body">
 		<p class="peek__top">
