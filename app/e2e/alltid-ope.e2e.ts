@@ -145,3 +145,81 @@ test('the coverage strip counts them separately from events', async ({ request }
 	expect(coverage).toMatch(/hendingar framover/i);
 	expect(coverage).toMatch(/alltid (er )?open|alltid (er )?opne/i);
 });
+
+/*
+ * The weekly activities — clubs, choirs, a parish's services — and why they are kept apart.
+ *
+ * The seed carries three, from two organisers, one fortnightly. They are `standing` rows like the
+ * escape room, so every guard above already keeps them out of the day lists; what is asserted here
+ * is that they are also kept out of the PLACES, which is what ADR 0013 refused to let happen when
+ * importing them would have made this page fifty training schedules with a museum in the middle.
+ */
+test('weekly activities are grouped by who runs them, with their times', async ({ request }) => {
+	const html = await (await request.get('/alltid-ope')).text();
+
+	const section = html.match(/<section class="weekly[\s\S]*?<\/section>/)?.[0];
+	expect(section, 'the weekly section must be server-rendered').toBeTruthy();
+
+	// One fold per organiser, holding its own activities — not one row per activity at the top.
+	const folds = section!.match(/<details class="org[\s\S]*?<\/details>/g) ?? [];
+	const club = folds.find((f) => f.includes('Seed Idrettslag'));
+	expect(club, 'the club has a fold of its own').toBeTruthy();
+	expect(club).toContain('Fotball G12');
+	expect(club).toContain('Turn 5-6 år');
+	expect(club).not.toContain('Gudsteneste');
+
+	// The timetable a reader needs, merged only where the hours agree.
+	expect(club).toContain('Tysdag og onsdag 18:00–19:30');
+	expect(club).toContain('Laurdag 11:30–13:00');
+
+	// A fortnightly service must say so — "every Sunday" would be wrong half the time.
+	const parish = folds.find((f) => f.includes('Seed Kyrkjelyd'));
+	expect(parish).toContain('Partalsveker');
+});
+
+test('a weekly activity is never shown as a place', async ({ request }) => {
+	/*
+	 * The front-page band, the "Òg ope denne dagen" line and the places grid all read
+	 * `standingOffers`. If the timetable filter comes off it, every one of them fills with football
+	 * squads, and nothing else on the page would look wrong.
+	 */
+	const page = await (await request.get('/alltid-ope')).text();
+	const cards = page.match(/<article class="card[\s\S]*?<\/article>/g) ?? [];
+	expect(cards.length).toBeGreaterThan(0);
+	for (const card of cards) expect(card).not.toMatch(/Fotball G12|Gudsteneste/);
+
+	for (const path of ['/', '/hendingar', '/denne-helga', '/neste-helg']) {
+		const html = await (await request.get(path)).text();
+		const shown = [
+			...(html.match(/<article class="(tile|card)[\s\S]*?<\/article>/g) ?? []),
+			...(html.match(/<aside class="also[\s\S]*?<\/aside>/g) ?? [])
+		];
+		for (const block of shown) {
+			expect(block, `${path} showed a weekly activity`).not.toMatch(/Fotball G12|Gudsteneste/);
+		}
+	}
+});
+
+test('a weekly activity’s page says when it meets, not midnight on its first day', async ({
+	page
+}) => {
+	await page.goto('/alltid-ope');
+	await page.locator('details.org', { hasText: 'Seed Idrettslag' }).locator('summary').click();
+	await page.getByRole('link', { name: 'Fotball G12' }).click();
+	await expect(page).toHaveURL(/\/hending\/\d+-/);
+
+	const when = page.locator('dd.weekly');
+	await expect(when).toContainText('Tysdag og onsdag 18:00–19:30');
+	await expect(when).toContainText(/Til \w+ \d+\. \w+ \d{4}/);
+	await expect(page.locator('.facts')).not.toContainText('00:00');
+});
+
+test('/alltid-ope does not scroll sideways at 320px with the folds open', async ({ page }) => {
+	await page.setViewportSize({ width: 320, height: 700 });
+	await page.goto('/alltid-ope');
+	for (const summary of await page.locator('details.org > summary').all()) await summary.click();
+	const overflow = await page.evaluate(
+		() => document.documentElement.scrollWidth - document.documentElement.clientWidth
+	);
+	expect(overflow).toBeLessThanOrEqual(0);
+});

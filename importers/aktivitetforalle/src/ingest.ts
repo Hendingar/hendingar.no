@@ -1,10 +1,25 @@
 import { and, eq } from 'drizzle-orm';
 import { createDb, type Db } from '@hendingar/core/db';
-import { events, ingestRuns, sources, venues } from '@hendingar/core/schema';
+import { events, ingestRuns, organizers, sources, venues } from '@hendingar/core/schema';
 import { markGoneUpstream } from '@hendingar/core/gone-upstream';
-import { orNull, parseEvents, parseFilters, parseLocations, read, type Read } from './api.ts';
+import {
+	orNull,
+	parseEvents,
+	parseFilters,
+	parseLocations,
+	parseOrganizers,
+	read,
+	type Read
+} from './api.ts';
 import { SITES, listingUrl, eventsUrl, type AfaSite } from './sites.ts';
-import { isFailure, isPublishableEvent, mapEvent, type MappedEvent } from './map.ts';
+import {
+	isFailure,
+	isPublishableActivity,
+	isPublishableEvent,
+	mapEvent,
+	slugifyVenue,
+	type MappedEvent
+} from './map.ts';
 
 /**
  * Deterministic: fetch → parse → validate → upsert. No language model touches this path.
@@ -50,9 +65,9 @@ async function upsertSource(db: Db, site: AfaSite) {
 		 * describes how we collect it, so the importer is what owns it.
 		 */
 		note:
-			'Portalen listar både enkelthendingar og faste, vekevise tilbod. Vi hentar berre ' +
-			'arrangement som er publiserte og har eit tidspunkt — dei faste tilboda blir ståande ' +
-			'hos kjelda.',
+			'Portalen listar både enkelthendingar og faste, vekevise tilbod. Enkelthendingane står i ' +
+			'kalenderen; dei faste tilboda står under «Alltid ope», samla etter kven som driv dei, ' +
+			'med dagane og tidene kjelda oppgjev.',
 		active: true,
 		scheduleCron: site.scheduleCron,
 		iconUrl: site.iconUrl,
@@ -109,6 +124,24 @@ async function venueIdFor(db: Db, mapped: MappedEvent, site: AfaSite) {
 	return row?.id ?? null;
 }
 
+/**
+ * The organiser's row, by the name the portal shows.
+ *
+ * Keyed on a slug of the name rather than the portal's id: `organizers` is shared by every source,
+ * and the same choir reported by two calendars should be one organiser, not two.
+ */
+async function organizerIdFor(db: Db, name: string | null) {
+	if (!name) return null;
+	const slug = slugifyVenue(name);
+	if (!slug) return null;
+	const [row] = await db
+		.insert(organizers)
+		.values({ slug, name })
+		.onConflictDoUpdate({ target: organizers.slug, set: { name } })
+		.returning({ id: organizers.id });
+	return row?.id ?? null;
+}
+
 export async function ingestSite(
 	connectionString: string,
 	site: AfaSite,
@@ -152,6 +185,7 @@ export async function ingestSite(
 		const payload = await fetcher(site);
 		const vocabulary = parseFilters(payload.filters);
 		const locations = parseLocations(payload.locations);
+		const organizerNames = parseOrganizers(payload.organizers);
 		const parsed = parseEvents(payload.events);
 
 		for (const problem of parsed.rejected) {
@@ -174,20 +208,20 @@ export async function ingestSite(
 			if (orNull(raw.event_status) === 'public') present.add(String(raw.event_id));
 
 			/*
-			 * Archived and draft rows, the standing weekly activities, and the one public event
-			 * that never got a start time.
+			 * Archived and draft rows, activities with no timetable or no season, and the one
+			 * public event that never got a start time.
 			 *
 			 * Counted separately from `rejected`: nothing changed shape, these are simply rows the
 			 * portal holds that a what's-on listing should not repeat. `rejected` must go on
 			 * meaning "the source moved".
 			 */
-			if (!isPublishableEvent(raw, site.timezone)) {
+			if (!isPublishableEvent(raw, site.timezone) && !isPublishableActivity(raw, site.timezone)) {
 				skipped += 1;
 				continue;
 			}
 
 			fetched += 1;
-			const mapped = mapEvent(raw, site, vocabulary, locations);
+			const mapped = mapEvent(raw, site, vocabulary, locations, organizerNames);
 			if (isFailure(mapped)) {
 				rejected += 1;
 				if (problems.length < 10)
@@ -203,6 +237,7 @@ export async function ingestSite(
 			}
 
 			const venueId = await venueIdFor(db, mapped, site);
+			const organizerId = await organizerIdFor(db, mapped.organizerName);
 
 			const values = {
 				sourceId: source.id,
@@ -214,6 +249,8 @@ export async function ingestSite(
 				startsAt: mapped.startsAt,
 				endsAt: mapped.endsAt,
 				venueId,
+				organizerId,
+				weeklyHours: mapped.weeklyHours,
 				ctaUrl: mapped.ctaUrl,
 				posterUrl: mapped.posterUrl,
 				posterSrcset: mapped.posterSrcset,
@@ -232,6 +269,8 @@ export async function ingestSite(
 					startsAt: events.startsAt,
 					endsAt: events.endsAt,
 					venueId: events.venueId,
+					organizerId: events.organizerId,
+					weeklyHours: events.weeklyHours,
 					ctaUrl: events.ctaUrl,
 					posterUrl: events.posterUrl,
 					posterSrcset: events.posterSrcset,
@@ -256,6 +295,10 @@ export async function ingestSite(
 				+existing.startsAt === +values.startsAt &&
 				(existing.endsAt?.getTime() ?? null) === (values.endsAt?.getTime() ?? null) &&
 				existing.venueId === values.venueId &&
+				existing.organizerId === values.organizerId &&
+				// Built by `mapWeeklyHours` in a fixed key order, and jsonb hands it back sorted
+				// by key length — so compare the content, not the spelling.
+				sameWeeklyHours(existing.weeklyHours, values.weeklyHours) &&
 				existing.ctaUrl === values.ctaUrl &&
 				existing.posterUrl === values.posterUrl &&
 				existing.posterSrcset === values.posterSrcset &&
@@ -291,13 +334,12 @@ export async function ingestSite(
 		const finishedAt = now();
 		const durationMs = finishedAt.getTime() - startedAt.getTime();
 		/*
-		 * The skipped count is recorded even on a clean run: it is the only place the decision to
-		 * take `arrangement` and leave `activity` is visible, and the number that moves if the
-		 * portal changes how it files things.
+		 * The skipped count is recorded even on a clean run: it is the only place the rows we
+		 * decline are visible, and the number that moves if the portal changes how it files things.
 		 */
 		const notes = [
 			skipped > 0
-				? `${skipped} rows skipped (archived, draft, standing activity or undated)`
+				? `${skipped} rows skipped (archived, draft, undated, or an activity with no timetable or season)`
 				: null,
 			// Said out loud on the run, because a row leaving the site should never be something
 			// only the database knows about.
@@ -388,4 +430,18 @@ export async function ingestAll(
 		}
 	}
 	return results;
+}
+
+function sameWeeklyHours(a: MappedEvent['weeklyHours'], b: MappedEvent['weeklyHours']): boolean {
+	if (a === null || b === null) return a === b;
+	return (
+		a.cadence === b.cadence &&
+		a.slots.length === b.slots.length &&
+		a.slots.every(
+			(slot, i) =>
+				slot.weekday === b.slots[i]?.weekday &&
+				slot.from === b.slots[i]?.from &&
+				slot.to === b.slots[i]?.to
+		)
+	);
 }

@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { eventsUrl, filtersUrl, locationsUrl, type AfaSite } from './sites.ts';
+import { eventsUrl, filtersUrl, locationsUrl, organizersUrl, type AfaSite } from './sites.ts';
 
 /**
  * Reading an "Aktivitet for Alle" portal.
@@ -92,8 +92,18 @@ const eventSchema = z.object({
 	event_organizer_name: nullish,
 	event_filter_ids: z.array(z.union([z.string(), z.number()])).nullish(),
 	event_thumbnail: uploadSchema,
-	/** Present on `activity` rows: the weekly pattern. We do not import those — see map.ts. */
-	event_weekdays: z.unknown().nullish()
+	/**
+	 * Present on `activity` rows: which weekdays, and when. Validated loosely here and strictly in
+	 * `mapWeeklyHours` — a timetable we cannot read costs that one activity, never the run.
+	 */
+	event_weekdays: z.unknown().nullish(),
+	/**
+	 * `each-week` | `even-weeks` | `odd-weeks` | `first-of-month` | `last-of-month`, or null —
+	 * which the portal's own page renders as "Kvar veke".
+	 */
+	event_week_interval: nullish,
+	/** References /api/v1/organizers. `event_organizer_name` is empty on every row that has one. */
+	organizer_id: z.union([z.string(), z.number()]).nullish()
 });
 
 export type UpstreamEvent = z.infer<typeof eventSchema>;
@@ -155,6 +165,28 @@ export function parseFilters(body: unknown): FilterVocabulary {
 	);
 }
 
+const organizerSchema = z.object({
+	organizer_id: z.union([z.string(), z.number()]),
+	/**
+	 * The name the portal shows a reader — "Bømlo Kulturskule". Not `organizer_name`, which is the
+	 * name in the business register: "Bømlo Kommune Skular" for that one, and for a few rows the
+	 * private person who registered the account. Only the public name is read.
+	 */
+	organizer_title: nullish,
+	organizer_public: z.boolean().nullish()
+});
+
+/** Organiser id → the name it goes by publicly. Organisers marked not public are left out. */
+export function parseOrganizers(body: unknown): Map<string, string> {
+	const { rows } = parseEnvelope(body, organizerSchema, '/api/v1/organizers');
+	const names = new Map<string, string>();
+	for (const o of rows) {
+		if (o.organizer_public === false || !o.organizer_title) continue;
+		names.set(String(o.organizer_id), o.organizer_title);
+	}
+	return names;
+}
+
 const HEADERS = {
 	// Identifying, with a contact URL, as docs/event-sources.md asks of every importer.
 	'user-agent': 'hendingar.no importer (+https://hendingar.no)',
@@ -178,17 +210,19 @@ export type Read = (site: AfaSite) => Promise<{
 	events: unknown;
 	locations: unknown;
 	filters: unknown;
+	organizers: unknown;
 }>;
 
 /**
- * Three requests per run, and no more.
+ * Four requests per run, and no more.
  *
- * robots.txt asks for a 600-second crawl delay. Three calls a day against a collection endpoint is
+ * robots.txt asks for a 600-second crawl delay. Four calls a day against collection endpoints is
  * a far lighter touch than a crawler walking the listing, which is the behaviour that delay exists
  * to discourage — but it is the reason this importer never fetches a per-event page.
  */
 export const read: Read = async (site) => ({
 	events: await getJson(eventsUrl(site)),
 	locations: await getJson(locationsUrl(site)),
-	filters: await getJson(filtersUrl(site))
+	filters: await getJson(filtersUrl(site)),
+	organizers: await getJson(organizersUrl(site))
 });

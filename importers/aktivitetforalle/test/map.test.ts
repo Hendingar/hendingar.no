@@ -2,14 +2,16 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { CATEGORY_SLUGS } from '@hendingar/core/taxonomy';
-import { orNull, parseEvents, parseFilters, parseLocations } from '../src/api.ts';
+import { orNull, parseEvents, parseFilters, parseLocations, parseOrganizers } from '../src/api.ts';
 import type { UpstreamEvent, UpstreamUpload } from '../src/api.ts';
 import { SITES, eventUrl, siteBySlug } from '../src/sites.ts';
 import {
 	isFailure,
+	isPublishableActivity,
 	isPublishableEvent,
 	mapCategory,
 	mapEvent,
+	mapWeeklyHours,
 	posterSrcsetFrom,
 	slugifyVenue,
 	toInstant
@@ -46,6 +48,7 @@ function row(overrides: Partial<UpstreamEvent> & { event_id: number; event_title
 		event_organizer_name: null,
 		event_filter_ids: null,
 		event_thumbnail: null,
+		event_week_interval: null,
 		...overrides
 	};
 }
@@ -460,5 +463,125 @@ describe('the venue address', () => {
 			// them would write a blank address over a real one.
 			expect(m.venueAddress.street === null || m.venueAddress.street.length > 0).toBe(true);
 		}
+	});
+});
+
+/**
+ * The standing weekly activities — every `activity` row the portal held on 2026-10-02.
+ *
+ * A separate fixture from `events.json`, which was captured before these were imported and holds
+ * only six. Trimmed to the fields the importer reads, with addresses and phone numbers in the
+ * free text replaced: several descriptions carry a parent volunteer's private e-mail.
+ */
+describe('activities', () => {
+	const activities = parseEvents(fixture('activities.json'));
+	const organizers = parseOrganizers(fixture('organizers.json'));
+	const listed = activities.rows.filter((r) => isPublishableActivity(r, site.timezone));
+	const mapped = listed.map((r) => mapEvent(r, site, vocabulary, locations, organizers));
+	const byId = (id: number) => {
+		const m = mapped.find((x) => x.externalId === String(id));
+		if (!m || isFailure(m)) throw new Error(`activity ${id} did not map`);
+		return m;
+	};
+
+	it('takes every public activity that says when it meets', () => {
+		expect(activities.rejected).toEqual([]);
+		expect(listed.length).toBe(132);
+		expect(mapped.filter(isFailure)).toEqual([]);
+	});
+
+	it('leaves the ones with no timetable at the source', () => {
+		// "Bømlo Soul Children", a motorsport club's "Treninger", and "badebursdag": all public, all
+		// repeating, none saying when. There is nothing for a reader to go to.
+		const left = activities.rows.filter(
+			(r) => orNull(r.event_status) === 'public' && !isPublishableActivity(r, site.timezone)
+		);
+		expect(left.map((r) => String(r.event_id)).sort()).toEqual(['3168', '34', '70']);
+	});
+
+	it('is never taken as a dated event, and never the other way round', () => {
+		// The two predicates must not overlap, or a row would be imported under both readings.
+		expect(listed.some((r) => isPublishableEvent(r, site.timezone))).toBe(false);
+		expect(parsed.rows.filter((r) => isPublishableEvent(r, site.timezone)).length).toBe(121);
+		expect(
+			parsed.rows.some(
+				(r) => isPublishableActivity(r, site.timezone) && r.event_type !== 'activity'
+			)
+		).toBe(false);
+	});
+
+	it('reads Bremnes G12 exactly as the portal shows it', () => {
+		// Rendered on bomlo.aktivitetforalle.no/aktivitetar/89: "Kvar veke · Tysdag kl. 18:00 -
+		// 19:30 · Onsdag kl. 18:00 - 19:30 · Laurdag kl. 11:30 - 13:00".
+		const g12 = byId(89);
+		expect(g12.weeklyHours).toEqual({
+			cadence: 'weekly',
+			slots: [
+				{ weekday: 2, from: '18:00', to: '19:30' },
+				{ weekday: 3, from: '18:00', to: '19:30' },
+				{ weekday: 6, from: '11:30', to: '13:00' }
+			]
+		});
+		expect(g12.organizerName).toBe('Bremnes Idrettslag');
+		expect(g12.sourceUrl).toBe('https://bomlo.aktivitetforalle.no/aktivitetar/89');
+	});
+
+	it('keeps a fortnightly service fortnightly', () => {
+		// The portal: "Partalsveker · Søndag kl. 11:00 - 12:30". Every Sunday would be half wrong.
+		expect(byId(25).weeklyHours?.cadence).toBe('even-weeks');
+		expect(byId(30).weeklyHours?.cadence).toBe('odd-weeks');
+		expect(byId(36).weeklyHours?.cadence).toBe('last-of-month');
+	});
+
+	it('reads an unset interval as weekly, which is what the portal prints for it', () => {
+		// "Turn 3-4 år" has `event_week_interval: null`; its page says "Kvar veke".
+		const turn = activities.rows.find((r) => String(r.event_id) === '923')!;
+		expect(turn.event_week_interval).toBeNull();
+		expect(byId(923).weeklyHours?.cadence).toBe('weekly');
+	});
+
+	it('names the organiser by the name it goes by, not the business register', () => {
+		// Organiser 53 is "Bømlo Kommune Skular" in the register and "Bømlo Kulturskule" on the
+		// portal. Only the second means anything to a parent looking for piano lessons.
+		expect(byId(115).organizerName).toBe('Bømlo Kulturskule');
+	});
+
+	it('refuses an interval it has no word for, rather than calling it weekly', () => {
+		const odd = row({
+			event_id: 1,
+			event_title: 'x',
+			event_type: 'activity',
+			event_week_interval: 'every-third-week',
+			event_weekdays: [{ value: 'Monday', from_time: '18:00:00', to_time: '19:00:00' }]
+		});
+		expect(mapWeeklyHours(odd)).toEqual({
+			problem: 'unknown event_week_interval: every-third-week'
+		});
+	});
+
+	it('skips an activity too short to be a season, so it never lands under a date at midnight', () => {
+		// Starts 00:00 like every activity. As a three-week row it would classify `dated` and be
+		// filed under its first day as a midnight event.
+		const course = row({
+			event_id: 2,
+			event_title: 'Kort kurs',
+			event_type: 'activity',
+			event_from: '2026-10-05 00:00:00',
+			event_to: '2026-10-26 23:59:59',
+			event_weekdays: [{ value: 'Monday', from_time: '18:00:00', to_time: '19:00:00' }]
+		});
+		expect(isPublishableActivity(course, site.timezone)).toBe(false);
+	});
+});
+
+describe('parseOrganizers', () => {
+	it('leaves out an organiser the portal does not show publicly', () => {
+		const names = parseOrganizers({
+			data: [
+				{ organizer_id: 1, organizer_title: 'Synleg lag', organizer_public: true },
+				{ organizer_id: 2, organizer_title: 'Skjult lag', organizer_public: false }
+			]
+		});
+		expect([...names.values()]).toEqual(['Synleg lag']);
 	});
 });

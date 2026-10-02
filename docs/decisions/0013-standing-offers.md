@@ -1,6 +1,8 @@
 # 0013 — A place that is open is not an event that happens
 
-**Status:** accepted (2026-09-06)
+**Status:** accepted (2026-09-06). The `aktivitetforalle` follow-up below is taken up by
+[ADR 0021](0021-weekly-activities.md): activities are now imported, with a timetable, and shown
+grouped by organiser rather than among the places.
 
 ## Context
 

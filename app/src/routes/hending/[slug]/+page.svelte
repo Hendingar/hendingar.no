@@ -3,7 +3,14 @@
 	import { error } from '@sveltejs/kit';
 	import { page } from '$app/state';
 	import { categoryLabel } from '@hendingar/core/taxonomy';
-	import { formatEventTime, formatEventClock, machineDateTime } from '@hendingar/core/datetime';
+	import {
+		formatCalendarDate,
+		formatEventTime,
+		formatEventClock,
+		instantToZonedWallClock,
+		machineDateTime
+	} from '@hendingar/core/datetime';
+	import { describeWeeklyHours } from '@hendingar/core/weekly-hours';
 	import { eventIdFromParam, eventPath } from '@hendingar/core/slug';
 	import {
 		VERIFICATION_CHECK_LABELS,
@@ -169,6 +176,22 @@
 	 * URL; repeating this one there would credit the same link twice under two different headings.
 	 */
 	const submittedSource = $derived(safeHttpUrl(event.sourceUrl));
+	/**
+	 * A weekly activity's timetable, in place of the start and end it does not really have.
+	 *
+	 * Its `starts_at` is midnight on the first day of the season — "1. januar 00:00" — which is true
+	 * of the row and useless to a reader, who wants to know it is Tuesdays at six. The season's last
+	 * day is still worth saying, because a squad that stops in December should not be turned up to
+	 * in January. See ADR 0021.
+	 */
+	const weekly = $derived(event.weeklyHours ? describeWeeklyHours(event.weeklyHours) : null);
+	const seasonEnds = $derived(
+		event.weeklyHours && event.endsAt
+			? formatCalendarDate(
+					instantToZonedWallClock(event.endsAt, event.venueTimeZone ?? undefined).date
+				).toLowerCase()
+			: null
+	);
 	const sameDay = $derived(
 		event.endsAt
 			? formatEventTime(event.startsAt, event.venueTimeZone, 'full').slice(0, 12) ===
@@ -374,25 +397,41 @@
 				<dl class="facts">
 					<div>
 						<dt>Når</dt>
-						<dd>
-							<time datetime={machineDateTime(event.startsAt)}>
-								{formatEventTime(event.startsAt, event.venueTimeZone, 'full')}
-							</time>
-							{#if event.endsAt}
-								<span class="facts__to">
-									–
-									{#if sameDay}
-										<time datetime={machineDateTime(event.endsAt)}>
-											{formatEventClock(event.endsAt, event.venueTimeZone)}
-										</time>
-									{:else}
-										<time datetime={machineDateTime(event.endsAt)}>
-											{formatEventTime(event.endsAt, event.venueTimeZone, 'full')}
-										</time>
-									{/if}
-								</span>
-							{/if}
-						</dd>
+						{#if weekly}
+							<dd class="weekly">
+								{#if weekly.cadence}
+									<span class="weekly__cad">{weekly.cadence}</span>
+								{/if}
+								{#each weekly.lines as line, i (i)}
+									<span>{line}</span>
+								{/each}
+								{#if seasonEnds && event.endsAt}
+									<span class="muted">
+										Til <time datetime={machineDateTime(event.endsAt)}>{seasonEnds}</time>
+									</span>
+								{/if}
+							</dd>
+						{:else}
+							<dd>
+								<time datetime={machineDateTime(event.startsAt)}>
+									{formatEventTime(event.startsAt, event.venueTimeZone, 'full')}
+								</time>
+								{#if event.endsAt}
+									<span class="facts__to">
+										–
+										{#if sameDay}
+											<time datetime={machineDateTime(event.endsAt)}>
+												{formatEventClock(event.endsAt, event.venueTimeZone)}
+											</time>
+										{:else}
+											<time datetime={machineDateTime(event.endsAt)}>
+												{formatEventTime(event.endsAt, event.venueTimeZone, 'full')}
+											</time>
+										{/if}
+									</span>
+								{/if}
+							</dd>
+						{/if}
 					</div>
 
 					{#if event.venueName}
@@ -683,6 +722,21 @@
 	}
 	dd {
 		margin: 0;
+	}
+	.weekly {
+		display: grid;
+		gap: 0.15rem;
+		font-variant-numeric: tabular-nums;
+	}
+	/* Outlined, not filled: filled peach marks one fixed time, and this qualifies a pattern. */
+	.weekly__cad {
+		justify-self: start;
+		font-family: var(--font-mono);
+		font-size: var(--step-micro);
+		letter-spacing: 0.08em;
+		text-transform: uppercase;
+		border: var(--rule) solid var(--peach-line);
+		padding: 0.05rem 0.4rem;
 	}
 	.muted {
 		color: var(--peach-dim);
