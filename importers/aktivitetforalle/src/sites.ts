@@ -19,6 +19,18 @@ export type AfaSite = {
 	scheduleCron: string;
 	iconUrl: string | null;
 	trusted: boolean;
+	/**
+	 * Does one run see everything this site publishes?
+	 *
+	 * True here, and it is a statement about the request rather than a preference: `/api/v1/events`
+	 * returns the whole collection in one response — that is the same fact `eventsUrl` is built on,
+	 * and the reason this importer can be polite about a 600-second crawl delay.
+	 *
+	 * It is what licenses the gone-upstream sweep (`markGoneUpstream`). A source read through a
+	 * window — one page, one month — must never set this: every row outside the window would look
+	 * cancelled.
+	 */
+	listingIsComplete: boolean;
 };
 
 export const SITES: readonly AfaSite[] = [
@@ -31,7 +43,8 @@ export const SITES: readonly AfaSite[] = [
 		timezone: 'Europe/Oslo',
 		scheduleCron: '0 5 * * *',
 		iconUrl: 'https://bomlo.aktivitetforalle.no/favicon.ico',
-		trusted: true
+		trusted: true,
+		listingIsComplete: true
 	}
 ];
 

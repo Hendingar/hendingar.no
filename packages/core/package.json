@@ -26,7 +26,8 @@
 		"./search": "./src/search.ts",
 		"./contribution": "./src/contribution.ts",
 		"./coverage": "./src/coverage.ts",
-		"./fixture": "./src/fixture.ts"
+		"./fixture": "./src/fixture.ts",
+		"./gone-upstream": "./src/gone-upstream.ts"
 	},
 	"scripts": {
 		"typecheck": "tsc --noEmit",

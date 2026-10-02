@@ -1,0 +1,1 @@
+ALTER TABLE "events" ADD COLUMN "removed_upstream_at" timestamp with time zone;

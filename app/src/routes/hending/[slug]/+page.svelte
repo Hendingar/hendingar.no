@@ -224,6 +224,25 @@
 	<div class="shell">
 		<p class="ev__back"><a href="/hendingar">← Alle hendingar</a></p>
 
+		{#if event.removedUpstreamAt}
+			<!--
+				Above the title, because it changes what the rest of the page means.
+
+				The page is kept rather than turned into a 404: people have this link, some of them
+				hearted it, and "fann ikkje hendinga" would say we lost it rather than that the
+				organiser took it down. What we can honestly report is the day we noticed, which is
+				not the same as the day it was cancelled — so the wording says "fann ikkje".
+			-->
+			<p class="ev__gone" role="status">
+				<strong>Denne hendinga ligg ikkje lenger hos kjelda.</strong>
+				Vi fann ho ikkje då vi henta frå
+				{event.sourceName ?? 'kjelda'}
+				<time datetime={machineDateTime(event.removedUpstreamAt)}>
+					{formatEventTime(event.removedUpstreamAt, event.venueTimeZone)}</time
+				>. Ho kan vere avlyst eller flytta — sjekk hos arrangøren før du reiser.
+			</p>
+		{/if}
+
 		<div class="ev__head">
 			<p class="label">
 				{categoryLabel(event.category)}
@@ -541,6 +560,21 @@
 		padding-block: clamp(1.5rem, 4vw, 3rem) var(--section-y);
 		container-type: inline-size;
 	}
+	/*
+	 * The withdrawn notice: peach paper and navy ink, the brand's own inversion.
+	 *
+	 * Loud on purpose. Everything else on this page describes an event that is happening, and a
+	 * reader who skims past this line travels to something that is not on.
+	 */
+	.ev__gone {
+		margin: 0 0 1.5rem;
+		padding: 0.85rem 1rem;
+		border-inline-start: var(--rule-fat) solid var(--peach);
+		background: var(--peach-wash-3);
+		font-size: var(--step-body);
+		line-height: 1.45;
+	}
+
 	.ev__back {
 		margin: 0 0 1.5rem;
 		font-family: var(--font-mono);
