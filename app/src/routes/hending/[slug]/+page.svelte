@@ -24,6 +24,8 @@
 	import { parseFixture } from '@hendingar/core/fixture';
 	import VersusTile from '../../../lib/components/VersusTile.svelte';
 	import { artworkFor } from '../../../lib/church-art.ts';
+	import { hasGardenSource } from '../../../lib/garden-sources.ts';
+	import GardenTile from '../../../lib/components/GardenTile.svelte';
 
 	const id = eventIdFromParam(page.params.slug ?? '');
 	if (id === null) error(404, 'Fann ikkje hendinga');
@@ -116,6 +118,8 @@
 	 * and not a texture.
 	 */
 	const artwork = $derived(artworkFor(event.id, event.category));
+	/* A hagelag's activity has no picture anywhere upstream — see garden-sources.ts. */
+	const garden = $derived(hasGardenSource(event.reportedBy.map((r) => r.slug)));
 
 	/**
 	 * One string for the search snippet and the share card both.
@@ -282,6 +286,8 @@
 					<!-- Drawn, not fetched — see VersusTile for why the club crests are off limits.
 					     `feature` is what makes this one move; the thumbnails in the listing do not. -->
 					<VersusTile id={event.id} {fixture} feature />
+				{:else if garden}
+					<GardenTile id={event.id} feature />
 				{:else if artwork}
 					<!--
 						A picture beside a church notice, and honest about being exactly that.

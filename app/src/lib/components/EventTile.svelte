@@ -84,6 +84,7 @@
 		posterSrcset={event.posterSrcset}
 		title={event.title}
 		category={event.category}
+		sourceSlugs={(event.sourceMarks ?? []).map((m) => m.slug)}
 	/>
 
 	<div class="tile__body">
