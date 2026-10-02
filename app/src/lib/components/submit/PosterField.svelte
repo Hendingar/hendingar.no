@@ -23,16 +23,36 @@
 	let {
 		poster = null,
 		readFromImage = false,
+		fromSource = null,
 		onpick,
 		onclear
 	}: {
-		/** The current image, as a `data:` URL, or null when none is attached. */
+		/** The current image: a `data:` URL for an attached photo, or `fromSource`'s address. */
 		poster?: string | null;
 		/** Were the fields read from this image? Then the caption has a second job to do. */
 		readFromImage?: boolean;
+		/**
+		 * Set when the picture is the linked page's rather than the sender's.
+		 *
+		 * The two look identical in the box and are not the same thing at all: one is a photograph
+		 * somebody chose to give us and we re-host, the other stays on its own server under its own
+		 * rights. The caption is where that gets said, so nobody is misled about what they are
+		 * attaching — and so the person who owns the picture is named.
+		 */
+		fromSource?: string | null;
 		onpick: (image: CapturedImage) => void;
 		onclear: () => void;
 	} = $props();
+
+	/** Just the host, which is the part a reader recognises. */
+	const sourceHost = $derived.by(() => {
+		if (!fromSource) return null;
+		try {
+			return new URL(fromSource).hostname.replace(/^www\./, '');
+		} catch {
+			return null;
+		}
+	});
 
 	let input = $state<HTMLInputElement | undefined>();
 	let message = $state('');
@@ -87,8 +107,18 @@
 			what happens to it is the information, and a caption is where you say so.
 		-->
 		<figure class="poster__fig">
-			<img src={poster} alt="Biletet du har lagt ved" />
+			<img
+				src={poster}
+				alt={fromSource ? 'Biletet frå sida du lenkja til' : 'Biletet du har lagt ved'}
+			/>
 			<figcaption>
+				{#if sourceHost}
+					<!--
+						Said plainly, because it is the difference between pointing and publishing.
+					-->
+					Biletet ligg hos <strong>{sourceHost}</strong> og blir henta derifrå — vi tek ikkje kopi av
+					det, og vi eig det ikkje. Vil du heller bruke ditt eige, legg det ved her.
+				{/if}
 				{#if readFromImage}
 					Felta merkte <span aria-hidden="true">◧</span>
 					<em>lese frå biletet</em> er lesne herifrå. Rett det som er feil — det du endrar blir ditt.

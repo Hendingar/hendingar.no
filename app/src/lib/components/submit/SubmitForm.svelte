@@ -204,6 +204,9 @@
 					repeatUntil: draft.repeatUntil || undefined
 				});
 				method = draft.method === 'photo' || draft.method === 'link' ? draft.method : 'form';
+				// The picture that came with the link the first time. Put back in the box rather
+				// than quietly dropped on the way to a second attempt.
+				linkPoster = draft.posterSourceUrl || null;
 				mode = 'form';
 			})
 			.catch(() => {
@@ -403,6 +406,15 @@
 	 * what becomes the thumbnail if the event is approved.
 	 */
 	let poster = $state<string | null>(null);
+
+	/**
+	 * A picture from the linked page, which we point at rather than hold.
+	 *
+	 * Separate state from `poster` all the way to the form field, because the two are different
+	 * things with different rights and a single variable would lose that distinction exactly where
+	 * it matters — at the moment one is written to the row.
+	 */
+	let linkPoster = $state<string | null>(null);
 	/**
 	 * The same bytes without the `data:` prefix, for the crop call.
 	 *
@@ -421,6 +433,8 @@
 	 * for a poster nobody can see any more.
 	 */
 	function attachImage(image: CapturedImage) {
+		// Theirs replaces the source's. See `prefillFromUrl` for which wins and why.
+		linkPoster = null;
 		poster = image.dataUrl;
 		posterBase64 = image.base64;
 		posterCrop = null;
@@ -557,7 +571,16 @@
 	 * afterwards: the method, because nobody photographed anything, and the source URL, because a
 	 * link submission has one by definition and it is the whole reason to trust the draft.
 	 */
-	function prefillFromUrl(draft: ExtractedEvent, sourceUrl: string) {
+	function prefillFromUrl(draft: ExtractedEvent, sourceUrl: string, imageUrl?: string | null) {
+		/*
+		 * The page's own picture, hotlinked — and never over a photograph already attached.
+		 *
+		 * An attached photo is one the sender took and chose to give us; it is re-hosted after
+		 * approval and shown as ours. A linked page's image stays on its own server with its rights
+		 * unverified. When both exist the sender's own wins, because it is the one we may actually
+		 * publish.
+		 */
+		linkPoster = poster ? null : (imageUrl ?? null);
 		/*
 		 * The source URL goes through `prefill`, not a second `fields.set` afterwards.
 		 *
@@ -1109,14 +1132,24 @@
 			the fields against it. Checking a suggestion without being able to see what it was read
 			from is not checking.
 		-->
-		<div class="form__poster" class:form__poster--filled={poster}>
+		<div class="form__poster" class:form__poster--filled={poster || linkPoster}>
 			<PosterField
-				{poster}
+				poster={poster ?? linkPoster}
 				readFromImage={method === 'photo' && fromPhoto.size > 0}
+				fromSource={poster ? null : linkPoster}
 				onpick={attachImage}
-				onclear={clearImage}
+				onclear={() => (linkPoster ? (linkPoster = null) : clearImage())}
 			/>
 		</div>
+		<!--
+			The linked page's picture, posted as a URL rather than as bytes.
+
+			Through the fields API like every other hidden input — a plain `name=` is namespaced
+			away by the remote form and silently dropped. The server probes it again before it is
+			written; see `posterSourceUrl` in the schema for why a value that has been through a
+			browser is a request and not a fact.
+		-->
+		<input {...f.posterSourceUrl.as('text')} type="hidden" value={linkPoster ?? ''} />
 
 		<!--
 		How the event reached us. Not user-editable, but it must go through the fields API: remote

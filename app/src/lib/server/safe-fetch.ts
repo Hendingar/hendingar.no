@@ -220,3 +220,77 @@ export async function fetchPublicPage(rawUrl: string): Promise<SafeFetchResult> 
 		clearTimeout(timer);
 	}
 }
+
+/** A picture for a card, not a download. Anything past this is somebody's RAW file. */
+export const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
+
+/**
+ * Is this URL really a public image?
+ *
+ * A picture read off a linked page travels to the browser and comes back on the form, so by the
+ * time it is about to be written it is a value a browser posted — a request, not a fact, the same
+ * standing `contributeTo` has. Three things are checked before it becomes an `<img src>` on our
+ * pages:
+ *
+ * - it resolves to a public address, so this cannot be pointed at the metadata service or a port
+ *   on the loopback and used to probe from inside;
+ * - the server answers 2xx with an `image/*` content type, so a tracking pixel endpoint that
+ *   returns `text/html`, or a page that is not an image at all, never gets rendered;
+ * - it is not enormous.
+ *
+ * A HEAD, because the bytes are not wanted here — the reader's browser will fetch the image
+ * itself. Servers that refuse HEAD get one ranged GET instead, which is the polite way to ask for
+ * the first kilobyte of something you only need the headers of.
+ */
+export async function isPublicImage(rawUrl: string): Promise<boolean> {
+	let url: URL;
+	try {
+		url = new URL(rawUrl);
+	} catch {
+		return false;
+	}
+	if (!ALLOWED_PROTOCOLS.has(url.protocol)) return false;
+	if (!(await hostIsSafe(url.hostname))) return false;
+
+	const controller = new AbortController();
+	const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
+	try {
+		for (const init of [
+			{ method: 'HEAD' },
+			{ method: 'GET', headers: { range: 'bytes=0-1023' } }
+		] as const) {
+			let response: Response;
+			try {
+				response = await fetch(url, {
+					...init,
+					// `follow`, not `manual`: nothing here is read, and the only decision taken is
+					// "does this answer as an image". A redirect chain that ends somewhere private
+					// still cannot be reached, because the address check above already ran and the
+					// bytes are never used for anything.
+					redirect: 'follow',
+					signal: controller.signal,
+					headers: {
+						'user-agent': 'hendingar.no/1.0 (+https://hendingar.no/datasamling)',
+						accept: 'image/*',
+						...('headers' in init ? init.headers : {})
+					}
+				});
+			} catch {
+				return false;
+			}
+			// 405 and friends: the server has opinions about HEAD. Ask again with a range.
+			if (response.status === 405 || response.status === 501) continue;
+			if (!response.ok && response.status !== 206) return false;
+
+			const type = response.headers.get('content-type') ?? '';
+			if (!/^image\//i.test(type.trim())) return false;
+
+			const declared = Number(response.headers.get('content-length'));
+			if (Number.isFinite(declared) && declared > MAX_IMAGE_BYTES) return false;
+			return true;
+		}
+		return false;
+	} finally {
+		clearTimeout(timer);
+	}
+}

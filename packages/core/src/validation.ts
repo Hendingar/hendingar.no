@@ -440,6 +440,19 @@ export const eventFormSchema = z
 		ctaUrl: httpUrl.optional().or(z.literal('').transform(() => undefined)),
 		sourceUrl: httpUrl.optional().or(z.literal('').transform(() => undefined)),
 		/**
+		 * A picture the linked page said was the event's, to hotlink rather than to hold.
+		 *
+		 * Posted back by the browser after `extractFromUrl` found it, which makes it a request and
+		 * not a fact — `submitEvent` re-checks that it is a public image before it becomes an
+		 * `<img src>` on anybody's page, the same standing `contributeTo` has.
+		 *
+		 * Distinct from the photograph somebody attaches, and the difference is the rights: an
+		 * attached photo is uploaded, re-hosted and shown as ours because the sender chose to give
+		 * it to us. This one stays on the source's server, is recorded `posterRightsVerified:
+		 * false`, and is therefore kept out of our OG images like every imported poster.
+		 */
+		posterSourceUrl: httpUrl.optional().or(z.literal('').transform(() => undefined)),
+		/**
 		 * Does it repeat, and how.
 		 *
 		 * A select rather than a checkbox plus a frequency: remote form schemas require every
