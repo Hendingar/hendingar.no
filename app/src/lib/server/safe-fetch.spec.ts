@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { fetchPublicPage, isBlockedAddress } from './safe-fetch.ts';
+import { fetchPublicPage, isBlockedAddress, isPublicImage } from './safe-fetch.ts';
 
 /**
  * The address filter is the whole security boundary of the "paste a link" tab, so it is tested as
@@ -100,5 +100,38 @@ describe('fetchPublicPage', () => {
 		const result = await fetchPublicPage('ikkje ei lenkje');
 		expect(result.ok).toBe(false);
 		if (!result.ok) expect(result.reason).toBe('scheme');
+	});
+});
+
+describe('isPublicImage', () => {
+	/*
+	 * Hermetic for the same reason as above: every case here is refused before a socket opens. The
+	 * content-type half needs a server and is covered by the submit path's own probe at runtime.
+	 */
+	it('refuses anything that is not an http(s) address', async () => {
+		for (const url of [
+			'file:///etc/passwd',
+			'data:image/png;base64,AA',
+			'javascript:alert(1)',
+			'nonsense'
+		]) {
+			expect(await isPublicImage(url), url).toBe(false);
+		}
+	});
+
+	it('refuses a private address, so a posted URL cannot probe from inside', async () => {
+		/*
+		 * The reason this is re-checked at submit time at all: the field travels through a browser,
+		 * and a browser can post anything. `169.254.169.254` is the one that matters — an image URL
+		 * is a fetch our server makes, and that address is the managed identity's token endpoint.
+		 */
+		for (const url of [
+			'http://169.254.169.254/metadata/identity/oauth2/token',
+			'http://127.0.0.1:5432/x.png',
+			'http://[::1]:5173/x.png',
+			'http://10.0.0.5/logo.png'
+		]) {
+			expect(await isPublicImage(url), url).toBe(false);
+		}
 	});
 });

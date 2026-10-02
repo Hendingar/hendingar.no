@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { extractEventFromPage, pageText, readSchemaDateTime } from './page-event.ts';
+import { extractEventFromPage, imageFromPage, pageText, readSchemaDateTime } from './page-event.ts';
+
+/** The address the page was read from. Every relative URL on it resolves against this. */
+const PAGE_URL = 'https://doemes.no/program/hausten';
 
 /*
  * Both fixtures are verbatim from real pages, captured today:
@@ -77,7 +80,7 @@ describe('readSchemaDateTime', () => {
 
 describe('extractEventFromPage', () => {
 	it('prefers JSON-LD, and reads every field the page asserts', () => {
-		const { source, event } = extractEventFromPage(JSON_LD_PAGE);
+		const { source, event } = extractEventFromPage(JSON_LD_PAGE, PAGE_URL);
 		expect(source).toBe('json-ld');
 		expect(event.title).toBe('Bok og strikk på Hillestveit');
 		expect(event.date).toBe('2026-09-07');
@@ -91,18 +94,18 @@ describe('extractEventFromPage', () => {
 	it('treats an empty schema.org string as absent, not as an empty name', () => {
 		// This page really does publish `"organizer": {"name": ""}`. Carrying that through would
 		// put an empty organiser into the form and call it "read from the page".
-		expect(extractEventFromPage(JSON_LD_PAGE).event.organizerName).toBeNull();
+		expect(extractEventFromPage(JSON_LD_PAGE, PAGE_URL).event.organizerName).toBeNull();
 	});
 
 	it('never guesses a category', () => {
 		// schema.org's event types do not map onto our taxonomy. A wrong category chosen on
 		// somebody's behalf is worse than a select they have to look at.
-		expect(extractEventFromPage(JSON_LD_PAGE).event.category).toBeNull();
-		expect(extractEventFromPage(MICRODATA_PAGE).event.category).toBeNull();
+		expect(extractEventFromPage(JSON_LD_PAGE, PAGE_URL).event.category).toBeNull();
+		expect(extractEventFromPage(MICRODATA_PAGE, PAGE_URL).event.category).toBeNull();
 	});
 
 	it('falls back to microdata, reading the machine value out of the attribute', () => {
-		const { source, event } = extractEventFromPage(MICRODATA_PAGE);
+		const { source, event } = extractEventFromPage(MICRODATA_PAGE, PAGE_URL);
 		expect(source).toBe('microdata');
 		expect(event.title).toBe('Frøpakkekveld');
 		expect(event.date).toBe('2026-09-18');
@@ -112,7 +115,9 @@ describe('extractEventFromPage', () => {
 
 	it('reads the venue from the nested Place, not the event title', () => {
 		// Both carry `itemprop="name"`, and the event's comes first in the document.
-		expect(extractEventFromPage(MICRODATA_PAGE).event.venueName).toBe('Bømlo Folkebibliotek');
+		expect(extractEventFromPage(MICRODATA_PAGE, PAGE_URL).event.venueName).toBe(
+			'Bømlo Folkebibliotek'
+		);
 	});
 
 	it('falls back to OpenGraph, and says plainly that is all it got', () => {
@@ -120,7 +125,7 @@ describe('extractEventFromPage', () => {
 			<meta property="og:title" content="Konsert i Kulturhuset" />
 			<meta property="og:description" content="Ein fin kveld" />
 			</head><body>x</body></html>`;
-		const { source, event } = extractEventFromPage(html);
+		const { source, event } = extractEventFromPage(html, PAGE_URL);
 		expect(source).toBe('opengraph');
 		expect(event.title).toBe('Konsert i Kulturhuset');
 		expect(event.date).toBeNull();
@@ -132,7 +137,7 @@ describe('extractEventFromPage', () => {
 			<script type="application/ld+json">{ this is not json </script>
 			<script type="application/ld+json">{"@type":"Event","name":"Etterpå","startDate":"2026-04-01"}</script>
 			</head><body></body></html>`;
-		const { source, event } = extractEventFromPage(html);
+		const { source, event } = extractEventFromPage(html, PAGE_URL);
 		expect(source).toBe('json-ld');
 		expect(event.title).toBe('Etterpå');
 	});
@@ -143,7 +148,7 @@ describe('extractEventFromPage', () => {
 				{"@type":"WebSite","name":"Ein stad"},
 				{"@type":"MusicEvent","name":"Konsert","startDate":"2026-04-01T20:00:00+02:00"}
 			]}</script></head><body></body></html>`;
-		const { source, event } = extractEventFromPage(html);
+		const { source, event } = extractEventFromPage(html, PAGE_URL);
 		expect(source).toBe('json-ld');
 		expect(event.title).toBe('Konsert');
 		expect(event.startTime).toBe('20:00');
@@ -151,7 +156,10 @@ describe('extractEventFromPage', () => {
 
 	it('reports "none" for a page with nothing on it, which is not an error', () => {
 		// The signal to try the model. Most of the web has no structured data and no og:title.
-		const { source, event } = extractEventFromPage('<html><body><p>hei</p></body></html>');
+		const { source, event } = extractEventFromPage(
+			'<html><body><p>hei</p></body></html>',
+			PAGE_URL
+		);
 		expect(source).toBe('none');
 		expect(event.title).toBeNull();
 	});
@@ -169,5 +177,71 @@ describe('pageText', () => {
 
 	it('caps its own length, so one enormous page cannot become one enormous prompt', () => {
 		expect(pageText(`<body>${'ord '.repeat(20_000)}</body>`, 500)).toHaveLength(500);
+	});
+});
+
+describe('imageFromPage', () => {
+	it("reads the event's own image out of JSON-LD", () => {
+		const html = `<script type="application/ld+json">${JSON.stringify({
+			'@type': 'MusicEvent',
+			name: 'Konsert',
+			startDate: '2026-12-13T20:00',
+			image: 'https://cdn.doemes.no/plakat.jpg'
+		})}</script>`;
+		expect(imageFromPage(html, PAGE_URL)).toBe('https://cdn.doemes.no/plakat.jpg');
+	});
+
+	it('takes the first of the four shapes schema.org allows', () => {
+		/*
+		 * A bare URL, an array of them, an ImageObject, or an array of those — all four are real
+		 * markup, and a reader that handles only the first loses the picture on three sites in
+		 * four without ever failing.
+		 */
+		const shape = (image: unknown) =>
+			imageFromPage(
+				`<script type="application/ld+json">${JSON.stringify({
+					'@type': 'Event',
+					name: 'x',
+					startDate: '2026-12-13',
+					image
+				})}</script>`,
+				PAGE_URL
+			);
+		expect(shape(['https://a.no/1.jpg', 'https://a.no/2.jpg'])).toBe('https://a.no/1.jpg');
+		expect(shape({ '@type': 'ImageObject', url: 'https://a.no/3.jpg' })).toBe('https://a.no/3.jpg');
+		expect(shape([{ '@type': 'ImageObject', contentUrl: 'https://a.no/4.jpg' }])).toBe(
+			'https://a.no/4.jpg'
+		);
+	});
+
+	it('resolves a relative image against the page it came from', () => {
+		/*
+		 * The normal case, and the one that cost `importers/aktivitetforalle` every poster it had
+		 * for a year: `new URL()` throws on a path, the catch swallowed it, and "no picture" and
+		 * "a picture we failed to address" looked identical afterwards.
+		 */
+		expect(imageFromPage('<meta property="og:image" content="/media/plakat.jpg">', PAGE_URL)).toBe(
+			'https://doemes.no/media/plakat.jpg'
+		);
+	});
+
+	it('falls back to og:image when the page has no structured event', () => {
+		expect(
+			imageFromPage('<meta property="og:image" content="https://a.no/og.png">', PAGE_URL)
+		).toBe('https://a.no/og.png');
+	});
+
+	it('refuses a scheme a browser must not be pointed at', () => {
+		// `javascript:` and `data:` both parse as URLs. Neither is a picture on somebody's server.
+		expect(
+			imageFromPage('<meta property="og:image" content="javascript:alert(1)">', PAGE_URL)
+		).toBe(null);
+		expect(
+			imageFromPage('<meta property="og:image" content="data:image/png;base64,AA">', PAGE_URL)
+		).toBe(null);
+	});
+
+	it('is null for a page with no picture at all', () => {
+		expect(imageFromPage('<html><body><h1>Konsert</h1></body></html>', PAGE_URL)).toBeNull();
 	});
 });

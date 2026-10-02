@@ -153,7 +153,60 @@ export type PageExtraction = {
 	event: ExtractedEvent;
 	/** The page text, for the model fallback when nothing structured was found. */
 	text: string;
+	/**
+	 * The picture the page says belongs to the event, absolute.
+	 *
+	 * Read whatever the fields came from — a page with no structured data at all usually still has
+	 * an `og:image`, and the model path deserves it as much as the JSON-LD one does.
+	 */
+	imageUrl: string | null;
 };
+
+/**
+ * schema.org's `image`, which is four different shapes in the wild.
+ *
+ * A bare URL, an array of them, an ImageObject with a `url`, or an array of those. Bandsintown,
+ * Hoopla and WordPress each pick a different one.
+ */
+function imageFromNode(value: unknown): string | null {
+	if (typeof value === 'string') return value.trim() || null;
+	if (Array.isArray(value)) {
+		for (const item of value) {
+			const found = imageFromNode(item);
+			if (found) return found;
+		}
+		return null;
+	}
+	if (value && typeof value === 'object') {
+		const node = value as Json;
+		return imageFromNode(node.url ?? node.contentUrl);
+	}
+	return null;
+}
+
+/**
+ * The event's picture, made absolute against the page it came from.
+ *
+ * Relative is the normal case — `/media/plakat.jpg` is what a CMS writes — and `new URL()` throws
+ * on one. The aktivitetforalle importer lost every poster it had for a year to exactly that, so
+ * the base is not optional here.
+ */
+export function imageFromPage(html: string, pageUrl: string): string | null {
+	const node = jsonLdNodes(html).find(isEventNode);
+	const candidate =
+		(node ? imageFromNode(node.image) : null) ??
+		microdataValue(html, 'image') ??
+		openGraph(html, 'og:image') ??
+		openGraph(html, 'twitter:image');
+	if (!candidate) return null;
+
+	try {
+		const url = new URL(candidate, pageUrl);
+		return url.protocol === 'http:' || url.protocol === 'https:' ? url.toString() : null;
+	} catch {
+		return null;
+	}
+}
 
 function emptyEvent(): ExtractedEvent {
 	return {
@@ -287,17 +340,18 @@ export function pageText(html: string, limit = 12_000): string {
  * which is the signal to try the model — not an error, because "this page has no structured data"
  * is an ordinary fact about most of the web.
  */
-export function extractEventFromPage(html: string): PageExtraction {
+export function extractEventFromPage(html: string, pageUrl: string): PageExtraction {
 	const text = pageText(html);
+	const imageUrl = imageFromPage(html, pageUrl);
 
 	const jsonLd = fromJsonLd(html);
-	if (jsonLd) return { source: 'json-ld', event: jsonLd, text };
+	if (jsonLd) return { source: 'json-ld', event: jsonLd, text, imageUrl };
 
 	const microdata = fromMicrodata(html);
-	if (microdata) return { source: 'microdata', event: microdata, text };
+	if (microdata) return { source: 'microdata', event: microdata, text, imageUrl };
 
 	const og = fromOpenGraph(html);
-	if (og) return { source: 'opengraph', event: og, text };
+	if (og) return { source: 'opengraph', event: og, text, imageUrl };
 
-	return { source: 'none', event: emptyEvent(), text };
+	return { source: 'none', event: emptyEvent(), text, imageUrl };
 }

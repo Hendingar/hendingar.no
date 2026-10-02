@@ -31,12 +31,15 @@
 		onextract
 	}: {
 		/**
-		 * The draft, plus the URL we actually read.
+		 * The draft, the URL we actually read, and the page's own picture where it had one.
 		 *
 		 * Not the URL that was typed: it may have redirected, and the address that answered is the
 		 * one worth keeping as the event's source. The parent puts it in the form's source field.
+		 *
+		 * The picture is a URL on the source's server, already checked server-side to be a public
+		 * image. It is hotlinked, not held — the form says so beside it.
 		 */
-		onextract: (draft: ExtractedEvent, sourceUrl: string) => void;
+		onextract: (draft: ExtractedEvent, sourceUrl: string, imageUrl?: string | null) => void;
 	} = $props();
 
 	let url = $state('');
@@ -79,7 +82,7 @@
 		}
 
 		phase = 'idle';
-		onextract(result.draft, result.sourceUrl);
+		onextract(result.draft, result.sourceUrl, result.imageUrl);
 	}
 </script>
 

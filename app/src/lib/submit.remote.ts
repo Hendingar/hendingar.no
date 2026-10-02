@@ -41,7 +41,8 @@ import {
 	verifyEvent,
 	type AgentCall
 } from './server/verifier';
-import { fetchPublicPage, type SafeFetchFailure } from './server/safe-fetch';
+import { fetchPublicPage, isPublicImage, type SafeFetchFailure } from './server/safe-fetch';
+import { refusedByHost } from './server/refusing-hosts';
 import { extractEventFromPage } from './server/page-event';
 
 /**
@@ -530,6 +531,18 @@ export const submissionDraft = query(
 				endsAt: events.endsAt,
 				sourceUrl: events.sourceUrl,
 				ctaUrl: events.ctaUrl,
+				/*
+				 * Only the hotlinked kind survives a revision, and `posterRightsVerified` is what
+				 * tells them apart: false is a picture on the source's own server that came in with
+				 * a pasted link, true is a photograph we re-hosted — and the second only ever
+				 * exists on an approved row, which is not revisable anyway.
+				 *
+				 * Carried because losing it would repeat the bug the photo path already had: a
+				 * read that failed took the picture down with it, so somebody who did everything
+				 * right ended up with a generated tile.
+				 */
+				posterUrl: events.posterUrl,
+				posterRightsVerified: events.posterRightsVerified,
 				method: events.submissionMethod,
 				seriesId: events.seriesId,
 				venueName: venues.name,
@@ -622,6 +635,8 @@ export const submissionDraft = query(
 			organizerName: row.organizerName ?? '',
 			sourceUrl: row.sourceUrl ?? '',
 			ctaUrl: row.ctaUrl ?? '',
+			/** The linked page's picture, to put back in the box. Never one of ours. */
+			posterSourceUrl: row.posterRightsVerified ? '' : (row.posterUrl ?? ''),
 			method: row.method,
 			timeZone: zone,
 			repeats,
@@ -847,10 +862,26 @@ export const extractFromUrl = command(
 	async ({ url, today }) => {
 		const page = await fetchPublicPage(url);
 		if (!page.ok) {
-			return { ok: false as const, error: FETCH_FAILURE_MESSAGE[page.reason] };
+			return {
+				ok: false as const,
+				error:
+					refusedByHost(url, page.reason, verifierEnabled()) ?? FETCH_FAILURE_MESSAGE[page.reason]
+			};
 		}
 
-		const extraction = extractEventFromPage(page.html);
+		const extraction = extractEventFromPage(page.html, page.url);
+		/*
+		 * The picture the page says is the event's, kept only if it really is a public image.
+		 *
+		 * Hotlinked, never copied: the rights are the source's, exactly as they are for every
+		 * imported poster, and the row records `posterRightsVerified: false` to say so. A
+		 * submission that carries a photograph the sender took is the other case entirely — that
+		 * one we re-host, because they chose to give it to us.
+		 */
+		const imageUrl =
+			extraction.imageUrl && (await isPublicImage(extraction.imageUrl))
+				? extraction.imageUrl
+				: null;
 
 		/*
 		 * Nothing structured on the page, so ask the model to read it.
@@ -870,7 +901,15 @@ export const extractFromUrl = command(
 					const draft = await extractPage(extraction.text, page.url, today);
 					// Zero confidence is the model saying "this page is not an event". Believe it.
 					if (draft.confidence > 0) {
-						return { ok: true as const, draft, sourceUrl: page.url, source: 'model' as const };
+						// The picture too: a page with no structured data still usually has an
+						// `og:image`, and the model path has no less claim to it than JSON-LD does.
+						return {
+							ok: true as const,
+							draft,
+							sourceUrl: page.url,
+							source: 'model' as const,
+							imageUrl
+						};
 					}
 				} catch {
 					// Falls through to the message below, which is what we would have said anyway.
@@ -889,7 +928,8 @@ export const extractFromUrl = command(
 			draft: extraction.event,
 			/* The URL we actually read, after redirects — not the one that was typed. */
 			sourceUrl: page.url,
-			source: extraction.source
+			source: extraction.source,
+			imageUrl
 		};
 	}
 );
@@ -1738,6 +1778,21 @@ export const submitEvent = form(eventFormSchema, async (submission): Promise<Sub
 		}
 	}
 
+	/*
+	 * The linked page's picture, checked again now rather than trusted from the form.
+	 *
+	 * It made a round trip through a browser since `extractFromUrl` approved it, and a value that
+	 * has been through a browser is a request. Re-probing costs one HEAD and closes the gap where
+	 * somebody posts the form with any URL they like in that field.
+	 *
+	 * Null on anything that is not a public image, and the submission goes through regardless: a
+	 * picture that cannot be verified costs the picture, never the event.
+	 */
+	const posterUrl =
+		submission.posterSourceUrl && (await isPublicImage(submission.posterSourceUrl))
+			? submission.posterSourceUrl
+			: null;
+
 	const inserted = await database
 		.insert(events)
 		.values(
@@ -1752,6 +1807,17 @@ export const submitEvent = form(eventFormSchema, async (submission): Promise<Sub
 				seriesId,
 				sourceUrl: submission.sourceUrl,
 				ctaUrl: submission.ctaUrl,
+				posterUrl,
+				/*
+				 * Never ours, and the column says so.
+				 *
+				 * This is somebody else's picture on somebody else's server, hotlinked exactly as
+				 * an imported poster is. `posterRightsVerified` false keeps it off our OG images,
+				 * which is the one place we would be republishing it rather than pointing at it.
+				 * An attached photograph overwrites both of these after approval, because that one
+				 * is ours to show.
+				 */
+				posterRightsVerified: false,
 				status,
 				submissionMethod: submission.method,
 				submissionOutcome: outcome,
