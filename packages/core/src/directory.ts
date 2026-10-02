@@ -139,6 +139,19 @@ export const SOURCE_PLATFORMS: readonly SourcePlatform[] = [
 		note: 'Ein hendingsplattform mange miljø og nettverk køyrer kalenderen sin på. Vi hentar frå kvar kalender for seg, rett frå arrangøren sin eigen, så hendinga høyrer heime hos den som står bak.'
 	},
 	{
+		slug: 'naeringsrad',
+		name: 'Næringsråd',
+		url: 'https://www.naeringsalliansen.no',
+		/*
+		 * Not a platform in the product sense, and grouped for the same reason Riksteatret is: one
+		 * kind of organisation, many local rows. Each næringsråd runs its own site on its own CMS —
+		 * Bømlo's is a Next.js build, Stord's a Getynet one — so they share nothing technical at
+		 * all. What they share is what they publish: the working calendar of the local business
+		 * community, which is a different thing from a concert listing and worth finding together.
+		 */
+		note: 'Næringsråda sine eigne kalendrar — frukostmøte, konferansar og kurs for folk som driv noko lokalt. Vi hentar frå kvart råd for seg, rett frå deira eiga side.'
+	},
+	{
 		slug: 'riksteatret',
 		name: 'Riksteatret',
 		url: 'https://www.riksteatret.no',
