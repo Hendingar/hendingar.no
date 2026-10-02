@@ -1,4 +1,5 @@
 import type { Fixture } from '@hendingar/core/fixture';
+import { crestUrl } from './club-crests.ts';
 
 /**
  * Setting a club name inside the versus tile.
@@ -28,7 +29,7 @@ const ADVANCE = 0.92;
  * The two names sit in opposite corners with the VS lockup between them, so neither gets the whole
  * width. 230 of 400 is what is left beside the mark.
  */
-const BAND = 230;
+export const BAND = 230;
 
 /** Big enough to read on a 310px card; small enough that two lines still clear the mark. */
 const MAX_SIZE = 34;
@@ -73,9 +74,14 @@ export function layoutClubName(club: string): NameBlock {
 	return { lines, fontSize };
 }
 
+export type FixtureSideTile = NameBlock & {
+	/** The club's crest, where we have written its id down, and null otherwise. */
+	crest: string | null;
+};
+
 export type FixtureTile = {
-	home: NameBlock;
-	away: NameBlock;
+	home: FixtureSideTile;
+	away: FixtureSideTile;
 	grade: string | null;
 	/** What a screen reader is told, since every glyph in the tile is drawn rather than written. */
 	label: string;
@@ -83,8 +89,8 @@ export type FixtureTile = {
 
 export function fixtureTile(fixture: Fixture): FixtureTile {
 	return {
-		home: layoutClubName(fixture.home.club),
-		away: layoutClubName(fixture.away.club),
+		home: { ...layoutClubName(fixture.home.club), crest: crestUrl(fixture.home.club) },
+		away: { ...layoutClubName(fixture.away.club), crest: crestUrl(fixture.away.club) },
 		grade: fixture.grade,
 		label: `${fixture.home.club} mot ${fixture.away.club}`
 	};
