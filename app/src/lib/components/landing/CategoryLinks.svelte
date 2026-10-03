@@ -44,45 +44,40 @@
 
 <style>
 	.cats {
-		border-block-start: var(--rule) solid var(--peach-line);
-		padding-block: clamp(0.875rem, 2vw, 1.25rem);
+		padding-block: clamp(0.75rem, 1.5vw, 1rem);
 	}
+	/*
+	 * One scrolling row at every width.
+	 *
+	 * Seventeen categories wrap to six rows at 390px — about 250px of chrome directly above the
+	 * events — and even on a desktop they took two rows, a wall of uppercase to read past before
+	 * the first event. One row says "there are kinds, and here are the biggest" and lets the rest
+	 * run off the edge. The same treatment /hendingar gives its filter row, down to the negative
+	 * margin that lets the chips run to the edge of the screen rather than stopping at the gutter.
+	 */
 	.cats ul {
 		display: flex;
-		flex-wrap: wrap;
 		gap: 0.5rem;
 		list-style: none;
 		margin: 0;
+		overflow-x: auto;
+		overscroll-behavior-x: contain;
+		scroll-snap-type: x proximity;
+		/* Without this, snapping aligns the first chip to the scroller's edge — which the negative
+		   margin put at the screen edge — and the row loads already scrolled past the gutter. */
+		scroll-padding-inline: var(--gutter, 1rem);
+		margin-inline: calc(var(--gutter, 1rem) * -1);
+		padding-inline: var(--gutter, 1rem);
+		/* The row is the scroller; hiding its bar keeps it from reading as a broken layout.
+		   Scrolling stays discoverable because the chips visibly run off the edge. */
+		scrollbar-width: none;
 	}
-
-	/*
-	 * One scrolling row on a phone, wrapped everywhere else.
-	 *
-	 * Seventeen categories wrap to six rows at 390px — about 250px of chrome directly above the
-	 * events, on the page whose argument is that the events come first. The same treatment
-	 * /hendingar already gives its filter row, down to the negative margin that lets the chips run
-	 * to the edge of the screen rather than stopping at the gutter.
-	 */
-	@media (width < 34rem) {
-		.cats ul {
-			flex-wrap: nowrap;
-			overflow-x: auto;
-			overscroll-behavior-x: contain;
-			scroll-snap-type: x proximity;
-			margin-inline: calc(var(--gutter, 1rem) * -1);
-			padding-inline: var(--gutter, 1rem);
-			padding-block-end: 0.35rem;
-			/* The row is the scroller; hiding its bar keeps it from reading as a broken layout.
-			   Scrolling stays discoverable because the chips visibly run off the edge. */
-			scrollbar-width: none;
-		}
-		.cats ul::-webkit-scrollbar {
-			display: none;
-		}
-		.cats li {
-			flex: none;
-			scroll-snap-align: start;
-		}
+	.cats ul::-webkit-scrollbar {
+		display: none;
+	}
+	.cats li {
+		flex: none;
+		scroll-snap-align: start;
 	}
 
 	/*

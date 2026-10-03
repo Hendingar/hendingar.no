@@ -46,10 +46,10 @@
 			<li>
 				<a class="ways__a" class:ways__a--empty={way.n === 0} href={way.href}>
 					<span class="ways__t">{way.label}</span>
-					<span class="ways__n">
-						{way.n}
-						{way.n === 1 ? 'hending' : 'hendingar'}
-					</span>
+					<!-- The number alone is enough to see; the noun is there to be heard. "I dag 1
+					     hending" on screen was a second word to read on every tile of the row. -->
+					<span class="ways__n" aria-hidden="true">{way.n}</span>
+					<span class="visually-hidden">{way.n} {way.n === 1 ? 'hending' : 'hendingar'}</span>
 				</a>
 			</li>
 		{/each}
@@ -102,17 +102,16 @@
 
 	.ways__a {
 		display: flex;
-		flex-direction: column;
 		/*
-		 * Bottom-aligned, not centred, so the five counts sit on one line whatever the labels do.
-		 * "Alt framover" is the longest and wraps to two lines at some widths; centred, that pushed
-		 * its count a line lower than the other four and the row stopped reading as a row.
+		 * Label and count on one line, the count pushed to the far edge — one line to read per tile
+		 * instead of two. Baseline-aligned so the mono numeral sits on the display label's line.
 		 */
-		justify-content: flex-end;
-		gap: 0.5rem;
-		/* Comfortably past the 44px floor — this is the row the page is built to have pressed. */
-		min-block-size: 4.75rem;
-		padding: 0.9rem clamp(0.75rem, 3vw, 1.25rem);
+		align-items: baseline;
+		justify-content: space-between;
+		gap: 0.75rem;
+		/* Still past the 44px floor — this is the row the page is built to have pressed. */
+		min-block-size: 3.25rem;
+		padding: 0.85rem clamp(0.75rem, 2vw, 1.25rem);
 		text-decoration: none;
 		color: var(--peach-dim);
 		border-block-end: var(--rule) solid var(--peach-line);
@@ -149,9 +148,9 @@
 		font-family: var(--font-display);
 		font-weight: 800;
 		font-stretch: 108%;
-		/* Capped at 1.3rem rather than 1.45: five columns is a narrower cell than four was, and the
-		   longest label has to fit one of them without breaking. */
-		font-size: clamp(1.1rem, 2.2vw, 1.3rem);
+		/* Capped at 1.15rem: five columns, each now sharing its line with a count, and the longest
+		   label has to fit beside it without breaking. */
+		font-size: clamp(1rem, 1.8vw, 1.15rem);
 		line-height: 1;
 		letter-spacing: -0.01em;
 		text-transform: uppercase;
@@ -159,10 +158,8 @@
 	}
 	.ways__n {
 		font-family: var(--font-mono);
-		font-size: var(--step-micro);
+		font-size: 0.9375rem;
 		font-weight: 700;
-		letter-spacing: 0.18em;
-		text-transform: uppercase;
 		font-variant-numeric: tabular-nums;
 	}
 
