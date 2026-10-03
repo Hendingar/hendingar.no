@@ -84,8 +84,13 @@ jobs:
       # this repo. Now a package under importers/ IS the registration, and there is nothing here to
       # keep in step with it.
       #
-      # --workspace-concurrency=1 keeps them sequential, so the upstreams see one polite client and
-      # the log reads in order.
+      # --workspace-concurrency=4 runs four importers at once. Politeness is per host, and no two
+      # packages share one — checked 2026-10-03: each talks to its own upstream, and `mec`, which
+      # reads several sites, reads them one after another inside its own process. So no upstream
+      # ever sees two of our requests at once, and allevents keeps its 10s crawl delay. It was 1,
+      # which made the run the SUM of every importer; now it is about the slowest one, allevents,
+      # at ~100s by design. Measured locally on 2026-10-03, same data: 156s sequential, 105s at 4.
+      # --stream prefixes every line with its package, so the log still reads per source.
       #
       # --no-bail is the flag that matters. The chain was `a && b && c`, so the first failure
       # stopped every importer after it: on 2026-09-06 allevents.in rate-limited us and six
