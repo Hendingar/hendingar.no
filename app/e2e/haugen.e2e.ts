@@ -43,10 +43,12 @@ test('typing asks the pile and says how it answered', async ({ page }) => {
 	await page.goto('/haugen');
 	await page.locator('#haugen-q').fill('Songkveld');
 
-	// No verifier in CI: the page is honest that this was text matching, not the model.
+	// No verifier in CI: the page is honest that this was text matching, not the model — and that
+	// it is still asking the model behind the text answer, rather than settling for it.
 	const status = page.locator('.ask__status');
 	await expect(status).toContainText('av');
 	await expect(status).toContainText('tekstsøk', { ignoreCase: true });
+	await expect(status).toContainText('spør Jev igjen');
 	await expect(page.locator('.answers')).toContainText('Songkveld i Stord kyrkje');
 });
 

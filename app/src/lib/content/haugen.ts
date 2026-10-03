@@ -12,6 +12,8 @@ export const HAUGEN = {
 	lede: (n: number) =>
 		`${n} hendingar dei neste vekene, i ein haug. Sei kva du har lyst til å gjere.`,
 	placeholder: 'Kva har du lyst til å gjere?',
+	/** Shown while a text answer is on screen and Jev is being asked again behind it. */
+	upgrading: 'Tekstsøk medan haugen vaknar — spør Jev igjen',
 	/** Shown when the answer came from plain text matching rather than from the ranker. */
 	textOnly: 'Enkel tekstsøk akkurat no — haugen les berre orda, ikkje meininga.',
 	none: 'Ingenting i haugen svarar på det. Prøv å seie det på ein annan måte.',

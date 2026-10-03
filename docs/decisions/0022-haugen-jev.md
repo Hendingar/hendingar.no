@@ -93,8 +93,10 @@ floats things for no visible reason asks to be trusted; this shows the working i
 
 - One stored secret. `TYPESAFE_API_KEY` is a GitHub secret passed to `infra/verifier.bicep`, which
   creates the Container App secret only when it is non-empty.
-- The verifier scales to zero, so the first question after a quiet night may meet a cold start and
-  get the text answer. The next keystroke gets Jev.
+- The verifier scaled to zero at first, and on the first live morning that turned most first
+  questions into text answers — a 16-second cold start against a 4-second budget. It now keeps one
+  replica warm ([ADR 0011](0011-no-cold-start.md), amended), and the page asks Jev again behind a
+  text answer for ~17 seconds, so a deploy costs a few seconds of text rather than the visit.
 - Thresholds — 0.5 to float, 0.35 to dim — are the app's (`app/src/lib/haugen.ts`), so they can
   move without a verifier deploy. The eval reads the same two numbers.
 - Known weak spots, recorded so they are not rediscovered: "noko for ungdom" floats children's
