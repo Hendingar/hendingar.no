@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { eventFormSchema, eventSubmissionSchema, importedEventSchema } from '../src/validation.ts';
+import {
+	comparePileSchema,
+	eventFormSchema,
+	eventSubmissionSchema,
+	importedEventSchema,
+	pileComparisonWireSchema,
+	pileRankingWireSchema
+} from '../src/validation.ts';
 
 const valid = {
 	title: 'Konsert på Den Blå Time',
@@ -117,5 +124,43 @@ describe('importedEventSchema', () => {
 		expect(
 			importedEventSchema.safeParse({ ...base, posterUrl: 'https://cdn.example.no/p.jpg' }).success
 		).toBe(true);
+	});
+});
+
+describe('the haugen wire formats', () => {
+	it('reads a ranking and keeps one question as pretty JSON for the page', () => {
+		const ranking = pileRankingWireSchema.parse({
+			scores: [{ event_id: 7, score: 0.9 }],
+			model: 'jev-1.13.0',
+			elapsed_ms: 300,
+			requests: 2,
+			input_tokens: 34000,
+			example: { model: 'jev-latest', state: { søk: 'konsertar' }, questions: {} }
+		});
+		expect(ranking.scores).toEqual([{ eventId: 7, score: 0.9 }]);
+		expect(ranking.example).toContain('"søk": "konsertar"');
+		expect(ranking.example).toContain('\n  "state"');
+	});
+
+	it('reads a comparison where one side failed without losing the other', () => {
+		const comparison = pileComparisonWireSchema.parse({
+			jev: { model: 'jev-1.13.0', elapsed_ms: 2000, scores: [], error: 'JevUnavailable' },
+			llm: {
+				model: 'gpt-4.1-mini',
+				elapsed_ms: 700,
+				input_tokens: 600,
+				output_tokens: 50,
+				scores: [{ event_id: 7, score: 1, ja: true }]
+			}
+		});
+		expect(comparison.jev.error).toBe('JevUnavailable');
+		expect(comparison.jev.inputTokens).toBeNull();
+		expect(comparison.llm.scores).toEqual([{ eventId: 7, score: 1, ja: true }]);
+		expect(comparison.llm.outputTokens).toBe(50);
+	});
+
+	it('refuses a comparison of more than three events', () => {
+		expect(comparePileSchema.safeParse({ q: 'konsertar', ids: [1, 2, 3, 4] }).success).toBe(false);
+		expect(comparePileSchema.safeParse({ q: 'konsertar', ids: [1, 2, 3] }).success).toBe(true);
 	});
 });

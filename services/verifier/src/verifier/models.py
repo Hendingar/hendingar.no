@@ -352,6 +352,52 @@ class HaugenRanking(BaseModel):
     elapsed_ms: int = 0
     requests: int = 0
     input_tokens: int = 0
+    #: One of the questions exactly as it went over the wire — the state every question shares,
+    #: and the question for the event that scored highest — so the page can show the structured
+    #: query itself rather than describe it.
+    example: dict | None = None
+
+
+class HaugenCompareRequest(BaseModel):
+    """Three events, asked the same question by Jev and by a chat model, side by side."""
+
+    query: str = Field(min_length=1, max_length=80)
+    events: list[HaugenEvent] = Field(min_length=1, max_length=3)
+
+
+class HaugenVerdict(BaseModel):
+    """What a chat model is asked to return per event. No range constraints: strict json_schema
+    refuses `minimum`/`maximum`, so the probability is clamped in code instead."""
+
+    id: int
+    ja: bool
+    sannsyn: float = Field(description="Kor sannsynleg det er at svaret er ja, frå 0 til 1")
+
+
+class HaugenVerdicts(BaseModel):
+    svar: list[HaugenVerdict]
+
+
+class HaugenSideScore(BaseModel):
+    event_id: int
+    score: float = Field(ge=0, le=1)
+    #: The chat model's own yes/no. Jev has none — it answers only with the probability.
+    ja: bool | None = None
+
+
+class HaugenSide(BaseModel):
+    model: str
+    elapsed_ms: int
+    input_tokens: int | None = None
+    output_tokens: int | None = None
+    scores: list[HaugenSideScore] = Field(default_factory=list)
+    #: Set when this side did not answer; the other side's result still stands.
+    error: str | None = None
+
+
+class HaugenComparison(BaseModel):
+    jev: HaugenSide
+    llm: HaugenSide
 
 
 class ImproveRequest(BaseModel):

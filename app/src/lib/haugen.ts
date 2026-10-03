@@ -103,6 +103,8 @@ export type PileTrace = {
 	serverMs: number;
 	requests: number;
 	inputTokens: number;
+	/** One question exactly as Jev received it, pretty-printed JSON. Null for text matching. */
+	example: string | null;
 	/** Answered from an earlier identical question. `modelMs` is then that question's time. */
 	cached: boolean;
 	/** Why it was text, when it was. */

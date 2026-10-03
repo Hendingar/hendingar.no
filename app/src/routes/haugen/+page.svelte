@@ -63,6 +63,25 @@
 	const scoreMap = $derived(new Map(scores.map((s) => [s.eventId, s.score])));
 	const asking = $derived(asked.length > 0);
 	const ordered = $derived(pileOrder(balls, asking ? scoreMap : new Map()));
+	/*
+	 * Three events for the 3-vs-3 comparison: the best answer, the one Jev was least sure about
+	 * (nearest 0.5), and the least likely. Three different kinds of case, so the two models are
+	 * compared where they agree easily and where they might not.
+	 */
+	const picks = $derived.by(() => {
+		if (mode !== 'jev' || scores.length < 3) return [];
+		const byScore = [...scores].sort((a, b) => b.score - a.score);
+		const best = byScore[0];
+		const worst = byScore[byScore.length - 1];
+		const middle = byScore
+			.filter((s) => s !== best && s !== worst)
+			.sort((a, b) => Math.abs(a.score - 0.5) - Math.abs(b.score - 0.5))[0];
+		const titles = new Map(balls.map((b) => [b.id, b.title]));
+		return [best, middle, worst]
+			.filter((s) => s !== undefined)
+			.map((s) => ({ id: s.eventId, title: titles.get(s.eventId) ?? '', score: s.score }));
+	});
+
 	const answers = $derived(asking ? ordered.filter((b) => (scoreMap.get(b.id) ?? 0) >= FLOAT) : []);
 
 	/*
@@ -309,7 +328,7 @@
 
 	{#if asking && trace}
 		<div id="panser">
-			<UnderTheHood {trace} {clientMs} scores={scores.map((s) => s.score)} />
+			<UnderTheHood {trace} {clientMs} query={asked} {picks} scores={scores.map((s) => s.score)} />
 		</div>
 	{/if}
 </div>

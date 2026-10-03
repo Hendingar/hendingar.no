@@ -12,9 +12,9 @@ from fake_model import FakeOpenAI, config, factory_for
 from fastapi.testclient import TestClient
 
 from verifier.app import create_app
-from verifier.haugen import CHUNK_SIZE, DESCRIPTION_CHARS, describe, rank
+from verifier.haugen import CHUNK_SIZE, DESCRIPTION_CHARS, QUESTION, compare, describe, rank
 from verifier.jev import ENDPOINT, JevClient, JevUnavailable
-from verifier.models import HaugenEvent, HaugenRequest
+from verifier.models import HaugenCompareRequest, HaugenEvent, HaugenRequest
 
 
 class FakeJev:
@@ -204,3 +204,68 @@ def test_an_oversized_query_is_refused_before_anything_is_asked():
 
     assert response.status_code == 422
     assert fake.bodies == []
+
+
+async def test_the_ranking_carries_one_question_exactly_as_sent():
+    """The page prints the structured query, so it must be the real one, not a paraphrase."""
+
+    def handle(request: httpx.Request) -> httpx.Response:
+        body = json.loads(request.content)
+        answers = {
+            qid: {"type": "noul", "noul": 0.9 if qid == "e2" else 0.1} for qid in body["questions"]
+        }
+        return httpx.Response(200, json={"model": "jev-1.13.0", "answers": answers, "usage": {}})
+
+    client = JevClient("k", transport=httpx.MockTransport(handle))
+    ranking = await rank(client, _request(3))
+
+    assert ranking.example is not None
+    assert ranking.example["state"] == {"søk": "konsertar"}
+    # The question for the best-scoring event, in the exact shape that went over the wire.
+    assert list(ranking.example["questions"]) == ["e2"]
+    sent = ranking.example["questions"]["e2"]
+    assert sent["type"] == "noul"
+    assert sent["instructions"]["hending"]["tittel"] == "Hending 2"
+
+
+def _verdicts(*rows: tuple[int, bool, float]) -> str:
+    return json.dumps({"svar": [{"id": i, "ja": ja, "sannsyn": p} for i, ja, p in rows]})
+
+
+def _compare_request() -> HaugenCompareRequest:
+    return HaugenCompareRequest(query="konsertar", events=[_event(1), _event(2), _event(3)])
+
+
+async def test_compare_asks_both_models_the_same_question():
+    fake_llm = FakeOpenAI(_verdicts((1, True, 0.9), (2, False, 0.2), (3, False, 1.7)))
+    fake_jev = FakeJev(score=0.6)
+    result = await compare(factory_for(fake_llm), _client(fake_jev), _compare_request())
+
+    # Jev: one request, three nouls, the search in state.
+    assert len(fake_jev.bodies) == 1
+    assert set(fake_jev.bodies[0]["questions"]) == {"e1", "e2", "e3"}
+    assert [s.score for s in result.jev.scores] == [0.6, 0.6, 0.6]
+    assert result.jev.model == "jev-1.13.0"
+
+    # The chat model: told the same question in the same words, and given the same events.
+    call = fake_llm.call_instructing(QUESTION)
+    user = next(m for m in call["messages"] if m["role"] == "user")
+    assert '"søk": "konsertar"' in str(user["content"])
+    assert [(s.event_id, s.ja) for s in result.llm.scores] == [(1, True), (2, False), (3, False)]
+    # A probability outside 0–1 from a model that writes is clamped, not trusted.
+    assert result.llm.scores[2].score == 1.0
+    assert result.llm.error is None and result.jev.error is None
+
+
+async def test_one_side_failing_leaves_the_other_standing():
+    fake_llm = FakeOpenAI(_verdicts((1, True, 0.9), (2, True, 0.8), (3, False, 0.1)))
+    result = await compare(factory_for(fake_llm), _client(FakeJev(500)), _compare_request())
+
+    assert result.jev.error == "JevUnavailable"
+    assert result.jev.scores == []
+    assert len(result.llm.scores) == 3
+
+
+def test_compare_is_off_without_a_key():
+    response = _app(None).post("/haugen/compare", json=_compare_request().model_dump())
+    assert response.status_code == 503

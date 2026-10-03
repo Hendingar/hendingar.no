@@ -33,10 +33,22 @@ the first. Same rule as the kurator, and the same test enforces it.
 """
 
 import asyncio
+import json
 import time
 
 from .jev import JevClient
-from .models import HaugenEvent, HaugenRanking, HaugenRequest, HaugenScore
+from .llm import AgentFactory
+from .models import (
+    HaugenCompareRequest,
+    HaugenComparison,
+    HaugenEvent,
+    HaugenRanking,
+    HaugenRequest,
+    HaugenScore,
+    HaugenSide,
+    HaugenSideScore,
+    HaugenVerdicts,
+)
 
 # Each event costs ~250 input tokens as a question. Jev allows 64k per request; sixty events is
 # about 15k, which leaves room for long descriptions and keeps each request well inside the
@@ -104,9 +116,12 @@ async def rank(client: JevClient, request: HaugenRequest) -> HaugenRanking:
         for chunk, answer in zip(chunks, answers, strict=True)
         for event in chunk
     ]
+    best = max(scores, key=lambda s: s.score)
+    best_event = next(e for e in request.events if e.id == best.event_id)
     return HaugenRanking(
         scores=scores,
         model=answers[0].model,
+        example=example_request(client.model, state, best_event),
         elapsed_ms=round((time.perf_counter() - started) * 1000),
         requests=len(chunks),
         input_tokens=sum(a.input_tokens for a in answers),
@@ -121,3 +136,104 @@ def _clip(text: str | None) -> str | None:
         return text
     cut = text[:DESCRIPTION_CHARS].rsplit(" ", 1)[0]
     return f"{cut}…"
+
+
+def example_request(model: str, state: dict, event: HaugenEvent) -> dict:
+    """One question exactly as it went over the wire, for the page to show.
+
+    The body Jev receives is `{model, state, questions}` with one entry per event; this is that
+    body cut down to a single entry, so what the page prints is the real structure and the real
+    words rather than a paraphrase of them.
+    """
+    return {
+        "model": model,
+        "state": state,
+        "questions": {f"e{event.id}": {"type": "noul", **question_for(event)}},
+    }
+
+
+# The same question, asked of a chat model. Everything Jev is told is here, in the same words —
+# the difference being compared is the kind of model, not the brief.
+LLM_INSTRUCTIONS = (
+    f"{QUESTION}\n\nJa: {CRITERIA['true']}.\nNei: {CRITERIA['false']}.\n\n"
+    "Du får `søk` og ei liste med `hendingar`. Svar for kvar hending med id-en, ja eller nei, og "
+    "kor sannsynleg det er at svaret er ja, som eit tal frå 0 til 1."
+)
+
+
+async def compare(
+    factory: AgentFactory, jev: JevClient, request: HaugenCompareRequest
+) -> HaugenComparison:
+    """The same three events, the same question: Jev and a chat model, timed side by side.
+
+    Run at the same time, each with its own clock, so neither waits on the other. Either side may
+    fail without taking the other with it — a comparison where one column says why it is empty
+    is still a comparison.
+    """
+    jev_side, llm_side = await asyncio.gather(_ask_jev(jev, request), _ask_llm(factory, request))
+    return HaugenComparison(jev=jev_side, llm=llm_side)
+
+
+async def _ask_jev(jev: JevClient, request: HaugenCompareRequest) -> HaugenSide:
+    started = time.perf_counter()
+    try:
+        answer = await jev.nouls(
+            {"søk": request.query}, {f"e{e.id}": question_for(e) for e in request.events}
+        )
+    except Exception as exc:  # noqa: BLE001 — the other column must survive this one failing
+        return HaugenSide(model=jev.model, elapsed_ms=_since(started), error=type(exc).__name__)
+    return HaugenSide(
+        model=answer.model,
+        elapsed_ms=_since(started),
+        input_tokens=answer.input_tokens,
+        scores=[
+            HaugenSideScore(event_id=e.id, score=answer.nouls[f"e{e.id}"]) for e in request.events
+        ],
+    )
+
+
+async def _ask_llm(factory: AgentFactory, request: HaugenCompareRequest) -> HaugenSide:
+    agent = factory.agent(
+        name="haugen-samanlikning",
+        instructions=LLM_INSTRUCTIONS,
+        response_format=HaugenVerdicts,
+        max_tokens=400,
+    )
+    message = json.dumps(
+        {
+            "søk": request.query,
+            "hendingar": [{"id": e.id, **describe(e)} for e in request.events],
+        },
+        ensure_ascii=False,
+    )
+    started = time.perf_counter()
+    try:
+        response = await factory.run(agent, message)
+    except Exception as exc:  # noqa: BLE001 — the other column must survive this one failing
+        return HaugenSide(model=factory.model, elapsed_ms=_since(started), error=type(exc).__name__)
+    elapsed = _since(started)
+    usage = getattr(response, "usage_details", None) or {}
+    verdicts = {v.id: v for v in (response.value.svar if response.value else [])}
+    return HaugenSide(
+        model=factory.model,
+        elapsed_ms=elapsed,
+        input_tokens=_int(usage.get("input_token_count")),
+        output_tokens=_int(usage.get("output_token_count")),
+        scores=[
+            HaugenSideScore(
+                event_id=e.id,
+                score=min(1.0, max(0.0, verdicts[e.id].sannsyn)),
+                ja=verdicts[e.id].ja,
+            )
+            for e in request.events
+            if e.id in verdicts
+        ],
+    )
+
+
+def _since(started: float) -> int:
+    return round((time.perf_counter() - started) * 1000)
+
+
+def _int(value: object) -> int | None:
+    return value if isinstance(value, int) else None

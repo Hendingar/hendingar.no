@@ -1,8 +1,13 @@
 import { error } from '@sveltejs/kit';
 import { command, query } from '$app/server';
-import { askPileSchema } from '@hendingar/core/validation';
+import { askPileSchema, comparePileSchema } from '@hendingar/core/validation';
 import { searchTermSchema } from '@hendingar/core/search';
-import { askPile as answerFromServer, pileEvents, textScores } from './server/haugen.ts';
+import {
+	askPile as answerFromServer,
+	compareOnPile,
+	pileEvents,
+	textScores
+} from './server/haugen.ts';
 
 /**
  * The boundary for `/haugen` — the pile, and the two ways of asking it something.
@@ -78,4 +83,14 @@ export const askPile = command(askPileSchema, async ({ q }) => {
 	if (!q) error(400, 'empty question');
 	const events = await pileEvents();
 	return answerFromServer(q, events);
+});
+
+/**
+ * The same three events, asked of Jev and of an ordinary chat model, side by side.
+ *
+ * A `command` for the same reason as `askPile`: it spends money, so a person has to press for it.
+ */
+export const comparePile = command(comparePileSchema, async ({ q, ids }) => {
+	if (!q) error(400, 'empty question');
+	return compareOnPile(q, ids);
 });

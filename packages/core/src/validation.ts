@@ -429,7 +429,9 @@ export const pileRankingSchema = z.object({
 	/** How long the model took, all requests in parallel. Shown on the page, not logged. */
 	elapsedMs: z.number().int().min(0).default(0),
 	requests: z.number().int().min(0).default(0),
-	inputTokens: z.number().int().min(0).default(0)
+	inputTokens: z.number().int().min(0).default(0),
+	/** One question exactly as sent, pretty-printed, so the page can show the structured query. */
+	example: z.string().nullable().default(null)
 });
 
 /**
@@ -444,7 +446,8 @@ export const pileRankingWireSchema = z
 		model: z.string().nullable().optional(),
 		elapsed_ms: z.number().optional(),
 		requests: z.number().optional(),
-		input_tokens: z.number().optional()
+		input_tokens: z.number().optional(),
+		example: z.record(z.string(), z.unknown()).nullable().optional()
 	})
 	.transform((wire) =>
 		pileRankingSchema.parse({
@@ -452,9 +455,49 @@ export const pileRankingWireSchema = z
 			model: wire.model ?? null,
 			elapsedMs: wire.elapsed_ms,
 			requests: wire.requests,
-			inputTokens: wire.input_tokens
+			inputTokens: wire.input_tokens,
+			example: wire.example ? JSON.stringify(wire.example, null, 2) : null
 		})
 	);
+
+/** Three events from the pile, to ask Jev and a chat model side by side. */
+export const comparePileSchema = z.object({
+	q: searchTermSchema,
+	ids: z.array(z.number().int().positive()).min(1).max(3)
+});
+
+const comparisonSideWire = z.object({
+	model: z.string(),
+	elapsed_ms: z.number(),
+	input_tokens: z.number().nullable().optional(),
+	output_tokens: z.number().nullable().optional(),
+	scores: z.array(
+		z.object({ event_id: z.number(), score: z.number(), ja: z.boolean().nullable().optional() })
+	),
+	error: z.string().nullable().optional()
+});
+
+function comparisonSide(wire: z.infer<typeof comparisonSideWire>) {
+	return {
+		model: wire.model,
+		elapsedMs: wire.elapsed_ms,
+		inputTokens: wire.input_tokens ?? null,
+		outputTokens: wire.output_tokens ?? null,
+		scores: wire.scores.map((s) => ({ eventId: s.event_id, score: s.score, ja: s.ja ?? null })),
+		error: wire.error ?? null
+	};
+}
+
+/**
+ * Jev and a chat model on the same three events, as the verifier writes it, read into ours.
+ * `services/verifier/src/verifier/models.py` (`HaugenComparison`) is the other end.
+ */
+export const pileComparisonWireSchema = z
+	.object({ jev: comparisonSideWire, llm: comparisonSideWire })
+	.transform((wire) => ({ jev: comparisonSide(wire.jev), llm: comparisonSide(wire.llm) }));
+
+export type PileComparison = z.output<typeof pileComparisonWireSchema>;
+export type PileComparisonSide = PileComparison['jev'];
 
 export type PileScore = z.infer<typeof pileScoreSchema>;
 export type PileRanking = z.infer<typeof pileRankingSchema>;

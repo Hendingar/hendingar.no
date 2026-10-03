@@ -30,7 +30,8 @@ function ranker(result: 'answer' | 'unavailable' = 'answer') {
 				model: 'jev-test',
 				elapsedMs: 300,
 				requests: 1,
-				inputTokens: 750
+				inputTokens: 750,
+				example: null
 			};
 		}
 	};
@@ -146,6 +147,7 @@ describe('AnswerCache', () => {
 				serverMs: 0,
 				requests: 0,
 				inputTokens: 0,
+				example: null,
 				cached: false,
 				fallback: null
 			}
