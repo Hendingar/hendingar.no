@@ -8,8 +8,10 @@ import {
 	improveDraftSchema,
 	improveReviewSchema,
 	improveSuggestionSchema,
+	pileComparisonWireSchema,
 	pileRankingWireSchema,
 	type CuratorSelection,
+	type PileComparison,
 	type PileRanking,
 	type ExtractedEvent,
 	type ExtractedField,
@@ -99,6 +101,11 @@ const CURATE_TIMEOUT_MS = 120_000;
  * page has fallen back to matching text, which is a pile that still works.
  */
 const RANK_TIMEOUT_MS = 4_000;
+/**
+ * The 3-vs-3 comparison waits on the slower of two models, and one of them writes. Somebody pressed
+ * a button to see exactly this, so they will wait for it — but not forever.
+ */
+const COMPARE_TIMEOUT_MS = 20_000;
 
 async function post<T>(path: string, body: unknown, timeoutMs: number): Promise<T> {
 	if (!VERIFIER_URL) throw new Error('verifier is not configured');
@@ -434,16 +441,7 @@ export async function rankForQuery(
 			'/haugen',
 			{
 				query,
-				events: candidates.map((c) => ({
-					id: c.id,
-					title: c.title,
-					category_label: c.categoryLabel,
-					when: c.when,
-					venue_name: c.venueName,
-					municipality: c.municipality,
-					organizer_name: c.organizerName,
-					description: c.description
-				}))
+				events: candidates.map(wireCandidate)
 			},
 			RANK_TIMEOUT_MS
 		);
@@ -455,6 +453,42 @@ export async function rankForQuery(
 		console.warn(`[verifier] haugen unavailable: ${message.split(':')[0]}`);
 		return null;
 	}
+}
+
+/**
+ * The same three events asked of Jev and of the chat model, side by side (ADR 0022). Never throws;
+ * null means the comparison could not be made at all. A side that failed says so on its own.
+ */
+export async function comparePile(
+	query: string,
+	candidates: PileCandidate[]
+): Promise<PileComparison | null> {
+	if (!VERIFIER_URL) return null;
+	try {
+		const raw = await post<unknown>(
+			'/haugen/compare',
+			{ query, events: candidates.map(wireCandidate) },
+			COMPARE_TIMEOUT_MS
+		);
+		return pileComparisonWireSchema.parse(raw);
+	} catch (error) {
+		const message = error instanceof Error ? error.message : String(error);
+		console.warn(`[verifier] haugen compare unavailable: ${message.split(':')[0]}`);
+		return null;
+	}
+}
+
+function wireCandidate(c: PileCandidate) {
+	return {
+		id: c.id,
+		title: c.title,
+		category_label: c.categoryLabel,
+		when: c.when,
+		venue_name: c.venueName,
+		municipality: c.municipality,
+		organizer_name: c.organizerName,
+		description: c.description
+	};
 }
 
 export type CuratorCandidate = {

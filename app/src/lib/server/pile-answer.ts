@@ -142,6 +142,7 @@ export async function answer<E extends { id: number }>(
 					serverMs: deps.now() - started,
 					requests: ranking.requests,
 					inputTokens: ranking.inputTokens,
+					example: ranking.example,
 					cached: false,
 					fallback: null
 				}
@@ -161,6 +162,7 @@ export async function answer<E extends { id: number }>(
 			serverMs: deps.now() - started,
 			requests: 0,
 			inputTokens: 0,
+			example: null,
 			cached: false,
 			fallback: affordable ? 'utan-modell' : 'budsjett'
 		}

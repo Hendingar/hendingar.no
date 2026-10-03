@@ -9,6 +9,7 @@ from .appeal import JURORS, QUORUM, judge_appeal, juror_by_id
 from .config import Config, load_config
 from .crop import suggest_crop
 from .extract import extract_page, extract_poster, extract_poster_stream
+from .haugen import compare as run_haugen_compare
 from .haugen import rank as run_haugen
 from .improve import improve as run_improve
 from .improve import improve_stream as run_improve_stream
@@ -24,6 +25,8 @@ from .models import (
     ExtractedEvent,
     ExtractPageRequest,
     ExtractRequest,
+    HaugenCompareRequest,
+    HaugenComparison,
     HaugenRanking,
     HaugenRequest,
     ImproveRequest,
@@ -245,6 +248,18 @@ def create_app(
         except JevUnavailable as exc:
             log.warning("haugen ranking unavailable: %s", exc)
             raise HTTPException(status_code=502, detail="ranking unavailable") from exc
+
+    @app.post("/haugen/compare", response_model=HaugenComparison)
+    async def haugen_compare(request: HaugenCompareRequest) -> HaugenComparison:
+        """Three events asked of Jev and of the chat model, side by side, for the page to show.
+
+        A demonstration, not a ranking: it exists so a reader can see the difference in shape and
+        speed between a typed classifier and a model that writes. 503 without a TypeSafe key,
+        like /haugen. Each side reports its own failure, so this does not 502 on one of them.
+        """
+        if jev is None:
+            raise HTTPException(status_code=503, detail="haugen is not configured")
+        return await run_haugen_compare(factory, jev, request)
 
     @app.get("/appeal/panel")
     async def panel() -> dict:
