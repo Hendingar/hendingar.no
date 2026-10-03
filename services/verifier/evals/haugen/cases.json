@@ -1,0 +1,73 @@
+[
+	{
+		"search": "konsertar",
+		"float": [
+			"Adam Douglas",
+			"Blues Konsert",
+			"Beethoven versus Grieg",
+			"Konsert med Elin Furubotn",
+			"Helge Lien Trio",
+			"Songlaget Stordabuen"
+		],
+		"sink": ["Offentleg bading", "Sjakk i biblioteket", "Sense and Sensibility", "Konfirmantgruppe"]
+	},
+	{
+		"search": "noko for ungdom",
+		"float": ["HAUSTFERIE - GRATIS", "KRIK"],
+		"sink": ["Babysong", "Seniortur", "Musikkleik 0-1", "Treff i Seniorengruppa", "Te-Dans"]
+	},
+	{
+		"search": "ting å gjere ute",
+		"float": ["Tur 1 Ellingsdalsvatnet", "Fitjartur", "T 2 Kyvikjo", "Seniortur"],
+		"sink": [
+			"Konsert Norges Korforbund",
+			"Bok & bolle",
+			"Offentleg bading",
+			"Sjakk i biblioteket",
+			"TorsdagsQuiz"
+		]
+	},
+	{
+		"search": "noko som gjer deg sprek",
+		"float": ["Aktiv til 100", "Fitjartur", "Tur 1 Ellingsdalsvatnet", "Magedans"],
+		"sink": [
+			"Bok & bolle",
+			"Beethoven versus Grieg",
+			"Sjakk i biblioteket",
+			"TorsdagsQuiz",
+			"Pølsefest"
+		]
+	},
+	{
+		"search": "for born",
+		"float": [
+			"Babysong",
+			"Lesestund for barnehageborn",
+			"Musikkleik 0-1",
+			"HAUSTFERIE - GRATIS",
+			"Bokstavjakt",
+			"Bømlo Knøttekor",
+			"Ulven (og geitekillingane)"
+		],
+		"sink": ["Seniortur", "Adam Douglas", "Pensjonskuppet", "Te-Dans", "Servicekurs"]
+	},
+	{
+		"search": "kino",
+		"float": ["Sense and Sensibility", "Minions & monstre", "Sauen Shaun"],
+		"sink": ["Gudstjeneste", "Konfirmantgruppe", "Offentleg bading", "Adam Douglas"]
+	},
+	{
+		"search": "i kyrkja",
+		"float": ["Gudstjeneste", "Fellesgudsteneste", "Hausttakkefest i Stord kyrkje"],
+		"sink": ["Fitjartur", "Adam Douglas", "TorsdagsQuiz"]
+	},
+	{
+		"search": "for pensjonistar",
+		"float": ["Seniortur", "Treff i Seniorengruppa", "Te-Dans", "Eldredagen"],
+		"sink": ["Babysong", "KRIK", "Pokémontreff"]
+	},
+	{
+		"search": "asdfgh",
+		"sink": ["Adam Douglas", "Aktiv til 100", "Babysong"]
+	}
+]

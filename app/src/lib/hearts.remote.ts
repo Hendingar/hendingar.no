@@ -4,7 +4,7 @@ import { and, count, eq, inArray, sql } from 'drizzle-orm';
 import { eventHearts, events, sources, venues } from '@hendingar/core/schema';
 import { db } from './server/db';
 import { withStartsIn } from './starts-in.ts';
-import type { SourceMark } from './events.remote';
+import type { SourceMark } from './server/listing.ts';
 
 /**
  * Hearts: the count, and the toggle.

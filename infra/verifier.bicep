@@ -31,6 +31,15 @@ param openAiEndpoint string
 @description('Model *deployment* name on that account.')
 param openAiDeployment string
 
+// The one key this service holds (ADR 0022). TypeSafe has no Entra auth, so Jev — which ranks
+// /haugen — is reached with a bearer key. Empty is a supported state: no secret is created, the
+// variable is not set, /haugen answers 503, and the app falls back to matching text.
+@secure()
+@description('TypeSafe API key for Jev. Empty disables the ranker.')
+param typesafeApiKey string = ''
+
+var hasTypesafeKey = !empty(typesafeApiKey)
+
 var tags = {
   project: 'hendingar.no'
   app: appName
@@ -65,7 +74,16 @@ resource verifier 'Microsoft.App/containerApps@2024-03-01' = {
           identity: runtimeIdentityId
         }
       ]
-      // No secrets block: there is nothing to store. The identity mints its own token.
+      // Azure OpenAI needs no secret: the identity mints its own token. TypeSafe has no
+      // equivalent, so its key is the only thing stored here (ADR 0022).
+      secrets: hasTypesafeKey
+        ? [
+            {
+              name: 'typesafe-api-key'
+              value: typesafeApiKey
+            }
+          ]
+        : []
     }
     template: {
       containers: [
@@ -76,7 +94,8 @@ resource verifier 'Microsoft.App/containerApps@2024-03-01' = {
             cpu: json('0.5')
             memory: '1.0Gi'
           }
-          env: [
+          env: concat(
+            [
             {
               name: 'AZURE_OPENAI_ENDPOINT'
               value: openAiEndpoint
@@ -94,7 +113,16 @@ resource verifier 'Microsoft.App/containerApps@2024-03-01' = {
               name: 'PORT'
               value: '8080'
             }
-          ]
+            ],
+            hasTypesafeKey
+              ? [
+                  {
+                    name: 'TYPESAFE_API_KEY'
+                    secretRef: 'typesafe-api-key'
+                  }
+                ]
+              : []
+          )
           probes: [
             {
               // /health does not call the model, so this stays cheap and does not consume quota.

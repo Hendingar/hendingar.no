@@ -29,6 +29,8 @@ env:
 #   3. the same identity has 'Cognitive Services OpenAI User' on the AI account. Without it the
 #      verifier deploys and answers /health, but every model call 401s and every submission
 #      routes to the human queue. The app still works; the photo shortcut does not.
+#   4. optional: secret TYPESAFE_API_KEY, for Jev on /haugen (ADR 0022). Unset deploys fine —
+#      the verifier gets no key, /haugen answers 503, and the page falls back to matching text.
 jobs:
   deploy:
     # workflow_run fires on failure too; only deploy green commits.
@@ -164,6 +166,7 @@ jobs:
               runtimeIdentityClientId="${{ steps.infra.outputs.runtimeIdentityClientId }}" \
               openAiEndpoint="${{ steps.infra.outputs.openAiEndpoint }}" \
               openAiDeployment="${{ steps.infra.outputs.openAiDeployment }}" \
+              typesafeApiKey="${{ secrets.TYPESAFE_API_KEY }}" \
             --query properties.outputs -o json > verifier-outputs.json
           echo "url=$(jq -r .verifierUrl.value verifier-outputs.json)" >> "$GITHUB_OUTPUT"
 

@@ -306,6 +306,54 @@ class CuratorSelection(BaseModel):
     model: str | None = None
 
 
+class HaugenEvent(BaseModel):
+    """One ball in the pile, as the only thing Jev is told about it.
+
+    `when` is words ("laurdag kveld"), formatted by the app in the venue's zone, because Jev reads
+    a timestamp as text and cannot compare one. `category_label` is the Nynorsk label rather than
+    the slug, for the same reason: it is what a person would recognise.
+
+    No heart count, no view count, no rank — see `haugen.py`.
+    """
+
+    id: int
+    title: str = Field(max_length=300)
+    category_label: str | None = None
+    when: str | None = None
+    venue_name: str | None = None
+    municipality: str | None = None
+    organizer_name: str | None = None
+    description: str | None = None
+
+
+class HaugenRequest(BaseModel):
+    """What somebody typed, and the events it is to be held against."""
+
+    query: str = Field(min_length=1, max_length=80)
+    events: list[HaugenEvent] = Field(default_factory=list, max_length=200)
+
+
+class HaugenScore(BaseModel):
+    event_id: int
+    #: The probability that this event is what was asked for, 0 to 1.
+    score: float = Field(ge=0, le=1)
+
+
+class HaugenRanking(BaseModel):
+    """One score per event, in the order the events were sent. Ordering is the caller's.
+
+    The page shows what happened under the hood — how long Jev took, over how many requests and
+    tokens — so those travel back with the answer rather than being logged where nobody sees them.
+    """
+
+    scores: list[HaugenScore] = Field(default_factory=list)
+    model: str | None = None
+    #: Wall time for every chunk, run in parallel: what the visitor waited on the model for.
+    elapsed_ms: int = 0
+    requests: int = 0
+    input_tokens: int = 0
+
+
 class ImproveRequest(BaseModel):
     """A submission as it stands in the form, before anybody has judged it.
 

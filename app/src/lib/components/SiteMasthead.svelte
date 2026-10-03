@@ -45,6 +45,9 @@
 	 * made the row unreadable — nothing in it said which links were alternatives to each other.
 	 */
 	const meta: NavItem[] = [
+		// A different way in rather than a different listing: you ask, and the pile answers. In
+		// rank two because rank one is already at its width on a phone.
+		{ href: '/haugen', label: 'Haugen' },
 		// Places rather than events: "what can I do" rather than "what is on". It is exactly that
 		// difference that moves it out of rank one.
 		{ href: '/alltid-ope', label: 'Alltid ope' },
