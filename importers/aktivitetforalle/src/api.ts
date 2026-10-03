@@ -102,6 +102,10 @@ const eventSchema = z.object({
 	 * which the portal's own page renders as "Kvar veke".
 	 */
 	event_week_interval: nullish,
+	/** `range` | `all` | null. Only `range` carries the two numbers below. */
+	event_age_type: nullish,
+	event_age_from: z.union([z.string(), z.number()]).nullish(),
+	event_age_to: z.union([z.string(), z.number()]).nullish(),
 	/** References /api/v1/organizers. `event_organizer_name` is empty on every row that has one. */
 	organizer_id: z.union([z.string(), z.number()]).nullish()
 });

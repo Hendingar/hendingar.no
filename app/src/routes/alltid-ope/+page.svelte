@@ -2,7 +2,9 @@
 	import { page } from '$app/state';
 	import { eventPath } from '@hendingar/core/slug';
 	import StandingGrid from '../../lib/components/StandingGrid.svelte';
-	import WeeklyActivities from '../../lib/components/alltid-ope/WeeklyActivities.svelte';
+	import DayLens from '../../lib/components/alltid-ope/DayLens.svelte';
+	import ClubGrid from '../../lib/components/alltid-ope/ClubGrid.svelte';
+	import { parseWeeklyParams } from '../../lib/weekly-view.ts';
 	import PageMeta from '../../lib/components/PageMeta.svelte';
 	import { canonicalUrl } from '../../lib/origin.ts';
 	import { breadcrumbJsonLd, itemListJsonLd, jsonLdScript } from '../../lib/jsonld.ts';
@@ -24,10 +26,13 @@
 	 */
 	const offers = await standingOffers();
 	/**
-	 * The weekly activities, below the places and apart from them: a different kind of answer to
-	 * the same question. See ADR 0021.
+	 * The weekly activities, read two ways: by day first, because "kva kan eg bli med på i dag" is
+	 * the question people arrive with, then by club. The day and age band come from the URL, which
+	 * `page.url` carries on the server too — so the chosen day is in the HTML, not filled in later.
+	 * See ADR 0021.
 	 */
-	const groups = await weeklyActivities();
+	const weekly = await weeklyActivities();
+	const params = $derived(parseWeeklyParams(page.url.searchParams));
 
 	const jsonLd = $derived([
 		itemListJsonLd(
@@ -55,40 +60,58 @@
 </svelte:head>
 
 <div class="shell open">
-	<p class="label">Ikkje bunde til ein dag</p>
-	<h1 class="display open__h">Alltid ope</h1>
-	<p class="open__lede">
-		Museum, galleri, symjehallar og faste aktivitetar. Desse står ikkje i dagslista, fordi dei er
-		opne kvar dag og ville fylt henne kvar dag.
-	</p>
-
-	{#if offers.length > 0}
-		<p class="open__count">
-			{offers.length === 1 ? 'Éin stad' : `${offers.length} stader`}
+	<header class="open__top">
+		<p class="label">Ikkje bunde til ein dag</p>
+		<h1 class="display open__h">Alltid ope</h1>
+		<p class="open__lede">
+			Lag, kor, symjehallen og speidaren — det som skjer kvar veke, heile sesongen. Og stadene som
+			alltid er opne. Ingenting av dette står i dagslista, fordi det ville fylt henne kvar dag.
 		</p>
-		<StandingGrid {offers} />
-	{:else}
-		<!--
-			Empty means we have not collected any yet, not that the region has none.
+	</header>
 
-			Most feeds publish an opening as an ordinary event with a short date range, and only some
-			state a season. Saying "ingenting er ope" would be a claim about Sunnhordland where the
-			truth is a claim about our data — the same distinction `/neste-helg` draws.
-		-->
-		<p class="open__empty">Vi har ikkje registrert nokon faste stader enno.</p>
-		<p class="open__note">
-			Veit du om eit museum, eit galleri eller ein symjehall som burde stå her?
-			<a href="/send-inn">Send det inn</a> — eller <a href="/datasamling">sjå kva vi hentar inn</a>.
-		</p>
+	{#if weekly.activities.length > 0}
+		<DayLens activities={weekly.activities} today={weekly.today} {params} />
+		<ClubGrid activities={weekly.activities} />
 	{/if}
 
-	<WeeklyActivities {groups} />
+	<section class="open__places" aria-labelledby="h-places">
+		<h2 id="h-places" class="display open__h2">Stader som alltid er opne</h2>
+		{#if offers.length > 0}
+			<p class="open__count">
+				{offers.length === 1 ? 'Éin stad' : `${offers.length} stader`}
+			</p>
+			<StandingGrid {offers} />
+		{:else}
+			<!--
+				Empty means we have not collected any yet, not that the region has none.
+
+				Most feeds publish an opening as an ordinary event with a short date range, and only some
+				state a season. Saying "ingenting er ope" would be a claim about Sunnhordland where the
+				truth is a claim about our data — the same distinction `/neste-helg` draws.
+			-->
+			<p class="open__empty">Vi har ikkje registrert nokon faste stader enno.</p>
+			<p class="open__note">
+				Veit du om eit museum, eit galleri eller ein symjehall som burde stå her?
+				<a href="/send-inn">Send det inn</a> — eller
+				<a href="/datasamling">sjå kva vi hentar inn</a>.
+			</p>
+		{/if}
+	</section>
 </div>
 
 <style>
 	.open {
 		padding-block: clamp(2rem, 5vw, 4rem) var(--section-y);
 		container-type: inline-size;
+		display: grid;
+		gap: clamp(3rem, 7vw, 5rem);
+		/* Grid children default to min-width:auto; a long title would widen the track. */
+		grid-template-columns: minmax(0, 1fr);
+	}
+	.open__h2 {
+		font-size: clamp(1.75rem, 7cqw, 3.5rem);
+		line-height: 0.95;
+		margin-block-end: 0.75rem;
 	}
 	.open__h {
 		/* cqw rather than vw, and floored low enough to survive 320px — docs/brand.md. */
@@ -98,7 +121,7 @@
 	.open__lede {
 		max-inline-size: 56ch;
 		color: var(--peach-dim);
-		margin: 0 0 1.5rem;
+		margin: 0;
 	}
 	.open__count {
 		font-family: var(--font-mono);

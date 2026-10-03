@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { addDays, isoWeekKey, weekdayIndex } from './datetime.ts';
 import { WEEKDAY_NAMES, WEEKDAYS, type Weekday } from './recurrence.ts';
 
 /**
@@ -115,4 +116,71 @@ export function describeWeeklyHours(hours: WeeklyHours): WeeklyHoursText {
 		cadence: hours.cadence === 'weekly' ? null : CADENCE_LABELS[hours.cadence],
 		lines
 	};
+}
+
+/**
+ * The slots an activity actually meets in on one calendar date, cadence included.
+ *
+ * A timetable says "sundag 11:00"; a reader asks "is it on THIS sunday". For a weekly activity the
+ * answer is the weekday alone. For the rest it is a fact about the date, and saying yes on the
+ * wrong week is how somebody stands outside a locked church:
+ *
+ * - **Partalsveker / oddetalsveker** are ISO week numbers, which is how a Norwegian calendar numbers
+ *   them. 1 January 2027 is in week 53 of 2026, and `isoWeekKey` already knows that.
+ * - **Første / siste veka i månaden** is the first or last time that weekday comes round in the
+ *   month — the 1st–7th, or the last seven days. Not "the ISO week containing the 1st", which would
+ *   put a Wednesday meeting on 29 September when the month it belongs to is October.
+ *
+ * `localDate` is a wall-clock date (`YYYY-MM-DD`) in the activity's own zone, so nothing here
+ * depends on where the code runs.
+ */
+export function slotsOn(hours: WeeklyHours, localDate: string): WeeklySlot[] {
+	const weekday = WEEKDAYS[weekdayIndex(localDate)];
+	const slots = hours.slots.filter((s) => s.weekday === weekday);
+	if (slots.length === 0) return [];
+
+	const week = Number(isoWeekKey(localDate).split('-W')[1]);
+	const dayOfMonth = Number(localDate.slice(8, 10));
+	const nextWeekSameMonth = addDays(localDate, 7).slice(0, 7) === localDate.slice(0, 7);
+
+	const meets: Record<WeeklyCadence, boolean> = {
+		weekly: true,
+		'even-weeks': week % 2 === 0,
+		'odd-weeks': week % 2 === 1,
+		'first-of-month': dayOfMonth <= 7,
+		'last-of-month': !nextWeekSameMonth
+	};
+	return meets[hours.cadence] ? slots : [];
+}
+
+/**
+ * Who an activity is for, as the age bands a reader picks from.
+ *
+ * The source states an age range per activity — "8–10", "62–100" — or "alle". A band matches when
+ * the range OVERLAPS it, not when it sits inside: badminton for 16–100 is genuinely open to a
+ * sixteen-year-old, and hiding it from "Ungdom" would be the site deciding something the club did
+ * not. No range at all matches every band, because that is what the source means by it.
+ *
+ * Bands rather than a free age input: four taps cover the question people actually have ("is
+ * there anything for my 9-year-old / for me / for my mother"), and a number box on a phone is a
+ * keyboard in the way of an answer.
+ */
+export const AGE_BANDS = [
+	{ key: 'born', label: 'Born', from: 0, to: 12 },
+	{ key: 'ungdom', label: 'Ungdom', from: 13, to: 19 },
+	{ key: 'vaksne', label: 'Vaksne', from: 20, to: 66 },
+	{ key: 'seniorar', label: 'Seniorar', from: 67, to: 150 }
+] as const;
+export type AgeBand = (typeof AGE_BANDS)[number]['key'];
+
+export function isAgeBand(raw: string | null): raw is AgeBand {
+	return AGE_BANDS.some((b) => b.key === raw);
+}
+
+export function fitsAgeBand(ageFrom: number | null, ageTo: number | null, band: AgeBand): boolean {
+	const b = AGE_BANDS.find((x) => x.key === band);
+	if (!b) return true;
+	const from = ageFrom ?? 0;
+	const to = ageTo ?? 150;
+	return from <= b.to && to >= b.from;
 }

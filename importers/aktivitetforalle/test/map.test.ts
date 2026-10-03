@@ -9,6 +9,7 @@ import {
 	isFailure,
 	isPublishableActivity,
 	isPublishableEvent,
+	mapAgeRange,
 	mapCategory,
 	mapEvent,
 	mapWeeklyHours,
@@ -49,6 +50,7 @@ function row(overrides: Partial<UpstreamEvent> & { event_id: number; event_title
 		event_filter_ids: null,
 		event_thumbnail: null,
 		event_week_interval: null,
+		event_age_type: null,
 		...overrides
 	};
 }
@@ -571,6 +573,40 @@ describe('activities', () => {
 			event_weekdays: [{ value: 'Monday', from_time: '18:00:00', to_time: '19:00:00' }]
 		});
 		expect(isPublishableActivity(course, site.timezone)).toBe(false);
+	});
+});
+
+describe('mapAgeRange', () => {
+	it('reads who an activity is for off the real rows', () => {
+		const activities = parseEvents(fixture('activities.json'));
+		const ages = activities.rows.map(mapAgeRange);
+		// "Bremnes G12" is for twelve-year-olds; the portal's own page says "12 - 12 år".
+		const g12 = activities.rows.findIndex((r) => String(r.event_id) === '89');
+		expect(ages[g12]).toEqual({ ageFrom: 12, ageTo: 12 });
+		// And most activities state a range at all — which is what makes the filter worth having.
+		expect(ages.filter((a) => a.ageFrom !== null).length).toBeGreaterThan(100);
+	});
+
+	it('maps "for alle" to no range, which every reader takes as everyone', () => {
+		const all = row({ event_id: 3, event_title: 'x', event_age_type: 'all' });
+		expect(mapAgeRange(all)).toEqual({ ageFrom: null, ageTo: null });
+	});
+
+	it('drops a range that is not one, rather than keeping half of it', () => {
+		for (const [from, to] of [
+			[12, 8],
+			[-1, 10],
+			[5, 1000]
+		]) {
+			const odd = row({
+				event_id: 4,
+				event_title: 'x',
+				event_age_type: 'range',
+				event_age_from: from,
+				event_age_to: to
+			});
+			expect(mapAgeRange(odd)).toEqual({ ageFrom: null, ageTo: null });
+		}
 	});
 });
 
