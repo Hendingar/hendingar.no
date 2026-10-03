@@ -54,6 +54,8 @@
 	 * itself shows what is happening rather than a spinner that says nothing.
 	 */
 	let sentAt = $state<number | null>(null);
+	/** Showing a text answer while asking Jev again in the background. */
+	let upgrading = $state(false);
 	let waited = $state(0);
 	/** The pile is animating — set by the pile once motion is allowed and loaded. */
 	let live = $state(false);
@@ -74,9 +76,21 @@
 	let sequence = 0;
 	let timer: ReturnType<typeof setTimeout> | undefined;
 
+	/**
+	 * How long to wait before asking Jev again, after an answer had to come from text matching.
+	 *
+	 * The text answer is shown at once — a visitor never waits on a retry — and the pile then keeps
+	 * working towards the real one. Seventeen seconds in all: a verifier that was restarting (a
+	 * deploy, a replica moving) is back well inside that, and a cold start measured 16s.
+	 */
+	const RETRY_MS = [2_000, 5_000, 10_000];
+	let retry: ReturnType<typeof setTimeout> | undefined;
+
 	function ask(raw: string, delay = DEBOUNCE_MS) {
 		const term = searchTermSchema.parse(raw);
 		clearTimeout(timer);
+		clearTimeout(retry);
+		upgrading = false;
 		const mine = ++sequence;
 		if (!term) {
 			asked = '';
@@ -88,27 +102,45 @@
 		}
 		if (term === asked && !pending) return;
 		pending = true;
-		timer = setTimeout(async () => {
-			const started = performance.now();
+		timer = setTimeout(() => send(term, mine, 0), delay);
+	}
+
+	async function send(term: string, mine: number, attempt: number) {
+		const started = performance.now();
+		const first = attempt === 0;
+		if (first) {
 			sentAt = started;
 			waited = 0;
-			try {
-				const answer = await askPile({ q: term });
-				if (mine !== sequence) return;
+		}
+		try {
+			const answer = await askPile({ q: term });
+			if (mine !== sequence) return;
+			// A retry only ever replaces text with Jev. Another text answer changes nothing on
+			// screen, so the balls do not twitch every few seconds while the pile waits.
+			if (first || answer.mode === 'jev') {
 				mode = answer.mode;
 				scores = answer.scores;
 				trace = answer.trace;
 				clientMs = performance.now() - started;
 				asked = term;
-			} catch {
-				// A failed question leaves the pile as it was. The next keystroke asks again.
-			} finally {
-				if (mine === sequence) {
-					pending = false;
-					sentAt = null;
-				}
 			}
-		}, delay);
+			// Text because the model did not answer — not because the budget is spent, which a
+			// retry would only spend further — so keep working towards the real answer.
+			const delay = RETRY_MS[attempt];
+			upgrading =
+				answer.mode === 'tekst' && answer.trace.fallback === 'utan-modell' && delay !== undefined;
+			if (upgrading && delay !== undefined) {
+				retry = setTimeout(() => send(term, mine, attempt + 1), delay);
+			}
+		} catch {
+			// A failed question leaves the pile as it was. The next keystroke asks again.
+			if (mine === sequence) upgrading = false;
+		} finally {
+			if (mine === sequence && first) {
+				pending = false;
+				sentAt = null;
+			}
+		}
 	}
 
 	// The wait, counted. Ticks only while a question is in flight.
@@ -125,7 +157,10 @@
 		// Typed before hydration, or arrived with `?q=`: either way the answer on screen is text
 		// matching, so ask properly now.
 		if (q) ask(q, 0);
-		return () => clearTimeout(timer);
+		return () => {
+			clearTimeout(timer);
+			clearTimeout(retry);
+		};
 	});
 
 	function when(ball: (typeof balls)[number]): string {
@@ -190,6 +225,15 @@
 				<strong>{seconds(waited)} s</strong>
 			{:else if pending}
 				<span class="ask__working">Spør haugen<span class="dots" aria-hidden="true"></span></span>
+			{:else if asking && upgrading}
+				<!--
+					Before "nothing found": text matching finding nothing is not an answer while Jev is
+					still being asked. That is precisely the question a model is for.
+				-->
+				<strong>{answers.length}</strong> av {balls.length} ·
+				<span class="ask__working"
+					>{HAUGEN.upgrading}<span class="dots" aria-hidden="true"></span></span
+				>
 			{:else if asking && answers.length === 0}
 				{HAUGEN.none}
 			{:else if asking && trace?.model}

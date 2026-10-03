@@ -1,6 +1,6 @@
 # 0011 — The app keeps one replica warm
 
-**Status:** accepted (2026-09-04)
+**Status:** accepted (2026-09-04); amended 2026-10-03 — the verifier keeps one warm too
 
 ## Context
 
@@ -65,3 +65,28 @@ next move would be Neon or a bought database, exactly as ADR 0007 anticipates.
 
 If traffic ever justifies it, the better answer than more replicas is caching the listing, which
 this codebase does not do at all yet.
+
+## Amendment, 2026-10-03: the verifier keeps one replica warm as well
+
+The verifier stayed at zero on one premise, stated above: "Nobody is ever staring at a blank screen
+waiting for it." [ADR 0022](0022-haugen-jev.md) ended that. `/haugen` asks the verifier while a
+person watches the box, on a 4-second budget, and the live logs that morning showed what a cold
+start does to it:
+
+```
+10:29:58  verifier deactivated (idle)
+10:33:14  a question arrives; Azure starts a replica
+10:33:18  the app gives up — "haugen unavailable: …aborted due to timeout" → text matching
+10:33:30  the container is finally up — 16s after the question
+```
+
+Eleven such timeouts between 09:18 and 10:33. The fallback worked exactly as designed, and that was
+the problem: on a page whose point is Jev, text matching was what most first visitors saw.
+
+**`minReplicas: 1` on the verifier.** Same trade as the app's: 0.5 vCPU and 1 GiB billed mostly at
+the idle rate, an estimated $10–15 a month at list idle rates, since the app already spends the free grant. Raising
+the app's timeout instead was rejected — a 16-second spinner is a broken page by another name.
+
+The page also keeps working towards Jev on its own: a text answer caused by an unanswering model is
+shown at once and then asked again behind it, three times over ~17 seconds, so a deploy or a moving
+replica costs a few seconds of text rather than the whole visit.

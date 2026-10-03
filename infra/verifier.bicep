@@ -138,9 +138,11 @@ resource verifier 'Microsoft.App/containerApps@2024-03-01' = {
         }
       ]
       scale: {
-        // Scales to zero: no submissions, no cost. The first submission after idle pays a cold
-        // start, which is why the app's extract timeout is generous.
-        minReplicas: 0
+        // One replica kept warm (ADR 0011, amended 2026-10-03). Scale-to-zero was right while
+        // only submissions called this — nobody watched the cold start. /haugen asks it while a
+        // person waits on a 4s budget, and a cold start measured 16s: every first question after
+        // a few idle minutes fell back to text matching.
+        minReplicas: 1
         maxReplicas: 2
       }
     }
