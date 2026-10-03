@@ -9,8 +9,10 @@ from .appeal import JURORS, QUORUM, judge_appeal, juror_by_id
 from .config import Config, load_config
 from .crop import suggest_crop
 from .extract import extract_page, extract_poster, extract_poster_stream
+from .haugen import rank as run_haugen
 from .improve import improve as run_improve
 from .improve import improve_stream as run_improve_stream
+from .jev import JevClient, JevUnavailable
 from .kurator import curate as run_curate
 from .llm import AgentFactory
 from .models import (
@@ -22,6 +24,8 @@ from .models import (
     ExtractedEvent,
     ExtractPageRequest,
     ExtractRequest,
+    HaugenRanking,
+    HaugenRequest,
     ImproveRequest,
     ImproveSuggestion,
     JurorVerdict,
@@ -41,11 +45,20 @@ MAX_IMAGE_BASE64_BYTES = 8 * 1024 * 1024
 MAX_PAGE_TEXT_CHARS = 40_000
 
 
-def create_app(config: Config | None = None, factory: AgentFactory | None = None) -> FastAPI:
-    """Factory so tests can inject an `AgentFactory` over a fake client and never touch Azure."""
+def create_app(
+    config: Config | None = None,
+    factory: AgentFactory | None = None,
+    jev: JevClient | None = None,
+) -> FastAPI:
+    """Factory so tests can inject an `AgentFactory` over a fake client and never touch Azure.
+
+    `jev` is the same seam for TypeSafe. When it is not handed in it is built from the config,
+    and a config without a key builds none — /haugen then says so with a 503.
+    """
     config = config or load_config()
     logging.basicConfig(level=config.log_level)
     factory = factory or AgentFactory(config)
+    jev = jev or JevClient.from_config(config)
 
     app = FastAPI(title="hendingar verifier", version="0.1.0")
 
@@ -213,6 +226,25 @@ def create_app(config: Config | None = None, factory: AgentFactory | None = None
         except Exception as exc:
             log.exception("curation failed")
             raise HTTPException(status_code=502, detail=f"curation failed: {exc}") from exc
+
+    @app.post("/haugen", response_model=HaugenRanking)
+    async def haugen(request: HaugenRequest) -> HaugenRanking:
+        """How well each event in the pile answers what somebody typed. ADR 0022.
+
+        503 when no key is configured, and 502 when Jev did not answer — two different statuses
+        because they mean different things to the app: "this is off" and "this is broken right
+        now". Either way the page falls back to matching text, and the visitor still gets a pile.
+
+        The query is never logged, here or in the exception: it is what a person typed, and the
+        README promises that no search term is kept.
+        """
+        if jev is None:
+            raise HTTPException(status_code=503, detail="haugen is not configured")
+        try:
+            return await run_haugen(jev, request)
+        except JevUnavailable as exc:
+            log.warning("haugen ranking unavailable: %s", exc)
+            raise HTTPException(status_code=502, detail="ranking unavailable") from exc
 
     @app.get("/appeal/panel")
     async def panel() -> dict:

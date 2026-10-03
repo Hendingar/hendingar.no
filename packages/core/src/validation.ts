@@ -405,6 +405,60 @@ export const curatorSelectionSchema = z.object({
 
 export type CuratorSelection = z.infer<typeof curatorSelectionSchema>;
 
+/**
+ * What somebody asked the pile on `/haugen`.
+ *
+ * The same search term the listing takes, so the two boxes cannot disagree about what a query is
+ * — trimmed, whitespace collapsed, capped at 80 characters.
+ */
+export const askPileSchema = z.object({ q: searchTermSchema });
+
+/**
+ * How well one event answers a question put to the pile: the probability, 0 to 1, that it is what
+ * was asked for. Jev's answer when the verifier gave one; 1 or 0 from text matching when not.
+ */
+export const pileScoreSchema = z.object({
+	eventId: z.number().int().positive(),
+	score: z.number().min(0).max(1)
+});
+
+/** The verifier's answer for a whole pile, one score per event sent. Ordering is the app's. */
+export const pileRankingSchema = z.object({
+	scores: z.array(pileScoreSchema),
+	model: z.string().nullable().default(null),
+	/** How long the model took, all requests in parallel. Shown on the page, not logged. */
+	elapsedMs: z.number().int().min(0).default(0),
+	requests: z.number().int().min(0).default(0),
+	inputTokens: z.number().int().min(0).default(0)
+});
+
+/**
+ * The same answer as the verifier writes it — Python's snake_case — read into ours.
+ *
+ * Beside the schema it produces, so the field mapping is one definition rather than a cast in the
+ * client. `services/verifier/src/verifier/models.py` (`HaugenRanking`) is the other end.
+ */
+export const pileRankingWireSchema = z
+	.object({
+		scores: z.array(z.object({ event_id: z.number(), score: z.number() })),
+		model: z.string().nullable().optional(),
+		elapsed_ms: z.number().optional(),
+		requests: z.number().optional(),
+		input_tokens: z.number().optional()
+	})
+	.transform((wire) =>
+		pileRankingSchema.parse({
+			scores: wire.scores.map((s) => ({ eventId: s.event_id, score: s.score })),
+			model: wire.model ?? null,
+			elapsedMs: wire.elapsed_ms,
+			requests: wire.requests,
+			inputTokens: wire.input_tokens
+		})
+	);
+
+export type PileScore = z.infer<typeof pileScoreSchema>;
+export type PileRanking = z.infer<typeof pileRankingSchema>;
+
 /** The verification pipeline's per-check output. */
 export const verificationResultSchema = z.object({
 	verdict: z.enum(VERIFICATION_VERDICTS),

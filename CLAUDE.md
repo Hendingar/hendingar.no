@@ -157,6 +157,11 @@ app/src/lib/server/kurator.ts     the nightly selection: candidates, the call, t
                                  is idempotent per day — see ADR 0018 for why that is the whole
                                  security argument
 
+app/src/lib/components/haugen/     the pile on `/haugen`. Pile.svelte is the DOM; the motion is
+                                   pile-physics.ts (matter-js, client only, loaded on mount)
+app/src/lib/haugen.remote.ts       the pile, text answers by GET, and the one `command` that may
+                                   reach Jev. Cache, budget and fallback: server/pile-answer.ts
+
 app/src/lib/components/hendingar/  single-use sections owned by `/hendingar`
 app/src/lib/listing-url.ts         filters ↔ URL. The page, the tokens and the suggestions all
                                    compose addresses through it, so they cannot disagree
@@ -170,6 +175,8 @@ services/verifier/src/verifier/
   kurator.py               the weekend's picks. A judgement, audited by a second agent, and
                            told nothing about hearts or views on purpose (ADR 0018)
   verify.py                the five checks. Rules and model calls deliberately mixed
+  jev.py                   TypeSafe's Jev: the ONLY holder of its key, one POST, no Agent
+  haugen.py                /haugen's question, in Nynorsk because it measured better (ADR 0022)
   app.py                   FastAPI. create_app(config, factory) so tests inject a stub
   tests/test_contract.py   asserts the check names still match packages/core
 
@@ -218,9 +225,11 @@ Scoped in a component, the next agent cannot see it and writes a second one.
    [ADR 0010](docs/decisions/0010-expand-contract-migrations.md).
 
 3. **`services/verifier` is the only place a model runs.** No model SDK in `app/` or
-   `importers/`, and no API keys anywhere — the service authenticates to Azure with a managed
-   identity, through Microsoft Agent Framework (ADR 0016) — so a model call is an `Agent` built by
-   `llm.AgentFactory`, never a hand-assembled request. Importers are `fetch → parse → validate → upsert`, deterministic and replayable;
+   `importers/`. The service authenticates to Azure with a managed identity, through Microsoft
+   Agent Framework (ADR 0016), so a model that writes is an `Agent` built by `llm.AgentFactory`,
+   never a hand-assembled request. The one exception to "no API keys" is TypeSafe's Jev, a
+   classifier rather than a writer: reached only through `jev.py`, with its key a secret on the
+   verifier and nowhere else (ADR 0022). Importers are `fetch → parse → validate → upsert`, deterministic and replayable;
    verification happens later, on already-structured data, and anything uncertain is reported back
    to whoever sent it in so they can correct it (ADR 0012). See `docs/decisions/0004-deterministic-importers.md` and
    `docs/decisions/0008-verification-service.md`.

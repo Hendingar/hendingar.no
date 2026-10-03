@@ -167,7 +167,7 @@ export function track(name: TrackedEvent, params: Record<string, string | number
 export function surfaceOf(pathname: string): string {
 	if (pathname === '/') return 'framsida';
 	const first = pathname.split('/')[1] ?? '';
-	return ['hendingar', 'kalender', 'poppis', 'hjarta'].includes(first) ? first : 'anna';
+	return ['hendingar', 'kalender', 'poppis', 'hjarta', 'haugen'].includes(first) ? first : 'anna';
 }
 
 /**

@@ -128,9 +128,12 @@ Extraction is transcription, not writing, so it is pinned as close to determinis
 allows: temperature 0, a fixed seed, and a strict JSON schema. Two people photographing the same
 poster should get the same suggestion.
 
-**No API keys anywhere.** The one service that calls a model runs on its own managed identity
-against an account with key authentication disabled. See
-[ADR 0008](docs/decisions/0008-verification-service.md).
+**One API key, and it is optional.** The service that calls models runs on its own managed
+identity against an account with key authentication disabled — see
+[ADR 0008](docs/decisions/0008-verification-service.md). The exception is TypeSafe's Jev, which
+ranks `/haugen` and offers no keyless auth: its key is a secret on that one internal service and
+nowhere else, and without it the page falls back to matching text. See
+[ADR 0022](docs/decisions/0022-haugen-jev.md).
 
 ## Status
 

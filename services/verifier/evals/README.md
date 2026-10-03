@@ -126,3 +126,24 @@ That is deliberate. It means the Bergen concert is a failing test on every commi
 note in a directory somebody remembers to run, while the parts that genuinely need a model —
 whether a confident plausibility pass can outrank a rule — stay here, where they cost tokens and
 can fail because a model changed.
+
+## Haugen
+
+Does the pile on `/haugen` float the right events? `run_haugen.py` sends a fixed snapshot of 150
+real upcoming events (`haugen/events.json`, taken from the public event pages on 2026-10-03) to
+TypeSafe's Jev with each search in `haugen/cases.json`, prints the top of each pile, and fails a
+case when a title that should float scores under 0.5 or one that should stay down scores 0.35 or
+more.
+
+```bash
+pnpm verifier:eval:haugen            # every case
+pnpm verifier:eval:haugen ungdom     # cases whose search contains "ungdom"
+```
+
+Needs `TYPESAFE_API_KEY` in `services/verifier/.env`. A full run is eight requests of 150
+questions — about 300k input tokens, or a little over one cent.
+
+**Known miss.** The snapshot has no category — the public pages do not state one — and without it
+"Babysong" scores about 0.7 for "konsertar": singing, in a church, sounds like a concert. The app
+sends the category label, which is the evidence that tells them apart, so this case is not
+asserted. If it is ever asserted, it needs a snapshot that carries categories.

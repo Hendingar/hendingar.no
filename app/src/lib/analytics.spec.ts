@@ -112,6 +112,7 @@ describe('surfaceOf', () => {
 		// Which day somebody browsed is not a question we are asking, so the date does not travel.
 		expect(surfaceOf('/kalender/2026-09-12')).toBe('kalender');
 		expect(surfaceOf('/kalender')).toBe('kalender');
+		expect(surfaceOf('/haugen')).toBe('haugen');
 	});
 
 	it('never invents a name for a page that is not a listing', () => {

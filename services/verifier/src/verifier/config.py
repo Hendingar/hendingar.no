@@ -35,6 +35,14 @@ class Config:
     log_level: str
     # Requests that take longer than this are abandoned; the caller degrades rather than hangs.
     request_timeout_seconds: float
+    # TypeSafe's Jev, which ranks /haugen. The one credential in this service that is a key
+    # rather than an identity: TypeSafe offers no Entra auth. Unset means /haugen answers 503 and
+    # the app falls back to matching text — see ADR 0022.
+    typesafe_api_key: str | None = None
+    jev_model: str = "jev-latest"
+    # A pile that answers in four seconds is not answering as you type; past this the app has
+    # already moved on to the next keystroke or to plain text matching.
+    jev_timeout_seconds: float = 3.0
 
 
 def load_config() -> Config:
@@ -52,4 +60,7 @@ def load_config() -> Config:
         azure_tenant_id=os.getenv("AZURE_TENANT_ID"),
         log_level=os.getenv("LOG_LEVEL", "INFO"),
         request_timeout_seconds=float(os.getenv("REQUEST_TIMEOUT_SECONDS", "60")),
+        typesafe_api_key=os.getenv("TYPESAFE_API_KEY") or None,
+        jev_model=os.getenv("JEV_MODEL", "jev-latest"),
+        jev_timeout_seconds=float(os.getenv("JEV_TIMEOUT_SECONDS", "3")),
     )

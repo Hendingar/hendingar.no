@@ -8,7 +8,9 @@ import {
 	improveDraftSchema,
 	improveReviewSchema,
 	improveSuggestionSchema,
+	pileRankingWireSchema,
 	type CuratorSelection,
+	type PileRanking,
 	type ExtractedEvent,
 	type ExtractedField,
 	type ImproveDraft,
@@ -17,6 +19,7 @@ import {
 	type ThumbnailCrop
 } from '@hendingar/core/validation';
 import type { VerificationCheck, VerificationVerdict } from '@hendingar/core/verification';
+import type { PileCandidate } from './pile-answer.ts';
 
 /**
  * Client for the verifier microservice (services/verifier).
@@ -87,6 +90,15 @@ const IMPROVE_TIMEOUT_MS = 60_000;
  * descriptions.
  */
 const CURATE_TIMEOUT_MS = 120_000;
+/**
+ * A pile answers as you type, so it gets the shortest budget here.
+ *
+ * Jev itself answers 150 events in about 350ms (measured 2026-10-03), and the verifier gives it
+ * three seconds. The extra second is the hop to the verifier, and one cold start: the service
+ * scales to zero, and the first search after a quiet night pays for waking it. Past this the
+ * page has fallen back to matching text, which is a pile that still works.
+ */
+const RANK_TIMEOUT_MS = 4_000;
 
 async function post<T>(path: string, body: unknown, timeoutMs: number): Promise<T> {
 	if (!VERIFIER_URL) throw new Error('verifier is not configured');
@@ -400,6 +412,49 @@ export async function curateWeekend(candidates: CuratorCandidate[]): Promise<Cur
 		note: raw.note,
 		model: raw.model
 	});
+}
+
+/**
+ * How well each event answers what somebody typed into `/haugen` (ADR 0022). Never throws.
+ *
+ * Null means "no ranking": the verifier is unset, has no TypeSafe key (503), timed out, or
+ * answered something unreadable. The caller falls back to matching text, so a visitor always gets
+ * a pile that responds — rule 8, for a page rather than a submission.
+ *
+ * The query is not logged on failure. It is what a person typed, and the README promises that no
+ * search term is kept anywhere.
+ */
+export async function rankForQuery(
+	query: string,
+	candidates: PileCandidate[]
+): Promise<PileRanking | null> {
+	if (!VERIFIER_URL) return null;
+	try {
+		const raw = await post<unknown>(
+			'/haugen',
+			{
+				query,
+				events: candidates.map((c) => ({
+					id: c.id,
+					title: c.title,
+					category_label: c.categoryLabel,
+					when: c.when,
+					venue_name: c.venueName,
+					municipality: c.municipality,
+					organizer_name: c.organizerName,
+					description: c.description
+				}))
+			},
+			RANK_TIMEOUT_MS
+		);
+		return pileRankingWireSchema.parse(raw);
+	} catch (error) {
+		// `post` puts up to 200 characters of the response body in its message, and the body of a
+		// 422 echoes the request — which carries the query. The status line is enough.
+		const message = error instanceof Error ? error.message : String(error);
+		console.warn(`[verifier] haugen unavailable: ${message.split(':')[0]}`);
+		return null;
+	}
 }
 
 export type CuratorCandidate = {

@@ -1,6 +1,7 @@
 # 0008 — Verification runs in a separate service, on Azure with managed identity
 
 **Status:** accepted; the human-review queue is superseded by [ADR 0012](0012-no-review-queue.md) (2026-08-28)
+**Amended by:** [ADR 0022](0022-haugen-jev.md) — one optional API key, TypeSafe's, held by this service
 
 ## Context
 
