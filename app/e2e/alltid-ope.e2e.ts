@@ -1,4 +1,7 @@
 import { expect, test } from '@playwright/test';
+import { DEFAULT_TIME_ZONE } from '@hendingar/core/datetime';
+import { localDayKey } from '../src/lib/calendar.ts';
+import { nextDateFor } from '../src/lib/weekly-view.ts';
 
 /**
  * Places that are open, kept out of the list of things that happen.
@@ -273,4 +276,25 @@ test('/alltid-ope does not scroll sideways at 320px', async ({ page }) => {
 		() => document.documentElement.scrollWidth - document.documentElement.clientWidth
 	);
 	expect(overflow).toBeLessThanOrEqual(0);
+});
+
+test('a day page shows what meets that weekday as cards, in the HTML', async ({ request }) => {
+	/*
+	 * The seed's Fotball G12 meets on Tuesdays. A day page for the next Tuesday must carry it as a
+	 * card linking to its own page — requested without a browser, because a section that only
+	 * appeared after hydration would be invisible to crawlers and no-JS readers (CLAUDE.md).
+	 *
+	 * Next Tuesday in the venue's zone, the same reckoning the page itself makes, so this holds on
+	 * whatever day the suite runs.
+	 */
+	const tuesday = nextDateFor(localDayKey(new Date(), DEFAULT_TIME_ZONE), 1);
+	const html = await (await request.get(`/kalender/${tuesday}`)).text();
+	const section = html.match(/<section class="also-day[\s\S]*?<\/section>/)?.[0];
+	expect(section, 'the day page must render its weekly activities').toBeTruthy();
+	expect(section).toMatch(/<li class="mini[^"]*">[\s\S]*?Fotball G12/);
+	expect(section).toMatch(/href="\/hending\/\d+-fotball-g12"/);
+	expect(section).toContain('18:00');
+	// Never as an event: the event grid above it stays events only.
+	const tiles = html.match(/<article class="tile[\s\S]*?<\/article>/g) ?? [];
+	for (const tile of tiles) expect(tile).not.toMatch(/Fotball G12/);
 });
