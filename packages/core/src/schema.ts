@@ -313,6 +313,15 @@ export const events = pgTable(
 		 * src/weekly-hours.ts and docs/decisions/0021-weekly-activities.md.
 		 */
 		weeklyHours: jsonb('weekly_hours').$type<WeeklyHours>(),
+		/**
+		 * Who it is for, as the source states it: "8–10", "62–100". Both null means the source says
+		 * everyone, or says nothing — which for a filter is the same answer.
+		 *
+		 * Read with `fitsAgeBand`, which matches on overlap, never containment: a group for 16–100
+		 * is open to a sixteen-year-old. Inclusive at both ends, as the sources write it.
+		 */
+		ageFrom: integer('age_from'),
+		ageTo: integer('age_to'),
 
 		/** Outbound ticket link. We never sell tickets — see README non-goals. */
 		ctaUrl: text('cta_url'),

@@ -183,6 +183,13 @@
       "when": 1790949400746,
       "tag": "0025_broken_grim_reaper",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1791007947371,
+      "tag": "0026_nasty_penance",
+      "breakpoints": true
     }
   ]
 }

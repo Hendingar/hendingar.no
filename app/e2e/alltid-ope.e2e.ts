@@ -147,33 +147,84 @@ test('the coverage strip counts them separately from events', async ({ request }
 });
 
 /*
- * The weekly activities — clubs, choirs, a parish's services — and why they are kept apart.
+ * The weekly activities — clubs, choirs, a parish's services — read by day, then by club.
  *
- * The seed carries three, from two organisers, one fortnightly. They are `standing` rows like the
- * escape room, so every guard above already keeps them out of the day lists; what is asserted here
- * is that they are also kept out of the PLACES, which is what ADR 0013 refused to let happen when
- * importing them would have made this page fifty training schedules with a museum in the middle.
+ * The seed carries three, from two organisers: "Fotball G12" (12 år; tysdag, onsdag, laurdag),
+ * "Turn 5-6 år" (onsdag) and a fortnightly "Gudsteneste". They are `standing` rows like the escape
+ * room, so every guard above keeps them out of the day lists; what is asserted here is the page
+ * that holds them, and that they never leak into the places.
+ *
+ * Days are asked for by name in the URL, because "i dag" moves with the clock and a spec that
+ * passes only on Tuesdays is the flaky test rule 6 forbids.
  */
-test('weekly activities are grouped by who runs them, with their times', async ({ request }) => {
+test('the day lens is server-rendered from the URL', async ({ request }) => {
+	const html = await (await request.get('/alltid-ope?dag=tysdag')).text();
+	const lens = html.match(/<section id="dag"[\s\S]*?<\/section>/)?.[0];
+	expect(lens, 'the lens must be in the HTML, not filled in after hydration').toBeTruthy();
+
+	// The chosen day is marked, and what meets that day is listed with its time.
+	expect(lens).toMatch(/aria-current="date"[^>]*>\s*<span class="day__short[^"]*">Ty</);
+	expect(lens).toContain('Fotball G12');
+	expect(lens).toContain('18:00');
+	// Turn meets on onsdag only.
+	expect(lens).not.toContain('Turn 5-6 år');
+	expect(lens).not.toContain('Lastar');
+});
+
+test('the age filter narrows to who it is for, by the range the source states', async ({
+	request
+}) => {
+	const lens = async (query: string) =>
+		(await (await request.get(`/alltid-ope?${query}`)).text()).match(
+			/<section id="dag"[\s\S]*?<\/section>/
+		)?.[0] ?? '';
+
+	// Onsdag: a 12-year-olds' squad and a 5–6 turn group are both for children…
+	const born = await lens('dag=onsdag&for=born');
+	expect(born).toContain('Fotball G12');
+	expect(born).toContain('Turn 5-6 år');
+
+	// …and neither is for adults. A filter that showed them would be the site deciding for the
+	// club who its squad is for.
+	const vaksne = await lens('dag=onsdag&for=vaksne');
+	expect(vaksne).not.toContain('Fotball G12');
+	expect(vaksne).not.toContain('Turn 5-6 år');
+
+	// Choosing a band keeps the day, and choosing a day keeps the band.
+	expect(born).toMatch(/href="\/alltid-ope\?dag=onsdag&amp;for=vaksne#dag"/);
+	expect(born).toMatch(/href="\/alltid-ope\?dag=tysdag&amp;for=born#dag"/);
+});
+
+test('picking a day works without JavaScript', async ({ browser }) => {
+	const context = await browser.newContext({ javaScriptEnabled: false });
+	const page = await context.newPage();
+	await page.goto('/alltid-ope?dag=tysdag');
+	await page
+		.getByRole('navigation', { name: 'Vel dag' })
+		.getByRole('link', { name: /^onsdag/ })
+		.click();
+	await expect(page).toHaveURL(/dag=onsdag/);
+	await expect(page.locator('#dag')).toContainText('Turn 5-6 år');
+	await context.close();
+});
+
+test('the clubs are cards with the days they meet', async ({ request }) => {
 	const html = await (await request.get('/alltid-ope')).text();
+	const clubs = html.match(/<section class="clubs[\s\S]*?<\/section>/)?.[0];
+	expect(clubs, 'the club grid must be server-rendered').toBeTruthy();
 
-	const section = html.match(/<section class="weekly[\s\S]*?<\/section>/)?.[0];
-	expect(section, 'the weekly section must be server-rendered').toBeTruthy();
-
-	// One fold per organiser, holding its own activities — not one row per activity at the top.
-	const folds = section!.match(/<details class="org[\s\S]*?<\/details>/g) ?? [];
-	const club = folds.find((f) => f.includes('Seed Idrettslag'));
-	expect(club, 'the club has a fold of its own').toBeTruthy();
+	const cards =
+		clubs!.match(/<li class="club[\s\S]*?(?=<li class="club|<\/ul>\s*<\/section>)/g) ?? [];
+	const club = cards.find((c) => c.includes('Seed Idrettslag'));
+	expect(club, 'the club has a card of its own').toBeTruthy();
+	expect(club).toContain('2 aktivitetar');
 	expect(club).toContain('Fotball G12');
-	expect(club).toContain('Turn 5-6 år');
 	expect(club).not.toContain('Gudsteneste');
+	// The pip strip is a picture with words for those who cannot see it.
+	expect(club).toMatch(/aria-label="Møtest tysdag, onsdag og laurdag"/);
 
-	// The timetable a reader needs, merged only where the hours agree.
-	expect(club).toContain('Tysdag og onsdag 18:00–19:30');
-	expect(club).toContain('Laurdag 11:30–13:00');
-
-	// A fortnightly service must say so — "every Sunday" would be wrong half the time.
-	const parish = folds.find((f) => f.includes('Seed Kyrkjelyd'));
+	// A fortnightly service says so wherever its time is shown.
+	const parish = cards.find((c) => c.includes('Seed Kyrkjelyd'));
 	expect(parish).toContain('Partalsveker');
 });
 
@@ -203,9 +254,8 @@ test('a weekly activity is never shown as a place', async ({ request }) => {
 test('a weekly activity’s page says when it meets, not midnight on its first day', async ({
 	page
 }) => {
-	await page.goto('/alltid-ope');
-	await page.locator('details.org', { hasText: 'Seed Idrettslag' }).locator('summary').click();
-	await page.getByRole('link', { name: 'Fotball G12' }).click();
+	await page.goto('/alltid-ope?dag=tysdag');
+	await page.locator('#dag').getByRole('link', { name: 'Fotball G12' }).click();
 	await expect(page).toHaveURL(/\/hending\/\d+-/);
 
 	const when = page.locator('dd.weekly');
@@ -214,10 +264,11 @@ test('a weekly activity’s page says when it meets, not midnight on its first d
 	await expect(page.locator('.facts')).not.toContainText('00:00');
 });
 
-test('/alltid-ope does not scroll sideways at 320px with the folds open', async ({ page }) => {
+test('/alltid-ope does not scroll sideways at 320px', async ({ page }) => {
 	await page.setViewportSize({ width: 320, height: 700 });
-	await page.goto('/alltid-ope');
-	for (const summary of await page.locator('details.org > summary').all()) await summary.click();
+	await page.goto('/alltid-ope?dag=onsdag');
+	for (const summary of await page.locator('details.club__more > summary').all())
+		await summary.click();
 	const overflow = await page.evaluate(
 		() => document.documentElement.scrollWidth - document.documentElement.clientWidth
 	);

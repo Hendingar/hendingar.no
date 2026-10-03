@@ -710,38 +710,24 @@ export const standingOffers = query(async () => {
 export type StandingOffer = Awaited<ReturnType<typeof standingOffers>>[number];
 
 /**
- * Titles sort as people read them: "G7" before "G12", and "Ø" after "Z".
+ * The clubs, choirs and groups that meet every week, and the date it is in Bømlo.
  *
- * `numeric` because a club's squads are numbered by age, and plain collation files "Bremnes G12"
- * before "Bremnes G7". Norwegian because Postgres's collation here is whatever the server was
- * built with, and "Øvre" belongs last. Server-only, where Node's ICU resolves `nb`; this never
- * reaches the browser, where it might not (CLAUDE.md, on `nn-NO`).
- */
-const byReadingOrder = new Intl.Collator('nb', { numeric: true, sensitivity: 'base' });
-
-/**
- * The clubs, choirs and groups that meet every week, grouped by who runs them.
+ * Flat, not grouped: `/alltid-ope` reads the same rows two ways — by day ("what meets on
+ * laurdag"), and by who runs them — and both are pure functions in `weekly-view.ts`, where they
+ * are unit-tested rather than buried in a query.
  *
- * "Bremnes G12, tysdag og onsdag 18:00" is something you join for a season rather than somewhere
- * you walk into this afternoon, and there are a hundred of them from one portal alone — mostly one
- * per age group per club. As a flat list they bury everything else on `/alltid-ope` (ADR 0013
- * measured it); grouped by organiser they are twenty-odd entries a parent can scan for the club
- * they already know.
- *
- * Grouped here rather than in the component so the page renders what it is given, and the rule for
- * what belongs together has one home. An activity whose source names no organiser is not dropped:
- * it goes in a last group of its own, with a null name for the page to word.
- *
- * Organisers alphabetically, like `standingOffers`: no order here should imply a ranking.
+ * `today` comes from the server so the page and its hydration agree on what "i dag" is, in the
+ * venue's zone rather than the visitor's or the server's. Every venue in the pilot is in Oslo time;
+ * a second zone would mean resolving per activity.
  */
 export const weeklyActivities = query(async () => {
-	const rows = await db()
+	const activities = await db()
 		.select({
 			id: events.id,
 			title: events.title,
-			category: events.category,
 			weeklyHours: events.weeklyHours,
-			endsAt: events.endsAt,
+			ageFrom: events.ageFrom,
+			ageTo: events.ageTo,
 			venueName: venues.name,
 			organizerName: organizers.name
 		})
@@ -758,29 +744,10 @@ export const weeklyActivities = query(async () => {
 				gte(events.endsAt, new Date())
 			)
 		);
-
-	const groups = new Map<string | null, typeof rows>();
-	for (const row of rows) {
-		const group = groups.get(row.organizerName) ?? [];
-		group.push(row);
-		groups.set(row.organizerName, group);
-	}
-
-	return [...groups.entries()]
-		.map(([organizer, activities]) => ({
-			organizer,
-			activities: activities.sort((a, b) => byReadingOrder.compare(a.title, b.title))
-		}))
-		.sort((a, b) =>
-			a.organizer === null
-				? 1
-				: b.organizer === null
-					? -1
-					: byReadingOrder.compare(a.organizer, b.organizer)
-		);
+	return { today: localDayKey(new Date(), DEFAULT_TIME_ZONE), activities };
 });
 
-export type WeeklyActivityGroup = Awaited<ReturnType<typeof weeklyActivities>>[number];
+export type WeeklyActivity = Awaited<ReturnType<typeof weeklyActivities>>['activities'][number];
 
 /** The row shape callers get, derived from the query rather than hand-written. */
 export type EventSummary = Awaited<ReturnType<typeof listEvents>>[number];

@@ -73,3 +73,30 @@ reader needs is the timetable, which a card has no room for.
 
 If readers want "what can my eight-year-old do on a Tuesday" more than "what does Bremnes IL run",
 the grouping should be by weekday. The timetable is already structured for that.
+
+## Addendum (2026-10-03): read by day first, by club second
+
+The first version shipped as twenty-two closed folds, one per organiser. They were correct and
+complete, and gave a visitor no reason to open any of them: every fold looked the same, and none
+answered the question people arrive with, which is "kva kan eg bli med på i dag?", not "which clubs
+exist".
+
+So `/alltid-ope` now leads with a **day lens**: a count for today, a seven-day strip with a count per
+day, an age filter, and that day's activities by time. The clubs follow as poster cards, each with a
+strip of seven pips for the days it meets. The places come last.
+
+- **A weekday means its next date, today included**, and `slotsOn` decides per date. That is what
+  makes the cadence honest: a fortnightly service shows on the Sunday it meets and not on the one
+  it doesn't. A strip of weekdays with no dates could not say that, and would have shown it every
+  week with a chip asking the reader to work it out.
+- **The age filter uses the range the source states** (`events.age_from`/`age_to`, 112 of 135
+  activities have one) and matches on overlap. Overlap is the club's own claim: a 16–100 group is
+  open to a sixteen-year-old. A mockup guessed audience from titles; that was never going to hold.
+- **Every control is a link** (`?dag=onsdag&for=born`), so the lens works without JavaScript,
+  survives a reload, is in the server-rendered HTML, and can be sent to someone. The page reads the
+  parameters from `page.url` on the server, in line with CLAUDE.md's rule against placeholders.
+- **"I dag" is the venue's date, computed on the server** and sent with the rows, so the page and
+  its hydration agree. The view logic is pure and runs on both sides, which is why it sorts with
+  its own comparator and not `Intl.Collator('nb')`: browser and Node ICU ship different locales.
+- **Clubs are ordered by size**, unlike the places. Here the count is information, and the biggest
+  club is the one most readers are looking for.

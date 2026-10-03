@@ -222,6 +222,9 @@ export type MappedEvent = {
 	organizerName: string | null;
 	/** Set for an `activity`, null for an `arrangement` — see `isPublishableActivity`. */
 	weeklyHours: WeeklyHours | null;
+	/** Who it is for, inclusive. Both null: the source says everyone, or nothing. */
+	ageFrom: number | null;
+	ageTo: number | null;
 };
 
 export type MapFailure = { externalId: string; title: string; problem: string };
@@ -445,6 +448,28 @@ export function mapEvent(
 			input.organizer_id != null
 				? (organizers.get(String(input.organizer_id)) ?? orNull(input.event_organizer_name))
 				: orNull(input.event_organizer_name),
-		weeklyHours
+		weeklyHours,
+		...mapAgeRange(input)
 	};
+}
+
+/**
+ * `event_age_type` + the two bounds → an inclusive range, or none.
+ *
+ * `all` is the portal's "for alle" and maps to no range, which is what every reader of these
+ * columns takes as everyone. A range with a bound that is not a sensible age — a typo of 1000, a
+ * negative, from after to — is dropped whole rather than half-kept: a filter that hides a squad
+ * from the parents it is for is worse than one that shows it to a few it is not.
+ */
+export function mapAgeRange(input: UpstreamEvent): {
+	ageFrom: number | null;
+	ageTo: number | null;
+} {
+	const none = { ageFrom: null, ageTo: null };
+	if (orNull(input.event_age_type) !== 'range') return none;
+	const from = Number(orNull(input.event_age_from) ?? NaN);
+	const to = Number(orNull(input.event_age_to) ?? NaN);
+	const sane = (n: number) => Number.isInteger(n) && n >= 0 && n <= 120;
+	if (!sane(from) || !sane(to) || from > to) return none;
+	return { ageFrom: from, ageTo: to };
 }

@@ -453,7 +453,8 @@ await db
  *
  * Modelled on aktivitetforalle's `activity` rows: a season as the date range, so `kind` resolves to
  * `standing`, and a timetable in `weekly_hours`. Two from one club so the grouping has something
- * to group, one fortnightly so the cadence has something to say. Without them the section and
+ * to group, one fortnightly so the cadence has something to say, and two with an age range so
+ * the "For" filter has something to narrow. Without them the section and
  * every guard about it would pass against a page that could not show it — and, worse, the specs
  * could not tell a training session leaking into the day list from one that never existed.
  */
@@ -480,6 +481,8 @@ await db
 			endsAt: daysFromNow(200, 23, 59),
 			venueId: libraryVenue.id,
 			organizerId: club.id,
+			ageFrom: 12,
+			ageTo: 12,
 			weeklyHours: {
 				cadence: 'weekly',
 				slots: [
@@ -499,6 +502,8 @@ await db
 			endsAt: daysFromNow(200, 23, 59),
 			venueId: libraryVenue.id,
 			organizerId: club.id,
+			ageFrom: 5,
+			ageTo: 6,
 			weeklyHours: { cadence: 'weekly', slots: [{ weekday: 3, from: '16:30', to: '17:45' }] },
 			status: 'published'
 		},

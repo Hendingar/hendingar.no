@@ -251,6 +251,8 @@ export async function ingestSite(
 				venueId,
 				organizerId,
 				weeklyHours: mapped.weeklyHours,
+				ageFrom: mapped.ageFrom,
+				ageTo: mapped.ageTo,
 				ctaUrl: mapped.ctaUrl,
 				posterUrl: mapped.posterUrl,
 				posterSrcset: mapped.posterSrcset,
@@ -271,6 +273,8 @@ export async function ingestSite(
 					venueId: events.venueId,
 					organizerId: events.organizerId,
 					weeklyHours: events.weeklyHours,
+					ageFrom: events.ageFrom,
+					ageTo: events.ageTo,
 					ctaUrl: events.ctaUrl,
 					posterUrl: events.posterUrl,
 					posterSrcset: events.posterSrcset,
@@ -299,6 +303,8 @@ export async function ingestSite(
 				// Built by `mapWeeklyHours` in a fixed key order, and jsonb hands it back sorted
 				// by key length — so compare the content, not the spelling.
 				sameWeeklyHours(existing.weeklyHours, values.weeklyHours) &&
+				existing.ageFrom === values.ageFrom &&
+				existing.ageTo === values.ageTo &&
 				existing.ctaUrl === values.ctaUrl &&
 				existing.posterUrl === values.posterUrl &&
 				existing.posterSrcset === values.posterSrcset &&
