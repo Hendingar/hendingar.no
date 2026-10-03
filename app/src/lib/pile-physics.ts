@@ -65,6 +65,8 @@ export class PileWorld {
 	#width: number;
 	#height: number;
 	#drag: { constraint: MatterNs.Constraint; id: number } | null = null;
+	#stirring = false;
+	#frame = 0;
 
 	constructor(matter: Matter, width: number, height: number) {
 		this.#m = matter;
@@ -141,6 +143,19 @@ export class PileWorld {
 		this.wake();
 	}
 
+	/**
+	 * Sift the heap while a question is out: every few frames a handful of balls are nudged up and
+	 * sideways, and fall back. Something is being looked through, and the pile shows it.
+	 *
+	 * Which balls, and which way, come from the id and the frame — no `Math.random`, so the same
+	 * wait looks the same twice.
+	 */
+	setStirring(on: boolean): void {
+		if (on === this.#stirring) return;
+		this.#stirring = on;
+		if (on) this.wake();
+	}
+
 	resize(width: number, height: number): void {
 		if (width === this.#width && height === this.#height) return;
 		this.#width = width;
@@ -163,7 +178,7 @@ export class PileWorld {
 
 	/** True once every ball is asleep and nothing is held — the page can stop asking for frames. */
 	get settled(): boolean {
-		if (this.#drag) return false;
+		if (this.#drag || this.#stirring) return false;
 		for (const { body } of this.#balls.values()) if (!body.isSleeping) return false;
 		return true;
 	}
@@ -218,6 +233,19 @@ export class PileWorld {
 
 	#applyLift(): void {
 		const g = this.#engine.gravity;
+		this.#frame += 1;
+		if (this.#stirring && this.#frame % 12 === 0) {
+			const beat = this.#frame / 12;
+			for (const [id, { body }] of this.#balls) {
+				if (this.#lift.has(id) || spread(id, beat) < 0.82) continue;
+				const kick = body.mass * g.y * g.scale;
+				this.#m.Sleeping.set(body, false);
+				this.#m.Body.applyForce(body, body.position, {
+					x: kick * (spread(id, beat + 0.5) - 0.5) * 6,
+					y: -kick * (8 + spread(id, beat + 0.25) * 8)
+				});
+			}
+		}
 		for (const [id, lift] of this.#lift) {
 			const ball = this.#balls.get(id);
 			if (!ball) continue;

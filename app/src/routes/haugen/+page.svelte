@@ -48,6 +48,13 @@
 	/** How the current answer was made, and how long it took to reach this browser. */
 	let trace = $state<PileTrace | null>(null);
 	let clientMs = $state(0);
+	/**
+	 * When the current question actually left for the server (after the debounce), and how long
+	 * ago that is. Null while nothing is in flight. The status line counts it up, so the wait
+	 * itself shows what is happening rather than a spinner that says nothing.
+	 */
+	let sentAt = $state<number | null>(null);
+	let waited = $state(0);
 	/** The pile is animating — set by the pile once motion is allowed and loaded. */
 	let live = $state(false);
 
@@ -73,6 +80,7 @@
 		const mine = ++sequence;
 		if (!term) {
 			asked = '';
+			sentAt = null;
 			scores = [];
 			trace = null;
 			pending = false;
@@ -82,6 +90,8 @@
 		pending = true;
 		timer = setTimeout(async () => {
 			const started = performance.now();
+			sentAt = started;
+			waited = 0;
 			try {
 				const answer = await askPile({ q: term });
 				if (mine !== sequence) return;
@@ -93,10 +103,23 @@
 			} catch {
 				// A failed question leaves the pile as it was. The next keystroke asks again.
 			} finally {
-				if (mine === sequence) pending = false;
+				if (mine === sequence) {
+					pending = false;
+					sentAt = null;
+				}
 			}
 		}, delay);
 	}
+
+	// The wait, counted. Ticks only while a question is in flight.
+	$effect(() => {
+		const from = sentAt;
+		if (from === null) return;
+		const tick = setInterval(() => (waited = performance.now() - from), 100);
+		return () => clearInterval(tick);
+	});
+
+	const seconds = (ms: number) => (ms / 1000).toFixed(1).replace('.', ',');
 
 	onMount(() => {
 		// Typed before hydration, or arrived with `?q=`: either way the answer on screen is text
@@ -137,7 +160,7 @@
 	</header>
 
 	<div class="stage__pile">
-		<Pile balls={ordered} scores={scoreMap} {asking} {mode} bind:live />
+		<Pile balls={ordered} scores={scoreMap} {asking} {mode} {pending} bind:live />
 	</div>
 
 	<div class="stage__ask">
@@ -153,12 +176,20 @@
 				bind:value={q}
 				oninput={() => ask(q)}
 			/>
-			<button class="btn btn--solid" type="submit">Spør</button>
+			<button class="btn btn--solid ask__go" type="submit" aria-busy={pending}>
+				{#if pending}<span class="spinner" aria-hidden="true"></span>{/if}
+				<span class="ask__go-label">Spør</span>
+			</button>
 		</form>
 
 		<p class="ask__status" aria-live="polite">
-			{#if pending}
-				Spør haugen …
+			{#if pending && sentAt !== null}
+				<span class="ask__working"
+					>Jev vurderer {balls.length} hendingar<span class="dots" aria-hidden="true"></span></span
+				>
+				<strong>{seconds(waited)} s</strong>
+			{:else if pending}
+				<span class="ask__working">Spør haugen<span class="dots" aria-hidden="true"></span></span>
 			{:else if asking && answers.length === 0}
 				{HAUGEN.none}
 			{:else if asking && trace?.model}
@@ -336,14 +367,83 @@
 		border-radius: 0.6rem;
 	}
 
+	.ask__go {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.5rem;
+	}
+
+	.spinner {
+		inline-size: 0.9em;
+		block-size: 0.9em;
+		border: 2px solid currentColor;
+		border-inline-end-color: transparent;
+		border-radius: 50%;
+		animation: spin 0.7s linear infinite;
+	}
+
+	/* Three dots that fill in turn: "vurderer…" visibly still going, in text rather than a shape. */
+	.dots::after {
+		content: '';
+		display: inline-block;
+		inline-size: 1.5ch;
+		text-align: start;
+		animation: dots 1.2s steps(4, end) infinite;
+	}
+
+	.ask__working {
+		color: var(--peach);
+	}
+
+	@keyframes spin {
+		to {
+			rotate: 1turn;
+		}
+	}
+
+	@keyframes dots {
+		0% {
+			content: '';
+		}
+		25% {
+			content: '.';
+		}
+		50% {
+			content: '..';
+		}
+		75% {
+			content: '...';
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.spinner,
+		.dots::after {
+			animation: none;
+		}
+
+		.dots::after {
+			content: '…';
+		}
+	}
+
 	.ask__status {
+		inline-size: fit-content;
+		max-inline-size: 100%;
 		min-block-size: 1.4em;
-		margin: 0.5rem 0 0;
+		margin: 0.5rem auto 0;
+		padding: 0.15rem 0.7rem;
 		font-family: var(--font-mono);
 		font-size: var(--step-micro);
 		text-align: center;
 		color: var(--peach-dim);
-		text-shadow: 0 0 0.5rem var(--navy-900);
+		/* Solid, not a shadow: over a heap of posters a shadow is not enough to read on. */
+		background: var(--navy-900);
+		border-radius: 999px;
+	}
+
+	.ask__status:empty {
+		visibility: hidden;
 	}
 
 	.ask__status strong {

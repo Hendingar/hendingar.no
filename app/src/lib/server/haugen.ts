@@ -21,11 +21,12 @@ import { whenWords } from '../haugen.ts';
 /**
  * How many events make the pile.
  *
- * The nearest 150, which is about two weeks here. Jev answers that many in ~350ms as three
- * parallel requests; the page shows as many balls as fit and keeps the rest for the ranking, so
- * an answer from next Thursday can still float into view.
+ * The nearest 120, which is a week and a half here. Tokens are paid per event asked about, so
+ * this number IS the cost of a question: 120 is two requests of sixty (the verifier's chunk) and
+ * about 34k tokens, down from three requests and ~42k at 150. The page shows as many balls as fit
+ * and keeps the rest for the ranking, so an answer from next weekend can still float into view.
  */
-export const PILE_SIZE = 150;
+export const PILE_SIZE = 120;
 
 export async function pileEvents() {
 	const rows = await db()

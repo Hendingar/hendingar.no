@@ -93,7 +93,7 @@ const CURATE_TIMEOUT_MS = 120_000;
 /**
  * A pile answers as you type, so it gets the shortest budget here.
  *
- * Jev itself answers 150 events in about 350ms (measured 2026-10-03), and the verifier gives it
+ * Jev itself answers a 120-event pile in a few hundred ms (measured 2026-10-03), and the verifier gives it
  * three seconds. The extra second is the hop to the verifier, and one cold start: the service
  * scales to zero, and the first search after a quiet night pays for waking it. Past this the
  * page has fallen back to matching text, which is a pile that still works.

@@ -29,6 +29,7 @@
 		scores,
 		asking,
 		mode,
+		pending = false,
 		live = $bindable(false)
 	}: {
 		/** Already in pile order — answers first. */
@@ -38,6 +39,8 @@
 		asking: boolean;
 		/** Who answered. Text matching scores 1 or 0, which is not worth printing as a percentage. */
 		mode: PileMode;
+		/** A question is out. The heap is sifted while it waits. */
+		pending?: boolean;
 		/** Out: the pile is animating. The page lays itself out around a live pile differently. */
 		live?: boolean;
 	} = $props();
@@ -159,6 +162,13 @@
 			world?.destroy();
 			world = null;
 		};
+	});
+
+	// Sift while a question is out; settle when the answer lands.
+	$effect(() => {
+		if (!live || !world) return;
+		world.setStirring(pending);
+		run();
 	});
 
 	// Hand the world the balls it should hold, their sizes, and how hard each is lifted.
