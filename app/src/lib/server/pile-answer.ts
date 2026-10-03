@@ -69,8 +69,8 @@ export class AnswerCache {
 /**
  * A spending limit on uncached questions, for the whole site.
  *
- * Sixty a minute, refilled continuously. One question is three requests of ~13k tokens, about a
- * fifth of a cent, so the cap is not about a normal evening; it is about somebody scripting the
+ * Sixty a minute, refilled continuously. One question is two requests of ~17k tokens, about a
+ * seventh of a cent, so the cap is not about a normal evening; it is about somebody scripting the
  * endpoint with random strings to run up a bill. Past it the pile answers by text until the
  * bucket refills, which is a worse answer and not a broken page.
  */

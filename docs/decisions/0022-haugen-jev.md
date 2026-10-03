@@ -22,7 +22,7 @@ event under 0.15.
 
 ## Decision
 
-**`/haugen` shows the next 150 events as a pile of round thumbnails. A question is put to Jev
+**`/haugen` shows the next 120 events as a pile of round thumbnails. A question is put to Jev
 through the verifier, and the events it answers yes to float up.**
 
 ### Where the call happens
@@ -87,6 +87,9 @@ prints it under the box and in full below the pile, with a histogram of every sc
 floats things for no visible reason asks to be trusted; this shows the working instead.
 
 ## Consequences
+
+- The pile was 150 at first and is 120 (same day): tokens are paid per event asked about, so the
+  pile size is the price of a question. 120 is two requests of sixty instead of three.
 
 - One stored secret. `TYPESAFE_API_KEY` is a GitHub secret passed to `infra/verifier.bicep`, which
   creates the Container App secret only when it is non-empty.
