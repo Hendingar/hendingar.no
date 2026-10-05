@@ -529,3 +529,40 @@ describe('the Bømlo programme', () => {
 		expect(bomloMapped.length).toBeGreaterThan(bomloUpstream.length);
 	});
 });
+
+describe('the cinema programme', () => {
+	/*
+	 * Stord kino: the same site's `kinoprogram` page, committed 2026-10-05. Fifteen films, forty-seven
+	 * screenings, and two `mc-` date markers that are not screenings at all.
+	 */
+	const kino = instanceBySlug('stord-kino')!;
+	const films = extractEvents(
+		JSON.parse(
+			readFileSync(
+				fileURLToPath(new URL('./fixtures/stord-kinoprogram.json', import.meta.url)),
+				'utf8'
+			)
+		)
+	);
+	const screenings = mapEvents(films, kino);
+
+	it('maps every screening, and nothing that is only a date', () => {
+		expect(screenings.filter(isFailure)).toEqual([]);
+		expect(screenings).toHaveLength(45);
+	});
+
+	it('files a film as a show, whatever shelf the cinema puts it on', () => {
+		// The upstream category is "På kino nå" on every row: a shelf, not a kind of thing.
+		expect(films.every((f) => f.category === 'På kino nå')).toBe(true);
+		for (const s of screenings) if (!isFailure(s)) expect(s.category).toBe('show');
+	});
+
+	it('still rejects an untimed entry on a day with no timed screening', () => {
+		const [film] = films;
+		const lone = mapEvents(
+			[{ ...film!, tickets: [{ id: 'mc-1', date: '2026-12-24', location: null, link: null }] }],
+			kino
+		);
+		expect(lone.filter(isFailure)).toHaveLength(1);
+	});
+});

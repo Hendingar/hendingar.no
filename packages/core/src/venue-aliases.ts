@@ -261,6 +261,25 @@ export const VENUE_ALIASES: readonly VenueAlias[] = [
 		place: 'Stord bibliotek',
 		evidence:
 			'"Språkkafé" ×4 is at Biblioteket in both calendars at the same minutes, and stord-kulturhus already resolves Biblioteket to Stord bibliotek.'
+	},
+
+	/*
+	 * Stord kino: the cinema programme on the same site as `stord-kulturhus`, screening in the
+	 * same two halls under the same names. Its twin entries, for the reason the Bømlo block gives.
+	 */
+	{
+		source: 'stord-kino',
+		name: 'Storsalen',
+		place: 'Stord kulturhus',
+		evidence:
+			'The cinema page of stord.kulturhus.no, naming the house hall as the house programme does.'
+	},
+	{
+		source: 'stord-kino',
+		name: 'Småsalen',
+		place: 'Stord kulturhus',
+		evidence:
+			'The cinema page of stord.kulturhus.no, naming the small hall as the house programme does.'
 	}
 ];
 
