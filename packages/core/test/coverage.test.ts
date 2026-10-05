@@ -3,6 +3,7 @@ import {
 	COVERED_MUNICIPALITIES,
 	COVERED_PLACES,
 	classifyCoverage,
+	coveredMunicipalitiesIn,
 	coveredMunicipalitiesSentence,
 	placeTokens
 } from '../src/coverage.ts';
@@ -147,6 +148,32 @@ describe('the place lists themselves', () => {
 
 	it('does not list a word that also means "we cannot tell"', () => {
 		expect(classifyCoverage({ municipality: 'Sunnhordland' }).state).toBe('unknown');
+	});
+});
+
+describe('coveredMunicipalitiesIn', () => {
+	it('names the one municipality a title points at', () => {
+		// The Enestående familier Stord group's own title for a trip to Fitjar. "Stordgruppa" is a
+		// group, not a place, and must not read as Stord — tokens, not substrings.
+		expect(
+			coveredMunicipalitiesIn(
+				'Stordgruppa inviterer til visning på Engesund fiskeoppdrett lørdag 24.oktober 2026'
+			)
+		).toEqual(['Fitjar']);
+	});
+
+	it('reports every municipality named, so a caller can refuse to pick between them', () => {
+		expect(coveredMunicipalitiesIn('Engesund i Fitjar, med buss frå Leirvik')).toEqual([
+			'Fitjar',
+			'Stord'
+		]);
+	});
+
+	it('names nothing for a street, a city we do not cover, or nothing at all', () => {
+		// `Fitjarsjøen` is one token and is not `Fitjar` — the Stordal rule, from the other side.
+		expect(coveredMunicipalitiesIn('Fitjarsjøen 2')).toEqual([]);
+		expect(coveredMunicipalitiesIn('Åsane kulturhus')).toEqual([]);
+		expect(coveredMunicipalitiesIn(null)).toEqual([]);
 	});
 });
 
