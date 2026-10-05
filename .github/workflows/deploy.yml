@@ -34,22 +34,38 @@ env:
 jobs:
   deploy:
     # workflow_run fires on failure too; only deploy green commits.
-    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    #
+    # And only a push to main in THIS repository. `branches: [main]` above matches the triggering
+    # run's head branch by name, so a fork's pull request from a branch it called `main` passes it
+    # — and this job holds the OIDC credential. The event and repository checks are what make the
+    # filter mean what it says.
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.event == 'push' &&
+       github.event.workflow_run.head_repository.full_name == github.repository)
     runs-on: ubuntu-latest
+    env:
+      # The commit CI actually verified. For workflow_run, `github.sha` is main's HEAD *now*: if a
+      # second merge lands while the first one's CI finishes, the first green result would build
+      # and migrate the second, unverified. Its own green run deploys it a few minutes later.
+      DEPLOY_SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ env.DEPLOY_SHA }}
 
       # `workflow_run` is already pinned to main, but `workflow_dispatch` accepts any ref — so
       # without this, a dev branch could be deployed to the environment hendingar.no serves by
       # picking it from a dropdown. Iterating on a branch must never be able to reach Azure.
       - name: Refuse to deploy anything but main
         run: |
-          if [ "${{ github.ref }}" != "refs/heads/main" ]; then
-            echo "::error::Deploy runs from main only — this ref is ${{ github.ref }}."
+          if [ "$GITHUB_REF" != "refs/heads/main" ]; then
+            echo "::error::Deploy runs from main only — this ref is $GITHUB_REF."
             exit 1
           fi
 
-      - uses: azure/login@v2
+      - uses: azure/login@7184910d9eb2b1c5e48f7073824a90609bb9b6d6 # v2
         with:
           client-id: ${{ vars.AZURE_CLIENT_ID }}
           tenant-id: ${{ vars.AZURE_TENANT_ID }}
@@ -59,13 +75,17 @@ jobs:
       # what the live app is running.
       - name: Deploy platform
         id: infra
+        # Secrets reach scripts as environment, never pasted into the script text: a value with a
+        # quote or a `$(` in it would otherwise be shell syntax.
+        env:
+          POSTGRES_ADMIN_PASSWORD: ${{ secrets.POSTGRES_ADMIN_PASSWORD }}
         run: |
           az deployment group create \
             --resource-group "$RG" \
             --name "platform-${{ github.run_id }}" \
             --template-file infra/main.bicep \
             --parameters appName="$APP" env="$ENV_NAME" \
-              postgresAdminPassword="${{ secrets.POSTGRES_ADMIN_PASSWORD }}" \
+              postgresAdminPassword="$POSTGRES_ADMIN_PASSWORD" \
             --query properties.outputs -o json > outputs.json
           for k in acrName acrLoginServer postgresFqdn postgresAdminUserOut managedEnvironmentId \
                    runtimeIdentityId runtimeIdentityClientId openAiEndpoint openAiDeployment \
@@ -78,7 +98,7 @@ jobs:
         run: |
           az acr build \
             --registry "${{ steps.infra.outputs.acrName }}" \
-            --image "hendingar:${{ github.sha }}" \
+            --image "hendingar:${{ env.DEPLOY_SHA }}" \
             --image "hendingar:latest" \
             --file Dockerfile .
 
@@ -86,7 +106,7 @@ jobs:
         run: |
           az acr build \
             --registry "${{ steps.infra.outputs.acrName }}" \
-            --image "hendingar-verifier:${{ github.sha }}" \
+            --image "hendingar-verifier:${{ env.DEPLOY_SHA }}" \
             --image "hendingar-verifier:latest" \
             --file services/verifier/Dockerfile services/verifier
 
@@ -107,6 +127,7 @@ jobs:
         env:
           PGHOST: ${{ steps.infra.outputs.postgresFqdn }}
           PGUSER: ${{ steps.infra.outputs.postgresAdminUserOut }}
+          PW: ${{ secrets.POSTGRES_ADMIN_PASSWORD }}
         run: |
           corepack enable
           pnpm install --frozen-lockfile
@@ -121,7 +142,7 @@ jobs:
           pnpm --filter @hendingar/core exec vitest run test/migration-safety.test.ts
           # Build the URL in python so special characters in the password are percent-encoded, and
           # take the username from the deployment output rather than hardcoding it.
-          DATABASE_URL=$(PW="${{ secrets.POSTGRES_ADMIN_PASSWORD }}" python3 -c \
+          DATABASE_URL=$(python3 -c \
             'import os,urllib.parse as u; print("postgres://%s:%s@%s:5432/hendingar?sslmode=require" % (u.quote(os.environ["PGUSER"], safe=""), u.quote(os.environ["PW"], safe=""), os.environ["PGHOST"]))')
           export DATABASE_URL
           pnpm db:migrate
@@ -153,20 +174,22 @@ jobs:
       # only resolves from inside the Container Apps environment — it is not a public endpoint.
       - name: Deploy verifier
         id: verifier
+        env:
+          TYPESAFE_API_KEY: ${{ secrets.TYPESAFE_API_KEY }}
         run: |
           az deployment group create \
             --resource-group "$RG" \
             --name "verifier-${{ github.run_id }}" \
             --template-file infra/verifier.bicep \
             --parameters appName="$APP" env="$ENV_NAME" \
-              containerImage="${{ steps.infra.outputs.acrLoginServer }}/hendingar-verifier:${{ github.sha }}" \
+              containerImage="${{ steps.infra.outputs.acrLoginServer }}/hendingar-verifier:${{ env.DEPLOY_SHA }}" \
               acrLoginServer="${{ steps.infra.outputs.acrLoginServer }}" \
               managedEnvironmentId="${{ steps.infra.outputs.managedEnvironmentId }}" \
               runtimeIdentityId="${{ steps.infra.outputs.runtimeIdentityId }}" \
               runtimeIdentityClientId="${{ steps.infra.outputs.runtimeIdentityClientId }}" \
               openAiEndpoint="${{ steps.infra.outputs.openAiEndpoint }}" \
               openAiDeployment="${{ steps.infra.outputs.openAiDeployment }}" \
-              typesafeApiKey="${{ secrets.TYPESAFE_API_KEY }}" \
+              typesafeApiKey="$TYPESAFE_API_KEY" \
             --query properties.outputs -o json > verifier-outputs.json
           echo "url=$(jq -r .verifierUrl.value verifier-outputs.json)" >> "$GITHUB_OUTPUT"
 
@@ -190,19 +213,21 @@ jobs:
 
       - name: Deploy application
         id: app
+        env:
+          POSTGRES_ADMIN_PASSWORD: ${{ secrets.POSTGRES_ADMIN_PASSWORD }}
         run: |
           az deployment group create \
             --resource-group "$RG" \
             --name "app-${{ github.run_id }}" \
             --template-file infra/app.bicep \
             --parameters appName="$APP" env="$ENV_NAME" \
-              containerImage="${{ steps.infra.outputs.acrLoginServer }}/hendingar:${{ github.sha }}" \
+              containerImage="${{ steps.infra.outputs.acrLoginServer }}/hendingar:${{ env.DEPLOY_SHA }}" \
               acrLoginServer="${{ steps.infra.outputs.acrLoginServer }}" \
               managedEnvironmentId="${{ steps.infra.outputs.managedEnvironmentId }}" \
               runtimeIdentityId="${{ steps.infra.outputs.runtimeIdentityId }}" \
               postgresFqdn="${{ steps.infra.outputs.postgresFqdn }}" \
               postgresAdminUser="${{ steps.infra.outputs.postgresAdminUserOut }}" \
-              postgresAdminPassword="${{ secrets.POSTGRES_ADMIN_PASSWORD }}" \
+              postgresAdminPassword="$POSTGRES_ADMIN_PASSWORD" \
               verifierUrl="${{ steps.verifier.outputs.url }}" \
               posterContainerUrl="${{ steps.infra.outputs.postersContainerUrl }}" \
               customDomains="$(cat domains.json)" \
@@ -269,7 +294,7 @@ jobs:
             echo "### Deploy (dev)"
             echo ""
             echo "- App: ${{ steps.app.outputs.url }}"
-            echo "- Image: \`hendingar:${{ github.sha }}\`"
+            echo "- Image: \`hendingar:${{ env.DEPLOY_SHA }}\`"
             echo "- Verifier (internal): \`${{ steps.verifier.outputs.url }}\`"
             echo "- Postgres: \`${{ steps.infra.outputs.postgresFqdn }}\`"
           } >> "$GITHUB_STEP_SUMMARY"

@@ -191,13 +191,16 @@ echo "  $MY_IP allowed as $RULE (removed when this script exits)"
 #
 # pg_dump refuses a server newer than itself, the deployed server is 17, and nobody should have to
 # keep a matching client on their laptop to get test data. The container is already running PG17
-# tooling and can reach both the internet and its own socket. Passing the password with `-e` also
-# keeps it out of the host's process list, where a URL argument would sit in plain sight.
+# tooling and can reach both the internet and its own socket.
+#
+# The password goes in on stdin. `-e PGPASSWORD=…` was thought to keep it out of the host's process
+# list, but the value is part of `container exec`'s own argv, which `ps` shows to every user on the
+# machine for as long as the dump runs. Read inside the container, it is never an argument at all.
 DUMP=/tmp/hendingar-pull.dump
 
 step "Dumping the deployed database"
-container exec -e PGPASSWORD="$POSTGRES_ADMIN_PASSWORD" -e PGSSLMODE=require "$NAME" \
-  pg_dump \
+printf '%s\n' "$POSTGRES_ADMIN_PASSWORD" | container exec -i -e PGSSLMODE=require "$NAME" \
+  sh -c 'IFS= read -r PGPASSWORD && export PGPASSWORD && exec pg_dump "$@"' pg_dump \
   --host="$FQDN" --username="$REMOTE_USER" --dbname="$REMOTE_DB" \
   --format=custom --no-owner --no-privileges --file="$DUMP"
 echo "  $(container exec "$NAME" sh -c "du -h $DUMP | cut -f1") dumped"
