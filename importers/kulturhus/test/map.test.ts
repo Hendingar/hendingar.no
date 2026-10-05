@@ -411,7 +411,13 @@ describe('chunkPathFor', () => {
 	});
 
 	it('derives the page name from the endpoint', () => {
-		expect(pageSlugFor(bomlo)).toBe('kulturprogram');
+		// A chunk-mode instance, as Bømlo was until its rebuild: the endpoint is the HTML page.
+		const chunkSite = {
+			...bomlo,
+			pageData: 'chunk' as const,
+			endpoint: 'https://bomlokulturhus.no/kulturprogram/'
+		};
+		expect(pageSlugFor(chunkSite)).toBe('kulturprogram');
 	});
 });
 
@@ -564,5 +570,25 @@ describe('the cinema programme', () => {
 			kino
 		);
 		expect(lone.filter(isFailure)).toHaveLength(1);
+	});
+});
+
+describe('Bømlo on Gatsby 5', () => {
+	// The site's page data after its 2026-10-05 rebuild, which replaced the webpack chunk.
+	const programme = extractEvents(
+		JSON.parse(
+			readFileSync(
+				fileURLToPath(new URL('./fixtures/bomlo-kulturprogram.json', import.meta.url)),
+				'utf8'
+			)
+		)
+	);
+
+	it('reads the programme from page data, as Stord does', () => {
+		expect(bomlo.pageData).toBe('json');
+		expect(programme).toHaveLength(22);
+		const showings = mapEvents(programme, bomlo);
+		expect(showings.filter(isFailure)).toEqual([]);
+		expect(showings).toHaveLength(41);
 	});
 });
