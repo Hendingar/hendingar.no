@@ -56,6 +56,23 @@ export const ORGANISERS: readonly BillettoOrganiser[] = [
 		scheduleCron: '0 5 * * *',
 		iconUrl: 'https://billetto.no/favicon.ico',
 		trusted: true
+	},
+	{
+		/*
+		 * A concert barn in Urangsvåg, Bømlo, selling its own programme. The profile has no
+		 * display name at all — the page reads "arrangert av ." — so the handle is the account's
+		 * uuid and the name is the venue every one of its events is held at. The id was read off
+		 * the profile page's own search request on 2026-10-05.
+		 */
+		slug: 'billetto-loo-pa-gasland',
+		name: 'Løo på Gåsland',
+		handle: '165a2d5c-e38f-470d-9a54-2d887c75673e',
+		organizerId: 2792292,
+		region: 'Sunnhordland',
+		timezone: 'Europe/Oslo',
+		scheduleCron: '0 5 * * *',
+		iconUrl: 'https://billetto.no/favicon.ico',
+		trusted: true
 	}
 ];
 
