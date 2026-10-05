@@ -8,6 +8,7 @@ describe('platformOf', () => {
 		expect(platformOf('dnt-stord-fitjar')?.slug).toBe('dnt');
 		expect(platformOf('luma-tcw')?.slug).toBe('luma');
 		expect(platformOf('dnt-bomlo')?.slug).toBe('dnt');
+		expect(platformOf('ticketco-frugard')?.slug).toBe('ticketco');
 	});
 
 	it('leaves a source that stands on its own alone', () => {

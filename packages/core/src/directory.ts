@@ -169,6 +169,12 @@ export const SOURCE_PLATFORMS: readonly SourcePlatform[] = [
 		name: 'The Events Calendar',
 		url: 'https://theeventscalendar.com',
 		note: 'Ein kalendermodul svært mange nettstader køyrer på WordPress. Vi hentar frå kvar stad for seg, rett frå deira eigen kalender, så hendinga høyrer heime hos den som arrangerer.'
+	},
+	{
+		slug: 'ticketco',
+		name: 'TicketCo',
+		url: 'https://ticketco.events',
+		note: 'Ein billettplattform der arrangøren får sin eigen billettbutikk. Vi hentar frå kvar butikk for seg, så hendinga høyrer heime hos den som står bak.'
 	}
 ];
 
