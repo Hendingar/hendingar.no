@@ -1,7 +1,7 @@
 import { command, form, query } from '$app/server';
 import { invalid } from '@sveltejs/kit';
 import { z } from 'zod';
-import { and, asc, desc, eq, gte, inArray, isNull, lte, ne, or } from 'drizzle-orm';
+import { and, asc, desc, eq, gte, inArray, isNull, lte, ne, or, sql } from 'drizzle-orm';
 import {
 	eventContributions,
 	eventSeries,
@@ -1247,7 +1247,10 @@ async function contributeToEvent(
 		const [organizer] = await database
 			.insert(organizers)
 			.values({ name: submission.organizerName, slug: slugify(submission.organizerName) })
-			.onConflictDoUpdate({ target: organizers.slug, set: { name: submission.organizerName } })
+			// Never renames a shared row: `slugify` folds case and punctuation, so "STORD KULTURHUS!!"
+			// would otherwise relabel the organiser on every event it already runs. The no-op update
+			// is only there so `returning` hands back the existing id.
+			.onConflictDoUpdate({ target: organizers.slug, set: { name: sql`${organizers.name}` } })
 			.returning({ id: organizers.id });
 		organizerId = organizer?.id;
 	}
@@ -1610,11 +1613,16 @@ export const submitEvent = form(eventFormSchema, async (submission): Promise<Sub
 			municipality: submission.municipality,
 			geocodeStatus: 'pending'
 		})
+		/*
+		 * A venue is shared by every event held there, imported ones included, and this runs before
+		 * the verdict — so whatever it writes, a declined or `shady` submission has written too.
+		 * It used to overwrite the municipality (or the name), which let anybody relabel Stord
+		 * kulturhus on every card, OG image and filter with a single rejected submission. Now it
+		 * only fills a municipality nobody has recorded, and never touches the name.
+		 */
 		.onConflictDoUpdate({
 			target: venues.slug,
-			set: submission.municipality
-				? { municipality: submission.municipality }
-				: { name: submission.venueName }
+			set: { municipality: sql`coalesce(${venues.municipality}, excluded.municipality)` }
 		})
 		.returning({ id: venues.id });
 
@@ -1623,7 +1631,10 @@ export const submitEvent = form(eventFormSchema, async (submission): Promise<Sub
 		const [organizer] = await database
 			.insert(organizers)
 			.values({ name: submission.organizerName, slug: slugify(submission.organizerName) })
-			.onConflictDoUpdate({ target: organizers.slug, set: { name: submission.organizerName } })
+			// Never renames a shared row: `slugify` folds case and punctuation, so "STORD KULTURHUS!!"
+			// would otherwise relabel the organiser on every event it already runs. The no-op update
+			// is only there so `returning` hands back the existing id.
+			.onConflictDoUpdate({ target: organizers.slug, set: { name: sql`${organizers.name}` } })
 			.returning({ id: organizers.id });
 		organizerId = organizer?.id;
 	}

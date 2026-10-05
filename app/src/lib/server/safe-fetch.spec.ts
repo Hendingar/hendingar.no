@@ -42,6 +42,23 @@ describe('isBlockedAddress', () => {
 		expect(isBlockedAddress('::ffff:10.0.0.1')).toBe(true);
 	});
 
+	it("blocks the less common spellings of v4 inside v6, and Azure's host agent", () => {
+		for (const address of [
+			'::7f00:1', // ::127.0.0.1, v4-compatible, as Node prints it
+			'::127.0.0.1',
+			'::ffff:0:7f00:1', // SIIT
+			'2002:7f00:1::1', // 6to4 wrapping 127.0.0.1
+			'168.63.129.16', // WireServer
+			'203.0.113.7',
+			'198.51.100.7'
+		]) {
+			expect(isBlockedAddress(address), address).toBe(true);
+		}
+		// And an ordinary public address of each family still passes.
+		expect(isBlockedAddress('93.184.216.34')).toBe(false);
+		expect(isBlockedAddress('2a00:1450:400f:80d::200e')).toBe(false);
+	});
+
 	it('blocks multicast, broadcast and reserved space', () => {
 		for (const address of ['224.0.0.1', '239.1.1.1', '255.255.255.255', 'ff02::1']) {
 			expect(isBlockedAddress(address), address).toBe(true);

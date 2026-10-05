@@ -18,7 +18,7 @@ describe('escapeText', () => {
 	});
 
 	it('escapes the separators that would otherwise end the value', () => {
-		expect(escapeText('Bergen, Stord; Bømlo')).toBe('Bergen\\, Stord\; Bømlo');
+		expect(escapeText('Bergen, Stord; Bømlo')).toBe('Bergen\\, Stord\\; Bømlo');
 	});
 
 	it('turns a real newline into a literal one', () => {
@@ -125,7 +125,7 @@ describe('buildIcal', () => {
 	it('escapes a description that would otherwise break the file', () => {
 		const ics = buildIcal({ ...base, description: 'Gratis, open for alle; ta med sekk' }, NOW);
 		const unfolded = ics.replace(/\r\n /g, '');
-		expect(unfolded).toContain('DESCRIPTION:Gratis\\, open for alle\; ta med sekk');
+		expect(unfolded).toContain('DESCRIPTION:Gratis\\, open for alle\\; ta med sekk');
 		// One DESCRIPTION property, not three fragments.
 		expect(unfolded.match(/^DESCRIPTION:/gm)).toHaveLength(1);
 	});

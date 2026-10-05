@@ -244,8 +244,15 @@ describe('jsonLdScript', () => {
 		 */
 		const out = jsonLdScript({ '@type': 'Event', name: 'Slutt </script> her' });
 		expect(out).not.toContain('</script>');
-		expect(out).toContain('<\\/script>');
-		expect(JSON.parse(out.replace(/<\\\//g, '</')).name).toBe('Slutt </script> her');
+		// Not one angle bracket or ampersand reaches the HTML parser, and JSON reads them back.
+		expect(out).not.toMatch(/[<>&]/);
+		expect(JSON.parse(out).name).toBe('Slutt </script> her');
+	});
+
+	it('cannot open an HTML comment that swallows the page', () => {
+		const out = jsonLdScript({ '@type': 'Event', name: '<!--<script> & meir' });
+		expect(out).not.toMatch(/[<>&]/);
+		expect(JSON.parse(out).name).toBe('<!--<script> & meir');
 	});
 
 	it('has no raw markup left to escape by the time a title reaches it', () => {

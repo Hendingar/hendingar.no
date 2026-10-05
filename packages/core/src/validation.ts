@@ -627,8 +627,13 @@ export const eventFormSchema = z
 			.regex(/^\d+$/, 'må vere ein id')
 			.optional()
 			.or(z.literal('').transform(() => undefined)),
-		/** IANA zone the wall-clock time is in. Defaults to the pilot region. */
-		timeZone: z.string().default('Europe/Oslo')
+		/**
+		 * IANA zone the wall-clock time is in. Defaults to the pilot region.
+		 *
+		 * Checked, because it arrives from a browser and goes straight into `Intl`: an unknown zone
+		 * is a RangeError there, which surfaced as a 500 rather than an issue on the form.
+		 */
+		timeZone: z.string().max(64).refine(isTimeZone, 'ukjend tidssone').default('Europe/Oslo')
 	})
 	.refine((v) => !v.endTime || v.endTime > v.startTime, {
 		message: 'sluttid må vere etter starttid',
@@ -672,3 +677,12 @@ export const eventFormSchema = z
 	});
 
 export type EventForm = z.infer<typeof eventFormSchema>;
+
+function isTimeZone(value: string): boolean {
+	try {
+		new Intl.DateTimeFormat('en', { timeZone: value });
+		return true;
+	} catch {
+		return false;
+	}
+}

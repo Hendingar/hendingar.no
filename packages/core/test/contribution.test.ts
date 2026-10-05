@@ -71,6 +71,32 @@ describe('planContribution', () => {
 		expect(plan.fill).toEqual(['posterUrl']);
 	});
 
+	it("never fills a ticket link that points away from the event's own source", () => {
+		// A ticket link is where readers pay. On a browser's say-so, a stranger's link would be a
+		// phishing page behind our "Billettar" button.
+		const canonical = { sourceUrl: 'https://www.stordkulturhus.no/program/rolfsnes', ctaUrl: null };
+		expect(
+			planContribution(canonical, { ctaUrl: 'https://billett-svindel.example/pay' }).fill
+		).toEqual([]);
+		expect(
+			planContribution({ sourceUrl: null, ctaUrl: null }, { ctaUrl: 'https://tikkio.com/x' }).fill
+		).toEqual([]);
+		// Nor can the contribution bring its own source along to vouch for its own ticket link.
+		expect(
+			planContribution(
+				{ sourceUrl: null, ctaUrl: null },
+				{ sourceUrl: 'https://scam.example/e', ctaUrl: 'https://scam.example/pay' }
+			).fill
+		).toEqual(['sourceUrl']);
+	});
+
+	it('fills a ticket link on the same site as the source', () => {
+		const canonical = { sourceUrl: 'https://www.stordkulturhus.no/program/rolfsnes', ctaUrl: null };
+		expect(
+			planContribution(canonical, { ctaUrl: 'https://stordkulturhus.no/billettar/rolfsnes' }).fill
+		).toEqual(['ctaUrl']);
+	});
+
 	it('offers nothing when the submission adds nothing', () => {
 		const plan = planContribution(
 			{ posterUrl: null },

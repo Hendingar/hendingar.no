@@ -225,7 +225,14 @@ export const listCollection = query(async () => {
 		pendingCount: pending?.total ?? 0,
 		submissions: submissions.map((row) => ({
 			...row,
-			title: publicSubmissionTitle(row.status, row.title)
+			title: publicSubmissionTitle(row.status, row.title),
+			/*
+			 * The title was never the only text a sender controls. The venue is a free-text box, and
+			 * the notes are a model's summary of the submission, which quotes it when explaining
+			 * why it is spam — so withholding the title alone republished the advert one column over.
+			 */
+			venueName: publicSubmissionTitle(row.status, row.venueName),
+			notes: publicSubmissionTitle(row.status, row.notes)
 		})),
 		/** Per check, what it has decided — and for the two that call a model, what that cost. */
 		checks: checkStats,

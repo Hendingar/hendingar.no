@@ -176,6 +176,10 @@
 	 * URL; repeating this one there would credit the same link twice under two different headings.
 	 */
 	const submittedSource = $derived(safeHttpUrl(event.sourceUrl));
+	// The ticket button and the source links are importer- and contributor-supplied too. Every
+	// importer validates its own, but a `javascript:` row from before that, or from the next
+	// importer that forgets, must not become a link on our page.
+	const ctaUrl = $derived(safeHttpUrl(event.ctaUrl));
 	/**
 	 * A weekly activity's timetable, in place of the start and end it does not really have.
 	 *
@@ -470,13 +474,13 @@
 					</a>
 				</p>
 
-				{#if event.ctaUrl}
+				{#if ctaUrl}
 					<!-- Outbound. We never sell tickets — see the README non-goals. -->
 					<a
 						class="btn btn--solid"
-						href={event.ctaUrl}
+						href={ctaUrl}
 						rel="noopener nofollow"
-						onclick={() => outbound(event.ctaUrl, 'cta')}>Billettar</a
+						onclick={() => outbound(ctaUrl, 'cta')}>Billettar</a
 					>
 				{/if}
 
@@ -493,13 +497,12 @@
 						<p class="label">{event.reportedBy.length > 1 ? 'Kjelder' : 'Kjelde'}</p>
 						<ul class="sources">
 							{#each event.reportedBy as src (src.slug)}
+								{@const eventUrl = safeHttpUrl(src.eventUrl)}
 								<li>
 									<SourceIcon src={src.iconUrl} name={src.name} size="1rem" />
-									{#if src.eventUrl}
-										<a
-											href={src.eventUrl}
-											rel="noopener"
-											onclick={() => outbound(src.eventUrl, 'source')}>{src.attribution}</a
+									{#if eventUrl}
+										<a href={eventUrl} rel="noopener" onclick={() => outbound(eventUrl, 'source')}
+											>{src.attribution}</a
 										>
 									{:else}
 										<a
