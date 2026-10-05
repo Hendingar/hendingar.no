@@ -42,7 +42,29 @@ export const SITES: readonly AfaSite[] = [
 		attribution: 'Aktivitet for Alle — Bømlo',
 		timezone: 'Europe/Oslo',
 		scheduleCron: '0 5 * * *',
-		iconUrl: 'https://bomlo.aktivitetforalle.no/favicon.ico',
+		/*
+		 * Not `/favicon.ico`: the portal became a single-page app, which answers every path it does
+		 * not know with its own HTML — so that address is a 200 that is not an image. The icon the
+		 * page itself links is this one.
+		 */
+		iconUrl: 'https://bomlo.aktivitetforalle.no/assets/img/favicon.png',
+		trusted: true,
+		listingIsComplete: true
+	},
+	{
+		/*
+		 * Stord, on the same platform and the same API. Measured 2026-10-05: 82 public rows, 80 of
+		 * them dated `arrangement`s — most in the kulturhus halls, which consolidation folds into
+		 * the rows other importers already hold — and two weekly `activity`s, one of them current.
+		 */
+		slug: 'stord-aktivitetforalle',
+		name: 'Aktivitet for Alle — Stord',
+		origin: 'https://stord.aktivitetforalle.no',
+		region: 'Sunnhordland',
+		attribution: 'Aktivitet for Alle — Stord',
+		timezone: 'Europe/Oslo',
+		scheduleCron: '0 5 * * *',
+		iconUrl: 'https://stord.aktivitetforalle.no/assets/img/favicon.png',
 		trusted: true,
 		listingIsComplete: true
 	}

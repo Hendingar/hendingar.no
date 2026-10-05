@@ -216,6 +216,51 @@ export const VENUE_ALIASES: readonly VenueAlias[] = [
 		place: 'Bømlo Kulturhus',
 		evidence:
 			'"Pubkveld med Bømlo kormix" 24 Oct 17:00Z is the same row bomlo-aktivitetforalle lists in Foajéen.'
+	},
+
+	/*
+	 * Stord's municipal activity calendar — the same platform as Bømlo's, and like Bømlo's it
+	 * writes the culture house's rooms by name. It writes them exactly as `stord-kulturhus` does,
+	 * which is why every entry there needs its twin here: aliasing one of two calendars that agree
+	 * turns their match into a mismatch (see the Bømlo block above).
+	 *
+	 * Evidence from `pnpm consolidate` on 2026-10-05, run over both sources before these entries
+	 * existed: it refused "Ulven (og geitekillingane)" ×4 across Stord VGS konsertsal, "Språkkafé" ×4
+	 * across Biblioteket and "Husflidslagdagen" across Vestibylen — the same names, at the same
+	 * minute, split only because one side resolved and the other did not.
+	 */
+	{
+		source: 'stord-aktivitetforalle',
+		name: 'Storsalen',
+		place: 'Stord kulturhus',
+		evidence:
+			'The same room name stord-kulturhus writes; "Songlaget Stordabuen: LET\'S GET LOUD" is listed by both at the same minutes.'
+	},
+	{
+		source: 'stord-aktivitetforalle',
+		name: 'Småsalen',
+		place: 'Stord kulturhus',
+		evidence: 'The small hall, written as stord-kulturhus writes it.'
+	},
+	{
+		source: 'stord-aktivitetforalle',
+		name: 'Vestibylen',
+		place: 'Stord kulturhus',
+		evidence: '"Husflidslagdagen" is in Vestibylen in both calendars at the same minute.'
+	},
+	{
+		source: 'stord-aktivitetforalle',
+		name: 'Stord VGS konsertsal',
+		place: 'Stord vidaregåande skule',
+		evidence:
+			'"Ulven (og geitekillingane)" ×4 is at Stord VGS konsertsal in both calendars at the same minutes.'
+	},
+	{
+		source: 'stord-aktivitetforalle',
+		name: 'Biblioteket',
+		place: 'Stord bibliotek',
+		evidence:
+			'"Språkkafé" ×4 is at Biblioteket in both calendars at the same minutes, and stord-kulturhus already resolves Biblioteket to Stord bibliotek.'
 	}
 ];
 
