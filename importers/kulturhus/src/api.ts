@@ -118,9 +118,16 @@ export const INSTANCES: readonly KulturhusInstance[] = [
 		 */
 		slug: 'bomlo-kulturhus',
 		name: 'Bømlo kulturhus',
-		url: 'https://bomlokulturhus.no/kulturprogram/',
-		endpoint: 'https://bomlokulturhus.no/kulturprogram/',
-		pageData: 'chunk',
+		url: 'https://bomlokulturhus.no/kulturprogram',
+		/*
+		 * `json` since 2026-10-05, when the site moved to Gatsby 5 and the chunk the old build
+		 * preloaded stopped existing — the run failed with "no path---kulturprogram-<hash>.js
+		 * preloaded", which is exactly the loud failure declaring the mode was meant to give. The
+		 * page data is Stord's shape, byte for byte in structure. The chunk reader stays, tested
+		 * against the old fixtures, for the next DX house still on an older build.
+		 */
+		endpoint: 'https://bomlokulturhus.no/page-data/kulturprogram/page-data.json',
+		pageData: 'json',
 		origin: 'https://bomlokulturhus.no',
 		region: 'Sunnhordland',
 		attribution: 'Bømlo kulturhus',
