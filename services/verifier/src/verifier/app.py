@@ -79,7 +79,9 @@ def create_app(
             return await extract_poster(factory, request)
         except Exception as exc:
             log.exception("extraction failed")
-            raise HTTPException(status_code=502, detail=f"extraction failed: {exc}") from exc
+            raise HTTPException(
+                status_code=502, detail=f"extraction failed ({type(exc).__name__})"
+            ) from exc
 
     @app.post("/extract/stream")
     async def extract_streaming(request: ExtractRequest) -> StreamingResponse:
@@ -131,7 +133,9 @@ def create_app(
             return await suggest_crop(factory, request)
         except Exception as exc:
             log.exception("crop suggestion failed")
-            raise HTTPException(status_code=502, detail=f"crop failed: {exc}") from exc
+            raise HTTPException(
+                status_code=502, detail=f"crop failed ({type(exc).__name__})"
+            ) from exc
 
     @app.post("/extract-page", response_model=ExtractedEvent)
     async def extract_page_route(request: ExtractPageRequest) -> ExtractedEvent:
@@ -149,7 +153,9 @@ def create_app(
             return await extract_page(factory, request)
         except Exception as exc:
             log.exception("page extraction failed")
-            raise HTTPException(status_code=502, detail=f"extraction failed: {exc}") from exc
+            raise HTTPException(
+                status_code=502, detail=f"extraction failed ({type(exc).__name__})"
+            ) from exc
 
     @app.post("/verify", response_model=VerifyResponse)
     async def verify(request: VerifyRequest) -> VerifyResponse:
@@ -157,7 +163,9 @@ def create_app(
             return await run_verify(factory, request)
         except Exception as exc:
             log.exception("verification failed")
-            raise HTTPException(status_code=502, detail=f"verification failed: {exc}") from exc
+            raise HTTPException(
+                status_code=502, detail=f"verification failed ({type(exc).__name__})"
+            ) from exc
 
     @app.post("/improve", response_model=ImproveSuggestion)
     async def improve(request: ImproveRequest) -> ImproveSuggestion:
@@ -174,7 +182,9 @@ def create_app(
             return await run_improve(factory, request)
         except Exception as exc:
             log.exception("improvement failed")
-            raise HTTPException(status_code=502, detail=f"improve failed: {exc}") from exc
+            raise HTTPException(
+                status_code=502, detail=f"improve failed ({type(exc).__name__})"
+            ) from exc
 
     @app.post("/improve/stream")
     async def improve_streaming(request: ImproveRequest) -> StreamingResponse:
@@ -228,7 +238,9 @@ def create_app(
             return await run_curate(factory, request)
         except Exception as exc:
             log.exception("curation failed")
-            raise HTTPException(status_code=502, detail=f"curation failed: {exc}") from exc
+            raise HTTPException(
+                status_code=502, detail=f"curation failed ({type(exc).__name__})"
+            ) from exc
 
     @app.post("/haugen", response_model=HaugenRanking)
     async def haugen(request: HaugenRequest) -> HaugenRanking:
