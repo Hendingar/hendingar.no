@@ -143,6 +143,9 @@ test('an event points its card at its own generated image', async ({ request }) 
 	const html = await (await request.get(href!)).text();
 	expect(meta(html, 'og:type')).toBe('article');
 	const image = meta(html, 'og:image');
+	// The seed's posters are same-origin files, so this is the generated card. An event with an
+	// HTTPS poster hotlinked from its source previews that poster instead — that rule is pure and
+	// unit-tested in `src/lib/share-image.spec.ts`.
 	expect(image).toContain(`${href}/og.png`);
 
 	// The calendar file is announced, not only linked: a calendar client handed this page looks

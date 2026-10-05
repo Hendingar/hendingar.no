@@ -25,6 +25,12 @@
 		path,
 		/** An absolute URL. Defaults to the site card at `/og.png`, which every page can use. */
 		image,
+		/**
+		 * The image's size, when we know it. Ours are always 1200×630, which is the default; a
+		 * poster hotlinked from a source is whatever shape its designer chose, and stating a size it
+		 * does not have makes Facebook crop it to the wrong box. `null` leaves the tags out.
+		 */
+		imageSize = { width: 1200, height: 630 },
 		imageAlt = 'hendingar.no — kva skjer i Sunnhordland',
 		/** `article` for one event, `website` for a listing. Nothing else has a meaning here. */
 		type = 'website'
@@ -33,6 +39,7 @@
 		description: string;
 		path: string;
 		image?: string;
+		imageSize?: { width: number; height: number } | null;
 		imageAlt?: string;
 		type?: 'website' | 'article';
 	} = $props();
@@ -54,8 +61,10 @@
 	<meta property="og:description" content={description} />
 	<meta property="og:image" content={cardImage} />
 	<!-- Facebook lays out the card before the image has loaded, and without these it guesses. -->
-	<meta property="og:image:width" content="1200" />
-	<meta property="og:image:height" content="630" />
+	{#if imageSize}
+		<meta property="og:image:width" content={String(imageSize.width)} />
+		<meta property="og:image:height" content={String(imageSize.height)} />
+	{/if}
 	<meta property="og:image:alt" content={imageAlt} />
 
 	<!--
