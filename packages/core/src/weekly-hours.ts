@@ -64,6 +64,29 @@ export const weeklyHoursSchema = z.object({
 });
 export type WeeklyHours = z.infer<typeof weeklyHoursSchema>;
 
+/**
+ * Do two timetables say the same thing?
+ *
+ * By content, not by spelling. Importers build the object in a fixed key order and jsonb hands it
+ * back sorted by key length, so `JSON.stringify` would call every row changed on every run — and an
+ * importer that reports everything "updated" daily buries the one day a source really moved.
+ *
+ * Slot order counts: every importer emits slots in week order, so a reordering is a real change.
+ */
+export function sameWeeklyHours(a: WeeklyHours | null, b: WeeklyHours | null): boolean {
+	if (a === null || b === null) return a === b;
+	return (
+		a.cadence === b.cadence &&
+		a.slots.length === b.slots.length &&
+		a.slots.every(
+			(slot, i) =>
+				slot.weekday === b.slots[i]?.weekday &&
+				slot.from === b.slots[i]?.from &&
+				slot.to === b.slots[i]?.to
+		)
+	);
+}
+
 /** "Tysdag 18:00–19:30". Capitalised, because each one starts a line. */
 function capitalise(word: string): string {
 	return word.charAt(0).toUpperCase() + word.slice(1);
