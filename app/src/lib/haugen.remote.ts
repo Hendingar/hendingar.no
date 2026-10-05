@@ -2,6 +2,7 @@ import { error } from '@sveltejs/kit';
 import { command, query } from '$app/server';
 import { askPileSchema, comparePileSchema } from '@hendingar/core/validation';
 import { searchTermSchema } from '@hendingar/core/search';
+import { plainText } from '@hendingar/core/text';
 import {
 	askPile as answerFromServer,
 	compareOnPile,
@@ -30,7 +31,7 @@ export const pile = query(async () => {
 	const rows = await pileEvents();
 	return rows.map((e) => ({
 		id: e.id,
-		title: e.title,
+		title: plainText(e.title) ?? e.title,
 		category: e.category,
 		startsAt: e.startsAt,
 		venueName: e.venueName,
@@ -48,7 +49,10 @@ export const pile = query(async () => {
 
 const BLURB_CHARS = 140;
 
-function blurb(text: string | null): string | null {
+function blurb(description: string | null): string | null {
+	// Through `plainText` first: some sources hand us entity-encoded markup, and a card that cut
+	// 140 characters out of it showed `&lt;h2&gt;Kva med ein tur…`.
+	const text = plainText(description);
 	if (!text) return null;
 	const flat = text.replace(/\s+/g, ' ').trim();
 	if (flat.length <= BLURB_CHARS) return flat;

@@ -71,3 +71,38 @@ test('reduced motion gets the same pile, standing still', async ({ browser }) =>
 	await expect(page.locator('.pile--live')).toHaveCount(0);
 	await context.close();
 });
+
+test('a ball in the live pile opens its event when clicked', async ({ page }) => {
+	await page.goto('/haugen');
+	await expect(page.locator('.pile--live')).toHaveCount(1);
+	// Picking a ball up captured the pointer on the pile, so the release never reached the link
+	// and nothing in the live pile could be opened.
+	const links = page.locator('.pile--live .ball__link');
+	await expect(links.first()).toBeVisible();
+	// Let the heap land first: a ball picked mid-fall can end up under the box.
+	const layout = () =>
+		links.evaluateAll((all) =>
+			all.map((a) => a.getBoundingClientRect()).map((r) => `${Math.round(r.x)},${Math.round(r.y)}`)
+		);
+	let before = '';
+	await expect
+		.poll(async () => {
+			const now = (await layout()).join(' ');
+			const same = now === before;
+			before = now;
+			return same;
+		})
+		.toBe(true);
+	// A ball the box and the chips are not lying over: the pile runs underneath them.
+	const index = await links.evaluateAll((all) =>
+		all.findIndex((a) => {
+			const r = a.getBoundingClientRect();
+			return a.contains(document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2));
+		})
+	);
+	expect(index).toBeGreaterThanOrEqual(0);
+	const link = links.nth(index);
+	const href = await link.getAttribute('href');
+	await link.click();
+	await expect(page).toHaveURL(new RegExp(`${href}$`));
+});

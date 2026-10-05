@@ -206,14 +206,19 @@
 		card = null;
 		cardTarget = null;
 		world.grab(id, x, y);
-		box?.setPointerCapture(event.pointerId);
 		run();
 	}
 
 	function onpointermove(event: PointerEvent) {
 		if (!held || !world) return;
 		const { x, y } = local(event);
-		if (Math.hypot(x - held.x, y - held.y) > 6) held.moved = true;
+		if (!held.moved && Math.hypot(x - held.x, y - held.y) > 6) {
+			held.moved = true;
+			// Captured only once it is a drag. Captured on press, the release lands on the pile
+			// rather than the link, so the browser never fires a click on it and a ball could
+			// not be opened at all.
+			box?.setPointerCapture(event.pointerId);
+		}
 		world.drag(x, y);
 		run();
 	}
@@ -269,7 +274,6 @@
 				<a
 					class="ball__link"
 					href={eventPath(ball.id, ball.title)}
-					title={label(ball)}
 					aria-label={label(ball)}
 					draggable="false"
 					onclick={() =>
