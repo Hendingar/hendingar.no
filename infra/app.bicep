@@ -122,6 +122,21 @@ resource app 'Microsoft.App/containerApps@2024-03-01' = {
               value: '8080'
             }
             {
+              /*
+               * Who a request is from, for the rate limits in app/src/lib/server/limits.ts.
+               *
+               * The socket's address is Container Apps' proxy, the same for every visitor. The
+               * proxy appends the real client to X-Forwarded-For, and depth 1 takes that last hop
+               * — the one it wrote. Anything to its left was sent by the client and can be forged.
+               */
+              name: 'ADDRESS_HEADER'
+              value: 'x-forwarded-for'
+            }
+            {
+              name: 'XFF_DEPTH'
+              value: '1'
+            }
+            {
               // Empty is a supported state, not a misconfiguration — src/env.ts treats '' as
               // unset and the UI hides the photo shortcut rather than offering a dead button.
               name: 'VERIFIER_URL'

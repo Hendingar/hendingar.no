@@ -109,10 +109,15 @@ const cache = new AnswerCache();
 const budget = new Budget(60, Date.now());
 
 /** The production wiring: the verifier's ranker, the database's text match, the wall clock. */
-export function askPile(q: string, pile: readonly PileEvent[]): Promise<PileAnswer> {
+export function askPile(
+	q: string,
+	pile: readonly PileEvent[],
+	withinVisitorShare = true
+): Promise<PileAnswer> {
 	return answer(q, pile, {
 		cache,
-		budget,
+		// The visitor's share is checked first, so a refused visitor spends nothing of the site's.
+		budget: { take: (now) => withinVisitorShare && budget.take(now) },
 		candidate: candidateOf,
 		rank: rankForQuery,
 		text: textScores,

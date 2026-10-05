@@ -1,5 +1,6 @@
 import { error } from '@sveltejs/kit';
 import { z } from 'zod';
+import { enforce } from '../../../lib/server/limits';
 import { extractPosterStreaming, verifierEnabled } from '../../../lib/server/verifier';
 import type { RequestHandler } from './$types';
 
@@ -38,10 +39,12 @@ function sse(event: string, data: unknown): Uint8Array {
 	return new TextEncoder().encode(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
 }
 
-export const POST: RequestHandler = async ({ request }) => {
+export const POST: RequestHandler = async (event) => {
+	const { request } = event;
 	// Hidden rather than offered as a button that cannot work (CLAUDE.md rule 8) — and the route
 	// says so too, because a control hidden in a page is not a route nobody can reach.
 	if (!verifierEnabled()) error(503, 'Bilettolking er ikkje slått på her.');
+	enforce('photo', event);
 
 	const parsed = readSchema.safeParse(await request.json().catch(() => null));
 	if (!parsed.success) error(400, 'Biletet kunne ikkje lesast. Fyll inn skjemaet under.');

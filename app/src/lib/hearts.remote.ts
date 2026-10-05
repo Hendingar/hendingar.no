@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { and, count, eq, inArray, sql } from 'drizzle-orm';
 import { eventHearts, events, sources, venues } from '@hendingar/core/schema';
 import { db } from './server/db';
+import { enforce } from './server/limits';
 import { withStartsIn } from './starts-in.ts';
 import type { SourceMark } from './server/listing.ts';
 
@@ -41,6 +42,8 @@ const toggleSchema = z.object({
  * one — which would be wrong the moment the same person has the site open in two tabs.
  */
 export const toggleHeart = command(toggleSchema, async ({ eventId, clientId, hearted }) => {
+	// A fresh client id is free to make, so this is what stops one script being a thousand hearts.
+	enforce('heart');
 	const database = db();
 
 	/*

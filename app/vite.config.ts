@@ -15,7 +15,36 @@ export default defineConfig({
 				experimental: { async: true }
 			},
 			adapter: adapter(),
-			experimental: { remoteFunctions: true }
+			experimental: { remoteFunctions: true },
+			/*
+			 * What a page may load, and who may frame it.
+			 *
+			 * The site renders text that strangers wrote — submissions, and fifteen importers'
+			 * worth of other people's HTML descriptions — so the question is not whether an
+			 * escaping bug will one day exist but what it can do when it does. With this, an
+			 * injected <script> does not run: SvelteKit stamps a nonce on its own hydration script
+			 * and nothing else has one. Every script the site needs is its own bundle, so `self` is
+			 * the whole list.
+			 *
+			 * Images are the exception, and deliberately: importers hotlink posters from whatever
+			 * CDN the source uses, and the submit form previews a photo as a `blob:`. Inline styles
+			 * are allowed because Svelte writes `style=` attributes; a style cannot run code.
+			 */
+			csp: {
+				mode: 'auto',
+				directives: {
+					'default-src': ['self'],
+					'script-src': ['self'],
+					'style-src': ['self', 'unsafe-inline'],
+					'img-src': ['self', 'https:', 'data:', 'blob:'],
+					'connect-src': ['self'],
+					'font-src': ['self'],
+					'object-src': ['none'],
+					'base-uri': ['self'],
+					'form-action': ['self'],
+					'frame-ancestors': ['none']
+				}
+			}
 		})
 	],
 	test: {

@@ -1,9 +1,11 @@
 import { error } from '@sveltejs/kit';
+import { z } from 'zod';
 import { and, eq, gte, isNotNull, isNull, ne } from 'drizzle-orm';
 import { classifyCoverage, coveredMunicipalitiesSentence } from '@hendingar/core/coverage';
 import { events, venues } from '@hendingar/core/schema';
 import { submissionCutoff } from '@hendingar/core/submissions';
 import { db } from '../../../../lib/server/db';
+import { enforce } from '../../../../lib/server/limits';
 import {
 	appealPanel,
 	judgeAppeal,
@@ -28,21 +30,24 @@ import type { RequestHandler } from './$types';
 const MIN_APPEAL = 10;
 const MAX_APPEAL = 2000;
 
+/** Shapes only; the length rules below answer in sentences rather than in a schema error. */
+const appealSchema = z.object({ clientId: z.unknown(), appeal: z.unknown() });
+
 function sse(event: string, data: unknown): Uint8Array {
 	return new TextEncoder().encode(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
 }
 
-export const POST: RequestHandler = async ({ params, request }) => {
+export const POST: RequestHandler = async (event) => {
+	const { params, request } = event;
 	if (!verifierEnabled()) error(503, 'Appellpanelet er ikkje tilgjengeleg i dette miljøet.');
+	enforce('appeal', event);
 
 	const id = Number(params.id);
 	if (!Number.isSafeInteger(id) || id <= 0) error(404, 'Fann ikkje innsendinga');
 
-	const body: unknown = await request.json();
-	const clientId =
-		typeof body === 'object' && body !== null ? (body as Record<string, unknown>).clientId : null;
-	const appeal =
-		typeof body === 'object' && body !== null ? (body as Record<string, unknown>).appeal : null;
+	const body = appealSchema.safeParse(await request.json().catch(() => null));
+	const clientId = body.success ? body.data.clientId : null;
+	const appeal = body.success ? body.data.appeal : null;
 
 	if (typeof clientId !== 'string' || !/^[A-Za-z0-9-]{8,64}$/.test(clientId)) {
 		error(403, 'Denne innsendinga er ikkje di.');
@@ -116,6 +121,29 @@ export const POST: RequestHandler = async ({ params, request }) => {
 
 	const { jurors, quorum } = await appealPanel();
 
+	/*
+	 * The one appeal is claimed here, atomically, before a single juror is asked.
+	 *
+	 * The SELECT above checks `appealed_at is null`, but the verdicts take seconds and used to be
+	 * written only at the end — so twenty requests sent at once all passed the check and sat twenty
+	 * panels, and the first one to reach a quorum published. That is the dice-rolling the check
+	 * exists to prevent, reached by sending the rolls in parallel. Re-asserting the condition in the
+	 * UPDATE's WHERE makes exactly one request the winner; the rest match no row and are refused.
+	 */
+	const claimed = await database
+		.update(events)
+		.set({ appealText: appeal.trim(), appealedAt: new Date(), updatedAt: new Date() })
+		.where(
+			and(
+				eq(events.id, row.id),
+				eq(events.submitterClientId, clientId),
+				ne(events.status, 'published'),
+				isNull(events.appealedAt)
+			)
+		)
+		.returning({ id: events.id });
+	if (claimed.length === 0) error(404, 'Fann ikkje ei innsending du kan appellere.');
+
 	const stream = new ReadableStream<Uint8Array>({
 		async start(controller) {
 			controller.enqueue(sse('panel', { jurors, quorum }));
@@ -177,8 +205,6 @@ export const POST: RequestHandler = async ({ params, request }) => {
 			await database
 				.update(events)
 				.set({
-					appealText: appeal.trim(),
-					appealedAt: new Date(),
 					appealVerdicts: JSON.stringify(verdicts),
 					...(passed
 						? {

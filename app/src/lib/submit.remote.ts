@@ -1,4 +1,5 @@
 import { command, form, query } from '$app/server';
+import { invalid } from '@sveltejs/kit';
 import { z } from 'zod';
 import { and, asc, desc, eq, gte, inArray, isNull, lte, ne, or } from 'drizzle-orm';
 import {
@@ -43,6 +44,7 @@ import {
 } from './server/verifier';
 import { fetchPublicPage, isPublicImage, type SafeFetchFailure } from './server/safe-fetch';
 import { refusedByHost } from './server/refusing-hosts';
+import { allow, TOO_MANY } from './server/limits';
 import { extractEventFromPage } from './server/page-event';
 
 /**
@@ -827,6 +829,7 @@ const photoSchema = z.object({
 export const cropSuggestion = command(
 	photoSchema.omit({ today: true }),
 	async ({ imageBase64, mediaType }) => {
+		if (!allow('crop')) return null;
 		// Never throws — see the note on `suggestCrop`. A thumbnail is not worth an error path in a
 		// flow whose event is already published.
 		return await suggestCrop(imageBase64, mediaType);
@@ -860,6 +863,7 @@ export const extractFromUrl = command(
 		today: z.string().regex(/^\d{4}-\d{2}-\d{2}$/)
 	}),
 	async ({ url, today }) => {
+		if (!allow('link')) return { ok: false as const, error: TOO_MANY };
 		const page = await fetchPublicPage(url);
 		if (!page.ok) {
 			return {
@@ -1481,6 +1485,11 @@ function costOf(
 }
 
 export const submitEvent = form(eventFormSchema, async (submission): Promise<SubmitResult> => {
+	/*
+	 * Before anything is written or asked. A refusal here is an issue on the form rather than an
+	 * error page, so what the person typed stays in the boxes for when they try again.
+	 */
+	if (!allow('submit')) invalid(TOO_MANY);
 	const database = db();
 	// A poster gives a wall clock, not an instant. Resolve it in the venue's zone, not the
 	// server's — otherwise every deployment outside Norway stores the wrong time.

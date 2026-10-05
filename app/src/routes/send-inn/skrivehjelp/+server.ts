@@ -1,6 +1,7 @@
 import { error } from '@sveltejs/kit';
 import { z } from 'zod';
 import { categorySchema } from '@hendingar/core/validation';
+import { enforce } from '../../../lib/server/limits';
 import { improveDescriptionStreaming, verifierEnabled } from '../../../lib/server/verifier';
 import type { RequestHandler } from './$types';
 
@@ -41,10 +42,12 @@ function sse(event: string, data: unknown): Uint8Array {
 	return new TextEncoder().encode(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
 }
 
-export const POST: RequestHandler = async ({ request }) => {
+export const POST: RequestHandler = async (event) => {
+	const { request } = event;
 	// Hidden rather than shown as a button that cannot work (CLAUDE.md rule 8) — but the route has
 	// to say so too, because a button hidden in the page is not a route nobody can reach.
 	if (!verifierEnabled()) error(503, 'Skrivehjelpa er ikkje slått på her.');
+	enforce('writing', event);
 
 	const parsed = askSchema.safeParse(await request.json().catch(() => null));
 	if (!parsed.success) error(400, 'Fyll inn tittel, kategori, dato og klokkeslett først.');

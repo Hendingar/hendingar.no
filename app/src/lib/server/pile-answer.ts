@@ -111,7 +111,7 @@ export async function answer<E extends { id: number }>(
 	deps: {
 		candidate: (event: E) => PileCandidate;
 		cache: AnswerCache;
-		budget: Budget;
+		budget: Pick<Budget, 'take'>;
 		rank: Ranker;
 		text: TextMatcher;
 		now: () => number;

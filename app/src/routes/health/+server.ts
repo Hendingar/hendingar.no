@@ -16,16 +16,17 @@ export async function GET() {
 			headers: { 'content-type': 'application/json', 'cache-control': 'no-store' }
 		});
 	} catch (error) {
-		return new Response(
-			JSON.stringify({
-				status: 'degraded',
-				database: 'unreachable',
-				error: error instanceof Error ? error.message : 'unknown'
-			}),
-			{
-				status: 503,
-				headers: { 'content-type': 'application/json', 'cache-control': 'no-store' }
-			}
+		/*
+		 * The reason goes to the log, not the body. This route is public, and a driver's message
+		 * names the database host, the user and sometimes the network path to them — a map for
+		 * anybody who polls it during an outage.
+		 */
+		console.error(
+			`[health] database unreachable: ${error instanceof Error ? error.message : error}`
 		);
+		return new Response(JSON.stringify({ status: 'degraded', database: 'unreachable' }), {
+			status: 503,
+			headers: { 'content-type': 'application/json', 'cache-control': 'no-store' }
+		});
 	}
 }

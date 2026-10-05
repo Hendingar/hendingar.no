@@ -2,6 +2,7 @@ import { error, json } from '@sveltejs/kit';
 import { and, eq, isNull } from 'drizzle-orm';
 import { eventContributions, events } from '@hendingar/core/schema';
 import { db } from '../../../../lib/server/db';
+import { enforce } from '../../../../lib/server/limits';
 import {
 	MAX_POSTER_BYTES,
 	posterStorageEnabled,
@@ -29,8 +30,10 @@ import type { RequestHandler } from './$types';
  * The browser sends a cropped, re-encoded JPEG. The crop box comes from the model that read the
  * poster; cropping there rather than here keeps image processing out of the server entirely.
  */
-export const POST: RequestHandler = async ({ params, request }) => {
+export const POST: RequestHandler = async (event) => {
+	const { params, request } = event;
 	if (!posterStorageEnabled()) error(503, 'Biletlagring er ikkje slått på i dette miljøet.');
+	enforce('upload', event);
 
 	const id = Number(params.id);
 	if (!Number.isSafeInteger(id) || id <= 0) error(404, 'Fann ikkje hendinga');
