@@ -23,6 +23,7 @@
 	import { markSeen } from '../../../lib/seen.ts';
 	import { describeFields } from '@hendingar/core/contribution';
 	import { linkLabel, safeHttpUrl } from '../../../lib/source-link.ts';
+	import { hotlinkedShareImage } from '../../../lib/share-image.ts';
 	import { canonicalUrl } from '../../../lib/origin.ts';
 	import PageMeta from '../../../lib/components/PageMeta.svelte';
 	import { breadcrumbJsonLd, eventJsonLd, jsonLdScript } from '../../../lib/jsonld.ts';
@@ -180,6 +181,7 @@
 	// importer validates its own, but a `javascript:` row from before that, or from the next
 	// importer that forgets, must not become a link on our page.
 	const ctaUrl = $derived(safeHttpUrl(event.ctaUrl));
+	const shareImage = $derived(hotlinkedShareImage(event));
 	/**
 	 * A weekly activity's timetable, in place of the start and end it does not really have.
 	 *
@@ -226,8 +228,9 @@
 	description={summary}
 	path={canonical}
 	type="article"
-	image={canonicalUrl(page.url, `${canonical}/og.png`)}
-	imageAlt="Delebilete for {event.title}"
+	image={shareImage ?? canonicalUrl(page.url, `${canonical}/og.png`)}
+	imageSize={shareImage ? null : undefined}
+	imageAlt={shareImage ? `Plakat for ${event.title}` : `Delebilete for ${event.title}`}
 />
 
 <svelte:head>
