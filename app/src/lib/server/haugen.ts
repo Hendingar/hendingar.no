@@ -21,14 +21,41 @@ import { whenWords } from '../haugen.ts';
 /**
  * How many events make the pile.
  *
- * The nearest 120, which is a week and a half here. Tokens are paid per event asked about, so
+ * The nearest 120 different events (`pileIds`), which is a week and a half or more here. Tokens are paid per event asked about, so
  * this number IS the cost of a question: 120 is two requests of sixty (the verifier's chunk) and
  * about 34k tokens, down from three requests and ~42k at 150. The page shows as many balls as fit
  * and keeps the rest for the ranking, so an answer from next weekend can still float into view.
  */
 export const PILE_SIZE = 120;
 
+/**
+ * Which events make the pile: the nearest 120 *different* ones.
+ *
+ * Collapsed on title and venue, keeping each one's next occurrence. A count of rows in date order
+ * is not a count of things to do: once the cinema and the swimming pool were imported, the
+ * nearest 120 rows were six days long — 31 public bathing sessions, ten screenings of one film —
+ * and held not one concert, so "konsert" was answered, correctly, with nothing. A repeat is one
+ * ball; the slots it gives back go to next week.
+ */
+async function pileIds(): Promise<number[]> {
+	const sameThing = sql`lower(${events.title})`;
+	const next = db()
+		.selectDistinctOn([sameThing, events.venueId], { id: events.id, startsAt: events.startsAt })
+		.from(events)
+		.where(upcoming())
+		.orderBy(sameThing, events.venueId, asc(events.startsAt), asc(events.id))
+		.as('next');
+	const rows = await db()
+		.select({ id: next.id })
+		.from(next)
+		.orderBy(asc(next.startsAt), asc(next.id))
+		.limit(PILE_SIZE);
+	return rows.map((r) => r.id);
+}
+
 export async function pileEvents() {
+	const ids = await pileIds();
+	if (ids.length === 0) return [];
 	const rows = await db()
 		.select({
 			id: events.id,
@@ -56,9 +83,8 @@ export async function pileEvents() {
 		.from(events)
 		.leftJoin(venues, eq(events.venueId, venues.id))
 		.leftJoin(organizers, eq(events.organizerId, organizers.id))
-		.where(upcoming())
-		.orderBy(asc(events.startsAt), asc(events.id))
-		.limit(PILE_SIZE);
+		.where(inArray(events.id, ids))
+		.orderBy(asc(events.startsAt), asc(events.id));
 	return rows;
 }
 
