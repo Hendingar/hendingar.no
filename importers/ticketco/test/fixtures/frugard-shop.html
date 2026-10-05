@@ -1,0 +1,1206 @@
+<!DOCTYPE html>
+<html lang='nb'>
+<head>
+<meta charset='utf-8'>
+<script type="text/javascript">window.NREUM||(NREUM={});NREUM.info={"beacon":"bam.nr-data.net","errorBeacon":"bam.nr-data.net","licenseKey":"0c78fae1e4","applicationID":"1942475","transactionName":"dg0NRxdWDlhcShgKXFgHTFoLXQdM","queueTime":2,"applicationTime":61,"agent":""}</script>
+<script type="text/javascript">(window.NREUM||(NREUM={})).init={privacy:{cookies_enabled:true},ajax:{deny_list:["bam.nr-data.net"],capture_payloads:"none"},api:{register:{duplicate_data_to_container:false,enabled:true}},session_trace:{sampling_rate:0.0,mode:"FIXED_RATE",enabled:true,error_sampling_rate:0.0},performance:{capture_marks:false,capture_detail:false,capture_measures:true},browser_consent_mode:{enabled:false}};(window.NREUM||(NREUM={})).loader_config={licenseKey:"0c78fae1e4",applicationID:"1942475",browserID:"1942503"};;/*! For license information please see nr-loader-rum-1.323.0.min.js.LICENSE.txt */
+(()=>{var e={8122(e,t,r){"use strict";r.d(t,{a:()=>i});var n=r(944);function i(e,t){try{if(!e||"object"!=typeof e)return(0,n.R)(3);if(!t||"object"!=typeof t)return(0,n.R)(4);const r=Object.create(Object.getPrototypeOf(t),Object.getOwnPropertyDescriptors(t)),a=0===Object.keys(r).length?e:r;for(let s in a)if(void 0!==e[s])try{if(null===e[s]){r[s]=null;continue}Array.isArray(e[s])&&Array.isArray(t[s])?r[s]=Array.from(new Set([...e[s],...t[s]])):e[s]instanceof Map||e[s]instanceof Set||e[s]instanceof Date||e[s]instanceof RegExp?r[s]=e[s]:"object"==typeof e[s]&&null!==t[s]&&"object"==typeof t[s]?r[s]=i(e[s],t[s]):r[s]=e[s]}catch(e){r[s]||(0,n.R)(1,e)}return r}catch(e){(0,n.R)(2,e)}}},2555(e,t,r){"use strict";r.d(t,{f:()=>s});var n=r(384),i=r(8122);const a={beacon:n.NT.beacon,errorBeacon:n.NT.errorBeacon,licenseKey:void 0,applicationID:void 0,sa:void 0,queueTime:void 0,applicationTime:void 0,ttGuid:void 0,user:void 0,account:void 0,product:void 0,extra:void 0,jsAttributes:{},userAttributes:void 0,atts:void 0,transactionName:void 0,tNamePlain:void 0};function s(e){try{return!!e.licenseKey&&!!e.errorBeacon&&!!e.applicationID}catch(e){return!1}}r.d(t,["D",0,e=>(0,i.a)(e,a)])},7699(e,t,r){"use strict";var n=r(860);const i={[n.K7.logging]:!0,[n.K7.genericEvents]:!0,[n.K7.jserrors]:!0,[n.K7.ajax]:!0};r.d(t,["It",0,1e6,"KC",0,i,"qh",0,"SESSION_ERROR"])},9324(e,t,r){"use strict";r.d(t,["xv",0,"1.323.0"])},981(e,t,r){"use strict";r.d(t,["R",0,{AJAX:"AjaxRequest",PA:"PageAction",UA:"UserAction",BP:"BrowserPerformance",WS:"WebSocket",SPV:"SecurityPolicyViolation",JSE:"JavaScriptError",LOG:"Log",PVE:"PageView",PVT:"PageViewTiming",SR:"SessionReplay",ST:"SessionTrace",BI:"BrowserInteraction"}])},6154(e,t,r){"use strict";var n=r(1863);const i="undefined"!=typeof window&&!!window.document,a="undefined"!=typeof WorkerGlobalScope&&("undefined"!=typeof self&&self instanceof WorkerGlobalScope&&self.navigator instanceof WorkerNavigator||"undefined"!=typeof globalThis&&globalThis instanceof WorkerGlobalScope&&globalThis.navigator instanceof WorkerNavigator),s=i?window:"undefined"!=typeof WorkerGlobalScope&&("undefined"!=typeof self&&self instanceof WorkerGlobalScope&&self||"undefined"!=typeof globalThis&&globalThis instanceof WorkerGlobalScope&&globalThis),o=Boolean("hidden"===s?.document?.visibilityState),c=""+s?.location,u=/iPad|iPhone|iPod/.test(s.navigator?.userAgent),d=u&&"undefined"==typeof SharedWorker,l=((()=>{const e=s.navigator?.userAgent?.match(/Firefox[/\s](\d+\.\d+)/);Array.isArray(e)&&e.length>=2&&e[1]})(),Date.now()-(0,n.t)());r.d(t,["OF",0,u,"RI",0,i,"WN",0,l,"bv",0,a,"gm",0,s,"m",0,c,"mw",0,o,"sb",0,d,"zk",0,()=>{const e=s?.performance?.getEntriesByType?.("navigation")?.[0];if(e&&e.responseStart>0&&e.responseStart<s.performance.now())return e}])},3241(e,t,r){"use strict";r.d(t,{W:()=>i});var n=r(6154);function i(e={}){try{n.gm.dispatchEvent(new CustomEvent("newrelic",{detail:e}))}catch(e){}}},1687(e,t,r){"use strict";r.d(t,{Ak:()=>o,Ze:()=>u,x3:()=>c});var n=r(3241),i=r(3606),a=r(860),s=r(2646);function o(e,t){if(!e)return;const r={staged:!1,priority:a.P3[t]||0};e.runtime.drainRegistry.get(t)||e.runtime.drainRegistry.set(t,r)}function c(e,t){if(!e)return;const r=e.runtime.drainRegistry;r&&(r.get(t)&&r.delete(t),l(e,t,!1),r.size&&d(e))}function u(e,t="feature",r=!1){if(e){if(!e.runtime.drainRegistry.get(t)||r)return l(e,t);e.runtime.drainRegistry.get(t).staged=!0,d(e)}}function d(e){if(!e)return;const t=Array.from(e.runtime.drainRegistry);t.every(([e,t])=>t.staged)&&(t.sort((e,t)=>e[1].priority-t[1].priority),t.forEach(([t])=>{e.runtime.drainRegistry.delete(t),l(e,t)}))}function l(e,t,r=!0){if(!e)return;const a=e.ee,o=i.i.handlers;if(a&&!a.aborted&&a.backlog&&o){if((0,n.W)({type:"lifecycle",name:"drain",feature:t}),r){const e=a.backlog[t],r=o[t];if(r){for(let t=0;e&&t<e.length;++t)f(e[t],r);Object.entries(r).forEach(([e,t])=>{Object.values(t||{}).forEach(t=>{t[0]?.on&&t[0].context()instanceof s.y&&!t[0].listeners(e).includes(t[1])&&t[0].on(e,t[1])})})}}a.isolatedBacklog||delete o[t],a.backlog[t]=null,a.emit("drain-"+t,[])}}function f(e,t){var r=e[1];Object.values(t[r]||{}).forEach(t=>{var r=e[0];if(t[0]===r){var n=t[1],i=e[3],a=e[2];n.apply(i,a)}})}},7836(e,t,r){"use strict";var n=r(384),i=r(8990),a=r(2646),s=r(5607);const o="nr@context:".concat(s.W),c=function e(t,r){var n={},s={},d={},l=!1;try{l=16===r.length&&u.initializedAgents?.[r]?.runtime.isolatedBacklog}catch(e){}var f={on:p,addEventListener:p,removeEventListener:function(e,t){var r=n[e];if(!r)return;for(var i=0;i<r.length;i++)r[i]===t&&r.splice(i,1)},emit:function(e,r,n,i,a){!1!==a&&(a=!0);if(c.aborted&&!i)return;t&&a&&t.emit(e,r,n);var o=g(n);m(e).forEach(e=>{e.apply(o,r)});var u=v()[s[e]];u&&u.push([f,e,r,o]);return o},get:h,listeners:m,context:g,buffer:function(e,t){const r=v();if(t=t||"feature",f.aborted)return;Object.entries(e||{}).forEach(([e,n])=>{s[n]=t,t in r||(r[t]=[])})},abort:function(){f._aborted=!0,Object.keys(f.backlog).forEach(e=>{delete f.backlog[e]})},isBuffering:function(e){return!!v()[s[e]]},debugId:r,backlog:l?{}:t&&"object"==typeof t.backlog?t.backlog:{},isolatedBacklog:l};return Object.defineProperty(f,"aborted",{get:()=>{let e=f._aborted||!1;return e||(t&&(e=t.aborted),e)}}),f;function g(e){return e&&e instanceof a.y?e:e?(0,i.I)(e,o,()=>new a.y(o)):new a.y(o)}function p(e,t){n[e]=m(e).concat(t)}function m(e){return n[e]||[]}function h(t){return d[t]=d[t]||e(f,t)}function v(){return f.backlog}}(void 0,"globalEE"),u=(0,n.Zm)();u.ee||(u.ee=c),r.d(t,["P",0,o,"ee",0,c])},2646(e,t,r){"use strict";r.d(t,{y:()=>n});class n{constructor(e){this.contextId=e}}},9908(e,t,r){"use strict";r.d(t,{d:()=>n,p:()=>i});var n=r(7836).ee.get("handle");function i(e,t,r,i,a){a?(a.buffer([e],i),a.emit(e,t,r)):(n.buffer([e],i),n.emit(e,t,r))}},3606(e,t,r){"use strict";r.d(t,{i:()=>a});var n=r(9908);a.on=s;var i=a.handlers={};function a(e,t,r,a){s(a||n.d,i,e,t,r)}function s(e,t,r,i,a){a||(a="feature"),e||(e=n.d);var s=t[a]=t[a]||{};(s[r]=s[r]||[]).push([e,i])}},3878(e,t,r){"use strict";function n(e,t){return{capture:e,passive:!1,signal:t}}function i(e,t,r=!1,i){window.addEventListener(e,t,n(r,i))}function a(e,t,r=!1,i){document.addEventListener(e,t,n(r,i))}r.d(t,{DD:()=>a,jT:()=>n,sp:()=>i})},5607(e,t,r){"use strict";const n=(0,r(9566).bz)();r.d(t,["W",0,n])},9566(e,t,r){"use strict";r.d(t,{LA:()=>s,bz:()=>a});var n=r(6154);function i(e,t){return e?15&e[t]:16*Math.random()|0}function a(){const e=n.gm?.crypto||n.gm?.msCrypto;let t,r=0;return e&&e.getRandomValues&&(t=e.getRandomValues(new Uint8Array(30))),"xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".split("").map(e=>"x"===e?i(t,r++).toString(16):"y"===e?(3&i()|8).toString(16):e).join("")}function s(e){const t=n.gm?.crypto||n.gm?.msCrypto;let r,a=0;t&&t.getRandomValues&&(r=t.getRandomValues(new Uint8Array(e)));const s=[];for(var o=0;o<e;o++)s.push(i(r,a++).toString(16));return s.join("")}},2614(e,t,r){"use strict";r.d(t,["BB",0,18e5,"Wt",0,"NRBA_SESSION::","iL",0,{SAME_TAB:"same-tab",CROSS_TAB:"cross-tab"},"tS",0,{STARTED:"session-started",PAUSE:"session-pause",RESET:"session-reset",RESUME:"session-resume",UPDATE:"session-update"},"wk",0,144e5])},1863(e,t,r){"use strict";function n(){return Math.floor(performance.now())}r.d(t,{t:()=>n})},944(e,t,r){"use strict";r.d(t,{R:()=>i});var n=r(3241);function i(e,t){"function"==typeof console.debug&&(console.debug("New Relic Warning: https://github.com/newrelic/newrelic-browser-agent/blob/main/docs/warning-codes.md#".concat(e),t),(0,n.W)({drained:null,type:"data",name:"warn",feature:"warn",data:{code:e,secondary:t}}))}},8990(e,t,r){"use strict";r.d(t,{I:()=>i});var n=Object.prototype.hasOwnProperty;function i(e,t,r){if(n.call(e,t))return e[t];var i=r();if(Object.defineProperty&&Object.keys)try{return Object.defineProperty(e,t,{value:i,writable:!0,enumerable:!1}),i}catch(e){}return e[t]=i,i}},6389(e,t,r){"use strict";function n(e,t=500,r={}){const n=r?.leading||!1;let i;return(...r)=>{n&&void 0===i&&(e.apply(this,r),i=setTimeout(()=>{i=clearTimeout(i)},t)),n||(clearTimeout(i),i=setTimeout(()=>{e.apply(this,r)},t))}}function i(e){let t=!1;return(...r)=>{t||(t=!0,e.apply(this,r))}}r.d(t,{J:()=>i,s:()=>n})},1910(e,t,r){"use strict";r.d(t,{i:()=>a});var n=r(944);const i=new Map;function a(...e){return e.every(e=>{if(i.has(e))return i.get(e);const t="function"==typeof e?e.toString():"",r=t.includes("[native code]"),a=t.includes("nrWrapper");return r||a||(0,n.R)(64,e?.name||t),i.set(e,r),r})}},5289(e,t,r){"use strict";r.d(t,{GG:()=>s,Qr:()=>c,sB:()=>o});var n=r(3878),i=r(6389);function a(){return"undefined"==typeof document||"complete"===document.readyState}function s(e,t){if(a())return e();const r=(0,i.J)(e),s=setInterval(()=>{a()&&(clearInterval(s),r())},500);(0,n.sp)("load",r,t)}function o(e){if(a())return e();(0,n.DD)("DOMContentLoaded",e)}function c(e){if(a())return e();(0,n.sp)("popstate",e)}},384(e,t,r){"use strict";r.d(t,{Zm:()=>c,bQ:()=>d,dV:()=>u,pV:()=>l});var n=r(6154),i=r(1863),a=r(944),s=r(1910);const o={beacon:"bam.nr-data.net",errorBeacon:"bam.nr-data.net"};function c(){return n.gm.NREUM||(n.gm.NREUM={}),void 0===n.gm.newrelic&&(n.gm.newrelic=n.gm.NREUM),n.gm.NREUM}function u(){let e=c();return e.o||(e.o={ST:n.gm.setTimeout,SI:n.gm.setImmediate||n.gm.setInterval,CT:n.gm.clearTimeout,XHR:n.gm.XMLHttpRequest,REQ:n.gm.Request,EV:n.gm.Event,PR:n.gm.Promise,MO:n.gm.MutationObserver,FETCH:n.gm.fetch,WS:n.gm.WebSocket},(0,s.i)(...Object.values(e.o))),e}function d(e,t){let r=c();r.initializedAgents??={},t.initializedAt={ms:(0,i.t)(),date:new Date},r.initializedAgents[e]=t,2===Object.keys(r.initializedAgents).length&&(0,a.R)(69)}function l(){return function(){let e=c();const t=e.info||{};e.info={beacon:o.beacon,errorBeacon:o.errorBeacon,...t}}(),function(){let e=c();const t=e.init||{};e.init={...t}}(),u(),function(){let e=c();const t=e.loader_config||{};e.loader_config={...t}}(),c()}r.d(t,["NT",0,o])},2843(e,t,r){"use strict";r.d(t,{G:()=>a,u:()=>i});var n=r(3878);function i(e,t=!1,r,i){(0,n.DD)("visibilitychange",function(){if(t)return void("hidden"===document.visibilityState&&e());e(document.visibilityState)},r,i)}function a(e,t,r){(0,n.sp)("pagehide",e,t,r)}},9300(e,t,r){"use strict";r(860).K7.ajax;r.d(t,["mo",0,{NONE:"none",FAILURES:"failures",ALL:"all"}])},3969(e,t,r){"use strict";const n=r(860).K7.metrics;r.d(t,["TZ",0,n,"XG",0,"storeEventMetrics","xV",0,"storeSupportabilityMetrics"])},6630(e,t,r){"use strict";const n=r(860).K7.pageViewEvent;r.d(t,["T",0,n])},782(e,t,r){"use strict";const n=r(860).K7.pageViewTiming;r.d(t,["T",0,n])},4234(e,t,r){"use strict";r.d(t,{W:()=>i});var n=r(1687);class i{constructor(e,t){this.agentRef=e,this.ee=e?.ee,this.featureName=t,this.blocked=!1}deregisterDrain(){(0,n.x3)(this.agentRef,this.featureName)}}},7767(e,t,r){"use strict";var n=r(6154);r.d(t,["V",0,e=>n.RI&&!0===e?.privacy.cookies_enabled])},8362(e,t,r){"use strict";r.d(t,{d:()=>a});var n=r(9566),i=r(1741);class a extends i.W{agentIdentifier=(0,n.LA)(16)}},1741(e,t,r){"use strict";r.d(t,{W:()=>a});var n=r(944),i=r(4261);class a{#e(e,...t){if(this[e]!==a.prototype[e])return this[e](...t);(0,n.R)(35,e)}addPageAction(e,t){return this.#e(i.hG,e,t)}register(e){return this.#e(i.eY,e)}recordCustomEvent(e,t){return this.#e(i.fF,e,t)}setPageViewName(e,t){return this.#e(i.Fw,e,t)}setCustomAttribute(e,t,r){return this.#e(i.cD,e,t,r)}noticeError(e,t){return this.#e(i.o5,e,t)}setUserId(e,t=!1){return this.#e(i.Dl,e,t)}setApplicationVersion(e){return this.#e(i.nb,e)}setErrorHandler(e){return this.#e(i.bt,e)}addRelease(e,t){return this.#e(i.k6,e,t)}log(e,t){return this.#e("log",e,t)}start(){return this.#e("start")}finished(e){return this.#e(i.BL,e)}recordReplay(){return this.#e(i.CH)}pauseReplay(){return this.#e(i.Tb)}addToTrace(e){return this.#e(i.U2,e)}setCurrentRouteName(e){return this.#e(i.PA,e)}interaction(e){return this.#e(i.dT,e)}wrapLogger(e,t,r){return this.#e(i.Wb,e,t,r)}measure(e,t){return this.#e(i.V1,e,t)}consent(e){return this.#e(i.Pv,e)}}},4261(e,t,r){"use strict";r.d(t,["BL",0,"finished","CH",0,"recordReplay","Dl",0,"setUserId","Fw",0,"setPageViewName","PA",0,"setCurrentRouteName","Pv",0,"consent","Tb",0,"pauseReplay","U2",0,"addToTrace","V1",0,"measure","Wb",0,"wrapLogger","bt",0,"setErrorHandler","cD",0,"setCustomAttribute","dT",0,"interaction","eY",0,"register","fF",0,"recordCustomEvent","hG",0,"addPageAction","k6",0,"addRelease","nb",0,"setApplicationVersion","o5",0,"noticeError"])},1738(e,t,r){"use strict";r.d(t,{U:()=>l,Y:()=>d});var n=r(3241),i=r(9908),a=r(1863),s=r(944),o=r(3969),c=r(8362),u=r(860);function d(e,t,r,a){const d=a||r;!d||d[e]&&d[e]!==c.d.prototype[e]||(d[e]=function(){(0,i.p)(o.xV,["API/"+e+"/called"],void 0,u.K7.metrics,r.ee),(0,n.W)({drained:!!r.runtime?.activatedFeatures,type:"data",name:"api",feature:"api-"+e,data:{}});try{return t.apply(this,arguments)}catch(e){(0,s.R)(23,e)}})}function l(e,t,r,n,s){const o=e.info;null===r?delete o.jsAttributes[t]:o.jsAttributes[t]=r,(s||null===r)&&(0,i.p)("api-"+n,[(0,a.t)(),t,r],void 0,"session",e.ee)}},8374(e,t,r){r.nc=(()=>{try{return document?.currentScript?.nonce}catch(e){}return""})()},860(e,t,r){"use strict";const n="events",i="jserrors",a="browser/blobs",s="browser/logs",o={ajax:"ajax",genericEvents:"generic_events",jserrors:i,logging:"logging",metrics:"metrics",pageAction:"page_action",pageViewEvent:"page_view_event",pageViewTiming:"page_view_timing",sessionReplay:"session_replay",sessionTrace:"session_trace",softNav:"soft_navigations"},c={[o.pageViewEvent]:1,[o.pageViewTiming]:2,[o.metrics]:3,[o.jserrors]:4,[o.softNav]:5,[o.ajax]:6,[o.sessionTrace]:7,[o.sessionReplay]:8,[o.logging]:9,[o.genericEvents]:10},u={[o.pageViewEvent]:"rum",[o.pageViewTiming]:n,[o.ajax]:n,[o.softNav]:n,[o.metrics]:i,[o.jserrors]:i,[o.sessionTrace]:a,[o.sessionReplay]:a,[o.logging]:s,[o.genericEvents]:"ins"};r.d(t,["$J",0,u,"K7",0,o,"P3",0,c,"XX",0,i,"Yy",0,s,"df",0,a,"hg",0,"connect"])}};const t={};function r(n){const i=t[n];if(void 0!==i)return i.exports;const a=t[n]={exports:{}};return e[n](a,a.exports,r),a.exports}r.m=e,r.d=(e,t)=>{if(Array.isArray(t))for(var n=0;n<t.length;){var i=t[n++],a=t[n++];r.o(e,i)?0===a&&n++:0===a?Object.defineProperty(e,i,{enumerable:!0,value:t[n++]}):Object.defineProperty(e,i,{enumerable:!0,get:a})}else for(var i in t)r.o(t,i)&&!r.o(e,i)&&Object.defineProperty(e,i,{enumerable:!0,get:t[i]})},r.f={},r.e=e=>Promise.all(Object.keys(r.f).reduce((t,n)=>(r.f[n](e,t),t),[])),r.u=e=>"nr-rum-1.323.0.min.js",r.o=(e,t)=>Object.prototype.hasOwnProperty.call(e,t),(()=>{const e={},t="NRBA-1.323.0.PROD:";r.l=(n,i,a,s)=>{if(e[n])return void e[n].push(i);let o,c;if(void 0!==a){const e=document.getElementsByTagName("script");for(var u=0;u<e.length;u++){const r=e[u];if(r.getAttribute("src")==n||r.getAttribute("data-webpack")==t+a){o=r;break}}}if(!o){c=!0;var d={296:"sha512-zhTI1o3vPu0UcYWUELiLeb9P46+LBW0K7R4KO/PafMc68L5tJ2mSHyvZtcNeG9Cw/PTZstuo62K1wwaoAsHdXQ=="};o=document.createElement("script"),o.charset="utf-8",r.nc&&o.setAttribute("nonce",r.nc),o.setAttribute("data-webpack",t+a),o.src=n,0!==o.src.indexOf(window.location.origin+"/")&&(o.crossOrigin="anonymous"),d[s]&&(o.integrity=d[s])}e[n]=[i];const l=(t,r)=>{o.onerror=o.onload=null,clearTimeout(f);const i=e[n];if(delete e[n],o.parentNode?.removeChild(o),i?.forEach(e=>e(r)),t)return t(r)},f=setTimeout(l.bind(null,void 0,{type:"timeout",target:o}),12e4);o.onerror=l.bind(null,o.onerror),o.onload=l.bind(null,o.onload),c&&document.head.appendChild(o)}})(),r.r=e=>{Symbol.toStringTag&&Object.defineProperty(e,Symbol.toStringTag,{value:"Module"}),Object.defineProperty(e,"__esModule",{value:!0})},r.p="https://js-agent.newrelic.com/",(()=>{const e={374:0,840:0};r.f.j=(t,n)=>{let i=r.o(e,t)?e[t]:void 0;if(0!==i)if(i)n.push(i[2]);else{const a=new Promise((r,n)=>i=e[t]=[r,n]);n.push(i[2]=a);const s=r.p+r.u(t),o=new Error,c=n=>{if(r.o(e,t)&&(i=e[t],0!==i&&(e[t]=void 0),i)){const e=n&&("load"===n.type?"missing":n.type),r=n&&n.target&&n.target.src;o.message="Loading chunk "+t+" failed: ("+e+": "+r+")",o.name="ChunkLoadError",o.type=e,o.request=r,i[1](o)}};r.l(s,c,"chunk-"+t,t)}};const t=(t,n)=>{let[i,a,s]=n;var o,c,u=0;if(i.some(t=>0!==e[t])){for(o in a)r.o(a,o)&&(r.m[o]=a[o]);if(s)s(r)}for(t&&t(n);u<i.length;u++)c=i[u],r.o(e,c)&&e[c]&&e[c][0](),e[c]=0},n=self["webpackChunk:NRBA-1.323.0.PROD"]=self["webpackChunk:NRBA-1.323.0.PROD"]||[];n.forEach(t.bind(null,0)),n.push=t.bind(null,n.push.bind(n))})(),(()=>{"use strict";r(8374);var e=r(8362),t=r(860);const n=Object.values(t.K7);var i=r(384),a=r(1741);var s=r(2555),o=r(981);t.K7.genericEvents,o.R.PA,o.R.UA,o.R.BP;const c={RESOURCES:"experimental.resources",REGISTER:"register"};var u=r(9300);const d=e=>{if(!e||"string"!=typeof e)return!1;try{document.createDocumentFragment().querySelector(e)}catch{return!1}return!0};var l=r(2614),f=r(944),g=r(8122);const p="[data-nr-mask]",m=e=>(0,g.a)(e,(()=>{const e={feature_flags:[],experimental:{register:!1,resources:!1,iframe_bridge:!1,iframe_domains:[]},mask_selector:"*",block_selector:"[data-nr-block]",mask_input_options:{color:!1,date:!1,"datetime-local":!1,email:!1,month:!1,number:!1,range:!1,search:!1,tel:!1,text:!1,time:!1,url:!1,week:!1,textarea:!1,select:!1,password:!0}};return{ajax:{deny_list:void 0,block_internal:!0,enabled:!0,autoStart:!0,capture_payloads:u.mo.NONE},api:{register:{get enabled(){return e.feature_flags.includes(c.REGISTER)||e.experimental.register},set enabled(t){e.experimental.register=t},duplicate_data_to_container:!1,get allow_iframe_bridge(){return e.feature_flags.includes(c.IFRAME_BRIDGE)||e.experimental.iframe_bridge},set allow_iframe_bridge(t){e.experimental.iframe_bridge=t},get iframe_domains(){return e.experimental.iframe_domains},set iframe_domains(t){Array.isArray(t)?e.experimental.iframe_domains=t:(0,f.R)(1,t)}}},browser_consent_mode:{enabled:!1},distributed_tracing:{enabled:void 0,exclude_newrelic_header:void 0,cors_use_newrelic_header:void 0,cors_use_tracecontext_headers:void 0,allowed_origins:void 0},get feature_flags(){return e.feature_flags},set feature_flags(t){e.feature_flags=t},generic_events:{enabled:!0,autoStart:!0},harvest:{interval:30},jserrors:{enabled:!0,autoStart:!0},logging:{enabled:!0,autoStart:!0},metrics:{enabled:!0,autoStart:!0},obfuscate:void 0,page_action:{enabled:!0},page_view_event:{enabled:!0,autoStart:!0},page_view_timing:{enabled:!0,autoStart:!0},performance:{capture_marks:!1,capture_measures:!1,capture_detail:!0,resources:{get enabled(){return e.feature_flags.includes(c.RESOURCES)||e.experimental.resources},set enabled(t){e.experimental.resources=t},asset_types:[],first_party_domains:[],ignore_newrelic:!0}},privacy:{cookies_enabled:!0},proxy:{assets:void 0,beacon:void 0},session:{expiresMs:l.wk,inactiveMs:l.BB},session_replay:{autoStart:!0,enabled:!1,preload:!1,sampling_rate:10,error_sampling_rate:100,collect_fonts:!1,inline_images:!1,fix_stylesheets:!0,mask_all_inputs:!0,get mask_text_selector(){return e.mask_selector},set mask_text_selector(t){d(t)?e.mask_selector="".concat(t,",").concat(p):""===t||null===t?e.mask_selector=p:(0,f.R)(5,t)},get block_class(){return"nr-block"},get ignore_class(){return"nr-ignore"},get mask_text_class(){return"nr-mask"},get block_selector(){return e.block_selector},set block_selector(t){d(t)?e.block_selector+=",".concat(t):""!==t&&(0,f.R)(6,t)},get mask_input_options(){return e.mask_input_options},set mask_input_options(t){t&&"object"==typeof t?e.mask_input_options={...t,password:!0}:(0,f.R)(7,t)}},session_trace:{enabled:!0,autoStart:!0},soft_navigations:{enabled:!0,autoStart:!0},ssl:void 0,user_actions:{enabled:!0,elementAttributes:["id","className","tagName","type"]},web_sockets:{enabled:!1}}})());var h=r(6154),v=r(9324);let b=0;const y={buildEnv:"PROD",distMethod:"CDN",version:v.xv,originTime:h.WN},_={consented:!1},w={activatedFeatures:void 0,appMetadata:{},configured:!1,get consented(){return this.session?.state?.consent||_.consented},set consented(e){_.consented=e},customTransaction:void 0,denyList:[],disabled:!1,drainRegistry:new Map,connector:void 0,harvester:void 0,v2Target:void 0,isolatedBacklog:!1,isRecording:!1,loaderType:void 0,maxBytes:3e4,obfuscator:void 0,onerror:void 0,ptid:void 0,releaseIds:{},session:void 0,timeKeeper:void 0,registeredEntities:[],jsAttributesMetadata:{bytes:0},get harvestCount(){return++b},listeningForIframeMessages:!1},R="BA";var A=r(7836),x=r(3241);const E={accountID:void 0,trustKey:void 0,agentID:void 0,licenseKey:void 0,applicationID:void 0,xpid:void 0};var S=r(9908);const k="newrelic-iframe-";function T(e,t={},n,o){let{init:c,info:u,loader_config:d,runtime:l={},exposed:f=!0}=t;if(!u){const e=(0,i.pV)();c=e.init,u=e.info,d=e.loader_config}var p;e.init=m(c||{}),e.loader_config=(p=d||{},(0,g.a)(p,E)),u.jsAttributes??={},h.bv&&(u.jsAttributes.isWorker=!0),e.info=(0,s.D)(u);const v=e.init;e.runtime??=(e=>{const t=(0,g.a)(e,w),r=Object.keys(y).reduce((e,t)=>(e[t]={value:y[t],writable:!1,configurable:!0,enumerable:!0},e),{});return Object.defineProperties(t,r)})(l),e.runtime.v2Target??={type:R,instance:e.agentIdentifier,get id(){return e.runtime.appMetadata?.agents?.[0]?.entityGuid},get attributes(){return{"entity.guid":this.id,appId:e.info.applicationID}}},v.proxy.assets&&(e=>{const t=e.startsWith("http");e+="/",r.p=t?e:"https://"+e})(v.proxy.assets),e.runtime.configured||(Object.defineProperty(e,"beacons",{get:()=>[e.info.beacon,e.info.errorBeacon,e.init.proxy.assets,e.init.proxy.beacon].filter(Boolean)}),Object.defineProperty(e.runtime,"denyList",{get:()=>[...e.init.ajax.deny_list||[],...e.init.ajax.block_internal?e.beacons:[]]}),e.runtime.ptid=e.agentIdentifier,function(e){const t=(0,i.pV)();Object.getOwnPropertyNames(a.W.prototype).forEach(r=>{const n=a.W.prototype[r];if("function"!=typeof n||"constructor"===n)return;let i=t[r];e[r]&&!1!==e.exposed&&"micro-agent"!==e.runtime?.loaderType&&(t[r]=(...t)=>{const n=e[r](...t);return i?i(...t):n})})}(e),e.runtime.loaderType=n,e.ee=A.ee.get(e.agentIdentifier),e.exposed=f,(0,x.W)({drained:!!e.runtime.activatedFeatures,type:"lifecycle",name:"initialize",feature:void 0,data:e.config}),e.init.api.register.allow_iframe_bridge&&h.gm.addEventListener("message",t=>{"string"==typeof t.data?.type&&t.data.type.startsWith(k)&&(0,S.p)("iframe-message",[t],void 0,"IFRAME",e.ee)}),e.runtime.configured=!0)}var j=r(1863),P=r(4261),N=r(1738);var O=r(1687),M=r(4234),I=r(5289),D=r(7767);function V(e){return!!(0,i.dV)().o.MO&&(0,D.V)(e)&&!0===e?.session_trace.enabled}var W=r(6389),B=r(7699);const C=new WeakSet,K=new WeakMap;class U extends M.W{constructor(e,t){super(e,t),this.abortHandler=void 0,this.featAggregate=void 0,this.loadedSuccessfully=void 0,this.onAggregateImported=new Promise(e=>{this.loadedSuccessfully=e}),this.deferred=Promise.resolve(),!1===e.init[this.featureName].autoStart?this.deferred=new Promise((t,r)=>{this.ee.on("manual-start-all",(0,W.J)(()=>{(0,O.Ak)(e,this.featureName),t()}))}):(0,O.Ak)(e,t)}importAggregator(e,t,n={}){if(this.featAggregate)return;const i=async()=>{if(await this.deferred,this.#t(e),!(0,s.f)(e.info))return(0,f.R)(43),e.ee.abort(),void this.loadedSuccessfully(!1);try{await async function(e,t,n){if(K.has(e))return K.get(e);const i=(async()=>{if((0,D.V)(e.init))try{const{setupAgentSession:t}=await r.e(296).then(r.bind(r,1768));t(e)}catch(e){(0,f.R)(20,e),t.emit("internal-error",[e]),(0,S.p)(B.qh,[e],void 0,n,t)}if(e.init.api.register.allow_iframe_bridge)try{const{setupIframeMFEMessageListener:t}=await Promise.resolve().then(function(){const e=new Error("Cannot find module '../../loaders/configure/iframe-message-handler'");throw e.code="MODULE_NOT_FOUND",e});t(e)}catch(e){(0,f.R)(23,e)}const[{Connector:i},{Harvester:a}]=await Promise.all([r.e(296).then(r.bind(r,6589)),r.e(296).then(r.bind(r,5237))]);e.runtime.connector=new i(e),e.runtime.harvester=new a(e);const s=Object.values(e.features).filter(t=>e.runtime.drainRegistry.has(t.featureName));Promise.all(s.map(e=>e.onAggregateImported)).then(()=>e.runtime.harvester.startTimer())})();K.set(e,i),await i}(e,this.ee,this.featureName)}catch(e){return(0,f.R)(79,e),this.ee.abort(),void this.loadedSuccessfully(!1)}try{if(!this.#r(this.featureName,e.runtime.session,e.init))return this.abortHandler?.(),(0,O.Ze)(this.agentRef,this.featureName),void this.loadedSuccessfully(!1);const{Aggregate:r}=await t();this.featAggregate=new r(e,n),e.runtime.harvester.initializedAggregates.push(this.featAggregate),this.loadedSuccessfully(!0)}catch(e){(0,f.R)(34,e),this.abortHandler?.(),(0,O.Ze)(this.agentRef,this.featureName,!0),this.loadedSuccessfully(!1)}};h.RI?(0,I.GG)(()=>i(),!0):i()}#r(e,r,n){if(this.blocked)return!1;switch(e){case t.K7.sessionReplay:return V(n)&&!!r;case t.K7.sessionTrace:return!!r;default:return!0}}#t(e){if(!C.has(e)&&(C.add(e),!(0,s.f)(e.info))){const t=(0,i.pV)();let r={...t.info?.jsAttributes};try{r={...r,...e.info?.jsAttributes}}catch(e){}T(e,{...t,info:{...t.info,jsAttributes:r},runtime:e.runtime},e.runtime.loaderType)}}}var L=r(6630);class F extends U{static featureName=L.T;constructor(e){var t;super(e,L.T),this.setupInspectionEvents(),t=e,(0,N.Y)(P.Fw,function(e,r){"string"==typeof e&&("/"!==e.charAt(0)&&(e="/"+e),t.runtime.customTransaction=(r||"http://custom.transaction")+e,(0,S.p)("api-"+P.Fw,[(0,j.t)()],void 0,void 0,t.ee))},t),this.importAggregator(e,()=>e.init.feature_flags.includes("rum_v2")?r.e(296).then(r.bind(r,908)):r.e(296).then(r.bind(r,7927)))}setupInspectionEvents(){const e=(e,t)=>{e&&(0,x.W)({timeStamp:e.timeStamp,loaded:"complete"===e.target.readyState,type:"window",name:t,data:e.target.location+""})};(0,I.sB)(t=>{e(t,"DOMContentLoaded")}),(0,I.GG)(t=>{e(t,"load")}),(0,I.Qr)(t=>{e(t,"navigate")}),this.ee.on(l.tS.UPDATE,(e,t)=>{(0,x.W)({type:"lifecycle",name:"session",data:t})})}}class G extends e.d{constructor(e){var t;(super(),h.gm)?(this.features={},(0,i.bQ)(this.agentIdentifier,this),this.desiredFeatures=new Set(e.features||[]),this.desiredFeatures.add(F),T(this,e,e.loaderType||"agent"),t=this,(0,N.Y)(P.cD,function(e,r,n=!1){if("string"==typeof e){if(["string","number","boolean"].includes(typeof r)||null===r)return(0,N.U)(t,e,r,P.cD,n);(0,f.R)(40,typeof r)}else(0,f.R)(39,typeof e)},t),function(e){(0,N.Y)(P.Dl,function(t,r=!1){if("string"!=typeof t&&null!==t)return void(0,f.R)(41,typeof t);const n=e.info.jsAttributes["enduser.id"];r&&null!=n&&n!==t?(0,S.p)("api-setUserIdAndResetSession",[t],void 0,"session",e.ee):(0,N.U)(e,"enduser.id",t,P.Dl,!0)},e)}(this),function(e){(0,N.Y)(P.nb,function(t){if("string"==typeof t||null===t)return(0,N.U)(e,"application.version",t,P.nb,!1);(0,f.R)(42,typeof t)},e)}(this),function(e){(0,N.Y)("start",function(){e.ee.emit("manual-start-all")},e)}(this),function(e){(0,N.Y)(P.Pv,function(t=!0){if("boolean"==typeof t){if((0,S.p)("api-"+P.Pv,[t],void 0,"session",e.ee),e.runtime.consented=t,t){const t=e.features.page_view_event;t.onAggregateImported.then(e=>{const r=t.featAggregate;e&&!r.sentRum&&r.sendRum?.()})}}else(0,f.R)(65,typeof t)},e)}(this),this.run()):(0,f.R)(21)}get config(){return{info:this.info,init:this.init,loader_config:this.loader_config,runtime:this.runtime}}get api(){return this}run(){try{const e=function(e){const t={};return n.forEach(r=>{t[r]=!!e[r]?.enabled}),t}(this.init),r=[...this.desiredFeatures],i=this.init.feature_flags.includes("rum_v2");r.sort((e,r)=>t.P3[e.featureName]-t.P3[r.featureName]),r.forEach(r=>{if(!e[r.featureName]&&(i||r.featureName!==t.K7.pageViewEvent))return;const n=function(e){switch(e){case t.K7.ajax:return[t.K7.jserrors];case t.K7.sessionTrace:return[t.K7.ajax,t.K7.pageViewEvent];case t.K7.sessionReplay:return[t.K7.sessionTrace];case t.K7.pageViewTiming:return[t.K7.pageViewEvent];default:return[]}}(r.featureName).filter(e=>!(e in this.features));n.length>0&&(0,f.R)(36,{targetFeature:r.featureName,missingDependencies:n}),this.features[r.featureName]=new r(this)})}catch(e){(0,f.R)(22,e);for(const e in this.features)this.features[e].abortHandler?.();const t=(0,i.Zm)();delete t.initializedAgents[this.agentIdentifier]?.features,delete this.sharedAggregator;return t.ee.get(this.agentIdentifier).abort(),!1}}}var H=r(2843),z=r(782);class Y extends U{static featureName=z.T;constructor(e){super(e,z.T),h.RI&&((0,H.u)(()=>(0,S.p)("docHidden",[(0,j.t)()],void 0,z.T,this.ee),!0),(0,H.G)(()=>(0,S.p)("winPagehide",[(0,j.t)()],void 0,z.T,this.ee)),this.importAggregator(e,()=>r.e(296).then(r.bind(r,9981))))}}var Z=r(3969);class q extends U{static featureName=Z.TZ;constructor(e){super(e,Z.TZ),this.importAggregator(e,()=>r.e(296).then(r.bind(r,9623)))}}new G({features:[F,Y,q],loaderType:"lite"})})()})();</script>
+<meta content='width=device-width' name='viewport'>
+<meta content='#f2f2f2' name='theme-color'>
+
+
+      <script>
+        window.dataLayer = window.dataLayer || [];
+        window.gtag = window.gtag || function(){ window.dataLayer.push(arguments); };
+        window.gtag('consent', 'default', {
+          ad_storage: 'denied',
+          analytics_storage: 'denied',
+          ad_user_data: 'denied',
+          ad_personalization: 'denied',
+        });
+      </script>
+    
+<script data-category='analytics' data-service='Google Tag Manager' data-turbolinks-track type='text/plain'>
+window.dataLayer = window.dataLayer || [];
+var blacklist = [];
+if ( true ) {
+  blacklist.push('customScripts');
+}
+window.dataLayer.push({
+  'gtm.blacklist': blacklist
+});
+
+
+</script>
+
+        <!-- Google Tag Manager -->
+        <script type="text/plain" data-category="analytics" data-service="Google Tag Manager" data-turbolinks-track>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+        new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+        j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+        'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+        })(window,document,'script','dataLayer','GTM-WNG4RRJ');</script>
+        <!-- End Google Tag Manager -->
+      
+
+      <script type="text/plain" data-category="analytics" data-service="Google Tag">
+        window.dataLayer = window.dataLayer || [];
+        window.dataLayer.push({
+          organizer_id: "502",
+          organizer_segment: "Theatre / Scene / Show",
+          organizer_popular_name: "Frugård",
+          organizer_name: "Bakeriet Frugård AS"
+        });
+      </script>
+    
+
+<meta name="csrf-param" content="authenticity_token" />
+<meta name="csrf-token" content="redacted" />
+<title>TicketCo - Arrangementer
+Frugård</title>
+<link href='https://fonts.googleapis.com' rel='preconnect'>
+<link crossorigin='true' href='https://fonts.gstatic.com' rel='preconnect'>
+<link href='https://fonts.googleapis.com/css2?family=Inter:wght@100..900&amp;display=swap' rel='stylesheet'>
+
+<meta name="action-cable-url" content="wss://sockets.ticketco.events/cable" />
+<link href='https://frugard.ticketco.events/no/nb' rel='canonical'>
+<link href='https://frugard.ticketco.events/no/nb' hreflang='x-default' rel='alternate'>
+<link href='https://frugard.ticketco.events/no/nb' hreflang='nb-NO' rel='alternate'>
+<link href='https://frugard.ticketco.events/uk/en' hreflang='en-GB' rel='alternate'>
+<link href='https://frugard.ticketco.events/se/sv' hreflang='sv-SE' rel='alternate'>
+<link href='https://frugard.ticketco.events/pl/en' hreflang='en-GB' rel='alternate'>
+<link href='https://frugard.ticketco.events/ie/en' hreflang='en-IE' rel='alternate'>
+<meta content='https://frugard.ticketco.events/no/nb' property='og:url'>
+<meta content='Frugård' property='og:type'>
+<meta content='Frugård @TicketCo' property='og:title'>
+<meta content='' property='og:description'>
+<meta content='https://tuploads.s3.eu-west-1.amazonaws.com/production/uploads/organizer/logo/502/default_logo-frugaard-topp.png' property='og:image'>
+
+
+<link rel="icon" type="image/x-icon" href="https://tuploads.s3.eu-west-1.amazonaws.com/production/uploads/branding/site_favicon_image/20399/bakeriet_logo_face.png" />
+<link rel="stylesheet" href="https://ticketco.events/packs/css/9211-bcb729a1.css" data-turbolinks-track="" />
+<link rel="stylesheet" href="https://ticketco.events/packs/css/3567-1de9722e.css" data-turbolinks-track="" />
+<link rel="stylesheet" href="https://ticketco.events/packs/css/mobile-common-12b11f0a.css" data-turbolinks-track="" />
+<link rel="stylesheet" href="https://ticketco.events/packs/css/1651-efd1ed0d.css" data-turbolinks-track="" />
+<link rel="stylesheet" href="https://ticketco.events/assets/application.mobile-fdbddf926d1e8cdf0b1121b42b68758bf65e55da28415a1a101ab16ed20eee1d.css" />
+<style data-turbolinks-track='true'>
+:root {
+  --section-version: 2;
+  --seat-width: 30px;
+  --seat-height: 30px;
+}
+
+</style>
+<style data-turbolinks-track='true'>
+@font-face {
+  font-family: MainBrandFont;
+  src: url();
+}
+
+
+:root {
+  --header-background-color: #FFFFFF;
+--header-background-color-rgb-channels: 255 255 255;
+--header-foreground-color: #000000;
+--header-foreground-color-rgb-channels: 0 0 0;
+--header-border-bottom-width: 0.5px;
+--header-border-bottom-color: #000000;
+--header-border-bottom-color-rgb-channels: 0 0 0;
+--main-background-color: #FFFFFF;
+--main-background-color-rgb-channels: 255 255 255;
+--main-background-image: url(https://tuploads.s3.eu-west-1.amazonaws.com/production/uploads/branding/main_background_image/20399/Skjermbilde_2022-09-20_kl._13.24.44.png);
+--main-background-repeat: no-repeat;
+--main-background-size: 100%;
+--main-card-title-foreground-color: #000000;
+--main-card-title-foreground-color-rgb-channels: 0 0 0;
+--main-inner-card-background-color: #D7CFC7;
+--main-inner-card-background-color-rgb-channels: 215 207 199;
+--main-primary-background-color: #CA293F;
+--main-primary-background-color-rgb-channels: 202 41 63;
+--main-primary-foreground-color: #FFFFFF;
+--main-primary-foreground-color-rgb-channels: 255 255 255;
+--main-tertiary-background-color: #000000;
+--main-tertiary-background-color-rgb-channels: 0 0 0;
+--main-tertiary-foreground-color: #FFFFFF;
+--main-tertiary-foreground-color-rgb-channels: 255 255 255;
+--main-label-foreground-color: #000000;
+--main-label-foreground-color-rgb-channels: 0 0 0;
+--passbook-background-color: #000000;
+--passbook-background-color-rgb-channels: 0 0 0;
+--passbook-foreground-color: #FFFFFF;
+--passbook-foreground-color-rgb-channels: 255 255 255;
+--passbook-label-foreground-color: #CA293F;
+--passbook-label-foreground-color-rgb-channels: 202 41 63;
+
+}
+
+</style>
+
+
+      <script type="text/javascript" src="//static.queue-it.net/script/queueclient.min.js"></script>
+      <script
+          data-queueit-c="ticketco"
+          type="text/javascript"
+          src="//static.queue-it.net/script/queueconfigloader.min.js">
+      </script>
+    
+</head>
+<body class='tc-companion-layout--body' data-currency-symbol='NOK' data-domain='frugard.ticketco.events' data-google-domain='frugard.ticketco.events' data-google-tracking-id='UA-26366548-1' data-lang='nb' data-subdomain='frugard' data-territory='no' ng-app='ticketco/mobile'>
+<header class='tc-mobile-header py-5 px-2 clearfix' tc-page-state='/no/nb/m/user'>
+<a style="-webkit-flex:0 0 auto; flex:0 0 auto; margin-right:10px;" href="https://frugard.ticketco.events/no/nb/m"><img alt="Logo" class="tc-mobile-header--logo" style="display:block; max-width:100%; margin-left:10px;" src="https://tuploads.s3.eu-west-1.amazonaws.com/production/uploads/branding/header_logo_image/20399/BAKERIET_LOGO__1_-1.png" />
+</a>
+<div class='tc-mobile-header--buttons flex gap-2'>
+<shopping-cart-counter count='' href='https://ticketco.events/no/nb/m/shopping_cart' on-complete-action='hide_timer' type='mobile'></shopping-cart-counter>
+<button aria-label='Menu button' class='tc-mobile-header--hamburger-button collapsed py-0 px-2 mr-2 bg-transparent border-none' data-target='#mainMenu' data-toggle='collapse'>
+<svg aria-hidden="true" viewBox="0 0 24 24" class="flex-none w-8 h-8 text-headerForeground">
+  <path fill="currentColor" d="M3 18h18v-2H3zm0-5h18v-2H3zm0-7v2h18V6z"></path>
+</svg>
+
+</button>
+</div>
+</header>
+<div class='tc-mobile-header--hamburger-menu collapse' id='mainMenu'>
+<a aria-label='Dismiss' class='tc-mobile-header--hamburger-menu-close' data-target='#mainMenu' data-toggle='collapse' href='#' id='hamburgerMenu'></a>
+<div class='tc-mobile-header--hamburger-menu-items'>
+<div class='tc-mobile-header--hamburger-menu-item'>
+<div class='lang-menus'>
+<div class='lang-menu'>
+<div class='flex gap-3 justify-center items-center'>
+<img alt="flags icon" class="flex-none" src="https://ticketco.events/assets/flags/4x3/no-d4ae9765d2dd03faef1007008bf1ccde064e36c765faef79a270e7e8fa97c23a.svg" width="24" height="18" />
+Språk
+</div>
+<form action='#'>
+<select name="language" id="language" data-tc-behavior="navigateToSelectedLanguageUrlAndSaveToCookies" class="select_territory tc-select __color-dark" aria-label="select language field"><option data-abbr="nb" selected="selected" value="/no/nb/m">Norsk</option>
+<option data-abbr="en" value="/no/en/m">English</option>
+<option data-abbr="sv" value="/no/sv/m">Svenska</option>
+<option data-abbr="sk" value="/no/sk/m">Slovenčina</option></select>
+</form>
+</div>
+</div>
+
+</div>
+<div class='tc-mobile-header--hamburger-menu-item'>
+<a rel="nofollow" class="tc-mobile-header--hamburger-menu-link" href="https://ticketco.events/no/nb/admin?version=m">Admin?</a>
+
+</div>
+<div class='tc-mobile-header--hamburger-menu-item'>
+<a class="tc-mobile-header--hamburger-menu-link" target="_blank" href="https://no.ticketco.io/">Selge billetter?</a>
+
+</div>
+<div class='tc-mobile-header--hamburger-menu-item'>
+<a class="tc-mobile-header--hamburger-menu-link" target="_blank" href="https://no.ticketco.io/the-ticketco-story">Hva er TicketCo?</a>
+
+</div>
+<div class='tc-mobile-header--hamburger-menu-item'>
+<a class="tc-mobile-header--hamburger-menu-link" ng-dialog="redeemItemsDialog.html" ng-dialog-controller="redeemItemsDialogController" ng-dialog-controller-as="form" ng-dialog-bind-to-controller="true" ng-dialog-class="ngdialog-theme-default above-all full-screen" data-toggle="collapse" data-target="#mainMenu" href="#">Innløs din reservasjon</a>
+
+</div>
+<div class='tc-mobile-header--hamburger-menu-item'>
+<a class="tc-mobile-header--hamburger-menu-link" ng-dialog="retrieveItemsDialog.html" ng-dialog-controller="retrieveTicketsDialogController" ng-dialog-controller-as="form" ng-dialog-bind-to-controller="true" ng-dialog-class="ngdialog-theme-default above-all full-screen" data-toggle="collapse" data-target="#mainMenu" href="#">Finn dine kjøpte billetter</a>
+
+</div>
+<div class='tc-mobile-header--hamburger-menu-item'>
+<a class="tc-mobile-header--hamburger-menu-link" ng-dialog="checkGiftCardBalanceDialog.html" ng-dialog-controller="checkGiftCardBalanceDialogController" ng-dialog-controller-as="form" ng-dialog-bind-to-controller="true" ng-dialog-class="ngdialog-theme-default above-all full-screen" data-toggle="collapse" data-target="#mainMenu" href="#">Sjekk gavekortsaldo</a>
+
+</div>
+<div class='tc-mobile-header--hamburger-menu-item'>
+<a class='tc-mobile-header--hamburger-menu-link' data-hubspot-chat='true' href='#'>
+<i class='t-icon-question-sign'></i>
+Hjelp
+</a>
+</div>
+<br>
+<div class='text-center'>
+<a class="tc-button __color-yellow __size-big __flat __all-caps" style="width: 50%;" data-toggle="collapse" data-target="#mainMenu" href="#">Lukk</a>
+</div>
+<br>
+</div>
+<div class='tc-mobile-header--hamburger-menu-copyrights'>
+<strong> &copy; TicketCo AS 2026.</strong>
+<a href="https://ticketco.events/no/nb/m/legal_terms_ticketbuyers">Vilkår for sluttbrukere (billettkjøpere)</a>
+<a href="https://ticketco.events/no/nb/m/legal_terms_organizers">Vilkår for arrangører.</a>
+</div>
+</div>
+
+<main>
+<div class='content-box'>
+<form id="eventSearcher" class="tc-primary-search tc-primary-search__no-border mb-7 bg-white rounded-allOrNothing" action="/no/nb/m" accept-charset="UTF-8" method="get"><div style='margin-bottom: 0;'>
+<input type="text" name="pattern" id="pattern" placeholder="Søk etter arrangementer her..." class="tc-primary-search--input h-auto pl-5 rounded-allOrNothing bg-mainBackground/75 placeholder:text-mainForeground/75 border-2 border-mainPrimaryBackground focus:border-mainPrimaryHighlightBackground" />
+<a class='tc-primary-search--submit search-trigger'></a>
+</div>
+</form>
+<div class='search-result'><div class='mt-6 mb-8'>
+<form action="/no/nb/m" accept-charset="UTF-8" method="get"><input type="hidden" name="visibility" id="visibility" autocomplete="off" />
+<input type="hidden" name="date_filter" id="date_filter" autocomplete="off" />
+<input type="hidden" name="filter_type" id="filter_type" autocomplete="off" />
+<input type="hidden" name="date_filter_sort_direction" id="date_filter_sort_direction" autocomplete="off" />
+<ul class='tc-primary-filters--types-list text-center'>
+<li class='tc-primary-filters--types-item'>
+<a class="tc-primary-filters--types-item-link border rounded-control text-base font-medium bg-mainPrimaryBackground text-mainPrimaryForeground border-mainPrimaryBackground hover:bg-mainPrimaryHighlightBackground hover:border-mainPrimaryHighlightBackground hover:text-mainPrimaryHighlightForeground" href="/no/nb/m">Dato</a>
+</li>
+<li class='tc-primary-filters--types-item'>
+<a class="tc-primary-filters--types-item-link border rounded-control text-base font-medium bg-mainPrimaryBackground text-mainPrimaryForeground border-mainPrimaryBackground hover:bg-mainPrimaryHighlightBackground hover:border-mainPrimaryHighlightBackground hover:text-mainPrimaryHighlightForeground" href="/no/nb/m?filter_type=popular">Populært</a>
+</li>
+<li class='tc-primary-filters--types-item'>
+<a class="tc-primary-filters--types-item-link border rounded-control text-base font-medium bg-mainPrimaryBackground text-mainPrimaryForeground border-mainPrimaryBackground hover:bg-mainPrimaryHighlightBackground hover:border-mainPrimaryHighlightBackground hover:text-mainPrimaryHighlightForeground" href="/no/nb/m?filter_subtype=all&amp;filter_type=category">Kategori</a>
+</li>
+</ul>
+</form></div>
+
+<div class='flex flex-col gap-4 overflow-visible tc-events-list mb-8'>
+<div>
+<div class='sm:pb-0 sm:flex-row bg-mainCardBackground tc-events-list--item drop-shadow-md sm:rounded-main hover:drop-shadow-lg flex flex-col gap-4 pb-4 overflow-hidden'>
+<a aria-label='Event link Erlend Loe les «Kukene/Kukane» ' class='tc-events-list--item-logo flex self-stretch sm:self-start items-start p-0 sm:py-4 sm:pl-4' href='https://frugard.ticketco.events/no/nb/m/e/erlend_loe_les_kukenekukane_live' target='_self'>
+<img class="flex self-stretch h-auto object-cover hidden sm:w-32 sm:block rounded-main" alt="Event image Erlend Loe les «Kukene/Kukane» " loading="lazy" src="https://tuploads.s3.amazonaws.com/production/uploads/event/image/1080734/thumb_file-1773350208.jpeg" width="120" height="120" />
+<img class="flex self-stretch h-auto object-cover w-full block sm:hidden" alt="Event image Erlend Loe les «Kukene/Kukane» " loading="lazy" src="https://tuploads.s3.amazonaws.com/production/uploads/event/image/1080734/default_file-1773350208.jpeg" width="625" height="625" />
+
+</a>
+<div class='tc-events-list--details sm:px-0 sm:py-4 px-4 py-0'>
+<a class='tc-events-list--title text-xl text-mainLinkForeground font-semibold inline-block hover:text-mainCardForeground' href='https://frugard.ticketco.events/no/nb/m/e/erlend_loe_les_kukenekukane_live' target='_self'>
+Erlend Loe les «Kukene/Kukane» 
+</a>
+<div class='tc-main-card-foreground-color text-base mt-2 mr-2'>
+<p>Velkomen til ein kveld der du får oppleve heile romanen, lesen av forfattaren sjølv – live frå scena!</p>
+</div>
+<div class='tc-events-list--place-time tc-main-card-foreground-color text-base mt-2'>
+23.10.2026 18:30
+@
+Arena
+</div>
+</div>
+<script type='application/ld+json'>
+{"@context" : "http://schema.org", "@type" : "Event", "name" : "Erlend Loe les «Kukene/Kukane» ", "description" : "<p>Dette blir ein ekte lesemaraton som vil vare i 2–3 timar, sjølvsagt med velfortente pausar undervegs, der publikum kan strekkje på beina og kjøpe noko i baren.</p><p>Erlend Loe er kjend som ein særeigen opplesar – med humor, varme og perfekt timing. Har du høyrt nokre av bøkene hans som lydbok, veit du kva vi snakkar om.</p><p><strong>Om «Kukene/Kukane»:</strong><br>«Ein dag fell penisen til Tander av medan han står i dusjen. Det er lite ideelt og passar dårleg, mildt sagt.» Slik byrjar Kukene / Kukane – ei forteljing om tap, tilknyting og fridom, om kropp, skam og om kva det eigentleg vil seie å vere heil.</p><p>Forteljinga er absurd, morosam og tankevekkjande. I kjend Loe-stil balanserer ho lettheit og djupn, med eit blikk for det menneskelege som er både ømt og burlesk.</p><p>Boka fekk ei rekkje strålande meldingar då ho kom ut i fjor haust, og ho vart òg nominert til Bokhandlerprisen.</p><p><strong>Frå meldingane:</strong></p><p>«Når lo eg høgt av ein roman sist? Altså, beint fram skratta?» NRK «Loe er morsom, veldig morsom.» Dagbladet «Forfatterens tørrvittige stil er perfekt for absurde historier som dette.» Stavanger Aftenblad «Det er bare Loe som kan finne på noe så vilt og originalt, her er nok stoff til å kurere en lett høstdepresjon.» Adresseavisen «Loe er som alltid en morsom forfatter. Han skriver med en letthet som er beundringsverdig.» VG</p><p><br></p><p>Arrangementet er eit samarbeid mellom Bakeriet Frugård og Stord Mållag.</p><p>Dørene opnar kl 18.30</p><p>Start kl 19.00</p>", "url" : "https://frugard.ticketco.events/no/nb/e/erlend_loe_les_kukenekukane_live", "eventStatus" : "EventScheduled", "startDate" : "2026-10-23T18:30:00Z", "endDate" : "2026-10-23T22:00:00Z", "image" : "https://tuploads.s3.amazonaws.com/production/uploads/event/image/1080734/default_file-1773350208.jpeg", "landing_image" : null, "location" : {"@type" : "Place", "name" : "Arena", "address" : "entities.street_address"}, "organizer" : {"@type" : "Organization", "name" : "Frugård", "url" : "https://frugard.ticketco.events"}}
+</script>
+</div>
+</div>
+<div>
+<div class='sm:pb-0 sm:flex-row bg-mainCardBackground tc-events-list--item drop-shadow-md sm:rounded-main hover:drop-shadow-lg flex flex-col gap-4 pb-4 overflow-hidden'>
+<a aria-label='Event link RAMMSUND ' class='tc-events-list--item-logo flex self-stretch sm:self-start items-start p-0 sm:py-4 sm:pl-4' href='https://frugard.ticketco.events/no/nb/m/e/rammsund_2026' target='_self'>
+<img class="flex self-stretch h-auto object-cover hidden sm:w-32 sm:block rounded-main" alt="Event image RAMMSUND " loading="lazy" src="https://tuploads.s3.amazonaws.com/production/uploads/event/image/1158372/thumb_file-1782119991.jpeg" width="120" height="120" />
+<img class="flex self-stretch h-auto object-cover w-full block sm:hidden" alt="Event image RAMMSUND " loading="lazy" src="https://tuploads.s3.amazonaws.com/production/uploads/event/image/1158372/default_file-1782119991.jpeg" width="625" height="625" />
+
+</a>
+<div class='tc-events-list--details sm:px-0 sm:py-4 px-4 py-0'>
+<a class='tc-events-list--title text-xl text-mainLinkForeground font-semibold inline-block hover:text-mainCardForeground' href='https://frugard.ticketco.events/no/nb/m/e/rammsund_2026' target='_self'>
+RAMMSUND 
+</a>
+<div class='tc-main-card-foreground-color text-base mt-2 mr-2'>
+<p></p>
+</div>
+<div class='tc-events-list--place-time tc-main-card-foreground-color text-base mt-2'>
+24.10.2026 20:00
+@
+Arena
+</div>
+</div>
+<script type='application/ld+json'>
+{"@context" : "http://schema.org", "@type" : "Event", "name" : "RAMMSUND ", "description" : "<p>Dørene opnar kl 20</p><p>Spelestart kl 21&nbsp;</p><p><br></p><p>Du vert ikkje det største ikkje-engelskspråklege rockebandet i verda, om ikkje musikken og melodiane er feite nok til å stå på eigne bein. Du må med andre ord ikkje skjøne orda til Rammstein. Men då ein kompisgjeng frå Oslo på slutten av 1990-tallet starta å gjere djupdykk i tekstane, skjønte dei at dette måtte verda få med seg! Eller, i kvart fall måtte Noreg få det med seg. Det fekk vere grenser for kor stort ansvar ein skulle ta på seg.<br><br>Dermed vart han fødd: ideen om Rammstein på norsk! Det måtte vere hardt, feitt og brutalt. Og med ein noko større dose godt humør enn kva metalband gjerne er kjend for. Dessutan, skulle ein verne om schwungen frå dei tyske tekstane, heldt det ikkje med utvaska bokmål. Det er nemleg berre eitt norsk språk som er stramt og hardbarka nok til å vere det austtyske metalfenomenet verdig. Det måtte verte nynorsk.<br><br>Ei utslite Spynorsk Mordliste og eit par korrekturlesingar av Språkrådet seinare, og dei fyrste Rammstein-låtane på nynorsk var klare, ein vinterdag i 2003. Rammsund var fødd.<br><br>Sidan har det gått slag i slag, og det finst knapt ei scene i Noreg der ikkje Rammsund har misjonert på vegne av Rammstein og Målsaka.</p>", "url" : "https://frugard.ticketco.events/no/en/e/rammsund_2026", "eventStatus" : "EventScheduled", "startDate" : "2026-10-24T20:00:00Z", "endDate" : "2026-10-24T23:30:00Z", "image" : "https://tuploads.s3.amazonaws.com/production/uploads/event/image/1158372/default_file-1782119991.jpeg", "landing_image" : null, "location" : {"@type" : "Place", "name" : "Arena", "address" : "entities.street_address"}, "organizer" : {"@type" : "Organization", "name" : "Frugård", "url" : "https://frugard.ticketco.events"}}
+</script>
+</div>
+</div>
+<div>
+<div class='sm:pb-0 sm:flex-row bg-mainCardBackground tc-events-list--item drop-shadow-md sm:rounded-main hover:drop-shadow-lg flex flex-col gap-4 pb-4 overflow-hidden'>
+<a aria-label='Event link OPEN ARENA' class='tc-events-list--item-logo flex self-stretch sm:self-start items-start p-0 sm:py-4 sm:pl-4' href='https://frugard.ticketco.events/no/nb/m/e/open_arena' target='_self'>
+<img class="flex self-stretch h-auto object-cover hidden sm:w-32 sm:block rounded-main" alt="Event image OPEN ARENA" loading="lazy" src="https://tuploads.s3.amazonaws.com/production/uploads/event/image/1205871/thumb_file-1790323929.jpeg" width="120" height="120" />
+<img class="flex self-stretch h-auto object-cover w-full block sm:hidden" alt="Event image OPEN ARENA" loading="lazy" src="https://tuploads.s3.amazonaws.com/production/uploads/event/image/1205871/default_file-1790323929.jpeg" width="625" height="625" />
+
+</a>
+<div class='tc-events-list--details sm:px-0 sm:py-4 px-4 py-0'>
+<a class='tc-events-list--title text-xl text-mainLinkForeground font-semibold inline-block hover:text-mainCardForeground' href='https://frugard.ticketco.events/no/nb/m/e/open_arena' target='_self'>
+OPEN ARENA
+</a>
+<div class='tc-main-card-foreground-color text-base mt-2 mr-2'>
+<p>Bakeriet Frugård og Trymmen sin rullekonto lagar konsertar med fri aldersgrense. Ungdom står på og bak scenen.</p>
+</div>
+<div class='tc-events-list--place-time tc-main-card-foreground-color text-base mt-2'>
+28.10.2026 17:30
+@
+Arena
+</div>
+</div>
+<script type='application/ld+json'>
+{"@context" : "http://schema.org", "@type" : "Event", "name" : "OPEN ARENA", "description" : "<p>Denne gongen er det unge talent frå Stord som fyller scenen i Arena! I samarbeid med kulturskulen, ungdomsskulane på øya og Musikklinja ved Stord vgs, har me sett saman eit program som bør fenge dei fleste.&nbsp;</p><p><br></p><p>Dei som er med er:</p><p><br></p><p>Yonas Tesfa</p><p>Håvard Mæhle Bay</p><p>Static Age</p><p>Evelina og Polina</p><p>Gnist</p><p>Wrong Place at the Right Time&nbsp;</p><p>Musikklinjekoret</p><p>Hedda &amp; the Husbands</p><p>Mina Kannelønning Kolstad</p><p><br></p><p>Dørene opnar kl 17.30</p><p>Spelestart kl 18</p>", "url" : "https://frugard.ticketco.events/no/en/e/open_arena", "eventStatus" : "EventScheduled", "startDate" : "2026-10-28T17:30:00Z", "endDate" : "2026-10-28T19:30:00Z", "image" : "https://tuploads.s3.amazonaws.com/production/uploads/event/image/1205871/default_file-1790323929.jpeg", "landing_image" : null, "location" : {"@type" : "Place", "name" : "Arena", "address" : "entities.street_address"}, "organizer" : {"@type" : "Organization", "name" : "Frugård", "url" : "https://frugard.ticketco.events"}}
+</script>
+</div>
+</div>
+<div>
+<div class='sm:pb-0 sm:flex-row bg-mainCardBackground tc-events-list--item drop-shadow-md sm:rounded-main hover:drop-shadow-lg flex flex-col gap-4 pb-4 overflow-hidden'>
+<a aria-label='Event link ORKAN / Skuld' class='tc-events-list--item-logo flex self-stretch sm:self-start items-start p-0 sm:py-4 sm:pl-4' href='https://frugard.ticketco.events/no/nb/m/e/orkan__skuld' target='_self'>
+<img class="flex self-stretch h-auto object-cover hidden sm:w-32 sm:block rounded-main" alt="Event image ORKAN / Skuld" loading="lazy" src="https://tuploads.s3.amazonaws.com/production/uploads/event/image/1163482/thumb_file-1782807147.png" width="120" height="120" />
+<img class="flex self-stretch h-auto object-cover w-full block sm:hidden" alt="Event image ORKAN / Skuld" loading="lazy" src="https://tuploads.s3.amazonaws.com/production/uploads/event/image/1163482/default_file-1782807147.png" width="625" height="625" />
+
+</a>
+<div class='tc-events-list--details sm:px-0 sm:py-4 px-4 py-0'>
+<a class='tc-events-list--title text-xl text-mainLinkForeground font-semibold inline-block hover:text-mainCardForeground' href='https://frugard.ticketco.events/no/nb/m/e/orkan__skuld' target='_self'>
+ORKAN / Skuld
+</a>
+<div class='tc-main-card-foreground-color text-base mt-2 mr-2'>
+<p></p>
+</div>
+<div class='tc-events-list--place-time tc-main-card-foreground-color text-base mt-2'>
+07.11.2026 20:00
+@
+Arena
+</div>
+</div>
+<script type='application/ld+json'>
+{"@context" : "http://schema.org", "@type" : "Event", "name" : "ORKAN / Skuld", "description" : "<p>ORKAN vart skipa i 2008 av TAAKE-livegitarist Gjermund Fredheim og tidlegare BYFROST-trommis, og seinare TAAKE-trommis Rune Nesse. Etter å ha fått med seg bassisten Sindre Hillesdal og frontfigur Einar Fjelldal (frå &nbsp;GRAVEMACHINE), gav ORKAN ut det fyrste albumet sitt, «Crimson Canvas», i 2012, og det kritikarroste andrealbumet «Livlaus» i 2015. og &nbsp;«Element!» &nbsp;i 2018.</p><p>Skuld er eit nystarta band frå Bergen som rører seg i landskapet mellom black metal og shoegaze. Bandet består av erfarne musikarar med tilknytning til blant anna Taake, Nifrost, Blodhemn, Drittmaskin og Confabulation, og har på kort tid gjort seg bemerka i den norske undergrunnen. Førstesingelen Æreskrans fekk strålande mottaking, blant anna 5 av 6 i Bergens Tidende, som skreiv:</p><p>“Endelig skjer det litt spennende greier i den bergenske metal-undergrunnen igjen. Skuld fortsetter denne trenden med Æreskrans, årets mest sørgmodige, melankolske låt til nå.\"</p>", "url" : "https://frugard.ticketco.events/no/en/e/orkan__skuld", "eventStatus" : "EventScheduled", "startDate" : "2026-11-07T20:00:00Z", "endDate" : "2026-11-07T23:30:00Z", "image" : "https://tuploads.s3.amazonaws.com/production/uploads/event/image/1163482/default_file-1782807147.png", "landing_image" : null, "location" : {"@type" : "Place", "name" : "Arena", "address" : "entities.street_address"}, "organizer" : {"@type" : "Organization", "name" : "Frugård", "url" : "https://frugard.ticketco.events"}}
+</script>
+</div>
+</div>
+<div>
+<div class='sm:pb-0 sm:flex-row bg-mainCardBackground tc-events-list--item drop-shadow-md sm:rounded-main hover:drop-shadow-lg flex flex-col gap-4 pb-4 overflow-hidden'>
+<a aria-label='Event link Hedvig Mollestad Trio' class='tc-events-list--item-logo flex self-stretch sm:self-start items-start p-0 sm:py-4 sm:pl-4' href='https://frugard.ticketco.events/no/nb/m/e/hedvig_mollestad_trio' target='_self'>
+<img class="flex self-stretch h-auto object-cover hidden sm:w-32 sm:block rounded-main" alt="Event image Hedvig Mollestad Trio" loading="lazy" src="https://tuploads.s3.amazonaws.com/production/uploads/event/image/1159254/thumb_file-1782211279.jpeg" width="120" height="120" />
+<img class="flex self-stretch h-auto object-cover w-full block sm:hidden" alt="Event image Hedvig Mollestad Trio" loading="lazy" src="https://tuploads.s3.amazonaws.com/production/uploads/event/image/1159254/default_file-1782211279.jpeg" width="625" height="625" />
+
+</a>
+<div class='tc-events-list--details sm:px-0 sm:py-4 px-4 py-0'>
+<a class='tc-events-list--title text-xl text-mainLinkForeground font-semibold inline-block hover:text-mainCardForeground' href='https://frugard.ticketco.events/no/nb/m/e/hedvig_mollestad_trio' target='_self'>
+Hedvig Mollestad Trio
+</a>
+<div class='tc-main-card-foreground-color text-base mt-2 mr-2'>
+<p></p>
+</div>
+<div class='tc-events-list--place-time tc-main-card-foreground-color text-base mt-2'>
+14.11.2026 20:00
+@
+Arena
+</div>
+</div>
+<script type='application/ld+json'>
+{"@context" : "http://schema.org", "@type" : "Event", "name" : "Hedvig Mollestad Trio", "description" : "<div data-complete=\"true\" data-copy-service-computed-style='font-family: \"Google Sans\", Arial, sans-serif; font-size: 16px; font-weight: 400; margin: 12px 0px 16px; text-decoration: none; border-bottom: 0px rgb(10, 10, 10);' data-hveid=\"CAAIBRAA\" data-processed=\"true\" data-sfc-cb=\"\" data-sfc-cp=\"\" data-sfc-root=\"ep\">Gitarist Hedvig Mollestad har to Spellemannprisar innabords og har vorte utpeika av Downbeat som ein av dei 25 som skal forme jazzen i åra som kjem.<span data-complete=\"true\" data-copy-service-computed-style='font-family: \"Google Sans\", Arial, sans-serif; font-size: 16px; font-weight: 400; margin: 0px; text-decoration: none; border-bottom: 0px rgb(10, 10, 10);' data-processed=\"true\" data-sfc-cb=\"\" data-sfc-cp=\"\" data-sfc-root=\"ep\">&nbsp;Musikken til Hedvig har ved fleire høve vorte heitt omtalt i NY Times, <span data-complete=\"true\" data-copy-service-computed-style='font-family: \"Google Sans\", Arial, sans-serif; font-size: 16px; font-weight: 400; margin: 0px; text-decoration: none; border-bottom: 0px rgb(10, 10, 10);' data-processed=\"true\" data-sfc-cb=\"\" data-sfc-cp=\"\" data-sfc-root=\"ep\"><a data-copy-service-computed-style='font-family: \"Google Sans\", Arial, sans-serif; font-size: 16px; font-weight: 500; margin: 0px; text-decoration: underline 1px rgb(21, 88, 214); border-bottom: 0px rgb(21, 88, 214);' data-hveid=\"CAAIBRAB\" data-processed=\"true\" href=\"https://www.rollingstone.com/\" ping=\"/url?sa=t&source=web&rct=j&url=https://www.rollingstone.com/&ved=2ahUKEwits8rRlZ2VAxXBPhAIHdFWKLYQy_kOegYIAAgFEAE&opi=89978449\" rel=\"noopener\" target=\"_blank\">Rolling Stone</a></span><span data-complete=\"true\" data-copy-service-computed-style='font-family: \"Google Sans\", Arial, sans-serif; font-size: 16px; font-weight: 400; margin: 0px; text-decoration: none; border-bottom: 0px rgb(10, 10, 10);' data-processed=\"true\" data-sfc-cb=\"\" data-sfc-cp=\"\" data-sfc-root=\"ep\">, Wall Street Journal, MOJO, Uncut, <span data-complete=\"true\" data-copy-service-computed-style='font-family: \"Google Sans\", Arial, sans-serif; font-size: 16px; font-weight: 400; margin: 0px; text-decoration: none; border-bottom: 0px rgb(10, 10, 10);' data-processed=\"true\" data-sfc-cb=\"\" data-sfc-cp=\"\" data-sfc-inited=\"2\" data-sfc-root=\"ep\"><a data-copy-service-computed-style='font-family: \"Google Sans\", Arial, sans-serif; font-size: 16px; font-weight: 500; margin: 0px; text-decoration: underline 1px rgb(21, 88, 214); border-bottom: 0px rgb(21, 88, 214);' data-hveid=\"CAAIBRAC\" data-processed=\"true\" href=\"https://pitchfork.com/\" ping=\"/url?sa=t&source=web&rct=j&url=https://pitchfork.com/&ved=2ahUKEwits8rRlZ2VAxXBPhAIHdFWKLYQy_kOegYIAAgFEAI&opi=89978449\" rel=\"noopener\" target=\"_blank\">Pitchfork</a> og</span><span data-complete=\"true\" data-copy-service-computed-style='font-family: \"Google Sans\", Arial, sans-serif; font-size: 16px; font-weight: 400; margin: 0px; text-decoration: none; border-bottom: 0px rgb(10, 10, 10);' data-processed=\"true\" data-sfc-cb=\"\" data-sfc-cp=\"\" data-sfc-root=\"ep\">&nbsp;<span data-complete=\"true\" data-copy-service-computed-style='font-family: \"Google Sans\", Arial, sans-serif; font-size: 16px; font-weight: 400; margin: 0px; text-decoration: none; border-bottom: 0px rgb(10, 10, 10);' data-processed=\"true\" data-sfc-cb=\"\" data-sfc-cp=\"\" data-sfc-inited=\"2\" data-sfc-root=\"ep\"><a aria-label=\"Jazzwise. Link preview. Site: Jazzwise. Title: Jazzwise - Home - Jazzwise. URL: https://www.jazzwise.com/.\" data-copy-service-computed-style='font-family: \"Google Sans\", Arial, sans-serif; font-size: 16px; font-weight: 500; margin: 0px; text-decoration: underline 1px rgb(21, 88, 214); border-bottom: 0px rgb(21, 88, 214);' data-hveid=\"CAAIBRAD\" data-processed=\"true\" href=\"https://www.jazzwise.com/\" ping=\"/url?sa=t&source=web&rct=j&url=https://www.jazzwise.com/&ved=2ahUKEwits8rRlZ2VAxXBPhAIHdFWKLYQy_kOegYIAAgFEAM&opi=89978449\" rel=\"noopener\" target=\"_blank\">Jazzwise</a>,</span> og trioen, med Ellen Brekken på bass og stords store son Ivar Loe Bjørnstad på trommer, har alltid vorte skildra som eit band som lagar engasjerande musikk, uavhengig av sjanger.</span></span></span></div><div data-complete=\"true\" data-copy-service-computed-style='font-family: \"Google Sans\", Arial, sans-serif; font-size: 14px; font-weight: 400; margin: 0px; text-decoration: none; border-bottom: 0px rgb(10, 10, 10);' data-processed=\"true\" data-sfc-cb=\"\" data-sfc-cp=\"\" data-sfc-inited=\"2\" data-sfc-root=\"ep\"><br></div><div aria-level=\"3\" aria-owns=\"action-menu-parent-container\" data-animation-nesting=\"\" data-complete=\"true\" data-copy-service-computed-style='font-family: \"Google Sans\", Arial, sans-serif; font-size: 20px; font-weight: 600; margin: 24px 0px 12px; text-decoration: none; border-bottom: 0px rgb(10, 10, 10);' data-processed=\"true\" data-sae=\"\" data-sfc-cb=\"\" data-sfc-cp=\"\" data-sfc-root=\"ep\"><br></div>", "url" : "https://frugard.ticketco.events/no/nb/e/hedvig_mollestad_trio", "eventStatus" : "EventScheduled", "startDate" : "2026-11-14T20:00:00Z", "endDate" : "2026-11-14T22:30:00Z", "image" : "https://tuploads.s3.amazonaws.com/production/uploads/event/image/1159254/default_file-1782211279.jpeg", "landing_image" : null, "location" : {"@type" : "Place", "name" : "Arena", "address" : "entities.street_address"}, "organizer" : {"@type" : "Organization", "name" : "Frugård", "url" : "https://frugard.ticketco.events"}}
+</script>
+</div>
+</div>
+<div>
+<div class='sm:pb-0 sm:flex-row bg-mainCardBackground tc-events-list--item drop-shadow-md sm:rounded-main hover:drop-shadow-lg flex flex-col gap-4 pb-4 overflow-hidden'>
+<a aria-label='Event link Ei Jazzy Jul med vener! ' class='tc-events-list--item-logo flex self-stretch sm:self-start items-start p-0 sm:py-4 sm:pl-4' href='https://frugard.ticketco.events/no/nb/m/e/ei_jazzy_jul_med_vener_2026' target='_self'>
+<img class="flex self-stretch h-auto object-cover hidden sm:w-32 sm:block rounded-main" alt="Event image Ei Jazzy Jul med vener! " loading="lazy" src="https://tuploads.s3.amazonaws.com/production/uploads/event/image/1200975/thumb_file-1789461530.png" width="120" height="120" />
+<img class="flex self-stretch h-auto object-cover w-full block sm:hidden" alt="Event image Ei Jazzy Jul med vener! " loading="lazy" src="https://tuploads.s3.amazonaws.com/production/uploads/event/image/1200975/default_file-1789461530.png" width="625" height="625" />
+
+</a>
+<div class='tc-events-list--details sm:px-0 sm:py-4 px-4 py-0'>
+<a class='tc-events-list--title text-xl text-mainLinkForeground font-semibold inline-block hover:text-mainCardForeground' href='https://frugard.ticketco.events/no/nb/m/e/ei_jazzy_jul_med_vener_2026' target='_self'>
+Ei Jazzy Jul med vener! 
+</a>
+<div class='tc-main-card-foreground-color text-base mt-2 mr-2'>
+<p>Sidan fjorårets konsert vart utseld er «Ei Jazzy Jul» tilbake i Arena. Stas! 
+<br />Det blir julelåtar i nye og jazzy drakter, inkludert reprise på favorittar frå i fjor. </p>
+</div>
+<div class='tc-events-list--place-time tc-main-card-foreground-color text-base mt-2'>
+22.12.2026 19:00
+@
+Arena
+</div>
+</div>
+<script type='application/ld+json'>
+{"@context" : "http://schema.org", "@type" : "Event", "name" : "Ei Jazzy Jul med vener! ", "description" : "<p>Den jazzy gjengen består av:</p><p>Dovilė Martinkutė og Brita Angeltveit på vokal</p><p>Frank Omar Vad på trommer</p><p>Haakon Hellesøy på bass</p><p>&nbsp;Johannes Hellesøy på gitar</p><p>Jakob Morvik på trompet</p><p>Denne samansetninga av lokale, profesjonelle utøvarar gler seg til å få spele heime på Stord igjen. Kom i julestemning med oss!</p><p>Her kan du både danse og sitje heilt i ro og nyte musikken. Det blir fint, gøy og veldig, veldig god stemning!</p><p>Konsertstart kl 20.00, men du er velkomen tidlegare for noko godt å eta inne på Bakeriet Frugård, eller for å catche opp med slekt og vener som er komne heim til jul! Velkommen!</p>", "url" : "https://frugard.ticketco.events/no/en/e/ei_jazzy_jul_med_vener_2026", "eventStatus" : "EventScheduled", "startDate" : "2026-12-22T19:00:00Z", "endDate" : "2026-12-22T22:00:00Z", "image" : "https://tuploads.s3.amazonaws.com/production/uploads/event/image/1200975/default_file-1789461530.png", "landing_image" : null, "location" : {"@type" : "Place", "name" : "Arena", "address" : "entities.street_address"}, "organizer" : {"@type" : "Organization", "name" : "Frugård", "url" : "https://frugard.ticketco.events"}}
+</script>
+</div>
+</div>
+<div>
+<div class='sm:pb-0 sm:flex-row bg-mainCardBackground tc-events-list--item drop-shadow-md sm:rounded-main hover:drop-shadow-lg flex flex-col gap-4 pb-4 overflow-hidden'>
+<a aria-label='Event link Marius &amp; Farius syng jula ut 2026' class='tc-events-list--item-logo flex self-stretch sm:self-start items-start p-0 sm:py-4 sm:pl-4' href='https://frugard.ticketco.events/no/nb/m/e/marius__farius_syng_jula_ut_2026' target='_self'>
+<img class="flex self-stretch h-auto object-cover hidden sm:w-32 sm:block rounded-main" alt="Event image Marius &amp; Farius syng jula ut 2026" loading="lazy" src="https://tuploads.s3.amazonaws.com/production/uploads/event/image/1200979/thumb_file-1789462039.jpeg" width="120" height="120" />
+<img class="flex self-stretch h-auto object-cover w-full block sm:hidden" alt="Event image Marius &amp; Farius syng jula ut 2026" loading="lazy" src="https://tuploads.s3.amazonaws.com/production/uploads/event/image/1200979/default_file-1789462039.jpeg" width="625" height="625" />
+
+</a>
+<div class='tc-events-list--details sm:px-0 sm:py-4 px-4 py-0'>
+<a class='tc-events-list--title text-xl text-mainLinkForeground font-semibold inline-block hover:text-mainCardForeground' href='https://frugard.ticketco.events/no/nb/m/e/marius__farius_syng_jula_ut_2026' target='_self'>
+Marius &amp; Farius syng jula ut 2026
+</a>
+<div class='tc-main-card-foreground-color text-base mt-2 mr-2'>
+<p></p>
+</div>
+<div class='tc-events-list--place-time tc-main-card-foreground-color text-base mt-2'>
+27.12.2026 20:00
+@
+Arena
+</div>
+</div>
+<script type='application/ld+json'>
+{"@context" : "http://schema.org", "@type" : "Event", "name" : "Marius & Farius syng jula ut 2026", "description" : "<p>Marius &amp; Farius gjentek suksessen frå i fjor og forfjor og forfjors fjor, og kjem attende til Arena 3. juledag. Med hjelp av onkel Frode Hammersland på bass, fetter Severin Vik på gitarar og kor og filleonkel Fredrik Horn på tangentar og kor, serverer dei deilig allsong, dans og festmusikk i kjent Marius &amp; Farius-stil. Dei foregåande åra har Arena vore fylt til randa, så her gjeld det å vere tidleg ute om ein ønsker å sikre seg ein billett.&nbsp;</p><p><br></p><p>Marius Sjo: Vokal og gitar.&nbsp;</p><p>Remi Sjo: trommer, kor og dans&nbsp;</p><p>Frode Hammersland: Bass og kor&nbsp;</p><p>Severin Vik: Gitar, mandolin og kor&nbsp;</p><p>Fredrik Horn på tangenter og kor</p><p><br></p><p>Dørene opnar: kl 20.00</p><p>Spelestart: kl 21.00 &nbsp;</p>", "url" : "https://frugard.ticketco.events/no/nb/e/marius__farius_syng_jula_ut_2026", "eventStatus" : "EventScheduled", "startDate" : "2026-12-27T20:00:00Z", "endDate" : "2026-12-27T23:00:00Z", "image" : "https://tuploads.s3.amazonaws.com/production/uploads/event/image/1200979/default_file-1789462039.jpeg", "landing_image" : null, "location" : {"@type" : "Place", "name" : "Arena", "address" : "entities.street_address"}, "organizer" : {"@type" : "Organization", "name" : "Frugård", "url" : "https://frugard.ticketco.events"}}
+</script>
+</div>
+</div>
+<div>
+<div class='sm:pb-0 sm:flex-row bg-mainCardBackground tc-events-list--item drop-shadow-md sm:rounded-main hover:drop-shadow-lg flex flex-col gap-4 pb-4 overflow-hidden'>
+<a aria-label='Event link SLOMOSA' class='tc-events-list--item-logo flex self-stretch sm:self-start items-start p-0 sm:py-4 sm:pl-4' href='https://frugard.ticketco.events/no/nb/m/e/slomosa' target='_self'>
+<img class="flex self-stretch h-auto object-cover hidden sm:w-32 sm:block rounded-main" alt="Event image SLOMOSA" loading="lazy" src="https://tuploads.s3.amazonaws.com/production/uploads/event/image/1205837/thumb_file-1790321987.jpeg" width="120" height="120" />
+<img class="flex self-stretch h-auto object-cover w-full block sm:hidden" alt="Event image SLOMOSA" loading="lazy" src="https://tuploads.s3.amazonaws.com/production/uploads/event/image/1205837/default_file-1790321987.jpeg" width="625" height="625" />
+
+</a>
+<div class='tc-events-list--details sm:px-0 sm:py-4 px-4 py-0'>
+<a class='tc-events-list--title text-xl text-mainLinkForeground font-semibold inline-block hover:text-mainCardForeground' href='https://frugard.ticketco.events/no/nb/m/e/slomosa' target='_self'>
+SLOMOSA
+</a>
+<div class='tc-main-card-foreground-color text-base mt-2 mr-2'>
+<p></p>
+</div>
+<div class='tc-events-list--place-time tc-main-card-foreground-color text-base mt-2'>
+08.01.2027 20:00
+@
+Arena
+</div>
+</div>
+<script type='application/ld+json'>
+{"@context" : "http://schema.org", "@type" : "Event", "name" : "SLOMOSA", "description" : "<p>Tundra Rock-fenomenet SLOMOSA har dei siste åra skapt kraftige bølgjer både i inn- og utland, med legendariske konsertar over heile USA og Europa.</p><p>Med den Spellemann-vinnande andraplata <em>Tundra Rock</em> i bagasjen, tek bandet nok ein gong over norske scener med sin energiske, tunge og særeigne «tundra rock» i 2027.</p><p>I 2025 spelte SLOMOSA heile 100 konsertar på europeisk og nordamerikansk jord – inkludert eigne utselde headliner-konsertar og turnear med Alkaline Trio, Helmet, Kadavar og Orange Goblin.</p><p>Bandet si kompromisslause liveenergi har gitt dei ein eksplosivt veksande tilhengarskare. I 2026 heldt ferda fram med større konsertar og omfattande turnear, mellom anna nest siste slot på Sirkus under ØYA og på Pstereo, som begge fekk fantastiske meldingar.</p><p>I 2027 kjem det endeleg ny musikk frå SLOMOSA, og i den samanhengen blir det både turné og festivalopptredenar her heime i Noreg.</p><p>“En konsert som seiler umiddelbart inn i historiebøkene som en av de beste som har blitt spilt på Marinen. Fullstendig utklassing”</p><p>– Adressa.no, for SLOMOSA sin konsert på Pstereo 2026 i Trondheim.</p><p>———-</p><p>“Det blir ikke tyngre i norsk rock i dag. Det blir knapt bedre heller, og i hvert fall ikke mer intenst.”</p><p>– Dagsavisen.no, for SLOMOSA sin konsert på Øyafestivalen 2026 i Oslo</p>", "url" : "https://frugard.ticketco.events/no/en/e/slomosa", "eventStatus" : "EventScheduled", "startDate" : "2027-01-08T20:00:00Z", "endDate" : "2027-01-08T23:00:00Z", "image" : "https://tuploads.s3.amazonaws.com/production/uploads/event/image/1205837/default_file-1790321987.jpeg", "landing_image" : null, "location" : {"@type" : "Place", "name" : "Arena", "address" : "entities.street_address"}, "organizer" : {"@type" : "Organization", "name" : "Frugård", "url" : "https://frugard.ticketco.events"}}
+</script>
+</div>
+</div>
+<div>
+<div class='sm:pb-0 sm:flex-row bg-mainCardBackground tc-events-list--item drop-shadow-md sm:rounded-main hover:drop-shadow-lg flex flex-col gap-4 pb-4 overflow-hidden'>
+<a aria-label='Event link Christoffer Schjelderup - Tenker Tanker ' class='tc-events-list--item-logo flex self-stretch sm:self-start items-start p-0 sm:py-4 sm:pl-4' href='https://frugard.ticketco.events/no/nb/m/e/christoffer_schjelderup__tenker_tanker' target='_self'>
+<img class="flex self-stretch h-auto object-cover hidden sm:w-32 sm:block rounded-main" alt="Event image Christoffer Schjelderup - Tenker Tanker " loading="lazy" src="https://tuploads.s3.amazonaws.com/production/uploads/event/image/1204386/thumb_file-1789989287.jpeg" width="120" height="120" />
+<img class="flex self-stretch h-auto object-cover w-full block sm:hidden" alt="Event image Christoffer Schjelderup - Tenker Tanker " loading="lazy" src="https://tuploads.s3.amazonaws.com/production/uploads/event/image/1204386/default_file-1789989287.jpeg" width="625" height="625" />
+
+</a>
+<div class='tc-events-list--details sm:px-0 sm:py-4 px-4 py-0'>
+<a class='tc-events-list--title text-xl text-mainLinkForeground font-semibold inline-block hover:text-mainCardForeground' href='https://frugard.ticketco.events/no/nb/m/e/christoffer_schjelderup__tenker_tanker' target='_self'>
+Christoffer Schjelderup - Tenker Tanker 
+</a>
+<div class='tc-main-card-foreground-color text-base mt-2 mr-2'>
+<p>Christoffer Schjelderup tek suksessframsyninga Tenker Tanker ut på turné! Etter ein svært vellukka speleperiode i Bergen er tida no inne for å la fleire oppleve showet live.</p>
+</div>
+<div class='tc-events-list--place-time tc-main-card-foreground-color text-base mt-2'>
+22.01.2027 19:00
+@
+Arena
+</div>
+</div>
+<script type='application/ld+json'>
+{"@context" : "http://schema.org", "@type" : "Event", "name" : "Christoffer Schjelderup - Tenker Tanker ", "description" : "<p>I soloshowet <strong>Tenker Tanker</strong> inviterer Schjelderup publikum inn i sitt eige, ofte kaotiske hovud. Her granskar han alt frå små, kvardagslege absurditetar til større spørsmål om samfunnet rundt oss – alltid levert med ein kombinasjon av sylskarp analyse, sjølvironi og uventa vendingar.</p><p>Med ufiltrert humor, presise observasjonar og ei særeigen evne til å gjere det kompliserte både gjenkjenneleg og lattervekkjande, har Schjelderup befest si stilling som ein av landets mest markante standupkomikarar.</p><p>Responsen på Schjelderups tredje soloshow har vore svært god frå både publikum og meldarar.</p><p>«Det er faktisk sjelden jeg ler så høyt.»</p><p>– Bergens Tidende</p><p>«Tett mellom de små gullkornene og de virkelig gode vitsene»</p><p>– Bergens Tidende</p><p>«Tilfredsstillende å se en komiker som kan sitt yrke så bra»</p><p>– Bergensavisen</p><p><br></p><p>Dørene opnar kl 19</p><p>Spelestart kl 20</p>", "url" : "https://frugard.ticketco.events/no/en/e/christoffer_schjelderup__tenker_tanker", "eventStatus" : "EventScheduled", "startDate" : "2027-01-22T19:00:00Z", "endDate" : "2027-01-22T21:30:00Z", "image" : "https://tuploads.s3.amazonaws.com/production/uploads/event/image/1204386/default_file-1789989287.jpeg", "landing_image" : null, "location" : {"@type" : "Place", "name" : "Arena", "address" : "entities.street_address"}, "organizer" : {"@type" : "Organization", "name" : "Frugård", "url" : "https://frugard.ticketco.events"}}
+</script>
+</div>
+</div>
+
+</div>
+
+</div>
+<img src="/no/nb/m/page_view?organizer_subdomain=frugard&amp;widget=false" style="display:none" alt="page view image" />
+<div class='organizer-preview'>
+<div class='clearfix'>
+<div class='organizer-logo'>
+<img alt="logo" src="https://tuploads.s3.eu-west-1.amazonaws.com/production/uploads/organizer/logo/502/logo-frugaard-topp.png" />
+</div>
+</div>
+<div class='card'>
+<div class='box clearfix organizer-pane'>
+<h3 class='mt-0'>
+Frugård
+</h3>
+</div>
+<div class='box clearfix organizer-pane'>
+<div class='clearfix'>
+<b>Gate</b>
+<span>:</span>
+Borggata 20	
+</div>
+<div class='t-form-row clearfix'>
+<b>By</b>
+<span>:</span>
+Stord
+</div>
+<div class='text-center' ng-app='ticketco/ticketbuyer/contact_organizer'>
+<button class='tc-button __size-small __color-tertiary' ng-dialog='contactOrganizerDialog.html' ng-dialog-bind-to-controller='true' ng-dialog-controller='contactOrganizerDialogController' ng-dialog-controller-as='form' ng-dialog-data='{&quot;organizer_id&quot;:502,&quot;name&quot;:null,&quot;email&quot;:null}' type='button'>
+<i class='t-icon-comments'></i>
+Kontakt arrangøren
+</button>
+<script id='contactOrganizerDialog.html' type='text/ng-template'>
+<form class='m-0' name='contactOrganizerForm'>
+<h2 class='mb-6 text-xl font-medium'>Send en melding til arrangøren</h2>
+<div class='flex flex-col gap-4 mb-6'>
+<div>
+<label class='t-label-small'>
+Ditt navn
+</label>
+<input class='txt-small input-block-level' name='name' ng-maxlength='255' ng-minlength='3' ng-model='form.ngDialogData.name' required type='text'>
+<div ng-messages='contactOrganizerForm.name.$error' role='alert'>
+<div ng-messages-include='error-messages.html'></div>
+</div>
+</div>
+<div>
+<label class='t-label-small'>
+Din e-post adresse
+</label>
+<input class='txt-small input-block-level' name='email' ng-model='form.ngDialogData.email' ng-model-options='{ updateOn: &#39;default blur&#39;, debounce: { &#39;default&#39;: 500, &#39;blur&#39;: 0 } }' required tc-mailgun='didYouMean' type='email'>
+<div ng-messages='contactOrganizerForm.email.$error' role='alert'>
+<div ng-messages-include='error-messages.html'></div>
+</div>
+<div ng-class='{&#39;tc-input-tips--item&#39;: contactOrganizerForm.email.$valid, &#39;tc-input-errors--item&#39;: contactOrganizerForm.email.$invalid }' ng-if='didYouMean'>
+Mente du 
+<a href='javascript:void(0)' ng-click='form.ngDialogData.email = didYouMean'>{{didYouMean}}</a>
+</div>
+</div>
+<div>
+<label class='t-label-small'>
+Din melding
+</label>
+<textarea class='t-textarea' name='body' ng-maxlength='5000' ng-minlength='4' ng-model='form.ngDialogData.body' required></textarea>
+<div ng-messages='contactOrganizerForm.body.$error' role='alert'>
+<div ng-messages-include='error-messages.html'></div>
+</div>
+</div>
+<div>
+<div key='&#39;6Lcy2SITAAAAAAMmXEQrH0-8RfSt-008SdlB7kV8&#39;' lang='nb' ng-model='form.ngDialogData.token' vc-recaptcha='true'></div>
+</div>
+</div>
+<div class='flex gap-4'>
+<button class='flex items-center justify-center truncate rounded-allOrNothing border-2 border-mainCardForeground px-5 py-2 text-base font-medium text-mainCardForeground transition duration-150 ease-out hover:border-mainPrimaryHighlightBackground hover:bg-mainPrimaryHighlightBackground hover:text-mainPrimaryHighlightForeground hover:ease-in' name='cancel' ng-click='closeThisDialog()' type='button'>
+Avbryt
+</button>
+<button class='flex-1 medium-primary-button' name='submit' ng-click='form.resolve(form.ngDialogData)' ng-disabled='contactOrganizerForm.$invalid || form.sendingMessage' type='submit'>
+Send melding
+</button>
+</div>
+</form>
+</script>
+
+<script id='error-messages.html' type='text/ng-template'>
+<div class='tc-input-errors--item' ng-message='required'>
+Dette feltet er obligatorisk
+</div>
+<div class='tc-input-errors--item' ng-message='number'>
+Dette feltet burde være numerisk
+</div>
+<div class='tc-input-errors--item' ng-message='min'>
+Nummeret er for lite
+</div>
+<div class='tc-input-errors--item' ng-message='max'>
+Tallet er for stort
+</div>
+<div class='tc-input-errors--item' ng-message='minlength'>
+Feltet er for kort
+</div>
+<div class='tc-input-errors--item' ng-message='maxlength'>
+Dette feltet er for langt
+</div>
+<div class='tc-input-errors--item' ng-message='integerNumber'>
+Verdien er ikke et gyldig tall
+</div>
+<div class='tc-input-errors--item' ng-message='maxDateTime'>
+Feil dato
+</div>
+<div class='tc-input-errors--item' ng-message='minDateTime'>
+Feil dato
+</div>
+<div class='tc-input-errors--item' ng-message='email'>
+Venligst legg inn en gyldig e-post adresse
+</div>
+<div class='tc-input-errors--item' ng-message='phone'>
+Ugyldig nummer
+</div>
+<div class='tc-input-errors--item' ng-message='entity_path'>
+Lenke til arrangement feltet er ikke gyldig. To arrangement kan ikke ha samme lenke og man kan ikke bruker spesialtegn som mellomrom, !, ? eller æøå
+</div>
+<div class='tc-input-errors--item' ng-message='zip'>
+Ugyldig postnummer
+</div>
+</script>
+
+</div>
+</div>
+</div>
+</div>
+
+</div>
+
+<script id='retrieveItemsDialog.html' type='text/ng-template'>
+<form class='m-0' name='retrieveTicketsForm'>
+<div class='mb-6' ng-if='!form.result'>
+<h2 class='mb-6 text-xl font-medium'>Finner du ikke billetten din? </h2>
+<div class='bg-mainWarningBackground border-mainWarningForeground text-mainWarningForeground rounded-main p-3' ng-if='!form.result &amp;&amp; !form.errors'>
+<p><li>Bekreft at du ikke er en robot  ved å huke av på boksen.</li><li>Legg inn e-post adresse og / eller telefonnummer.</li><li>Trykk på "Finn mine billetter".</li><li>Vi sender deg en lenke på e-post eller SMS som hjelper deg å finne billettene dine.</li></p>
+</div>
+</div>
+<div class='mb-6' ng-if='form.result'>
+<div class='t-form-row'>
+Vi har sendt lenken til: 
+<div>{{ form.ngDialogData.email }}</div>
+<div>{{ form.ngDialogData.phone }}</div>
+</div>
+<div class='t-form-row'>Om du ikke mottar lenken i løpet av kort tid, husk å sjekke søppelposten. Du kan også kontakte oss på chat</div>
+</div>
+<div ng-if='form.errors'>
+<div class='mb-6'>
+<div class='rounded-main bg-mainAttentionBackground text-mainAttentionForeground p-4' ng-repeat='error in form.errors'>
+{{error}}
+</div>
+</div>
+<button class='medium-primary-button w-full' ng-click='form.errors = undefined'>
+Forsøk igjen
+</button>
+</div>
+<div class='flex flex-col gap-4 mb-6' ng-if='!form.result &amp;&amp; !form.errors'>
+<div>
+<div lang='nb' ng-model='form.ngDialogData.token' vc-recaptcha='true'></div>
+</div>
+<div>
+<tc-phone-input name='phone' ng-model='form.ngDialogData.phone' ng-model-options='{ debounce: 500 }' prefixes='[&quot;+47&quot;,&quot;+44&quot;,&quot;+48&quot;,&quot;+46&quot;,&quot;+31&quot;,&quot;+353&quot;,&quot;+1&quot;,&quot;+33&quot;,&quot;+34&quot;,&quot;+421&quot;,&quot;+39&quot;,&quot;+1481&quot;,&quot;+20&quot;,&quot;+211&quot;,&quot;+212&quot;,&quot;+213&quot;,&quot;+216&quot;,&quot;+218&quot;,&quot;+220&quot;,&quot;+221&quot;,&quot;+222&quot;,&quot;+223&quot;,&quot;+225&quot;,&quot;+226&quot;,&quot;+228&quot;,&quot;+229&quot;,&quot;+230&quot;,&quot;+231&quot;,&quot;+232&quot;,&quot;+233&quot;,&quot;+234&quot;,&quot;+235&quot;,&quot;+236&quot;,&quot;+237&quot;,&quot;+238&quot;,&quot;+239&quot;,&quot;+240&quot;,&quot;+241&quot;,&quot;+242&quot;,&quot;+243&quot;,&quot;+244&quot;,&quot;+245&quot;,&quot;+246&quot;,&quot;+248&quot;,&quot;+249&quot;,&quot;+250&quot;,&quot;+251&quot;,&quot;+252&quot;,&quot;+253&quot;,&quot;+254&quot;,&quot;+255&quot;,&quot;+256&quot;,&quot;+257&quot;,&quot;+258&quot;,&quot;+260&quot;,&quot;+261&quot;,&quot;+262&quot;,&quot;+263&quot;,&quot;+264&quot;,&quot;+265&quot;,&quot;+266&quot;,&quot;+267&quot;,&quot;+268&quot;,&quot;+269&quot;,&quot;+27&quot;,&quot;+277&quot;,&quot;+284&quot;,&quot;+290&quot;,&quot;+291&quot;,&quot;+297&quot;,&quot;+298&quot;,&quot;+299&quot;,&quot;+30&quot;,&quot;+32&quot;,&quot;+340&quot;,&quot;+345&quot;,&quot;+350&quot;,&quot;+351&quot;,&quot;+352&quot;,&quot;+354&quot;,&quot;+355&quot;,&quot;+356&quot;,&quot;+357&quot;,&quot;+358&quot;,&quot;+359&quot;,&quot;+36&quot;,&quot;+370&quot;,&quot;+371&quot;,&quot;+372&quot;,&quot;+373&quot;,&quot;+374&quot;,&quot;+375&quot;,&quot;+376&quot;,&quot;+377&quot;,&quot;+378&quot;,&quot;+379&quot;,&quot;+380&quot;,&quot;+381&quot;,&quot;+382&quot;,&quot;+385&quot;,&quot;+386&quot;,&quot;+387&quot;,&quot;+389&quot;,&quot;+40&quot;,&quot;+41&quot;,&quot;+420&quot;,&quot;+423&quot;,&quot;+43&quot;,&quot;+441&quot;,&quot;+45&quot;,&quot;+473&quot;,&quot;+49&quot;,&quot;+500&quot;,&quot;+501&quot;,&quot;+502&quot;,&quot;+503&quot;,&quot;+504&quot;,&quot;+505&quot;,&quot;+506&quot;,&quot;+507&quot;,&quot;+508&quot;,&quot;+509&quot;,&quot;+51&quot;,&quot;+52&quot;,&quot;+53&quot;,&quot;+54&quot;,&quot;+55&quot;,&quot;+56&quot;,&quot;+57&quot;,&quot;+58&quot;,&quot;+590&quot;,&quot;+591&quot;,&quot;+592&quot;,&quot;+593&quot;,&quot;+594&quot;,&quot;+595&quot;,&quot;+596&quot;,&quot;+597&quot;,&quot;+598&quot;,&quot;+599&quot;,&quot;+60&quot;,&quot;+61&quot;,&quot;+62&quot;,&quot;+63&quot;,&quot;+64&quot;,&quot;+649&quot;,&quot;+65&quot;,&quot;+66&quot;,&quot;+664&quot;,&quot;+670&quot;,&quot;+671&quot;,&quot;+672&quot;,&quot;+673&quot;,&quot;+674&quot;,&quot;+675&quot;,&quot;+676&quot;,&quot;+677&quot;,&quot;+678&quot;,&quot;+679&quot;,&quot;+680&quot;,&quot;+681&quot;,&quot;+682&quot;,&quot;+683&quot;,&quot;+684&quot;,&quot;+685&quot;,&quot;+686&quot;,&quot;+687&quot;,&quot;+688&quot;,&quot;+689&quot;,&quot;+690&quot;,&quot;+691&quot;,&quot;+692&quot;,&quot;+7&quot;,&quot;+758&quot;,&quot;+767&quot;,&quot;+784&quot;,&quot;+787&quot;,&quot;+809&quot;,&quot;+81&quot;,&quot;+82&quot;,&quot;+84&quot;,&quot;+850&quot;,&quot;+852&quot;,&quot;+853&quot;,&quot;+855&quot;,&quot;+856&quot;,&quot;+86&quot;,&quot;+868&quot;,&quot;+869&quot;,&quot;+872&quot;,&quot;+876&quot;,&quot;+880&quot;,&quot;+886&quot;,&quot;+891&quot;,&quot;+90&quot;,&quot;+91&quot;,&quot;+92&quot;,&quot;+93&quot;,&quot;+94&quot;,&quot;+95&quot;,&quot;+960&quot;,&quot;+961&quot;,&quot;+962&quot;,&quot;+963&quot;,&quot;+964&quot;,&quot;+965&quot;,&quot;+966&quot;,&quot;+967&quot;,&quot;+968&quot;,&quot;+970&quot;,&quot;+971&quot;,&quot;+972&quot;,&quot;+973&quot;,&quot;+974&quot;,&quot;+975&quot;,&quot;+976&quot;,&quot;+977&quot;,&quot;+98&quot;,&quot;+992&quot;,&quot;+993&quot;,&quot;+994&quot;,&quot;+995&quot;,&quot;+996&quot;,&quot;+998&quot;]'></tc-phone-input>
+<div ng-messages='retrieveTicketsForm.phone.$error' role='alert'>
+<div ng-messages-include='error-messages.html'></div>
+</div>
+</div>
+<div class='text-center'>
+eller
+</div>
+<div ng-init='form.ngDialogData.organizer_id = 502 '>
+<input aria-label='email input' class='txt-small input-block-level' name='email' ng-model='form.ngDialogData.email' ng-model-options='{ updateOn: &#39;default blur&#39;, debounce: { &#39;default&#39;: 500, &#39;blur&#39;: 0 } }' placeholder='Din e-post adresse' tc-mailgun='didYouMean' type='email'>
+<div ng-messages='retrieveTicketsForm.email.$error' role='alert'>
+<div ng-messages-include='error-messages.html'></div>
+</div>
+<div ng-class='{&#39;tc-input-tips--item&#39;: retrieveTicketsForm.email.$valid, &#39;tc-input-errors--item&#39;: retrieveTicketsForm.email.$invalid }' ng-if='didYouMean'>
+Mente du 
+<a href='javascript:void(0)' ng-click='form.ngDialogData.email = didYouMean'>{{didYouMean}}</a>
+</div>
+</div>
+</div>
+<button class='medium-primary-button w-full mt-6' name='submit' ng-click='form.retrieveCommand(form.ngDialogData)' ng-disabled='retrieveTicketsForm.$invalid' ng-if='!form.result &amp;&amp; !form.errors' type='submit'>
+Finn mine billetter
+</button>
+</form>
+
+</script>
+
+<script id='contactOrganizerDialog.html' type='text/ng-template'>
+<form class='m-0' name='contactOrganizerForm'>
+<h2 class='mb-6 text-xl font-medium'>Send en melding til arrangøren</h2>
+<div class='flex flex-col gap-4 mb-6'>
+<div>
+<label class='t-label-small'>
+Ditt navn
+</label>
+<input class='txt-small input-block-level' name='name' ng-maxlength='255' ng-minlength='3' ng-model='form.ngDialogData.name' required type='text'>
+<div ng-messages='contactOrganizerForm.name.$error' role='alert'>
+<div ng-messages-include='error-messages.html'></div>
+</div>
+</div>
+<div>
+<label class='t-label-small'>
+Din e-post adresse
+</label>
+<input class='txt-small input-block-level' name='email' ng-model='form.ngDialogData.email' ng-model-options='{ updateOn: &#39;default blur&#39;, debounce: { &#39;default&#39;: 500, &#39;blur&#39;: 0 } }' required tc-mailgun='didYouMean' type='email'>
+<div ng-messages='contactOrganizerForm.email.$error' role='alert'>
+<div ng-messages-include='error-messages.html'></div>
+</div>
+<div ng-class='{&#39;tc-input-tips--item&#39;: contactOrganizerForm.email.$valid, &#39;tc-input-errors--item&#39;: contactOrganizerForm.email.$invalid }' ng-if='didYouMean'>
+Mente du 
+<a href='javascript:void(0)' ng-click='form.ngDialogData.email = didYouMean'>{{didYouMean}}</a>
+</div>
+</div>
+<div>
+<label class='t-label-small'>
+Din melding
+</label>
+<textarea class='t-textarea' name='body' ng-maxlength='5000' ng-minlength='4' ng-model='form.ngDialogData.body' required></textarea>
+<div ng-messages='contactOrganizerForm.body.$error' role='alert'>
+<div ng-messages-include='error-messages.html'></div>
+</div>
+</div>
+<div>
+<div key='&#39;6Lcy2SITAAAAAAMmXEQrH0-8RfSt-008SdlB7kV8&#39;' lang='nb' ng-model='form.ngDialogData.token' vc-recaptcha='true'></div>
+</div>
+</div>
+<div class='flex gap-4'>
+<button class='flex items-center justify-center truncate rounded-allOrNothing border-2 border-mainCardForeground px-5 py-2 text-base font-medium text-mainCardForeground transition duration-150 ease-out hover:border-mainPrimaryHighlightBackground hover:bg-mainPrimaryHighlightBackground hover:text-mainPrimaryHighlightForeground hover:ease-in' name='cancel' ng-click='closeThisDialog()' type='button'>
+Avbryt
+</button>
+<button class='flex-1 medium-primary-button' name='submit' ng-click='form.resolve(form.ngDialogData)' ng-disabled='contactOrganizerForm.$invalid || form.sendingMessage' type='submit'>
+Send melding
+</button>
+</div>
+</form>
+</script>
+
+<script id='checkGiftCardBalanceDialog.html' type='text/ng-template'>
+<form class='m-0' name='checkGiftCardBalanceForm'>
+<div class='mb-6' ng-if='!form.result'>
+<h2 class='text-xl font-medium'>Sjekk gavekortsaldo</h2>
+</div>
+<div class='t-form-row__center mb-6' ng-if='form.result'>
+<h2 class='text-xl font-medium mb-5'>{{ form.result.title }}</h2>
+<b>{{ form.result.balance | territoryCurrency }}</b>
+<div>
+<div class='t-label-medium'>igjen på dette gavekortet</div>
+</div>
+</div>
+<div ng-if='form.errors'>
+<div class='mb-6'>
+<div class='p-4 rounded-main bg-mainAttentionBackground text-mainAttentionForeground' ng-repeat='error in form.errors'>
+{{error}}
+</div>
+</div>
+<button class='medium-primary-button w-full' ng-click='form.errors = undefined'>
+Forsøk igjen
+</button>
+</div>
+<div ng-if='!form.result &amp;&amp; !form.errors'>
+<div class='mb-4'>
+<input aria-label='ref number' class='txt-small input-block-level' name='ref_number' ng-maxlength='255' ng-minlength='3' ng-model='form.ngDialogData.ref_number' placeholder='Gavekort ref #' required type='text'>
+<div ng-messages='checkGiftCardBalanceForm.ref_number.$error' role='alert'>
+<div ng-messages-include='error-messages.html'></div>
+</div>
+</div>
+<div lang='nb' ng-model='form.ngDialogData.token' vc-recaptcha='true'></div>
+<button class='medium-primary-button w-full mt-6' name='submit' ng-click='form.checkCommand(form.ngDialogData)' ng-disabled='checkGiftCardBalanceForm.$invalid || form.loading' type='submit'>
+Sjekk
+</button>
+</div>
+</form>
+</script>
+
+<script id='redeemItemsDialog.html' type='text/ng-template'>
+<form class='m-0' name='redeemItemsForm'>
+<h2 class='mb-6 text-xl font-medium'>Innløs din reservasjon</h2>
+<div class='t-form-row' ng-if='!form.errors'>
+<p>Legg inn din reservasjonskode. </p>
+</div>
+<div ng-if='form.errors'>
+<div class='mb-6'>
+<div class='rounded-main bg-mainAttentionBackground text-mainAttentionForeground p-4' ng-repeat='error in form.errors'>
+{{error}}
+</div>
+</div>
+<button class='medium-primary-button w-full' ng-click='form.reset(form)'>
+Forsøk igjen
+</button>
+</div>
+<div class='flex flex-col gap-6' ng-if='!form.errors'>
+<div>
+<label class='t-label-small' for='refNumber'>Reservasjonskode</label>
+<input autocomplete='off' class='txt-small input-block-level' id='refNumber' name='ref_number' ng-maxlength='255' ng-model='form.ngDialogData.ref_number' required tc-ref-number='true' type='text'>
+<div ng-messages='redeemItemsForm.ref_number.$error' role='alert'>
+<div ng-messages-include='error-messages.html'></div>
+<div class='tc-input-errors--item' ng-message='refNumber'>
+Koden er ikke gyldig. Prøv igjen.
+</div>
+</div>
+</div>
+<div lang='nb' ng-model='form.ngDialogData.token' required='required' vc-recaptcha='true'></div>
+<button class='medium-primary-button w-full' name='submit' ng-click='form.redeemCommand(form.ngDialogData)' ng-disabled='redeemItemsForm.$invalid || form.loading' type='submit'>
+Fortsett til betaling
+</button>
+</div>
+</form>
+</script>
+
+<script id='error-messages.html' type='text/ng-template'>
+<div class='tc-input-errors--item' ng-message='required'>
+Dette feltet er obligatorisk
+</div>
+<div class='tc-input-errors--item' ng-message='number'>
+Dette feltet burde være numerisk
+</div>
+<div class='tc-input-errors--item' ng-message='min'>
+Nummeret er for lite
+</div>
+<div class='tc-input-errors--item' ng-message='max'>
+Tallet er for stort
+</div>
+<div class='tc-input-errors--item' ng-message='minlength'>
+Feltet er for kort
+</div>
+<div class='tc-input-errors--item' ng-message='maxlength'>
+Dette feltet er for langt
+</div>
+<div class='tc-input-errors--item' ng-message='integerNumber'>
+Verdien er ikke et gyldig tall
+</div>
+<div class='tc-input-errors--item' ng-message='maxDateTime'>
+Feil dato
+</div>
+<div class='tc-input-errors--item' ng-message='minDateTime'>
+Feil dato
+</div>
+<div class='tc-input-errors--item' ng-message='email'>
+Venligst legg inn en gyldig e-post adresse
+</div>
+<div class='tc-input-errors--item' ng-message='phone'>
+Ugyldig nummer
+</div>
+<div class='tc-input-errors--item' ng-message='entity_path'>
+Lenke til arrangement feltet er ikke gyldig. To arrangement kan ikke ha samme lenke og man kan ikke bruker spesialtegn som mellomrom, !, ? eller æøå
+</div>
+<div class='tc-input-errors--item' ng-message='zip'>
+Ugyldig postnummer
+</div>
+</script>
+
+
+</main>
+
+<footer class='tc-main-footer tc-ticketbuyer-layout--footer'>
+<div class='container'>
+<div class='row-fluid'>
+<div class='span3 offset3'>
+<div class='tc-main-footer--unit'>
+<div class='tc-socials tc-main-footer--socials'>
+<a target="_blank" title="Facebook" class="tc-socials--item" href="https://www.facebook.com/BakerietFrugaard/photos/?ref=page_internal"><img data-src="https://ticketco.events/assets/icons/facebook-circle-c2598548506f72c2d555709ddc83ce6ca996ea110de64d74fcc513c39ff7351d.svg" alt="Facebook" class="lazy" style="height:40px;" src="https://ticketco.events/assets/blank-a0c1e3063bcabc548a5f3fa7328f3c1c97f747e6e764da4c14439567baa79ae1.gif" width="40" height="40" />
+</a><a target="_blank" title="Instagram" class="tc-socials--item" href="https://www.instagram.com/bakeriet_frugard/?hl=en"><img data-src="https://ticketco.events/assets/icons/instagram-circle-69974cac6738cad62f504dfd34ee673019a5041fae74067e26f83e6197dea990.svg" alt="Instagram" class="lazy" style="height:40px;" src="https://ticketco.events/assets/blank-a0c1e3063bcabc548a5f3fa7328f3c1c97f747e6e764da4c14439567baa79ae1.gif" width="40" height="40" />
+</a></div>
+</div>
+<button class='mt-4 text-white text-left' data-cc='show-preferencesModal' type='button'>Manage cookie preferences</button>
+</div>
+<div class='span3'>
+<div class='tc-main-footer--unit'>
+<div class='tc-socials tc-main-footer--socials'>
+<ul>
+<li>
+<div class='tc-main-footer--buttons'>
+<a target="_blank" href="https://itunes.apple.com/no/app/ticketco-wallet/id1403738929?mt=8"><img data-src="https://ticketco.events/assets/app-store-download-440ad528e1f915b614d9fa3f726779a11c843631f11dbafed858bffc4b360967.svg" alt="Download TicketCo Wallet on App Store" class="lazy object-contain" style="height:40px;" src="https://ticketco.events/assets/blank-a0c1e3063bcabc548a5f3fa7328f3c1c97f747e6e764da4c14439567baa79ae1.gif" width="135" height="40" />
+</a></div>
+</li>
+<li>
+<div class='tc-main-footer--buttons'>
+<a target="_blank" href="https://play.google.com/store/apps/details?id=events.ticketco.wallet&amp;hl=nb"><img data-src="https://ticketco.events/assets/google-play-download-7058ca46f9b79fab486b886d30c9ac513cc47445a8333bdd1897215e9dfe5f73.svg" alt="Download TicketCo Wallet on Google Play" class="lazy object-contain" style="height:40px;" src="https://ticketco.events/assets/blank-a0c1e3063bcabc548a5f3fa7328f3c1c97f747e6e764da4c14439567baa79ae1.gif" width="135" height="40" />
+</a></div>
+</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+<div class='tc-main-footer--copyright'>
+<strong> &copy; Frugård 2026.</strong>
+<div>Borggata 20	 Stord</div>
+<div><div class='powered-by' style='display:inline-flex; align-items:center; padding: 6px; font-size: 10px; font-family: sans-serif; color: #fefefe; background: #333; border-radius: 3px;'>
+Powered by
+<svg xmlns="http://www.w3.org/2000/svg" id="Layer_1-2" width="92" height="22" viewBox="0 0 150.688 37.936" style="display:inline-block; margin-left:1rem; vertical-align:middle;">
+  <g id="Group_3169" data-name="Group 3169">
+    <path id="Path_115211" data-name="Path 115211" d="M152.61,41.018H157.9V57.512h2.061V41.018h5.5V39.01H152.61Z" transform="translate(-108.129 -27.64)" fill="#fff"></path>
+    <rect id="Rectangle_14715" data-name="Rectangle 14715" width="1.982" height="13.798" transform="translate(60.553 16.075)" fill="#fff"></rect>
+    <path id="Path_115212" data-name="Path 115212" d="M207.447,35.02a1.484,1.484,0,0,0-1.122.4,1.458,1.458,0,0,0-.385,1.058,1.4,1.4,0,0,0,.385,1.043,1.519,1.519,0,0,0,1.122.385,1.474,1.474,0,0,0,1.11-.4,1.4,1.4,0,0,0,.4-1.032,1.412,1.412,0,0,0-.4-1.07A1.531,1.531,0,0,0,207.447,35.02Z" transform="translate(-145.915 -24.813)" fill="#fff"></path>
+    <path id="Path_115213" data-name="Path 115213" d="M230.452,56.689A4.749,4.749,0,0,1,232.976,56a5.116,5.116,0,0,1,2.367.609,5.739,5.739,0,0,1,1.944,1.612l1.163-1.428a5.946,5.946,0,0,0-2.326-1.944,7.34,7.34,0,0,0-3.224-.7,6.714,6.714,0,0,0-3.5.924,6.561,6.561,0,0,0-2.431,2.55,8.114,8.114,0,0,0,0,7.374,6.7,6.7,0,0,0,2.419,2.565,6.543,6.543,0,0,0,3.489.939,7.207,7.207,0,0,0,3.119-.714,6.329,6.329,0,0,0,2.4-1.9l-1.163-1.428a5.4,5.4,0,0,1-4.282,2.169,4.622,4.622,0,0,1-2.483-.688,4.9,4.9,0,0,1-1.758-1.889,5.683,5.683,0,0,1-.647-2.737,5.788,5.788,0,0,1,.635-2.737,4.777,4.777,0,0,1,1.758-1.889h-.006Z" transform="translate(-160.185 -38.367)" fill="#fff"></path>
+    <path id="Path_115214" data-name="Path 115214" d="M288.707,41.142h-2.67l-6.925,6.794V35.38H277.13V54.94h1.982V50.289l1.9-1.822,5.576,6.474h2.591l-6.739-7.823Z" transform="translate(-196.355 -25.068)" fill="#fff"></path>
+    <path id="Path_115215" data-name="Path 115215" d="M332.671,54.92a6.181,6.181,0,0,0-3.264-.86,6.707,6.707,0,0,0-3.556.939,6.562,6.562,0,0,0-2.419,2.577,7.885,7.885,0,0,0-.871,3.754,7.446,7.446,0,0,0,.9,3.7,6.391,6.391,0,0,0,2.5,2.512,7.328,7.328,0,0,0,3.661.9,7.763,7.763,0,0,0,3.014-.595,7.486,7.486,0,0,0,2.352-1.492l-1.032-1.428a6.948,6.948,0,0,1-2.128,1.309,5.935,5.935,0,0,1-1.944.329,5.224,5.224,0,0,1-3.754-1.335,5.147,5.147,0,0,1-1.533-3.582h10.945l.026-.924a7.05,7.05,0,0,0-.714-3.451,5.775,5.775,0,0,0-2.18-2.352h0Zm.886,5.063h-8.881a4.517,4.517,0,0,1,1.548-3,4.889,4.889,0,0,1,3.186-1.017,4.135,4.135,0,0,1,2.18.554A3.958,3.958,0,0,1,333,57.96a4.153,4.153,0,0,1,.554,1.836v.184h0Z" transform="translate(-228.544 -38.303)" fill="#fff"></path>
+    <path id="Path_115216" data-name="Path 115216" d="M377.814,42.73h-1.982v3.62H372.71v1.9h3.122V60.148h1.982V48.253H381.3v-1.9h-3.489Z" transform="translate(-264.077 -30.276)" fill="#fff"></path>
+    <path id="Path_115217" data-name="Path 115217" d="M413.855,41.559a6.8,6.8,0,0,1,3.556-.939,6.369,6.369,0,0,1,2.827.688,7.217,7.217,0,0,1,2.4,1.9l1.428-1.481a6.935,6.935,0,0,0-1.758-1.638,9.327,9.327,0,0,0-2.34-1.122,8.281,8.281,0,0,0-2.565-.411,9.1,9.1,0,0,0-3.582.7,8.678,8.678,0,0,0-2.883,1.97,9.088,9.088,0,0,0-1.915,2.988,9.954,9.954,0,0,0-.688,3.728,10.078,10.078,0,0,0,1.178,4.929,8.663,8.663,0,0,0,3.224,3.369,9.014,9.014,0,0,0,4.693,1.215,9.164,9.164,0,0,0,2.419-.329,10.006,10.006,0,0,0,2.221-.9,6,6,0,0,0,1.653-1.309l-1.058-1.717a5.934,5.934,0,0,1-2.18,1.586,6.831,6.831,0,0,1-2.816.609,7.28,7.28,0,0,1-3.74-.95,6.723,6.723,0,0,1-2.539-2.617,7.949,7.949,0,0,1-.912-3.885,7.68,7.68,0,0,1,.9-3.792,6.65,6.65,0,0,1,2.472-2.591v-.006Z" transform="translate(-289.322 -27.321)" fill="#fff"></path>
+    <path id="Path_115218" data-name="Path 115218" d="M481.71,57.623a6.693,6.693,0,0,0-2.512-2.539,7.119,7.119,0,0,0-3.635-.924,7.206,7.206,0,0,0-3.646.924,6.641,6.641,0,0,0-2.524,2.539,7.323,7.323,0,0,0-.912,3.675,7.491,7.491,0,0,0,.912,3.713,6.729,6.729,0,0,0,2.524,2.565,7.53,7.53,0,0,0,7.281,0,6.762,6.762,0,0,0,2.512-2.565,7.452,7.452,0,0,0,.912-3.713A7.285,7.285,0,0,0,481.71,57.623Zm-1.8,6.409a4.977,4.977,0,0,1-1.772,1.9,4.776,4.776,0,0,1-2.577.7,4.848,4.848,0,0,1-2.591-.7,4.94,4.94,0,0,1-1.784-1.9,5.683,5.683,0,0,1-.647-2.737,5.6,5.6,0,0,1,.647-2.722,4.769,4.769,0,0,1,1.784-1.862,4.985,4.985,0,0,1,2.591-.673,4.91,4.91,0,0,1,2.577.673,4.823,4.823,0,0,1,1.772,1.862,5.609,5.609,0,0,1,.647,2.722A5.691,5.691,0,0,1,479.911,64.032Z" transform="translate(-331.933 -38.374)" fill="#fff"></path>
+    <path id="Path_115219" data-name="Path 115219" d="M23.688,0H4.795A4.8,4.8,0,0,0,0,4.795V33.14a4.8,4.8,0,0,0,4.795,4.795h5.748a1.317,1.317,0,0,0,.93-.385l.595-.595,2.2-2.2,1.965,2.2.595.595a1.315,1.315,0,0,0,.93.385h5.931a4.8,4.8,0,0,0,4.795-4.795V4.795A4.8,4.8,0,0,0,23.685,0h0ZM14.241,32.677,13.536,32,7.66,26.121a3.968,3.968,0,1,1,5.611-5.614l.976.976.976-.976a3.969,3.969,0,0,1,5.646.032,4.008,4.008,0,0,1-.07,5.617l-5.838,5.835-.72.679v.006Zm12.775.461a3.331,3.331,0,0,1-3.329,3.329H18.024l-2.737-2.737L21.834,27.2a5.477,5.477,0,0,0,.082-7.677,5.39,5.39,0,0,0-3.885-1.635,5.316,5.316,0,0,0-3.783,1.533,5.433,5.433,0,0,0-7.625,7.741l6.616,6.573L10.5,36.469l.047.015a.263.263,0,0,0-.061.023l.015-.038H4.795A3.331,3.331,0,0,1,1.466,33.14V4.795A3.331,3.331,0,0,1,4.795,1.466H23.688a3.331,3.331,0,0,1,3.329,3.329V33.14h0Z" fill="#fff"></path>
+    <path id="Path_115220" data-name="Path 115220" d="M43.326,16.14a2.206,2.206,0,1,0,2.206,2.206A2.21,2.21,0,0,0,43.326,16.14Zm0,3.247a1.041,1.041,0,1,1,1.041-1.041A1.041,1.041,0,0,1,43.326,19.387Z" transform="translate(-29.135 -11.436)" fill="#fff"></path>
+  </g>
+</svg>
+
+</div>
+</div>
+</div>
+</div>
+</footer>
+
+
+<contentinfo class='tc-companion-footer'></contentinfo>
+<div class='alerts-container'><div class='contents' data-flash-messages='[]'></div>
+</div>
+<script src="https://ticketco.events/packs/js/runtime-eb9fa82d03f8acfa67bf.js" defer="defer"></script>
+<script src="https://ticketco.events/packs/js/6026-5e3039f7455c7c56444a.js" defer="defer"></script>
+<script src="https://ticketco.events/packs/js/4355-777e93a19e7755b39ac1.js" defer="defer"></script>
+<script src="https://ticketco.events/packs/js/4696-638a1f11702741900128.js" defer="defer"></script>
+<script src="https://ticketco.events/packs/js/0-e4c7204f3a02f774a705.js" defer="defer"></script>
+<script src="https://ticketco.events/packs/js/5435-0c58b6477142812f535d.js" defer="defer"></script>
+<script src="https://ticketco.events/packs/js/8528-0f81c308cddcd7e130e5.js" defer="defer"></script>
+<script src="https://ticketco.events/packs/js/8288-4a157075951a5820df21.js" defer="defer"></script>
+<script src="https://ticketco.events/packs/js/8503-3513b406925286fbd54e.js" defer="defer"></script>
+<script src="https://ticketco.events/packs/js/3311-b15c0004f3f7861492d0.js" defer="defer"></script>
+<script src="https://ticketco.events/packs/js/1531-74c130cdf3fe812edcf9.js" defer="defer"></script>
+<script src="https://ticketco.events/packs/js/5988-b37cfa3eb3ea61843acc.js" defer="defer"></script>
+<script src="https://ticketco.events/packs/js/5979-e6a20a59186d4ecae031.js" defer="defer"></script>
+<script src="https://ticketco.events/packs/js/8895-aaf5f08eaab7853419fa.js" defer="defer"></script>
+<script src="https://ticketco.events/packs/js/9664-ce72f1ea3818d50c1506.js" defer="defer"></script>
+<script src="https://ticketco.events/packs/js/1196-cbe701030d325ae1cc40.js" defer="defer"></script>
+<script src="https://ticketco.events/packs/js/7671-1ccfaa7f74d6578b9f51.js" defer="defer"></script>
+<script src="https://ticketco.events/packs/js/536-55c8f34bc22a8f8d5c85.js" defer="defer"></script>
+<script src="https://ticketco.events/packs/js/3295-2601f28ccb680e4c8220.js" defer="defer"></script>
+<script src="https://ticketco.events/packs/js/3013-18a66883efe27ec26aba.js" defer="defer"></script>
+<script src="https://ticketco.events/packs/js/7060-e463b0bc1f28fef566cd.js" defer="defer"></script>
+<script src="https://ticketco.events/packs/js/mobile-common-28d316ec078d6a36deb1.js" defer="defer"></script>
+<script src="https://ticketco.events/packs/js/cookies-6e1ce2328977bf92c98a.js" defer="defer"></script>
+<script src="https://ticketco.events/assets/mobile-8514fc080c232579f9f2f6efade450fab446a08ccedcc5b2a908435e773ebd2c.js" defer="defer"></script>
+<script>
+  window.TC_LABELS = Object.assign(window.TC_LABELS || {}, {
+    MONTH_NAMES: ["januar","februar","mars","april","mai","juni","juli","august","september","oktober","november","desember"],
+    SHORT_MONTH_NAMES: ["jan","feb","mar","apr","mai","jun","jul","aug","sep","okt","nov","des"],
+    DAY_NAMES: ["søndag","mandag","tirsdag","onsdag","torsdag","fredag","lørdag"],
+    SHORT_DAY_NAMES: ["SØN","MAN","TIR","ONS","TOR","FRE","LØR"],
+    TODAY: "Today",
+    ORDER_PROCESSING: "Kjøpet ditt gjennomføres... vent litt!",
+    ROW: "Rad",
+    SEAT: "Sete",
+    LEGAL_TERMS_ERROR_MESSAGE: "Kreves for å fullføre kjøpet",
+    NEW_ORDER_FORM_ERRORS: {
+      BUYER_NOT_ELIGIBLE: "{{itemType}} — {{reason}}",
+      DEPENDENCY: "Some required tickets are not selected",
+      ITEM_TYPE: "Pass på at alle plassene har blitt tildelt en billettkategori.",
+      MAX_HOLDERS: "Du kan personalisere maksimalt {{amount}} billett(er) — én til deg selv og én til hver av dine venner og familie.",
+      MAX_PER_ORDER: "Select no more than {{amount}} item(s) of this type: {{itemType}}",
+      MIN_PER_ORDER: "Select at least {{amount}} items of this type: {{itemType}}",
+      NO_ELIGIBLE_HOLDER: "Nobody in your Friends & Family can receive: {{itemTypes:and}}",
+      PARENT: "For å kunne kjøpe en barnebillett, må en voksenbillett også bli lagt til i bestillingen. ",
+      PARENT_V2: "For å kunne kjøpe {{childrenTitles:and}} billett må du også legge til en av følgende: {{parentTitles:or}}",
+      REQUIRED: "Select something...",
+      SIGN_IN_REQUIRED: "Logg inn for å kjøpe denne billetten",
+      TICKET_LIMIT: "Maksimalt antall billetter nådd: {{max}} billetter per kjøper.",
+    },
+    SEATING_ARRANGEMENT_ITEM_TYPE_GROUP: {
+      OPEN: "Promo-kode billetter du kan bruke",
+      AVAILABLE: "Alle billetter",
+      HIDDEN: "Skjulte",
+    },
+    SEATING_ARRANGEMENT_SEASON_PASS_TYPE_GROUP: {
+      OPEN: "Promo-kode sesongkort du kan bruke",
+      AVAILABLE: "Alle sesongkort",
+      HIDDEN: "Skjulte",
+    },
+    TICKET_PERSONALIZATION: {
+      HOLDER_NOT_UNIQUE_ITEM: "{{holder}} er også tildelt {{tickets:and}}.",
+      HOLDER_NOT_UNIQUE_ITEM_SELF: "Du er også tildelt {{tickets:and}}.",
+      HOLDER_NOT_ELIGIBLE_ITEM: "{{holder}} kan ikke tildeles denne billetten: {{reason}}",
+      HOLDER_NOT_ELIGIBLE_ITEM_SELF: "Du kan ikke få denne billetten: {{reason}}",
+    },
+    ELIGIBILITY_UNAVAILABLE: "Utilgjengelig",
+    // Keyed by reason code; the Ruby placeholders are interpolated in the browser.
+    // A code offering several wordings carries them as an object, chosen by the rule's values.
+    ELIGIBILITY_REASONS: {
+      "eligibility.sign_in_required": "Logg inn for å kjøpe denne billetten",
+      "eligibility.min_loyalty_points_not_met": "Krever %{required} lojalitetspoeng",
+      "eligibility.age_not_met": {
+        range: "Krever alder mellom %{min} og %{max} år",
+        min: "Krever %{min} år eller eldre",
+        max: "Krever %{max} år eller yngre",
+      },
+      "eligibility.profile_birth_missing": "Fødselsdato må være registrert på profilen",
+      "eligibility.profile_unavailable": "Vi kunne ikke bekrefte kvalifiseringen akkurat nå, prøv igjen",
+      "eligibility.ticket_limit_reached": "Maksimalt antall billetter nådd: %{max} billetter per kjøper.",
+    },
+    SHARED: {
+      DOWNLOAD: "Last ned",
+      CANCEL: "Avbryt",
+      ARE_YOU_SURE: "Er du sikker?",
+    },
+    ITEM_TYPES_TYPE: {
+      TicketType: "Billett",
+      FoodBeverageType: "Mat & Drikke",
+      MerchandiseType: "Effektsalg",
+      LodgingType: "Overnatting",
+      TransportationType: "Transport",
+      DonationType: "Donasjon",
+      SeasonPassType: "Sesongkort",
+      SeasonPassShadowType: "Sesongkort",
+      SubscriptionType: "Abonnement",
+      SubscriptionShadowType: "Subscription",
+      GiftCardType: "Gavekort",
+      ClickCardType: "Klippekort",
+      CashFreeType: "Cashless",
+      VoucherType: "Voucher",
+      OpenBundleType: "Åpen pakke",
+      ClosedBundleType: "Items bundling",
+    },
+    USER_NAME: "Bruker navn",
+    PROMO_CODE_APPLIED: "Riktig promo-kode ble benyttet",
+    PROMO_CODE_INVALID: "Ugyldig promo-kode",
+    DISCOUNTS_PROMOCODE_APPLIED: "Godkjent promokode",
+    SHOPPING_CART: "Handlekurv",
+    CHECKOUT: "Fullfør kjøp",
+  });
+</script>
+
+
+
+      <script type="text/javascript">
+        window.hsConversationsSettings = {
+          loadImmediately: false,
+          inlineEmbedSelector: '#hubspot-support-chat-widget'
+        };
+      </script>
+      <style>
+        #hubspot-support-chat-panel {
+          position: fixed;
+          left: 64px;
+          bottom: 24px;
+          z-index: 2147483647;
+          width: min(380px, calc(100vw - 80px));
+          height: min(620px, calc(100vh - 48px));
+          overflow: hidden;
+          border-radius: 8px;
+          background: #fff;
+          box-shadow: 0 24px 72px rgba(15, 23, 42, 0.24);
+        }
+
+        @media (min-width: 1024px) {
+          #hubspot-support-chat-panel {
+            left: 264px;
+            width: min(380px, calc(100vw - 288px));
+          }
+        }
+
+        #hubspot-support-chat-panel[hidden] {
+          display: none;
+        }
+
+        #hubspot-support-chat-panel[data-loading="true"] {
+          opacity: 0;
+          pointer-events: none;
+        }
+
+        #hubspot-support-chat-widget,
+        #hubspot-conversations-inline-parent,
+        #hubspot-conversations-inline-iframe {
+          width: 100% !important;
+          height: 100% !important;
+          border: 0 !important;
+        }
+
+        #hubspot-messages-iframe-container {
+          display: none !important;
+        }
+
+        [data-hubspot-chat][data-active="true"] {
+          color: #202436 !important;
+          background-color: #ddaf54 !important;
+        }
+
+        [data-hubspot-chat][data-active="true"] > div:first-child > span {
+          background-color: #748D8A !important;
+        }
+      </style>
+      <script type="text/javascript" id="hs-script-loader" async defer
+        src="//js.hs-scripts.com/26100044.js">
+      </script>
+      <script type="text/javascript">
+        (function() {
+          var hubSpotWidgetEventsRegistered = false;
+
+          function setHubSpotSupportActive(isActive) {
+            document.querySelectorAll('[data-hubspot-chat]').forEach(function(trigger) {
+              trigger.dataset.active = isActive ? 'true' : 'false';
+            });
+          }
+
+          function removeHubSpotWidget() {
+            var hs = window.HubSpotConversations;
+            var panel = document.getElementById('hubspot-support-chat-panel');
+
+            setHubSpotSupportActive(false);
+
+            if (panel) {
+              panel.hidden = true;
+              panel.dataset.loading = 'true';
+            }
+
+            if (hs && hs.widget) {
+              hs.widget.remove();
+            }
+          }
+
+          function ensureHubSpotChatPanel() {
+            var panel = document.getElementById('hubspot-support-chat-panel');
+            if (panel) return panel;
+
+            panel = document.createElement('div');
+            panel.id = 'hubspot-support-chat-panel';
+            panel.hidden = true;
+            panel.dataset.loading = 'true';
+
+            var widget = document.createElement('div');
+            widget.id = 'hubspot-support-chat-widget';
+
+            panel.appendChild(widget);
+            document.body.appendChild(panel);
+
+            return panel;
+          }
+
+          function showPanelWhenHubSpotIframeIsReady(panel) {
+            var widget = document.getElementById('hubspot-support-chat-widget');
+            if (!widget) return;
+
+            function showIfReady() {
+              if (!widget.querySelector('iframe')) return false;
+
+              panel.dataset.loading = 'false';
+              return true;
+            }
+
+            if (showIfReady()) return;
+
+            var observer = new MutationObserver(function() {
+              if (showIfReady()) {
+                observer.disconnect();
+              }
+            });
+
+            observer.observe(widget, { childList: true, subtree: true });
+          }
+
+          function openHubSpotWidget() {
+            var hs = window.HubSpotConversations;
+            if (!hs || !hs.widget) return false;
+
+            var panel = ensureHubSpotChatPanel();
+            if (!panel.hidden && panel.dataset.loading !== 'true') {
+              removeHubSpotWidget();
+              return true;
+            }
+
+            panel.hidden = false;
+            panel.dataset.loading = 'true';
+            setHubSpotSupportActive(true);
+            showPanelWhenHubSpotIframeIsReady(panel);
+            hs.widget.load();
+            return true;
+          }
+
+          function registerHubSpotWidgetEvents() {
+            var hs = window.HubSpotConversations;
+            if (hubSpotWidgetEventsRegistered || !hs || !hs.on) return false;
+
+            hs.on('widgetClosed', removeHubSpotWidget);
+            hubSpotWidgetEventsRegistered = true;
+            return true;
+          }
+
+          if (!registerHubSpotWidgetEvents()) {
+            window.hsConversationsOnReady = window.hsConversationsOnReady || [];
+            window.hsConversationsOnReady.push(registerHubSpotWidgetEvents);
+          }
+
+          document.addEventListener('page:load', removeHubSpotWidget);
+          document.addEventListener('page:restore', removeHubSpotWidget);
+
+          document.addEventListener('click', function(event) {
+            if (!event.target.closest) return;
+
+            var panel = document.getElementById('hubspot-support-chat-panel');
+            var trigger = event.target.closest('[data-hubspot-chat]');
+
+            if (
+              panel &&
+              !panel.hidden &&
+              !panel.contains(event.target) &&
+              !trigger
+            ) {
+              removeHubSpotWidget();
+              return;
+            }
+
+            if (!trigger) {
+              return;
+            }
+
+            event.preventDefault();
+            setHubSpotSupportActive(true);
+
+            if (openHubSpotWidget()) return;
+
+            window.hsConversationsOnReady = window.hsConversationsOnReady || [];
+            window.hsConversationsOnReady.push(openHubSpotWidget);
+          });
+        })();
+      </script>
+    
+<script id="IntercomSettingsScriptTag">
+//<![CDATA[
+window.intercomSettings = {"app_id":"fz972xyp","widget":{"activator":"#Intercom"},"hide_default_launcher":true,"installation_type":"rails"};(function(){var w=window;var ic=w.Intercom;if(typeof ic==="function"){ic('update',intercomSettings);}else{var d=document;var i=function(){i.c(arguments)};i.q=[];i.c=function(args){i.q.push(args)};w.Intercom=i;function l(){var s=d.createElement('script');s.type='text/javascript';s.async=true;s.src='https://widget.intercom.io/widget/fz972xyp';var x=d.getElementsByTagName('script')[0];x.parentNode.insertBefore(s,x);}if(document.readyState==='complete'){l();}else if(w.attachEvent){w.attachEvent('onload',l);}else{w.addEventListener('load',l,false);}};})()
+//]]>
+</script>
+</body>
+</html>
