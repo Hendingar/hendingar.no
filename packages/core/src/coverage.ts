@@ -197,6 +197,27 @@ export function classifyCoverage(input: {
 }
 
 /**
+ * Every covered municipality a piece of text names, each once, in the order it first appears.
+ *
+ * `classifyCoverage` stops at the first covered word, which is right for a submission — any one
+ * covered name means the event is ours. An importer deciding *which* municipality to write needs
+ * the other half of the answer too: whether the text names a second one. "Engesund, med buss frå
+ * Leirvik" names Fitjar and Stord, and taking the first word would be a coin toss dressed up as a
+ * fact. So this returns them all, and the caller writes one only when there is exactly one.
+ *
+ * The same tokens and the same place lists as `classifyCoverage`, so the two cannot disagree about
+ * what a word means.
+ */
+export function coveredMunicipalitiesIn(value: string | null | undefined): CoveredMunicipality[] {
+	const named: CoveredMunicipality[] = [];
+	for (const token of placeTokens(value?.trim() ?? '')) {
+		const municipality = INSIDE.get(token);
+		if (municipality && !named.includes(municipality)) named.push(municipality);
+	}
+	return named;
+}
+
+/**
  * "Stord, Bømlo og Fitjar" — the list, written out, from the list itself.
  *
  * Copy that names the municipalities is copy that goes stale the day a fourth one is added, and
