@@ -22,6 +22,7 @@ import {
 } from '@hendingar/core/validation';
 import type { VerificationCheck, VerificationVerdict } from '@hendingar/core/verification';
 import type { PileCandidate } from './pile-answer.ts';
+import { RateLimiter } from './rate-limit.ts';
 
 /**
  * Client for the verifier microservice (services/verifier).
@@ -107,8 +108,31 @@ const RANK_TIMEOUT_MS = 4_000;
  */
 const COMPARE_TIMEOUT_MS = 20_000;
 
+/**
+ * A ceiling on model calls for the whole site, per replica — what bounds the bill however many
+ * addresses somebody has. `limits.ts` stops one address taking all of it.
+ *
+ * Six hundred an hour is about forty times the busiest hour the site has had, and a few dollars at
+ * worst. Past it every caller already has its degraded state, because each of them must survive
+ * the verifier being down anyway: a submission is stored and declined into `/kø` to be sent again
+ * (rule 8), a photo read or a writing-help press says "fill it in yourself", a crop keeps the
+ * whole picture, and the kurator tries again tomorrow.
+ *
+ * `/haugen` and `/haugen/compare` are not counted here. They have their own budget in
+ * `haugen.ts`, sized for something that fires as you type.
+ */
+const modelBudget = new RateLimiter(600, 60 * 60_000, 1);
+const METERED = new Set(['/crop', '/extract-page', '/kurator', '/verify', '/appeal']);
+
+function spendModelCall(path: string): void {
+	if (!modelBudget.take('site', Date.now())) {
+		throw new Error(`model budget for this hour is spent; refused ${path}`);
+	}
+}
+
 async function post<T>(path: string, body: unknown, timeoutMs: number): Promise<T> {
 	if (!VERIFIER_URL) throw new Error('verifier is not configured');
+	if (METERED.has(path)) spendModelCall(path);
 	const res = await fetch(`${VERIFIER_URL.replace(/\/$/, '')}${path}`, {
 		method: 'POST',
 		headers: { 'content-type': 'application/json' },
@@ -234,6 +258,7 @@ export async function* extractPosterStreaming(
 	today: string
 ): AsyncGenerator<ExtractStreamEvent> {
 	if (!VERIFIER_URL) throw new Error('verifier is not configured');
+	spendModelCall('/extract/stream');
 
 	const response = await fetch(`${VERIFIER_URL.replace(/\/$/, '')}/extract/stream`, {
 		method: 'POST',
@@ -290,6 +315,7 @@ export async function* improveDescriptionStreaming(
 	signal?: AbortSignal
 ): AsyncGenerator<ImproveStreamEvent> {
 	if (!VERIFIER_URL) throw new Error('verifier is not configured');
+	spendModelCall('/improve/stream');
 
 	const response = await fetch(`${VERIFIER_URL.replace(/\/$/, '')}/improve/stream`, {
 		method: 'POST',

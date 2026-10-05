@@ -8,6 +8,7 @@ import {
 	pileEvents,
 	textScores
 } from './server/haugen.ts';
+import { allow } from './server/limits.ts';
 
 /**
  * The boundary for `/haugen` — the pile, and the two ways of asking it something.
@@ -82,7 +83,9 @@ export const askPile = command(askPileSchema, async ({ q }) => {
 	// The page never sends an empty question; anything that does is not the page.
 	if (!q) error(400, 'empty question');
 	const events = await pileEvents();
-	return answerFromServer(q, events);
+	// Over their own share, a visitor gets the text answer the whole site gets past its budget —
+	// so one script typing cannot spend the ranker for everybody else.
+	return answerFromServer(q, events, allow('ask'));
 });
 
 /**
@@ -92,5 +95,6 @@ export const askPile = command(askPileSchema, async ({ q }) => {
  */
 export const comparePile = command(comparePileSchema, async ({ q, ids }) => {
 	if (!q) error(400, 'empty question');
+	if (!allow('ask')) return { status: 'budsjett' as const };
 	return compareOnPile(q, ids);
 });

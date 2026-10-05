@@ -1,6 +1,7 @@
 // `Handle` moved to this subpath in SvelteKit 3 — it is not on the root export any more.
 import type { Handle } from '@sveltejs/kit/hooks';
 import { CANONICAL_HOST, SITE_ORIGIN } from './lib/origin.ts';
+import { allow, TOO_MANY } from './lib/server/limits.ts';
 
 /**
  * One indexable origin, enforced at the edge of the app.
@@ -30,11 +31,53 @@ export const handle: Handle = async ({ event, resolve }) => {
 		});
 	}
 
+	/*
+	 * A floor under every write, before any of it runs.
+	 *
+	 * The expensive routes have tighter limits of their own (`server/limits.ts`). This one is for
+	 * whatever is added next and forgotten, and for remote functions, whose URLs are opaque — a
+	 * script that has found one should meet a limit without anybody having remembered to add it.
+	 */
+	if (!SAFE_METHODS.has(event.request.method) && !allow('post', event)) {
+		return new Response(TOO_MANY, {
+			status: 429,
+			headers: { 'content-type': 'text/plain; charset=utf-8', 'retry-after': '60' }
+		});
+	}
+
 	const response = await resolve(event);
 
 	if (hostname !== CANONICAL_HOST) {
 		response.headers.set('x-robots-tag', 'noindex, nofollow');
 	}
 
+	for (const [name, value] of Object.entries(SECURITY_HEADERS)) {
+		if (!response.headers.has(name)) response.headers.set(name, value);
+	}
+
 	return response;
+};
+
+const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
+
+/**
+ * The headers every response carries. The Content-Security-Policy is not here: SvelteKit writes it
+ * (vite.config.ts), because only SvelteKit knows the nonce on its own hydration script.
+ *
+ * - `nosniff`, because `/ko/[id]/bilete` stores bytes a stranger sent and the blob is served back;
+ *   a browser must never guess that a "JPEG" is HTML.
+ * - Frame denial twice over: `frame-ancestors` in the CSP for browsers that read it, the old header
+ *   for those that do not. Nothing here is meant to be embedded, and the forms are worth clickjacking.
+ * - The referrer is cut to the origin when a reader follows a link out to a source, so a source
+ *   learns that somebody came from hendingar.no, not which `/ko` page or search they were on.
+ * - HSTS without `includeSubDomains`: every host we serve is HTTPS already, and a subdomain somebody
+ *   points somewhere else later should not inherit a year-long promise from this one.
+ */
+const SECURITY_HEADERS: Record<string, string> = {
+	'x-content-type-options': 'nosniff',
+	'x-frame-options': 'DENY',
+	'referrer-policy': 'strict-origin-when-cross-origin',
+	'cross-origin-opener-policy': 'same-origin',
+	'permissions-policy': 'camera=(), microphone=(), geolocation=(), payment=(), usb=()',
+	'strict-transport-security': 'max-age=31536000'
 };

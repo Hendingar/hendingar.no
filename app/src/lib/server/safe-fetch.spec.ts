@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { fetchPublicPage, isBlockedAddress, isPublicImage } from './safe-fetch.ts';
 
 /**
@@ -132,6 +132,30 @@ describe('isPublicImage', () => {
 			'http://10.0.0.5/logo.png'
 		]) {
 			expect(await isPublicImage(url), url).toBe(false);
+		}
+	});
+
+	it('never follows a redirect to a private address', async () => {
+		/*
+		 * A public address that 302s inside. The fetch is stubbed, so no socket opens; what is
+		 * asserted is that the second hop is refused before it is requested — one call, not two.
+		 * An IP literal so the first hop's check needs no DNS.
+		 */
+		const asked: string[] = [];
+		vi.stubGlobal('fetch', async (input: URL | string, init?: RequestInit) => {
+			// `follow` would hand the next hop to fetch, which requests it unchecked.
+			expect(init?.redirect).toBe('manual');
+			asked.push(String(input));
+			return new Response(null, {
+				status: 302,
+				headers: { location: 'http://127.0.0.1:8080/x.png' }
+			});
+		});
+		try {
+			expect(await isPublicImage('http://93.184.216.34/poster.jpg')).toBe(false);
+			expect(asked).toEqual(['http://93.184.216.34/poster.jpg']);
+		} finally {
+			vi.unstubAllGlobals();
 		}
 	});
 });

@@ -1,5 +1,6 @@
 import { json } from '@sveltejs/kit';
 import { curateToday } from '../../../lib/server/kurator';
+import { enforce } from '../../../lib/server/limits';
 import type { RequestHandler } from './$types';
 
 /**
@@ -22,7 +23,8 @@ import type { RequestHandler } from './$types';
  * `POST` rather than `GET`, and that distinction is doing real work: this writes rows, and a `GET`
  * that writes is one crawler away from being run every hour.
  */
-export const POST: RequestHandler = async () => {
+export const POST: RequestHandler = async (event) => {
+	enforce('kurator', event);
 	const outcome = await curateToday();
 	return json(outcome, { headers: { 'cache-control': 'no-store' } });
 };

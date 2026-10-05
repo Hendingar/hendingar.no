@@ -235,8 +235,28 @@ export type CurationOutcome = {
  *
  * The idempotency is the cost control and it is checked first, before anything is read and long
  * before a model is reached. Two calls a minute apart cost one curation; a hundred cost one.
+ *
+ * Stored picks alone did not make that true, and the endpoint is open (ADR 0018), so the gaps were
+ * anybody's to use. A hundred calls *at once* all found no picks and all asked the model, because
+ * the picks are written at the end. And a day whose call failed or chose nothing stores nothing by
+ * design — "neste køyring prøver på nytt" — so every later POST that day asked again, as often as
+ * somebody cared to send one. So concurrent calls share the one in flight, and a replica asks the
+ * model at most `ATTEMPTS_PER_DAY` times a day whatever comes back.
  */
-export async function curateToday(): Promise<CurationOutcome> {
+export function curateToday(): Promise<CurationOutcome> {
+	inFlight ??= curateOnce().finally(() => {
+		inFlight = null;
+	});
+	return inFlight;
+}
+
+let inFlight: Promise<CurationOutcome> | null = null;
+
+/** Enough for the cron and a retry or two after a verifier blip; nowhere near a loop. */
+const ATTEMPTS_PER_DAY = 3;
+let attempts = { forDate: '', count: 0 };
+
+async function curateOnce(): Promise<CurationOutcome> {
 	const forDate = today();
 
 	const existing = await picksFor(forDate);
@@ -259,6 +279,18 @@ export async function curateToday(): Promise<CurationOutcome> {
 			fresh: false
 		};
 	}
+
+	if (attempts.forDate !== forDate) attempts = { forDate, count: 0 };
+	if (attempts.count >= ATTEMPTS_PER_DAY) {
+		return {
+			forDate,
+			picks: 0,
+			considered: 0,
+			note: 'Kuratoren har alt prøvd så mange gonger som han får i dag. I morgon prøver han igjen.',
+			fresh: false
+		};
+	}
+	attempts.count += 1;
 
 	const rows = await candidates();
 

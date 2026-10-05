@@ -1590,6 +1590,10 @@
 			<p class="form__send-note">
 				{CHECK_COUNT_WORD_LEADING} kontrollar går med ein gong — ingen kø, ingen som ventar.
 			</p>
+			<!-- Issues about the form as a whole rather than one field: today, only the rate limit. -->
+			{#each f.issues() ?? [] as issue (issue.message)}
+				<p class="field__error" role="alert">{issue.message}</p>
+			{/each}
 		</div>
 		<div class="form__foot">
 			<p class="form__fine fineprint">

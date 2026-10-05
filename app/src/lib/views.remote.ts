@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { and, eq, inArray, sql } from 'drizzle-orm';
 import { eventViews, events } from '@hendingar/core/schema';
 import { db } from './server/db';
+import { enforce } from './server/limits';
 
 /**
  * The view counter: one number per event, and the way it goes up.
@@ -20,6 +21,7 @@ import { db } from './server/db';
  * That is the whole design, and passing one would quietly undo it.
  */
 export const recordView = command(z.number().int().positive(), async (eventId) => {
+	enforce('view');
 	const database = db();
 
 	/*

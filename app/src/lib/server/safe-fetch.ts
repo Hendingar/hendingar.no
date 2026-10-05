@@ -243,14 +243,12 @@ export const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
  * the first kilobyte of something you only need the headers of.
  */
 export async function isPublicImage(rawUrl: string): Promise<boolean> {
-	let url: URL;
+	let start: URL;
 	try {
-		url = new URL(rawUrl);
+		start = new URL(rawUrl);
 	} catch {
 		return false;
 	}
-	if (!ALLOWED_PROTOCOLS.has(url.protocol)) return false;
-	if (!(await hostIsSafe(url.hostname))) return false;
 
 	const controller = new AbortController();
 	const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
@@ -259,25 +257,8 @@ export async function isPublicImage(rawUrl: string): Promise<boolean> {
 			{ method: 'HEAD' },
 			{ method: 'GET', headers: { range: 'bytes=0-1023' } }
 		] as const) {
-			let response: Response;
-			try {
-				response = await fetch(url, {
-					...init,
-					// `follow`, not `manual`: nothing here is read, and the only decision taken is
-					// "does this answer as an image". A redirect chain that ends somewhere private
-					// still cannot be reached, because the address check above already ran and the
-					// bytes are never used for anything.
-					redirect: 'follow',
-					signal: controller.signal,
-					headers: {
-						'user-agent': 'hendingar.no/1.0 (+https://hendingar.no/datasamling)',
-						accept: 'image/*',
-						...('headers' in init ? init.headers : {})
-					}
-				});
-			} catch {
-				return false;
-			}
+			const response = await requestEveryHopChecked(start, init, controller.signal);
+			if (!response) return false;
 			// 405 and friends: the server has opinions about HEAD. Ask again with a range.
 			if (response.status === 405 || response.status === 501) continue;
 			if (!response.ok && response.status !== 206) return false;
@@ -293,4 +274,51 @@ export async function isPublicImage(rawUrl: string): Promise<boolean> {
 	} finally {
 		clearTimeout(timer);
 	}
+}
+
+/**
+ * One request, its redirects followed by hand, every hop's address checked before it is asked.
+ *
+ * This used to be `redirect: 'follow'`, on the reasoning that nothing here is read. But a request
+ * is the harm, not the reading: a public URL that 302s to `http://localhost:8080/…` or to the
+ * verifier's internal name had our server ask it, and "was that an image, and how long did it
+ * take" is enough to map what answers inside the environment. The same loop `fetchPublicPage`
+ * runs, for the same reason.
+ */
+async function requestEveryHopChecked(
+	start: URL,
+	init: { method: 'HEAD' | 'GET'; headers?: Record<string, string> },
+	signal: AbortSignal
+): Promise<Response | null> {
+	let url = start;
+	for (let hop = 0; hop <= MAX_REDIRECTS; hop++) {
+		if (!ALLOWED_PROTOCOLS.has(url.protocol)) return null;
+		if (!(await hostIsSafe(url.hostname))) return null;
+
+		let response: Response;
+		try {
+			response = await fetch(url, {
+				method: init.method,
+				redirect: 'manual',
+				signal,
+				headers: {
+					'user-agent': 'hendingar.no/1.0 (+https://hendingar.no/datasamling)',
+					accept: 'image/*',
+					...init.headers
+				}
+			});
+		} catch {
+			return null;
+		}
+
+		if (response.status < 300 || response.status >= 400) return response;
+		const location = response.headers.get('location');
+		if (!location) return null;
+		try {
+			url = new URL(location, url);
+		} catch {
+			return null;
+		}
+	}
+	return null;
 }
