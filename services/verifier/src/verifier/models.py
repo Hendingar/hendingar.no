@@ -358,11 +358,17 @@ class HaugenRanking(BaseModel):
     example: dict | None = None
 
 
+#: The most events one comparison may carry: one Jev request (`haugen.CHUNK_SIZE`), and one chat
+#: call. `comparePileSchema` in packages/core is the other end and carries the same number.
+COMPARE_MAX_EVENTS = 60
+
+
 class HaugenCompareRequest(BaseModel):
-    """Three events, asked the same question by Jev and by a chat model, side by side."""
+    """Events asked the same question by Jev and by a chat model, side by side — three picked to
+    show the shape of the answers, or sixty to show how often the two agree."""
 
     query: str = Field(min_length=1, max_length=80)
-    events: list[HaugenEvent] = Field(min_length=1, max_length=3)
+    events: list[HaugenEvent] = Field(min_length=1, max_length=COMPARE_MAX_EVENTS)
 
 
 class HaugenVerdict(BaseModel):

@@ -1,7 +1,7 @@
 import { and, asc, eq, gte, inArray, isNull, or, sql } from 'drizzle-orm';
 import { events, organizers, venues } from '@hendingar/core/schema';
 import { categoryLabel } from '@hendingar/core/taxonomy';
-import type { PileScore } from '@hendingar/core/validation';
+import { COMPARE_MAX_EVENTS, type PileScore } from '@hendingar/core/validation';
 import { AnswerCache, Budget, answer, type PileAnswer, type PileCandidate } from './pile-answer.ts';
 import { db } from './db';
 import { datedOnly, matchesSearch, sourceMarksFor, stillListed } from './listing.ts';
@@ -126,7 +126,8 @@ export function askPile(
 }
 
 /**
- * Jev against the chat model on up to three events from the pile, for the comparison on the page.
+ * Jev against the chat model on events from the pile — three, or up to sixty — for the comparison
+ * on the page.
  *
  * Only ids that are in the pile right now: the button sends ids, and a caller is not allowed to
  * use this to have arbitrary rows judged. It spends from the same budget as a question, because
@@ -134,7 +135,7 @@ export function askPile(
  */
 export async function compareOnPile(q: string, ids: readonly number[]) {
 	const pile = await pileEvents();
-	const chosen = pile.filter((e) => ids.includes(e.id)).slice(0, 3);
+	const chosen = pile.filter((e) => ids.includes(e.id)).slice(0, COMPARE_MAX_EVENTS);
 	if (chosen.length === 0) return { status: 'ukjende' as const };
 	if (!budget.take(Date.now())) return { status: 'budsjett' as const };
 	const result = await comparePile(q, chosen.map(candidateOf));

@@ -460,10 +460,16 @@ export const pileRankingWireSchema = z
 		})
 	);
 
-/** Three events from the pile, to ask Jev and a chat model side by side. */
+/**
+ * The most events one comparison may carry: one Jev request (the verifier's chunk of sixty) and one
+ * chat call. `COMPARE_MAX_EVENTS` in `services/verifier/src/verifier/models.py` is the other end.
+ */
+export const COMPARE_MAX_EVENTS = 60;
+
+/** Events from the pile — three, or as many as sixty — to ask Jev and a chat model side by side. */
 export const comparePileSchema = z.object({
 	q: searchTermSchema,
-	ids: z.array(z.number().int().positive()).min(1).max(3)
+	ids: z.array(z.number().int().positive()).min(1).max(COMPARE_MAX_EVENTS)
 });
 
 const comparisonSideWire = z.object({

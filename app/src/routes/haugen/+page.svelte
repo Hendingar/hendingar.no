@@ -15,7 +15,7 @@
 	import { formatEventTime } from '@hendingar/core/datetime';
 	import { eventPath } from '@hendingar/core/slug';
 	import { searchTermSchema } from '@hendingar/core/search';
-	import type { PileScore } from '@hendingar/core/validation';
+	import { COMPARE_MAX_EVENTS, type PileScore } from '@hendingar/core/validation';
 	import Pile from '../../lib/components/haugen/Pile.svelte';
 	import UnderTheHood from '../../lib/components/haugen/UnderTheHood.svelte';
 	import PageMeta from '../../lib/components/PageMeta.svelte';
@@ -68,6 +68,7 @@
 	 * (nearest 0.5), and the least likely. Three different kinds of case, so the two models are
 	 * compared where they agree easily and where they might not.
 	 */
+	const titles = $derived(new Map(balls.map((b) => [b.id, b.title])));
 	const picks = $derived.by(() => {
 		if (mode !== 'jev' || scores.length < 3) return [];
 		const byScore = [...scores].sort((a, b) => b.score - a.score);
@@ -76,11 +77,23 @@
 		const middle = byScore
 			.filter((s) => s !== best && s !== worst)
 			.sort((a, b) => Math.abs(a.score - 0.5) - Math.abs(b.score - 0.5))[0];
-		const titles = new Map(balls.map((b) => [b.id, b.title]));
 		return [best, middle, worst]
 			.filter((s) => s !== undefined)
 			.map((s) => ({ id: s.eventId, title: titles.get(s.eventId) ?? '', score: s.score }));
 	});
+	/*
+	 * Sixty for the wide comparison: the ones Jev found likeliest. Every answer and every unsure
+	 * one is in there, and the rest are the near misses — where two models are most likely to
+	 * disagree. The bottom of a pile of 120 is "no" to any model and would only pad the count.
+	 */
+	const widePicks = $derived(
+		mode === 'jev'
+			? [...scores]
+					.sort((a, b) => b.score - a.score)
+					.slice(0, COMPARE_MAX_EVENTS)
+					.map((s) => ({ id: s.eventId, title: titles.get(s.eventId) ?? '', score: s.score }))
+			: []
+	);
 
 	const answers = $derived(asking ? ordered.filter((b) => (scoreMap.get(b.id) ?? 0) >= FLOAT) : []);
 
@@ -333,7 +346,14 @@
 
 	{#if asking && trace}
 		<div id="panser">
-			<UnderTheHood {trace} {clientMs} query={asked} {picks} scores={scores.map((s) => s.score)} />
+			<UnderTheHood
+				{trace}
+				{clientMs}
+				query={asked}
+				{picks}
+				{widePicks}
+				scores={scores.map((s) => s.score)}
+			/>
 		</div>
 	{/if}
 </div>

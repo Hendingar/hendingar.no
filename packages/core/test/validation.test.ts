@@ -159,8 +159,10 @@ describe('the haugen wire formats', () => {
 		expect(comparison.llm.outputTokens).toBe(50);
 	});
 
-	it('refuses a comparison of more than three events', () => {
-		expect(comparePileSchema.safeParse({ q: 'konsertar', ids: [1, 2, 3, 4] }).success).toBe(false);
-		expect(comparePileSchema.safeParse({ q: 'konsertar', ids: [1, 2, 3] }).success).toBe(true);
+	it('refuses a comparison larger than one Jev request', () => {
+		const ids = (n: number) => Array.from({ length: n }, (_, i) => i + 1);
+		expect(comparePileSchema.safeParse({ q: 'konsertar', ids: ids(61) }).success).toBe(false);
+		expect(comparePileSchema.safeParse({ q: 'konsertar', ids: ids(60) }).success).toBe(true);
+		expect(comparePileSchema.safeParse({ q: 'konsertar', ids: ids(3) }).success).toBe(true);
 	});
 });
