@@ -103,10 +103,11 @@ const CURATE_TIMEOUT_MS = 120_000;
  */
 const RANK_TIMEOUT_MS = 4_000;
 /**
- * The 3-vs-3 comparison waits on the slower of two models, and one of them writes. Somebody pressed
- * a button to see exactly this, so they will wait for it — but not forever.
+ * The comparison waits on the slower of two models, and one of them writes — sixty verdicts, in
+ * the larger one, which is over a thousand tokens of output. Somebody pressed a button to see
+ * exactly this, so they will wait for it, but not forever. Inside the verifier's own 60s.
  */
-const COMPARE_TIMEOUT_MS = 20_000;
+const COMPARE_TIMEOUT_MS = 45_000;
 
 /**
  * A ceiling on model calls for the whole site, per replica — what bounds the bill however many
@@ -482,7 +483,7 @@ export async function rankForQuery(
 }
 
 /**
- * The same three events asked of Jev and of the chat model, side by side (ADR 0022). Never throws;
+ * The same events asked of Jev and of the chat model, side by side (ADR 0022). Never throws;
  * null means the comparison could not be made at all. A side that failed says so on its own.
  */
 export async function comparePile(

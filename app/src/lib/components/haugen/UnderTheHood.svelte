@@ -22,7 +22,8 @@
 		scores,
 		clientMs,
 		query,
-		picks
+		picks,
+		widePicks
 	}: {
 		trace: PileTrace;
 		scores: readonly number[];
@@ -32,6 +33,8 @@
 		query: string;
 		/** Three events for the comparison: the best answer, the most unsure, the least likely. */
 		picks: readonly Pick[];
+		/** The sixty Jev found likeliest, for the wide comparison: how often do the two agree? */
+		widePicks: readonly Pick[];
 	} = $props();
 
 	/** The id of the question in the example, e.g. `e1405`, so the expected answer can name it. */
@@ -54,23 +57,32 @@
 	);
 
 	/*
-	 * Jev against an ordinary chat model, three events each, pressed for.
+	 * Jev against an ordinary chat model, pressed for: three events to see the shape of the two
+	 * answers, or sixty to see how often they agree.
 	 *
-	 * Kept with the question it was made for, so a comparison from "konsertar" is not shown under
-	 * an answer to "ute".
+	 * Kept with the question and the events it was made for, so a comparison from "konsertar" is
+	 * not shown under an answer to "ute".
 	 */
-	let comparison = $state<{ query: string; result: PileComparison } | null>(null);
-	let comparing = $state(false);
+	let comparison = $state<{
+		query: string;
+		wide: boolean;
+		rows: readonly Pick[];
+		result: PileComparison;
+	} | null>(null);
+	let comparing = $state<'narrow' | 'wide' | null>(null);
 	let compareNote = $state<string | null>(null);
-	const shown = $derived(comparison?.query === query ? comparison.result : null);
+	const shown = $derived(comparison?.query === query ? comparison : null);
+	const wide = $derived(shown?.wide ?? false);
 
-	async function compare() {
-		comparing = true;
+	async function compare(which: 'narrow' | 'wide') {
+		comparing = which;
 		compareNote = null;
 		const asked = query;
+		const rows = which === 'wide' ? widePicks : picks;
 		try {
-			const outcome = await comparePile({ q: asked, ids: picks.map((p) => p.id) });
-			if (outcome.status === 'ok') comparison = { query: asked, result: outcome.result };
+			const outcome = await comparePile({ q: asked, ids: rows.map((p) => p.id) });
+			if (outcome.status === 'ok')
+				comparison = { query: asked, wide: which === 'wide', rows, result: outcome.result };
 			else
 				compareNote =
 					outcome.status === 'budsjett'
@@ -79,9 +91,31 @@
 		} catch {
 			compareNote = 'Samanlikninga feila. Prøv igjen om litt.';
 		} finally {
-			comparing = false;
+			comparing = null;
 		}
 	}
+
+	/**
+	 * Where the two said the same thing. Jev's "ja" is our line (0,5 and over), the chat model's is
+	 * its own — the same line the pile floats on, so a disagreement is one the page would show.
+	 * Only rows both answered count: a side that failed has nothing to disagree with.
+	 */
+	const agreement = $derived.by(() => {
+		const differ: number[] = [];
+		let both = 0;
+		let jevYes = 0;
+		let llmYes = 0;
+		for (const row of shown?.rows ?? []) {
+			const j = shown && sideScore(shown.result.jev, row.id);
+			const l = shown && sideScore(shown.result.llm, row.id);
+			if (!j || !l) continue;
+			both += 1;
+			if (j.score >= FLOAT) jevYes += 1;
+			if (l.ja) llmYes += 1;
+			if (j.score >= FLOAT !== Boolean(l.ja)) differ.push(row.id);
+		}
+		return { both, jevYes, llmYes, differ };
+	});
 
 	function sideScore(side: PileComparisonSide, id: number) {
 		return side.scores.find((s) => s.eventId === id);
@@ -198,61 +232,97 @@
 		{#if picks.length > 0}
 			<h3 class="hood__sub">Samanlikn med ein vanleg språkmodell</h3>
 			<p class="hood__line">
-				Same spørsmål, med same ord, om tre hendingar — den beste, den mest usikre og den minst
-				sannsynlege — sendt til Jev og til ein vanleg språkmodell samstundes. Språkmodellen må
-				skrive svaret sitt som tekst etter eit skjema; Jev svarar med eitt tal per hending.
+				Same spørsmål, med same ord, sendt til Jev og til ein vanleg språkmodell samstundes. Tre
+				hendingar — den beste, den mest usikre og den minst sannsynlege — viser korleis svara ser
+				ut;
+				{widePicks.length} — dei Jev rekna som mest sannsynlege — viser kor ofte dei to er samde. Språkmodellen
+				må skrive svaret sitt som tekst etter eit skjema; Jev svarar med eitt tal per hending.
 			</p>
-			<button class="btn hood__compare" type="button" onclick={compare} disabled={comparing}>
-				{#if comparing}<span class="hood__spinner" aria-hidden="true"></span>{/if}
-				Samanlikn 3 mot 3
-			</button>
+			<div class="hood__buttons">
+				<button
+					class="btn hood__compare"
+					type="button"
+					onclick={() => compare('narrow')}
+					disabled={comparing !== null}
+				>
+					{#if comparing === 'narrow'}<span class="hood__spinner" aria-hidden="true"></span>{/if}
+					Samanlikn {picks.length} mot {picks.length}
+				</button>
+				{#if widePicks.length > picks.length}
+					<button
+						class="btn hood__compare"
+						type="button"
+						onclick={() => compare('wide')}
+						disabled={comparing !== null}
+					>
+						{#if comparing === 'wide'}<span class="hood__spinner" aria-hidden="true"></span>{/if}
+						Samanlikn {widePicks.length} mot {widePicks.length}
+					</button>
+				{/if}
+			</div>
 			{#if compareNote}<p class="hood__line">{compareNote}</p>{/if}
 
 			{#if shown}
-				<table class="hood__table">
-					<thead>
-						<tr>
-							<th scope="col">Hending</th>
-							<th scope="col">{shown.jev.model}</th>
-							<th scope="col">{shown.llm.model}</th>
-						</tr>
-					</thead>
-					<tbody>
-						{#each picks as pick (pick.id)}
-							{@const j = sideScore(shown.jev, pick.id)}
-							{@const l = sideScore(shown.llm, pick.id)}
-							<tr>
-								<th scope="row">{pick.title}</th>
-								<td>{j ? percent(j.score) : '–'}</td>
-								<td>{l ? `${l.ja ? 'ja' : 'nei'} · ${percent(l.score)}` : '–'}</td>
-							</tr>
-						{/each}
-					</tbody>
-					<tfoot>
-						<tr>
-							<th scope="row">Tid</th>
-							<td><strong>{ms(shown.jev.elapsedMs)}</strong></td>
-							<td><strong>{ms(shown.llm.elapsedMs)}</strong></td>
-						</tr>
-						<tr>
-							<th scope="row">Token inn</th>
-							<td>{shown.jev.inputTokens === null ? '–' : tokens(shown.jev.inputTokens)}</td>
-							<td>{shown.llm.inputTokens === null ? '–' : tokens(shown.llm.inputTokens)}</td>
-						</tr>
-						<tr>
-							<th scope="row">Token ut</th>
-							<td>ingen — svarar med tal</td>
-							<td>{shown.llm.outputTokens === null ? '–' : tokens(shown.llm.outputTokens)}</td>
-						</tr>
-						{#if shown.jev.error || shown.llm.error}
-							<tr>
-								<th scope="row">Feil</th>
-								<td>{shown.jev.error ?? ''}</td>
-								<td>{shown.llm.error ?? ''}</td>
-							</tr>
+				{@const result = shown.result}
+				{#if wide}
+					<p class="hood__line hood__agree">
+						Samde om <strong>{agreement.both - agreement.differ.length}</strong> av {agreement.both}.
+						Jev sa ja til
+						<strong>{agreement.jevYes}</strong>, {result.llm.model} til
+						<strong>{agreement.llmYes}</strong>.
+						{#if agreement.differ.length === 1}
+							Den eine dei var usamde om, er merka.
+						{:else if agreement.differ.length > 1}
+							Dei {agreement.differ.length} dei var usamde om, er merka.
 						{/if}
-					</tfoot>
-				</table>
+					</p>
+				{/if}
+				<div class="hood__scroll" class:hood__scroll--wide={wide}>
+					<table class="hood__table">
+						<thead>
+							<tr>
+								<th scope="col">Hending</th>
+								<th scope="col">{result.jev.model}</th>
+								<th scope="col">{result.llm.model}</th>
+							</tr>
+						</thead>
+						<tbody>
+							{#each shown.rows as pick (pick.id)}
+								{@const j = sideScore(result.jev, pick.id)}
+								{@const l = sideScore(result.llm, pick.id)}
+								<tr class:hood__differ={wide && agreement.differ.includes(pick.id)}>
+									<th scope="row">{pick.title}</th>
+									<td>{j ? percent(j.score) : '–'}</td>
+									<td>{l ? `${l.ja ? 'ja' : 'nei'} · ${percent(l.score)}` : '–'}</td>
+								</tr>
+							{/each}
+						</tbody>
+						<tfoot>
+							<tr>
+								<th scope="row">Tid</th>
+								<td><strong>{ms(result.jev.elapsedMs)}</strong></td>
+								<td><strong>{ms(result.llm.elapsedMs)}</strong></td>
+							</tr>
+							<tr>
+								<th scope="row">Token inn</th>
+								<td>{result.jev.inputTokens === null ? '–' : tokens(result.jev.inputTokens)}</td>
+								<td>{result.llm.inputTokens === null ? '–' : tokens(result.llm.inputTokens)}</td>
+							</tr>
+							<tr>
+								<th scope="row">Token ut</th>
+								<td>ingen — svarar med tal</td>
+								<td>{result.llm.outputTokens === null ? '–' : tokens(result.llm.outputTokens)}</td>
+							</tr>
+							{#if result.jev.error || result.llm.error}
+								<tr>
+									<th scope="row">Feil</th>
+									<td>{result.jev.error ?? ''}</td>
+									<td>{result.llm.error ?? ''}</td>
+								</tr>
+							{/if}
+						</tfoot>
+					</table>
+				</div>
 				<p class="hood__line">
 					Språkmodellen gjev eit ja/nei og eit tal den har skrive sjølv; talet er ikkje kalibrert.
 					Jev sitt tal er sjølve svaret, trena for å vere eit sannsyn.
@@ -371,11 +441,50 @@
 		border: var(--rule) solid var(--peach-line);
 	}
 
+	.hood__buttons {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.75rem;
+		margin-block: 0.75rem 0.25rem;
+	}
+
 	.hood__compare {
 		display: inline-flex;
 		align-items: center;
 		gap: 0.5rem;
-		margin-block: 0.75rem 0.25rem;
+	}
+
+	.hood__agree {
+		margin-block-start: 0.75rem;
+	}
+
+	/* The scores do not wrap, so a narrow phone scrolls the table sideways, not the page. */
+	.hood__scroll {
+		max-inline-size: 44rem;
+		overflow-x: auto;
+	}
+
+	/* Sixty rows would push the rest of the page a screen and a half down; scroll them instead. */
+	.hood__scroll--wide {
+		max-block-size: 28rem;
+		overflow-y: auto;
+		margin-block: 0.75rem;
+	}
+
+	.hood__scroll--wide .hood__table {
+		margin-block: 0;
+	}
+
+	.hood__scroll--wide thead th {
+		position: sticky;
+		inset-block-start: 0;
+		background: var(--navy-900);
+	}
+
+	.hood__table tr.hood__differ th,
+	.hood__table tr.hood__differ td {
+		color: var(--navy-900);
+		background: var(--peach);
 	}
 
 	.hood__spinner {
@@ -417,6 +526,10 @@
 	.hood__table tfoot th {
 		color: var(--peach);
 		font-weight: 400;
+	}
+
+	.hood__table td {
+		white-space: nowrap;
 	}
 
 	.hood__table tbody th {

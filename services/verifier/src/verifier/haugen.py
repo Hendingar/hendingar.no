@@ -164,7 +164,7 @@ LLM_INSTRUCTIONS = (
 async def compare(
     factory: AgentFactory, jev: JevClient, request: HaugenCompareRequest
 ) -> HaugenComparison:
-    """The same three events, the same question: Jev and a chat model, timed side by side.
+    """The same events, the same question: Jev and a chat model, timed side by side.
 
     Run at the same time, each with its own clock, so neither waits on the other. Either side may
     fail without taking the other with it — a comparison where one column says why it is empty
@@ -197,7 +197,9 @@ async def _ask_llm(factory: AgentFactory, request: HaugenCompareRequest) -> Haug
         name="haugen-samanlikning",
         instructions=LLM_INSTRUCTIONS,
         response_format=HaugenVerdicts,
-        max_tokens=400,
+        # About twenty tokens a verdict. Sized to the request, so sixty events are not cut off
+        # half-way through the list — a truncated reply fails to parse and the column is empty.
+        max_tokens=max(400, 30 * len(request.events)),
     )
     message = json.dumps(
         {

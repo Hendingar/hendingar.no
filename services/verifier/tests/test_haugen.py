@@ -266,6 +266,25 @@ async def test_one_side_failing_leaves_the_other_standing():
     assert len(result.llm.scores) == 3
 
 
+async def test_compare_takes_sixty_in_one_jev_request():
+    request = HaugenCompareRequest(query="konsertar", events=[_event(i) for i in range(1, 61)])
+    fake_llm = FakeOpenAI(_verdicts(*((i, i % 2 == 0, 0.5) for i in range(1, 61))))
+    fake_jev = FakeJev()
+    result = await compare(factory_for(fake_llm), _client(fake_jev), request)
+
+    assert len(fake_jev.bodies) == 1
+    assert len(fake_jev.bodies[0]["questions"]) == 60
+    assert len(result.jev.scores) == 60
+    assert len(result.llm.scores) == 60
+    # Room for sixty verdicts: the default would truncate the chat model's list.
+    assert fake_llm.call_instructing(QUESTION)["max_completion_tokens"] >= 60 * 20
+
+
+def test_compare_refuses_more_than_one_jev_request():
+    body = {"query": "konsertar", "events": [_event(i).model_dump() for i in range(1, 62)]}
+    assert _app(None).post("/haugen/compare", json=body).status_code == 422
+
+
 def test_compare_is_off_without_a_key():
     response = _app(None).post("/haugen/compare", json=_compare_request().model_dump())
     assert response.status_code == 503

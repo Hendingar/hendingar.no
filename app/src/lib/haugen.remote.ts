@@ -93,7 +93,7 @@ export const askPile = command(askPileSchema, async ({ q }) => {
 });
 
 /**
- * The same three events, asked of Jev and of an ordinary chat model, side by side.
+ * The same events — three, or sixty — asked of Jev and of an ordinary chat model, side by side.
  *
  * A `command` for the same reason as `askPile`: it spends money, so a person has to press for it.
  */
