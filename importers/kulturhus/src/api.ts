@@ -73,6 +73,36 @@ export const INSTANCES: readonly KulturhusInstance[] = [
 	},
 	{
 		/*
+		 * The cinema in the same building, on the same site, and not in `kulturprogram` at all —
+		 * the house files its films on a page of their own. Same Gatsby build, same page-data
+		 * route, same event shape: each film is a parent with one `ticket` per screening, plus
+		 * `type: 'movie'`, `cast` and `club`, which the schema ignores. Measured 2026-10-05: 15
+		 * films, 47 screenings, none of them in `kulturprogram`.
+		 *
+		 * A source of its own rather than a second endpoint on `stord-kulturhus`, so `/datasamling`
+		 * can say when the cinema programme stops arriving without the concerts hiding it.
+		 */
+		slug: 'stord-kino',
+		name: 'Stord kino',
+		url: 'https://stord.kulturhus.no/kinoprogram',
+		endpoint: 'https://stord.kulturhus.no/page-data/kinoprogram/page-data.json',
+		pageData: 'json',
+		origin: 'https://stord.kulturhus.no',
+		region: 'Sunnhordland',
+		attribution: 'Stord kino',
+		timezone: 'Europe/Oslo',
+		venueFallback: 'Stord kulturhus',
+		iconUrl: 'https://dx-cw-static-files.imgix.net/169/stord-kulturhus-favicon.png',
+		scheduleCron: '0 5 * * *',
+		trusted: true,
+		/*
+		 * False, unlike the house's own programme. The house agreed to us using its images; a film
+		 * poster is the distributor's, and that agreement cannot speak for them.
+		 */
+		posterRightsCleared: false
+	},
+	{
+		/*
 		 * The payoff of a platform importer, and it took some digging to see it.
 		 *
 		 * Bømlo kulturhus looks nothing like Stord from outside — its own domain, its own theme,
@@ -145,6 +175,11 @@ const eventSchema = z.object({
 	/** Relative path to the event's own page. */
 	link: z.string().nullish(),
 	category: z.string().nullish(),
+	/**
+	 * `movie` on the cinema page, absent on the house programme. Read because the cinema's
+	 * `category` is a shelf ("På kino nå"), not a kind of thing, and will be "Kommer snart" next.
+	 */
+	type: z.string().nullish(),
 	begin: z.string().nullish(),
 	tickets: z.array(ticketSchema).nullish()
 });

@@ -97,6 +97,23 @@ export const INSTANCES: readonly MecInstance[] = [
 		iconUrl: null,
 		trusted: true,
 		posterRightsCleared: true
+	},
+	{
+		// The same Webloft library theme as Bømlo's, on the same Modern Events Calendar.
+		slug: 'fitjarbibliotek',
+		name: 'Fitjar folkebibliotek',
+		url: 'https://www.fitjarbibliotek.no/kva-skjer/',
+		endpoint: 'https://www.fitjarbibliotek.no/kva-skjer/',
+		region: 'Sunnhordland',
+		attribution: 'Fitjar folkebibliotek',
+		timezone: 'Europe/Oslo',
+		venueFallback: 'Fitjar folkebibliotek',
+		scheduleCron: '0 5 * * *',
+		iconUrl:
+			'https://www.fitjarbibliotek.no/wp-content/uploads/2023/01/1455393372-e1674652441526.jpg',
+		// No agreement with the library about its images, unlike Bømlo's. Hotlinked either way.
+		posterRightsCleared: false,
+		trusted: true
 	}
 ];
 

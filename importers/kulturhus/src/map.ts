@@ -253,7 +253,7 @@ export function mapTicket(
 	return {
 		externalId,
 		title,
-		category: mapCategory(parent.category),
+		category: parent.type === 'movie' ? mapCategory('kino') : mapCategory(parent.category),
 		startsAt,
 		endsAt,
 		venueName,
@@ -267,6 +267,22 @@ export function mapTicket(
 		// checkout — we are an index, not a box office.
 		sourceUrl: safeUrl(parent.link, instance.origin) ?? instance.url
 	};
+}
+
+/**
+ * A ticket entry that is a date and nothing else, on a day the same event already has a real,
+ * timed showing.
+ *
+ * The cinema page carries these — `mc-` ids, no clock, no room, no link, no sale — beside the
+ * screenings they share a date with; most likely the premiere marker. They are not showings, and
+ * rejecting them made every run `partial` for two rows that were never events. Only this exact
+ * shape is skipped: an untimed entry on a day with no timed showing is still a rejection, because
+ * that one might be a real showing whose time we do not know.
+ */
+function isDateMarker(ticket: UpstreamTicket, siblings: readonly UpstreamTicket[]): boolean {
+	const date = ticket.date.trim();
+	if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || ticket.link || ticket.location) return false;
+	return siblings.some((t) => t !== ticket && t.date.startsWith(`${date} `));
 }
 
 /** Every showing of every event, flattened. */
@@ -300,7 +316,10 @@ export function mapEvents(
 			);
 			continue;
 		}
-		for (const ticket of tickets) out.push(mapTicket(parent, ticket, instance));
+		for (const ticket of tickets) {
+			if (isDateMarker(ticket, tickets)) continue;
+			out.push(mapTicket(parent, ticket, instance));
+		}
 	}
 	return out;
 }
