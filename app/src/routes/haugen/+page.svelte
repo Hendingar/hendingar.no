@@ -105,7 +105,12 @@
 	const RETRY_MS = [2_000, 5_000, 10_000];
 	let retry: ReturnType<typeof setTimeout> | undefined;
 
-	function ask(raw: string, delay = DEBOUNCE_MS) {
+	/**
+	 * `force` asks even when the question is the one already answered — which on mount it always
+	 * is, because `asked` starts as `?q=`. Without it a reload, or coming back to a search, kept
+	 * the server's text matching and never asked Jev: one hit, until the question was reworded.
+	 */
+	function ask(raw: string, delay = DEBOUNCE_MS, force = false) {
 		const term = searchTermSchema.parse(raw);
 		clearTimeout(timer);
 		clearTimeout(retry);
@@ -119,7 +124,7 @@
 			pending = false;
 			return;
 		}
-		if (term === asked && !pending) return;
+		if (term === asked && !pending && !force) return;
 		pending = true;
 		timer = setTimeout(() => send(term, mine, 0), delay);
 	}
@@ -175,7 +180,7 @@
 	onMount(() => {
 		// Typed before hydration, or arrived with `?q=`: either way the answer on screen is text
 		// matching, so ask properly now.
-		if (q) ask(q, 0);
+		if (q) ask(q, 0, true);
 		return () => {
 			clearTimeout(timer);
 			clearTimeout(retry);
