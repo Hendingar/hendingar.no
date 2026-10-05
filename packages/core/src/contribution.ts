@@ -182,10 +182,43 @@ export function planContribution(
 		if (!held) gaps.push(field);
 		if (!hasValue(offered[field])) continue;
 		if (held) redundant.push(field);
-		else fill.push(field);
+		else if (field !== 'ctaUrl' || ticketLinkIsTheSources(canonical.sourceUrl, offered.ctaUrl))
+			fill.push(field);
 	}
 
 	return { fill, redundant, gaps };
+}
+
+/**
+ * May a contributed ticket link be shown on this event?
+ *
+ * The one gap that is not harmless to fill. Every other field is something a reader looks at; a
+ * ticket link is where they pay, rendered as the solid "Billettar" button. Filled on a browser's
+ * say-so, it is a phishing page with our name on the button — and nothing on the event would look
+ * wrong until somebody had paid. "A wrong poster is the worst case" stops being true here.
+ *
+ * So a contributed link is filled only when it is on the same site as the event's own source: the
+ * venue's programme pointing at the venue's ticket page. Anything else is not written — not
+ * redundant either, because the row did not agree with it. Ticket links on other hosts still
+ * arrive the way they always have, from the source, through an importer.
+ */
+export function ticketLinkIsTheSources(
+	sourceUrl: ContributableValue,
+	ctaUrl: ContributableValue
+): boolean {
+	const source = siteOf(sourceUrl);
+	return source !== null && source === siteOf(ctaUrl);
+}
+
+function siteOf(value: ContributableValue): string | null {
+	if (typeof value !== 'string') return null;
+	try {
+		const url = new URL(value);
+		if (url.protocol !== 'https:' && url.protocol !== 'http:') return null;
+		return url.hostname.toLowerCase().replace(/^www\./, '');
+	} catch {
+		return null;
+	}
 }
 
 /** Is there anything here for the canonical row at all? Drives whether the offer is made. */

@@ -245,8 +245,18 @@ function isUrl(value: string | null | undefined): value is string {
  *
  * `</` cannot appear inside a script element, and a description quoting `</p>` would otherwise
  * close the tag early and spill JSON into the document — the one genuinely dangerous thing about
- * embedding data this way.
+ * embedding data this way. Escaping only `</` was not quite enough: a title holding `<!--<script>`
+ * moves the HTML parser into its "double-escaped" state, which swallows the page after it.
+ *
+ * So every `<`, `>` and `&` becomes its `\u` escape, which JSON reads back as the same character
+ * and HTML never sees at all. U+2028 and U+2029 likewise, the two characters that are valid in JSON
+ * and were, until recently, line terminators in JavaScript.
  */
 export function jsonLdScript(node: JsonLd): string {
-	return JSON.stringify(node).replace(/<\//g, '<\\/');
+	return JSON.stringify(node)
+		.replace(/</g, '\\u003c')
+		.replace(/>/g, '\\u003e')
+		.replace(/&/g, '\\u0026')
+		.replace(/\u2028/g, '\\u2028')
+		.replace(/\u2029/g, '\\u2029');
 }

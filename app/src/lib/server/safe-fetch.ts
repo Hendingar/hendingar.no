@@ -52,7 +52,7 @@ function isBlockedV4(address: string): boolean {
 	const parts = address.split('.').map(Number);
 	if (parts.length !== 4 || parts.some((n) => !Number.isInteger(n) || n < 0 || n > 255))
 		return true;
-	const [a, b] = parts as [number, number, number, number];
+	const [a, b, c, d] = parts as [number, number, number, number];
 
 	if (a === 0) return true; // 0.0.0.0/8 "this network"
 	if (a === 10) return true; // private
@@ -63,6 +63,11 @@ function isBlockedV4(address: string): boolean {
 	if (a === 192 && b === 0) return true; // IETF protocol assignments, incl. 192.0.0.0/24
 	if (a === 192 && b === 168) return true; // private
 	if (a === 198 && (b === 18 || b === 19)) return true; // benchmarking
+	if (a === 192 && b === 88 && c === 99) return true; // deprecated 6to4 relay anycast
+	if (a === 198 && b === 51 && c === 100) return true; // documentation
+	if (a === 203 && b === 0 && c === 113) return true; // documentation
+	// Azure's WireServer: the host agent every VM and container can reach. Public-looking, not public.
+	if (a === 168 && b === 63 && c === 129 && d === 16) return true;
 	if (a >= 224) return true; // multicast, reserved, broadcast
 	return false;
 }
@@ -75,6 +80,12 @@ function isBlockedV6(address: string): boolean {
 	const mapped = /^::ffff:(\d+\.\d+\.\d+\.\d+)$/.exec(value);
 	if (mapped?.[1]) return isBlockedV4(mapped[1]);
 	if (/^::ffff:/.test(value)) return true; // any other v4-mapped form we did not parse
+	// The other ways to write v4 inside v6. Node prints ::127.0.0.1 as ::7f00:1, so these are
+	// refused by prefix rather than parsed: v4-compatible (::/96), SIIT (::ffff:0:0/96), 6to4.
+	if (/^::[0-9a-f]{1,4}(:[0-9a-f]{1,4})?$/.test(value)) return true;
+	if (/^::(\d+\.){3}\d+$/.test(value)) return true;
+	if (/^::ffff:0:/.test(value)) return true;
+	if (/^2002:/.test(value)) return true;
 
 	if (/^f[cd]/.test(value)) return true; // fc00::/7 unique local
 	if (/^fe[89ab]/.test(value)) return true; // fe80::/10 link-local
