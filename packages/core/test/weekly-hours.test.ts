@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
 	describeWeeklyHours,
 	fitsAgeBand,
+	sameWeeklyHours,
 	slotsOn,
 	weeklyHoursSchema,
 	type WeeklyHours
@@ -77,6 +78,34 @@ describe('weeklyHoursSchema', () => {
 				slots: [{ weekday: 1, from: '18:00:00', to: null }]
 			}).success
 		).toBe(false);
+	});
+});
+
+describe('sameWeeklyHours', () => {
+	const tuesday: WeeklyHours = {
+		cadence: 'weekly',
+		slots: [{ weekday: 2, from: '11:00', to: '13:30' }]
+	};
+
+	it('compares content, not key order', () => {
+		// jsonb hands the object back with its keys sorted by length; the content is what counts.
+		const fromDb: WeeklyHours = {
+			slots: [{ to: '13:30', from: '11:00', weekday: 2 }],
+			cadence: 'weekly'
+		};
+		expect(sameWeeklyHours(tuesday, fromDb)).toBe(true);
+	});
+
+	it('sees a moved time, a new cadence and a missing timetable', () => {
+		expect(sameWeeklyHours(tuesday, { ...tuesday, cadence: 'even-weeks' })).toBe(false);
+		expect(
+			sameWeeklyHours(tuesday, {
+				cadence: 'weekly',
+				slots: [{ weekday: 2, from: '11:00', to: '14:00' }]
+			})
+		).toBe(false);
+		expect(sameWeeklyHours(tuesday, null)).toBe(false);
+		expect(sameWeeklyHours(null, null)).toBe(true);
 	});
 });
 

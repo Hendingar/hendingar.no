@@ -2,6 +2,7 @@ import { and, eq } from 'drizzle-orm';
 import { createDb, type Db } from '@hendingar/core/db';
 import { events, ingestRuns, organizers, sources, venues } from '@hendingar/core/schema';
 import { markGoneUpstream } from '@hendingar/core/gone-upstream';
+import { sameWeeklyHours } from '@hendingar/core/weekly-hours';
 import {
 	orNull,
 	parseEvents,
@@ -436,18 +437,4 @@ export async function ingestAll(
 		}
 	}
 	return results;
-}
-
-function sameWeeklyHours(a: MappedEvent['weeklyHours'], b: MappedEvent['weeklyHours']): boolean {
-	if (a === null || b === null) return a === b;
-	return (
-		a.cadence === b.cadence &&
-		a.slots.length === b.slots.length &&
-		a.slots.every(
-			(slot, i) =>
-				slot.weekday === b.slots[i]?.weekday &&
-				slot.from === b.slots[i]?.from &&
-				slot.to === b.slots[i]?.to
-		)
-	);
 }
