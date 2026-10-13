@@ -1,0 +1,440 @@
+BEGIN:VCALENDAR
+PRODID:-//github.com/ical-org/ical.net//NONSGML ical.net 4.0//EN
+VERSION:2.0
+X-WR-CALNAME:Bremnes Kvinner 1
+BEGIN:VEVENT
+DESCRIPTION:3. div. kvinner Vestland (runde 4)\n\nBremnes Kvinner 1 - Førd
+ e\nScaleAQ Stadion mandag 06.04.26 13:00\n\nwww.fotball.no
+DTEND;TZID=Europe/Oslo:20260406T144400
+DTSTAMP:20261013T090937Z
+DTSTART;TZID=Europe/Oslo:20260406T130000
+LOCATION:ScaleAQ Stadion
+SEQUENCE:0
+SUMMARY:Bremnes Kvinner 1 - Førde
+UID:2fe42220-4785-4de5-a93c-fc294cfb8fec
+URL:https://www.fotball.no/fotballdata/kamp/?fiksId=8984327
+X-ALT-DESC;FMTTYPE=text/html:\n                    <html><head></head><bod
+ y>\n                        <h4><a href="https://www.fotball.no/fotballda
+ ta/kamp/?fiksId=8984327">Bremnes Kvinner 1 - Førde</a></h4>\n            
+             <p>3. div. kvinner Vestland (runde 4)</p>\n                  
+       <p>Spilles på <a href="https://www.fotball.no/fotballdata/anlegg/hj
+ em/?fiksId=5984">ScaleAQ Stadion</a> mandag 06.04.26 13:00</p>\n         
+                <br/><a href="http://www.fotball.no">fotball.no</a>\n     
+                </body></html>
+END:VEVENT
+BEGIN:VEVENT
+DESCRIPTION:3. div. kvinner Vestland (runde 1)\n\nSotra Kvinner Senior 1 -
+  Bremnes Kvinner 1\nStraume Sotra stadion søndag 12.04.26 16:00\n\nwww.fo
+ tball.no
+DTEND;TZID=Europe/Oslo:20260412T174400
+DTSTAMP:20261013T090937Z
+DTSTART;TZID=Europe/Oslo:20260412T160000
+LOCATION:Straume Sotra stadion
+SEQUENCE:0
+SUMMARY:Sotra Kvinner Senior 1 - Bremnes Kvinner 1
+UID:30ebc11a-234a-4263-9412-60170ed20d78
+URL:https://www.fotball.no/fotballdata/kamp/?fiksId=8984308
+X-ALT-DESC;FMTTYPE=text/html:\n                    <html><head></head><bod
+ y>\n                        <h4><a href="https://www.fotball.no/fotballda
+ ta/kamp/?fiksId=8984308">Sotra Kvinner Senior 1 - Bremnes Kvinner 1</a></
+ h4>\n                        <p>3. div. kvinner Vestland (runde 1)</p>\n 
+                        <p>Spilles på <a href="https://www.fotball.no/fotb
+ alldata/anlegg/hjem/?fiksId=3822">Straume Sotra stadion</a> søndag 12.04.
+ 26 16:00</p>\n                        <br/><a href="http://www.fotball.no
+ ">fotball.no</a>\n                    </body></html>
+END:VEVENT
+BEGIN:VEVENT
+DESCRIPTION:3. div. kvinner Vestland (runde 2)\n\nBremnes Kvinner 1 - Os k
+ vinner senior A\nScaleAQ Stadion fredag 17.04.26 19:30\n\nwww.fotball.no
+DTEND;TZID=Europe/Oslo:20260417T211400
+DTSTAMP:20261013T090937Z
+DTSTART;TZID=Europe/Oslo:20260417T193000
+LOCATION:ScaleAQ Stadion
+SEQUENCE:0
+SUMMARY:Bremnes Kvinner 1 - Os kvinner senior A
+UID:77e896fc-81ab-4831-9ef8-807c7347bc09
+URL:https://www.fotball.no/fotballdata/kamp/?fiksId=8984314
+X-ALT-DESC;FMTTYPE=text/html:\n                    <html><head></head><bod
+ y>\n                        <h4><a href="https://www.fotball.no/fotballda
+ ta/kamp/?fiksId=8984314">Bremnes Kvinner 1 - Os kvinner senior A</a></h4>
+ \n                        <p>3. div. kvinner Vestland (runde 2)</p>\n    
+                     <p>Spilles på <a href="https://www.fotball.no/fotball
+ data/anlegg/hjem/?fiksId=5984">ScaleAQ Stadion</a> fredag 17.04.26 19:30<
+ /p>\n                        <br/><a href="http://www.fotball.no">fotball
+ .no</a>\n                    </body></html>
+END:VEVENT
+BEGIN:VEVENT
+DESCRIPTION:3. div. kvinner Vestland (runde 3)\n\nVoss Kvinner Senior A - 
+ Bremnes Kvinner 1\nPrestegardsmoen Olabanen lørdag 25.04.26 14:00\n\nwww.
+ fotball.no
+DTEND;TZID=Europe/Oslo:20260425T154400
+DTSTAMP:20261013T090937Z
+DTSTART;TZID=Europe/Oslo:20260425T140000
+LOCATION:Prestegardsmoen Olabanen
+SEQUENCE:0
+SUMMARY:Voss Kvinner Senior A - Bremnes Kvinner 1
+UID:2da2103c-1dca-4ebc-aaa0-ba0058b69cd1
+URL:https://www.fotball.no/fotballdata/kamp/?fiksId=8984319
+X-ALT-DESC;FMTTYPE=text/html:\n                    <html><head></head><bod
+ y>\n                        <h4><a href="https://www.fotball.no/fotballda
+ ta/kamp/?fiksId=8984319">Voss Kvinner Senior A - Bremnes Kvinner 1</a></h
+ 4>\n                        <p>3. div. kvinner Vestland (runde 3)</p>\n  
+                       <p>Spilles på <a href="https://www.fotball.no/fotba
+ lldata/anlegg/hjem/?fiksId=6057">Prestegardsmoen Olabanen</a> lørdag 25.0
+ 4.26 14:00</p>\n                        <br/><a href="http://www.fotball.
+ no">fotball.no</a>\n                    </body></html>
+END:VEVENT
+BEGIN:VEVENT
+DESCRIPTION:3. div. kvinner Vestland (runde 5)\n\nFyllingsdalen Kvinner se
+ nior B - Bremnes Kvinner 1\nVarden Amfi søndag 10.05.26 15:00\n\nwww.fotb
+ all.no
+DTEND;TZID=Europe/Oslo:20260510T164400
+DTSTAMP:20261013T090937Z
+DTSTART;TZID=Europe/Oslo:20260510T150000
+LOCATION:Varden Amfi
+SEQUENCE:0
+SUMMARY:Fyllingsdalen Kvinner senior B - Bremnes Kvinner 1
+UID:51b66795-1448-41f6-b473-e1902b496791
+URL:https://www.fotball.no/fotballdata/kamp/?fiksId=8984334
+X-ALT-DESC;FMTTYPE=text/html:\n                    <html><head></head><bod
+ y>\n                        <h4><a href="https://www.fotball.no/fotballda
+ ta/kamp/?fiksId=8984334">Fyllingsdalen Kvinner senior B - Bremnes Kvinner
+  1</a></h4>\n                        <p>3. div. kvinner Vestland (runde 5
+ )</p>\n                        <p>Spilles på <a href="https://www.fotball
+ .no/fotballdata/anlegg/hjem/?fiksId=5928">Varden Amfi</a> søndag 10.05.26
+  15:00</p>\n                        <br/><a href="http://www.fotball.no">
+ fotball.no</a>\n                    </body></html>
+END:VEVENT
+BEGIN:VEVENT
+DESCRIPTION:3. div. kvinner Vestland (runde 6)\n\nBremnes Kvinner 1 - Bjar
+ g Kvinner Senior A\nScaleAQ Stadion torsdag 14.05.26 15:00\n\nwww.fotball
+ .no
+DTEND;TZID=Europe/Oslo:20260514T164400
+DTSTAMP:20261013T090937Z
+DTSTART;TZID=Europe/Oslo:20260514T150000
+LOCATION:ScaleAQ Stadion
+SEQUENCE:0
+SUMMARY:Bremnes Kvinner 1 - Bjarg Kvinner Senior A
+UID:82478501-c5fc-403b-b2ba-e03a3d021af4
+URL:https://www.fotball.no/fotballdata/kamp/?fiksId=8984340
+X-ALT-DESC;FMTTYPE=text/html:\n                    <html><head></head><bod
+ y>\n                        <h4><a href="https://www.fotball.no/fotballda
+ ta/kamp/?fiksId=8984340">Bremnes Kvinner 1 - Bjarg Kvinner Senior A</a></
+ h4>\n                        <p>3. div. kvinner Vestland (runde 6)</p>\n 
+                        <p>Spilles på <a href="https://www.fotball.no/fotb
+ alldata/anlegg/hjem/?fiksId=5984">ScaleAQ Stadion</a> torsdag 14.05.26 15
+ :00</p>\n                        <br/><a href="http://www.fotball.no">fot
+ ball.no</a>\n                    </body></html>
+END:VEVENT
+BEGIN:VEVENT
+DESCRIPTION:3. div. kvinner Vestland (runde 11)\n\nBremnes Kvinner 1 - Sto
+ rd Fotball Kvinner Senior A\nScaleAQ Stadion onsdag 20.05.26 19:00\n\nwww
+ .fotball.no
+DTEND;TZID=Europe/Oslo:20260520T204400
+DTSTAMP:20261013T090937Z
+DTSTART;TZID=Europe/Oslo:20260520T190000
+LOCATION:ScaleAQ Stadion
+SEQUENCE:0
+SUMMARY:Bremnes Kvinner 1 - Stord Fotball Kvinner Senior A
+UID:e1cf358b-bc9b-4585-8114-957cb74828e4
+URL:https://www.fotball.no/fotballdata/kamp/?fiksId=8984368
+X-ALT-DESC;FMTTYPE=text/html:\n                    <html><head></head><bod
+ y>\n                        <h4><a href="https://www.fotball.no/fotballda
+ ta/kamp/?fiksId=8984368">Bremnes Kvinner 1 - Stord Fotball Kvinner Senior
+  A</a></h4>\n                        <p>3. div. kvinner Vestland (runde 1
+ 1)</p>\n                        <p>Spilles på <a href="https://www.fotbal
+ l.no/fotballdata/anlegg/hjem/?fiksId=5984">ScaleAQ Stadion</a> onsdag 20.
+ 05.26 19:00</p>\n                        <br/><a href="http://www.fotball
+ .no">fotball.no</a>\n                    </body></html>
+END:VEVENT
+BEGIN:VEVENT
+DESCRIPTION:3. div. kvinner Vestland (runde 7)\n\nArna-Bjørnar Kvinner Sen
+ ior B - Bremnes Kvinner 1\nArna Idrettspark tirsdag 26.05.26 19:00\n\nwww
+ .fotball.no
+DTEND;TZID=Europe/Oslo:20260526T204400
+DTSTAMP:20261013T090937Z
+DTSTART;TZID=Europe/Oslo:20260526T190000
+LOCATION:Arna Idrettspark
+SEQUENCE:0
+SUMMARY:Arna-Bjørnar Kvinner Senior B - Bremnes Kvinner 1
+UID:a9d63b6f-4820-4e5d-b0cd-2393a7d143bf
+URL:https://www.fotball.no/fotballdata/kamp/?fiksId=8984347
+X-ALT-DESC;FMTTYPE=text/html:\n                    <html><head></head><bod
+ y>\n                        <h4><a href="https://www.fotball.no/fotballda
+ ta/kamp/?fiksId=8984347">Arna-Bjørnar Kvinner Senior B - Bremnes Kvinner 
+ 1</a></h4>\n                        <p>3. div. kvinner Vestland (runde 7)
+ </p>\n                        <p>Spilles på <a href="https://www.fotball.
+ no/fotballdata/anlegg/hjem/?fiksId=13731">Arna Idrettspark</a> tirsdag 26
+ .05.26 19:00</p>\n                        <br/><a href="http://www.fotbal
+ l.no">fotball.no</a>\n                    </body></html>
+END:VEVENT
+BEGIN:VEVENT
+DESCRIPTION:3. div. kvinner Vestland (runde 8)\n\nLyngbø Kvinner Senior A 
+ - Bremnes Kvinner 1\nLyngbø Idrettspark lørdag 30.05.26 13:00\n\nwww.fotb
+ all.no
+DTEND;TZID=Europe/Oslo:20260530T144400
+DTSTAMP:20261013T090937Z
+DTSTART;TZID=Europe/Oslo:20260530T130000
+LOCATION:Lyngbø Idrettspark
+SEQUENCE:0
+SUMMARY:Lyngbø Kvinner Senior A - Bremnes Kvinner 1
+UID:74b0ef04-4ca5-4ec1-9679-cac975da3902
+URL:https://www.fotball.no/fotballdata/kamp/?fiksId=8984352
+X-ALT-DESC;FMTTYPE=text/html:\n                    <html><head></head><bod
+ y>\n                        <h4><a href="https://www.fotball.no/fotballda
+ ta/kamp/?fiksId=8984352">Lyngbø Kvinner Senior A - Bremnes Kvinner 1</a><
+ /h4>\n                        <p>3. div. kvinner Vestland (runde 8)</p>\n
+                         <p>Spilles på <a href="https://www.fotball.no/fot
+ balldata/anlegg/hjem/?fiksId=775">Lyngbø Idrettspark</a> lørdag 30.05.26 
+ 13:00</p>\n                        <br/><a href="http://www.fotball.no">f
+ otball.no</a>\n                    </body></html>
+END:VEVENT
+BEGIN:VEVENT
+DESCRIPTION:3. div. kvinner Vestland (runde 9)\n\nBremnes Kvinner 1 - Åsan
+ e Kvinner 2\nScaleAQ Stadion søndag 07.06.26 16:00\n\nwww.fotball.no
+DTEND;TZID=Europe/Oslo:20260607T174400
+DTSTAMP:20261013T090937Z
+DTSTART;TZID=Europe/Oslo:20260607T160000
+LOCATION:ScaleAQ Stadion
+SEQUENCE:0
+SUMMARY:Bremnes Kvinner 1 - Åsane Kvinner 2
+UID:897f57d6-3e5b-4070-bf90-47f7d587e210
+URL:https://www.fotball.no/fotballdata/kamp/?fiksId=8984356
+X-ALT-DESC;FMTTYPE=text/html:\n                    <html><head></head><bod
+ y>\n                        <h4><a href="https://www.fotball.no/fotballda
+ ta/kamp/?fiksId=8984356">Bremnes Kvinner 1 - Åsane Kvinner 2</a></h4>\n  
+                       <p>3. div. kvinner Vestland (runde 9)</p>\n        
+                 <p>Spilles på <a href="https://www.fotball.no/fotballdata
+ /anlegg/hjem/?fiksId=5984">ScaleAQ Stadion</a> søndag 07.06.26 16:00</p>\
+ n                        <br/><a href="http://www.fotball.no">fotball.no<
+ /a>\n                    </body></html>
+END:VEVENT
+BEGIN:VEVENT
+DESCRIPTION:3. div. kvinner Vestland (runde 10)\n\nAskøy FK Kvinner 1 - Br
+ emnes Kvinner 1\nFollese Tertnes Holding Arena søndag 14.06.26 15:00\n\nw
+ ww.fotball.no
+DTEND;TZID=Europe/Oslo:20260614T164400
+DTSTAMP:20261013T090937Z
+DTSTART;TZID=Europe/Oslo:20260614T150000
+LOCATION:Follese Tertnes Holding Arena
+SEQUENCE:0
+SUMMARY:Askøy FK Kvinner 1 - Bremnes Kvinner 1
+UID:494cd142-36f9-4ebe-8681-421973e087d9
+URL:https://www.fotball.no/fotballdata/kamp/?fiksId=8984363
+X-ALT-DESC;FMTTYPE=text/html:\n                    <html><head></head><bod
+ y>\n                        <h4><a href="https://www.fotball.no/fotballda
+ ta/kamp/?fiksId=8984363">Askøy FK Kvinner 1 - Bremnes Kvinner 1</a></h4>\
+ n                        <p>3. div. kvinner Vestland (runde 10)</p>\n    
+                     <p>Spilles på <a href="https://www.fotball.no/fotball
+ data/anlegg/hjem/?fiksId=1019">Follese Tertnes Holding Arena</a> søndag 1
+ 4.06.26 15:00</p>\n                        <br/><a href="http://www.fotba
+ ll.no">fotball.no</a>\n                    </body></html>
+END:VEVENT
+BEGIN:VEVENT
+DESCRIPTION:3. div. kvinner Vestland (runde 13)\n\nOs kvinner senior A - B
+ remnes Kvinner 1\nKuventræ kunstgress 01 lørdag 22.08.26 13:00\n\nwww.fot
+ ball.no
+DTEND;TZID=Europe/Oslo:20260822T144400
+DTSTAMP:20261013T090937Z
+DTSTART;TZID=Europe/Oslo:20260822T130000
+LOCATION:Kuventræ kunstgress 01
+SEQUENCE:0
+SUMMARY:Os kvinner senior A - Bremnes Kvinner 1
+UID:650a2304-0874-4f91-af60-fd5cb4718123
+URL:https://www.fotball.no/fotballdata/kamp/?fiksId=8984380
+X-ALT-DESC;FMTTYPE=text/html:\n                    <html><head></head><bod
+ y>\n                        <h4><a href="https://www.fotball.no/fotballda
+ ta/kamp/?fiksId=8984380">Os kvinner senior A - Bremnes Kvinner 1</a></h4>
+ \n                        <p>3. div. kvinner Vestland (runde 13)</p>\n   
+                      <p>Spilles på <a href="https://www.fotball.no/fotbal
+ ldata/anlegg/hjem/?fiksId=967">Kuventræ kunstgress 01</a> lørdag 22.08.26
+  13:00</p>\n                        <br/><a href="http://www.fotball.no">
+ fotball.no</a>\n                    </body></html>
+END:VEVENT
+BEGIN:VEVENT
+DESCRIPTION:3. div. kvinner Vestland (runde 14)\n\nBremnes Kvinner 1 - Vos
+ s Kvinner Senior A\nScaleAQ Stadion lørdag 29.08.26 14:00\n\nwww.fotball.
+ no
+DTEND;TZID=Europe/Oslo:20260829T154400
+DTSTAMP:20261013T090937Z
+DTSTART;TZID=Europe/Oslo:20260829T140000
+LOCATION:ScaleAQ Stadion
+SEQUENCE:0
+SUMMARY:Bremnes Kvinner 1 - Voss Kvinner Senior A
+UID:d6cfa2bd-cbaf-4750-81a8-02b39200b02e
+URL:https://www.fotball.no/fotballdata/kamp/?fiksId=8984385
+X-ALT-DESC;FMTTYPE=text/html:\n                    <html><head></head><bod
+ y>\n                        <h4><a href="https://www.fotball.no/fotballda
+ ta/kamp/?fiksId=8984385">Bremnes Kvinner 1 - Voss Kvinner Senior A</a></h
+ 4>\n                        <p>3. div. kvinner Vestland (runde 14)</p>\n 
+                        <p>Spilles på <a href="https://www.fotball.no/fotb
+ alldata/anlegg/hjem/?fiksId=5984">ScaleAQ Stadion</a> lørdag 29.08.26 14:
+ 00</p>\n                        <br/><a href="http://www.fotball.no">fotb
+ all.no</a>\n                    </body></html>
+END:VEVENT
+BEGIN:VEVENT
+DESCRIPTION:3. div. kvinner Vestland (runde 15)\n\nFørde - Bremnes Kvinner
+  1\nHafstadparken 1 lørdag 05.09.26 13:00\n\nwww.fotball.no
+DTEND;TZID=Europe/Oslo:20260905T144400
+DTSTAMP:20261013T090937Z
+DTSTART;TZID=Europe/Oslo:20260905T130000
+LOCATION:Hafstadparken 1
+SEQUENCE:0
+SUMMARY:Førde - Bremnes Kvinner 1
+UID:860856bd-d66f-4f97-834b-57f915bf116e
+URL:https://www.fotball.no/fotballdata/kamp/?fiksId=8984393
+X-ALT-DESC;FMTTYPE=text/html:\n                    <html><head></head><bod
+ y>\n                        <h4><a href="https://www.fotball.no/fotballda
+ ta/kamp/?fiksId=8984393">Førde - Bremnes Kvinner 1</a></h4>\n            
+             <p>3. div. kvinner Vestland (runde 15)</p>\n                 
+        <p>Spilles på <a href="https://www.fotball.no/fotballdata/anlegg/h
+ jem/?fiksId=25678">Hafstadparken 1</a> lørdag 05.09.26 13:00</p>\n       
+                  <br/><a href="http://www.fotball.no">fotball.no</a>\n   
+                  </body></html>
+END:VEVENT
+BEGIN:VEVENT
+DESCRIPTION:3. div. kvinner Vestland (runde 16)\n\nBremnes Kvinner 1 - Fyl
+ lingsdalen Kvinner senior B\nScaleAQ Stadion lørdag 12.09.26 15:00\n\nwww
+ .fotball.no
+DTEND;TZID=Europe/Oslo:20260912T164400
+DTSTAMP:20261013T090937Z
+DTSTART;TZID=Europe/Oslo:20260912T150000
+LOCATION:ScaleAQ Stadion
+SEQUENCE:0
+SUMMARY:Bremnes Kvinner 1 - Fyllingsdalen Kvinner senior B
+UID:0d4501fe-0f16-470e-85e5-e03e5efc1628
+URL:https://www.fotball.no/fotballdata/kamp/?fiksId=8984400
+X-ALT-DESC;FMTTYPE=text/html:\n                    <html><head></head><bod
+ y>\n                        <h4><a href="https://www.fotball.no/fotballda
+ ta/kamp/?fiksId=8984400">Bremnes Kvinner 1 - Fyllingsdalen Kvinner senior
+  B</a></h4>\n                        <p>3. div. kvinner Vestland (runde 1
+ 6)</p>\n                        <p>Spilles på <a href="https://www.fotbal
+ l.no/fotballdata/anlegg/hjem/?fiksId=5984">ScaleAQ Stadion</a> lørdag 12.
+ 09.26 15:00</p>\n                        <br/><a href="http://www.fotball
+ .no">fotball.no</a>\n                    </body></html>
+END:VEVENT
+BEGIN:VEVENT
+DESCRIPTION:3. div. kvinner Vestland (runde 17)\n\nBjarg Kvinner Senior A 
+ - Bremnes Kvinner 1\nStavollen Kunstgress 01 lørdag 19.09.26 15:00\n\nwww
+ .fotball.no
+DTEND;TZID=Europe/Oslo:20260919T164400
+DTSTAMP:20261013T090937Z
+DTSTART;TZID=Europe/Oslo:20260919T150000
+LOCATION:Stavollen Kunstgress 01
+SEQUENCE:0
+SUMMARY:Bjarg Kvinner Senior A - Bremnes Kvinner 1
+UID:5e9756cf-13ed-4597-baa1-340812c17af2
+URL:https://www.fotball.no/fotballdata/kamp/?fiksId=8984406
+X-ALT-DESC;FMTTYPE=text/html:\n                    <html><head></head><bod
+ y>\n                        <h4><a href="https://www.fotball.no/fotballda
+ ta/kamp/?fiksId=8984406">Bjarg Kvinner Senior A - Bremnes Kvinner 1</a></
+ h4>\n                        <p>3. div. kvinner Vestland (runde 17)</p>\n
+                         <p>Spilles på <a href="https://www.fotball.no/fot
+ balldata/anlegg/hjem/?fiksId=730">Stavollen Kunstgress 01</a> lørdag 19.0
+ 9.26 15:00</p>\n                        <br/><a href="http://www.fotball.
+ no">fotball.no</a>\n                    </body></html>
+END:VEVENT
+BEGIN:VEVENT
+DESCRIPTION:3. div. kvinner Vestland (runde 18)\n\nBremnes Kvinner 1 - Arn
+ a-Bjørnar Kvinner Senior B\nScaleAQ Stadion lørdag 26.09.26 15:00\n\nwww.
+ fotball.no
+DTEND;TZID=Europe/Oslo:20260926T164400
+DTSTAMP:20261013T090937Z
+DTSTART;TZID=Europe/Oslo:20260926T150000
+LOCATION:ScaleAQ Stadion
+SEQUENCE:0
+SUMMARY:Bremnes Kvinner 1 - Arna-Bjørnar Kvinner Senior B
+UID:8f63c437-1a10-4dd1-ad53-25461128669b
+URL:https://www.fotball.no/fotballdata/kamp/?fiksId=8984413
+X-ALT-DESC;FMTTYPE=text/html:\n                    <html><head></head><bod
+ y>\n                        <h4><a href="https://www.fotball.no/fotballda
+ ta/kamp/?fiksId=8984413">Bremnes Kvinner 1 - Arna-Bjørnar Kvinner Senior 
+ B</a></h4>\n                        <p>3. div. kvinner Vestland (runde 18
+ )</p>\n                        <p>Spilles på <a href="https://www.fotball
+ .no/fotballdata/anlegg/hjem/?fiksId=5984">ScaleAQ Stadion</a> lørdag 26.0
+ 9.26 15:00</p>\n                        <br/><a href="http://www.fotball.
+ no">fotball.no</a>\n                    </body></html>
+END:VEVENT
+BEGIN:VEVENT
+DESCRIPTION:3. div. kvinner Vestland (runde 19)\n\nBremnes Kvinner 1 - Lyn
+ gbø Kvinner Senior A\nScaleAQ Stadion lørdag 03.10.26 13:00\n\nwww.fotbal
+ l.no
+DTEND;TZID=Europe/Oslo:20261003T144400
+DTSTAMP:20261013T090937Z
+DTSTART;TZID=Europe/Oslo:20261003T130000
+LOCATION:ScaleAQ Stadion
+SEQUENCE:0
+SUMMARY:Bremnes Kvinner 1 - Lyngbø Kvinner Senior A
+UID:3e18e025-df7d-4898-b5ab-6f8d2deadeee
+URL:https://www.fotball.no/fotballdata/kamp/?fiksId=8984418
+X-ALT-DESC;FMTTYPE=text/html:\n                    <html><head></head><bod
+ y>\n                        <h4><a href="https://www.fotball.no/fotballda
+ ta/kamp/?fiksId=8984418">Bremnes Kvinner 1 - Lyngbø Kvinner Senior A</a><
+ /h4>\n                        <p>3. div. kvinner Vestland (runde 19)</p>\
+ n                        <p>Spilles på <a href="https://www.fotball.no/fo
+ tballdata/anlegg/hjem/?fiksId=5984">ScaleAQ Stadion</a> lørdag 03.10.26 1
+ 3:00</p>\n                        <br/><a href="http://www.fotball.no">fo
+ tball.no</a>\n                    </body></html>
+END:VEVENT
+BEGIN:VEVENT
+DESCRIPTION:3. div. kvinner Vestland (runde 20)\n\nÅsane Kvinner 2 - Bremn
+ es Kvinner 1\nÅsane Arena  lørdag 10.10.26 16:30\n\nwww.fotball.no
+DTEND;TZID=Europe/Oslo:20261010T181400
+DTSTAMP:20261013T090937Z
+DTSTART;TZID=Europe/Oslo:20261010T163000
+LOCATION:Åsane Arena
+SEQUENCE:0
+SUMMARY:Åsane Kvinner 2 - Bremnes Kvinner 1
+UID:d05af1ba-6157-42fc-a6d0-4578427a1cda
+URL:https://www.fotball.no/fotballdata/kamp/?fiksId=8984422
+X-ALT-DESC;FMTTYPE=text/html:\n                    <html><head></head><bod
+ y>\n                        <h4><a href="https://www.fotball.no/fotballda
+ ta/kamp/?fiksId=8984422">Åsane Kvinner 2 - Bremnes Kvinner 1</a></h4>\n  
+                       <p>3. div. kvinner Vestland (runde 20)</p>\n       
+                  <p>Spilles på <a href="https://www.fotball.no/fotballdat
+ a/anlegg/hjem/?fiksId=26421">Åsane Arena </a> lørdag 10.10.26 16:30</p>\n
+                         <br/><a href="http://www.fotball.no">fotball.no</
+ a>\n                    </body></html>
+END:VEVENT
+BEGIN:VEVENT
+DESCRIPTION:3. div. kvinner Vestland (runde 21)\n\nBremnes Kvinner 1 - Ask
+ øy FK Kvinner 1\nScaleAQ Stadion søndag 18.10.26 15:00\n\nwww.fotball.no
+DTEND;TZID=Europe/Oslo:20261018T164400
+DTSTAMP:20261013T090937Z
+DTSTART;TZID=Europe/Oslo:20261018T150000
+LOCATION:ScaleAQ Stadion
+SEQUENCE:0
+SUMMARY:Bremnes Kvinner 1 - Askøy FK Kvinner 1
+UID:80d16a1c-2e8a-46dd-bcaa-883ca44a6310
+URL:https://www.fotball.no/fotballdata/kamp/?fiksId=8984429
+X-ALT-DESC;FMTTYPE=text/html:\n                    <html><head></head><bod
+ y>\n                        <h4><a href="https://www.fotball.no/fotballda
+ ta/kamp/?fiksId=8984429">Bremnes Kvinner 1 - Askøy FK Kvinner 1</a></h4>\
+ n                        <p>3. div. kvinner Vestland (runde 21)</p>\n    
+                     <p>Spilles på <a href="https://www.fotball.no/fotball
+ data/anlegg/hjem/?fiksId=5984">ScaleAQ Stadion</a> søndag 18.10.26 15:00<
+ /p>\n                        <br/><a href="http://www.fotball.no">fotball
+ .no</a>\n                    </body></html>
+END:VEVENT
+BEGIN:VEVENT
+DESCRIPTION:3. div. kvinner Vestland (runde 22)\n\nStord Fotball Kvinner S
+ enior A - Bremnes Kvinner 1\nVikahaugane Kunstgress lørdag 24.10.26 13:00
+ \n\nwww.fotball.no
+DTEND;TZID=Europe/Oslo:20261024T144400
+DTSTAMP:20261013T090937Z
+DTSTART;TZID=Europe/Oslo:20261024T130000
+LOCATION:Vikahaugane Kunstgress
+SEQUENCE:0
+SUMMARY:Stord Fotball Kvinner Senior A - Bremnes Kvinner 1
+UID:fc0449ae-3fcd-4098-9130-15c83845b58c
+URL:https://www.fotball.no/fotballdata/kamp/?fiksId=8984434
+X-ALT-DESC;FMTTYPE=text/html:\n                    <html><head></head><bod
+ y>\n                        <h4><a href="https://www.fotball.no/fotballda
+ ta/kamp/?fiksId=8984434">Stord Fotball Kvinner Senior A - Bremnes Kvinner
+  1</a></h4>\n                        <p>3. div. kvinner Vestland (runde 2
+ 2)</p>\n                        <p>Spilles på <a href="https://www.fotbal
+ l.no/fotballdata/anlegg/hjem/?fiksId=7949">Vikahaugane Kunstgress</a> lør
+ dag 24.10.26 13:00</p>\n                        <br/><a href="http://www.
+ fotball.no">fotball.no</a>\n                    </body></html>
+END:VEVENT
+END:VCALENDAR

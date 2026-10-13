@@ -1,0 +1,425 @@
+BEGIN:VCALENDAR
+PRODID:-//github.com/ical-org/ical.net//NONSGML ical.net 4.0//EN
+VERSION:2.0
+X-WR-CALNAME:Stord Fotball Kvinner Senior A
+BEGIN:VEVENT
+DESCRIPTION:3. div. kvinner Vestland (runde 1)\n\nStord Fotball Kvinner Se
+ nior A - Lyngbø Kvinner Senior A\nVikahaugane Kunstgress søndag 12.04.26 
+ 16:00\n\nwww.fotball.no
+DTEND;TZID=Europe/Oslo:20260412T174400
+DTSTAMP:20261013T001742Z
+DTSTART;TZID=Europe/Oslo:20260412T160000
+LOCATION:Vikahaugane Kunstgress
+SEQUENCE:0
+SUMMARY:Stord Fotball Kvinner Senior A - Lyngbø Kvinner Senior A
+UID:fcc366f6-b6a9-451d-8e0c-2fdcd8da2ab5
+URL:https://www.fotball.no/fotballdata/kamp/?fiksId=8984309
+X-ALT-DESC;FMTTYPE=text/html:\n                    <html><head></head><bod
+ y>\n                        <h4><a href="https://www.fotball.no/fotballda
+ ta/kamp/?fiksId=8984309">Stord Fotball Kvinner Senior A - Lyngbø Kvinner 
+ Senior A</a></h4>\n                        <p>3. div. kvinner Vestland (r
+ unde 1)</p>\n                        <p>Spilles på <a href="https://www.f
+ otball.no/fotballdata/anlegg/hjem/?fiksId=7949">Vikahaugane Kunstgress</a
+ > søndag 12.04.26 16:00</p>\n                        <br/><a href="http:/
+ /www.fotball.no">fotball.no</a>\n                    </body></html>
+END:VEVENT
+BEGIN:VEVENT
+DESCRIPTION:3. div. kvinner Vestland (runde 2)\n\nÅsane Kvinner 2 - Stord 
+ Fotball Kvinner Senior A\nÅsane Arena  torsdag 16.04.26 19:30\n\nwww.fotb
+ all.no
+DTEND;TZID=Europe/Oslo:20260416T211400
+DTSTAMP:20261013T001742Z
+DTSTART;TZID=Europe/Oslo:20260416T193000
+LOCATION:Åsane Arena
+SEQUENCE:0
+SUMMARY:Åsane Kvinner 2 - Stord Fotball Kvinner Senior A
+UID:0c1ef623-e8f6-44b0-99ba-67f4d799597f
+URL:https://www.fotball.no/fotballdata/kamp/?fiksId=8984316
+X-ALT-DESC;FMTTYPE=text/html:\n                    <html><head></head><bod
+ y>\n                        <h4><a href="https://www.fotball.no/fotballda
+ ta/kamp/?fiksId=8984316">Åsane Kvinner 2 - Stord Fotball Kvinner Senior A
+ </a></h4>\n                        <p>3. div. kvinner Vestland (runde 2)<
+ /p>\n                        <p>Spilles på <a href="https://www.fotball.n
+ o/fotballdata/anlegg/hjem/?fiksId=26421">Åsane Arena </a> torsdag 16.04.2
+ 6 19:30</p>\n                        <br/><a href="http://www.fotball.no"
+ >fotball.no</a>\n                    </body></html>
+END:VEVENT
+BEGIN:VEVENT
+DESCRIPTION:3. div. kvinner Vestland (runde 3)\n\nStord Fotball Kvinner Se
+ nior A - Askøy FK Kvinner 1\nTrott stadion - Prestegardsskogen søndag 26.
+ 04.26 13:00\n\nwww.fotball.no
+DTEND;TZID=Europe/Oslo:20260426T144400
+DTSTAMP:20261013T001742Z
+DTSTART;TZID=Europe/Oslo:20260426T130000
+LOCATION:Trott stadion - Prestegardsskogen
+SEQUENCE:0
+SUMMARY:Stord Fotball Kvinner Senior A - Askøy FK Kvinner 1
+UID:37ea359e-b4de-432e-8a43-0551238b0e5c
+URL:https://www.fotball.no/fotballdata/kamp/?fiksId=8984322
+X-ALT-DESC;FMTTYPE=text/html:\n                    <html><head></head><bod
+ y>\n                        <h4><a href="https://www.fotball.no/fotballda
+ ta/kamp/?fiksId=8984322">Stord Fotball Kvinner Senior A - Askøy FK Kvinne
+ r 1</a></h4>\n                        <p>3. div. kvinner Vestland (runde 
+ 3)</p>\n                        <p>Spilles på <a href="https://www.fotbal
+ l.no/fotballdata/anlegg/hjem/?fiksId=5997">Trott stadion - Prestegardssko
+ gen</a> søndag 26.04.26 13:00</p>\n                        <br/><a href="
+ http://www.fotball.no">fotball.no</a>\n                    </body></html>
+END:VEVENT
+BEGIN:VEVENT
+DESCRIPTION:3. div. kvinner Vestland (runde 4)\n\nStord Fotball Kvinner Se
+ nior A - Arna-Bjørnar Kvinner Senior B\nVikahaugane Kunstgress søndag 03.
+ 05.26 16:00\n\nwww.fotball.no
+DTEND;TZID=Europe/Oslo:20260503T174400
+DTSTAMP:20261013T001742Z
+DTSTART;TZID=Europe/Oslo:20260503T160000
+LOCATION:Vikahaugane Kunstgress
+SEQUENCE:0
+SUMMARY:Stord Fotball Kvinner Senior A - Arna-Bjørnar Kvinner Senior B
+UID:da7018f8-fa77-4105-aaa9-f0bb2e0ef389
+URL:https://www.fotball.no/fotballdata/kamp/?fiksId=8984329
+X-ALT-DESC;FMTTYPE=text/html:\n                    <html><head></head><bod
+ y>\n                        <h4><a href="https://www.fotball.no/fotballda
+ ta/kamp/?fiksId=8984329">Stord Fotball Kvinner Senior A - Arna-Bjørnar Kv
+ inner Senior B</a></h4>\n                        <p>3. div. kvinner Vestl
+ and (runde 4)</p>\n                        <p>Spilles på <a href="https:/
+ /www.fotball.no/fotballdata/anlegg/hjem/?fiksId=7949">Vikahaugane Kunstgr
+ ess</a> søndag 03.05.26 16:00</p>\n                        <br/><a href="
+ http://www.fotball.no">fotball.no</a>\n                    </body></html>
+END:VEVENT
+BEGIN:VEVENT
+DESCRIPTION:3. div. kvinner Vestland (runde 6)\n\nStord Fotball Kvinner Se
+ nior A - Os kvinner senior A\nVikahaugane Kunstgress onsdag 13.05.26 19:0
+ 0\n\nwww.fotball.no
+DTEND;TZID=Europe/Oslo:20260513T204400
+DTSTAMP:20261013T001742Z
+DTSTART;TZID=Europe/Oslo:20260513T190000
+LOCATION:Vikahaugane Kunstgress
+SEQUENCE:0
+SUMMARY:Stord Fotball Kvinner Senior A - Os kvinner senior A
+UID:d9bfbe49-d907-4102-b595-35fc293a4631
+URL:https://www.fotball.no/fotballdata/kamp/?fiksId=8984336
+X-ALT-DESC;FMTTYPE=text/html:\n                    <html><head></head><bod
+ y>\n                        <h4><a href="https://www.fotball.no/fotballda
+ ta/kamp/?fiksId=8984336">Stord Fotball Kvinner Senior A - Os kvinner seni
+ or A</a></h4>\n                        <p>3. div. kvinner Vestland (runde
+  6)</p>\n                        <p>Spilles på <a href="https://www.fotba
+ ll.no/fotballdata/anlegg/hjem/?fiksId=7949">Vikahaugane Kunstgress</a> on
+ sdag 13.05.26 19:00</p>\n                        <br/><a href="http://www
+ .fotball.no">fotball.no</a>\n                    </body></html>
+END:VEVENT
+BEGIN:VEVENT
+DESCRIPTION:3. div. kvinner Vestland (runde 11)\n\nBremnes Kvinner 1 - Sto
+ rd Fotball Kvinner Senior A\nScaleAQ Stadion onsdag 20.05.26 19:00\n\nwww
+ .fotball.no
+DTEND;TZID=Europe/Oslo:20260520T204400
+DTSTAMP:20261013T001742Z
+DTSTART;TZID=Europe/Oslo:20260520T190000
+LOCATION:ScaleAQ Stadion
+SEQUENCE:0
+SUMMARY:Bremnes Kvinner 1 - Stord Fotball Kvinner Senior A
+UID:a35836a0-3b8e-4d51-b4fb-23b402beca87
+URL:https://www.fotball.no/fotballdata/kamp/?fiksId=8984368
+X-ALT-DESC;FMTTYPE=text/html:\n                    <html><head></head><bod
+ y>\n                        <h4><a href="https://www.fotball.no/fotballda
+ ta/kamp/?fiksId=8984368">Bremnes Kvinner 1 - Stord Fotball Kvinner Senior
+  A</a></h4>\n                        <p>3. div. kvinner Vestland (runde 1
+ 1)</p>\n                        <p>Spilles på <a href="https://www.fotbal
+ l.no/fotballdata/anlegg/hjem/?fiksId=5984">ScaleAQ Stadion</a> onsdag 20.
+ 05.26 19:00</p>\n                        <br/><a href="http://www.fotball
+ .no">fotball.no</a>\n                    </body></html>
+END:VEVENT
+BEGIN:VEVENT
+DESCRIPTION:3. div. kvinner Vestland (runde 7)\n\nVoss Kvinner Senior A - 
+ Stord Fotball Kvinner Senior A\nPrestegardsmoen Olabanen mandag 25.05.26 
+ 15:00\n\nwww.fotball.no
+DTEND;TZID=Europe/Oslo:20260525T164400
+DTSTAMP:20261013T001742Z
+DTSTART;TZID=Europe/Oslo:20260525T150000
+LOCATION:Prestegardsmoen Olabanen
+SEQUENCE:0
+SUMMARY:Voss Kvinner Senior A - Stord Fotball Kvinner Senior A
+UID:3a577dbc-afce-4bbd-a716-bba54daaa650
+URL:https://www.fotball.no/fotballdata/kamp/?fiksId=8984343
+X-ALT-DESC;FMTTYPE=text/html:\n                    <html><head></head><bod
+ y>\n                        <h4><a href="https://www.fotball.no/fotballda
+ ta/kamp/?fiksId=8984343">Voss Kvinner Senior A - Stord Fotball Kvinner Se
+ nior A</a></h4>\n                        <p>3. div. kvinner Vestland (run
+ de 7)</p>\n                        <p>Spilles på <a href="https://www.fot
+ ball.no/fotballdata/anlegg/hjem/?fiksId=6057">Prestegardsmoen Olabanen</a
+ > mandag 25.05.26 15:00</p>\n                        <br/><a href="http:/
+ /www.fotball.no">fotball.no</a>\n                    </body></html>
+END:VEVENT
+BEGIN:VEVENT
+DESCRIPTION:3. div. kvinner Vestland (runde 8)\n\nStord Fotball Kvinner Se
+ nior A - Førde\nVikahaugane Kunstgress lørdag 30.05.26 12:00\n\nwww.fotba
+ ll.no
+DTEND;TZID=Europe/Oslo:20260530T134400
+DTSTAMP:20261013T001742Z
+DTSTART;TZID=Europe/Oslo:20260530T120000
+LOCATION:Vikahaugane Kunstgress
+SEQUENCE:0
+SUMMARY:Stord Fotball Kvinner Senior A - Førde
+UID:5f957ab7-2bbd-4885-b6c1-d4e8e47e0274
+URL:https://www.fotball.no/fotballdata/kamp/?fiksId=8984349
+X-ALT-DESC;FMTTYPE=text/html:\n                    <html><head></head><bod
+ y>\n                        <h4><a href="https://www.fotball.no/fotballda
+ ta/kamp/?fiksId=8984349">Stord Fotball Kvinner Senior A - Førde</a></h4>\
+ n                        <p>3. div. kvinner Vestland (runde 8)</p>\n     
+                    <p>Spilles på <a href="https://www.fotball.no/fotballd
+ ata/anlegg/hjem/?fiksId=7949">Vikahaugane Kunstgress</a> lørdag 30.05.26 
+ 12:00</p>\n                        <br/><a href="http://www.fotball.no">f
+ otball.no</a>\n                    </body></html>
+END:VEVENT
+BEGIN:VEVENT
+DESCRIPTION:3. div. kvinner Vestland (runde 9)\n\nFyllingsdalen Kvinner se
+ nior B - Stord Fotball Kvinner Senior A\nVarden Amfi søndag 07.06.26 16:0
+ 0\n\nwww.fotball.no
+DTEND;TZID=Europe/Oslo:20260607T174400
+DTSTAMP:20261013T001742Z
+DTSTART;TZID=Europe/Oslo:20260607T160000
+LOCATION:Varden Amfi
+SEQUENCE:0
+SUMMARY:Fyllingsdalen Kvinner senior B - Stord Fotball Kvinner Senior A
+UID:5235a1ac-c848-4560-a035-5371f29768b9
+URL:https://www.fotball.no/fotballdata/kamp/?fiksId=8984358
+X-ALT-DESC;FMTTYPE=text/html:\n                    <html><head></head><bod
+ y>\n                        <h4><a href="https://www.fotball.no/fotballda
+ ta/kamp/?fiksId=8984358">Fyllingsdalen Kvinner senior B - Stord Fotball K
+ vinner Senior A</a></h4>\n                        <p>3. div. kvinner Vest
+ land (runde 9)</p>\n                        <p>Spilles på <a href="https:
+ //www.fotball.no/fotballdata/anlegg/hjem/?fiksId=5928">Varden Amfi</a> sø
+ ndag 07.06.26 16:00</p>\n                        <br/><a href="http://www
+ .fotball.no">fotball.no</a>\n                    </body></html>
+END:VEVENT
+BEGIN:VEVENT
+DESCRIPTION:3. div. kvinner Vestland (runde 10)\n\nStord Fotball Kvinner S
+ enior A - Bjarg Kvinner Senior A\nVikahaugane Kunstgress lørdag 13.06.26 
+ 15:00\n\nwww.fotball.no
+DTEND;TZID=Europe/Oslo:20260613T164400
+DTSTAMP:20261013T001742Z
+DTSTART;TZID=Europe/Oslo:20260613T150000
+LOCATION:Vikahaugane Kunstgress
+SEQUENCE:0
+SUMMARY:Stord Fotball Kvinner Senior A - Bjarg Kvinner Senior A
+UID:60d6139c-9a79-4d8d-9681-9231b993dfb6
+URL:https://www.fotball.no/fotballdata/kamp/?fiksId=8984362
+X-ALT-DESC;FMTTYPE=text/html:\n                    <html><head></head><bod
+ y>\n                        <h4><a href="https://www.fotball.no/fotballda
+ ta/kamp/?fiksId=8984362">Stord Fotball Kvinner Senior A - Bjarg Kvinner S
+ enior A</a></h4>\n                        <p>3. div. kvinner Vestland (ru
+ nde 10)</p>\n                        <p>Spilles på <a href="https://www.f
+ otball.no/fotballdata/anlegg/hjem/?fiksId=7949">Vikahaugane Kunstgress</a
+ > lørdag 13.06.26 15:00</p>\n                        <br/><a href="http:/
+ /www.fotball.no">fotball.no</a>\n                    </body></html>
+END:VEVENT
+BEGIN:VEVENT
+DESCRIPTION:3. div. kvinner Vestland (runde 13)\n\nStord Fotball Kvinner S
+ enior A - Åsane Kvinner 2\nVikahaugane Kunstgress mandag 24.08.26 19:30\n
+ \nwww.fotball.no
+DTEND;TZID=Europe/Oslo:20260824T211400
+DTSTAMP:20261013T001742Z
+DTSTART;TZID=Europe/Oslo:20260824T193000
+LOCATION:Vikahaugane Kunstgress
+SEQUENCE:0
+SUMMARY:Stord Fotball Kvinner Senior A - Åsane Kvinner 2
+UID:f2276918-02b0-44d2-958f-a2548b82dd79
+URL:https://www.fotball.no/fotballdata/kamp/?fiksId=8984382
+X-ALT-DESC;FMTTYPE=text/html:\n                    <html><head></head><bod
+ y>\n                        <h4><a href="https://www.fotball.no/fotballda
+ ta/kamp/?fiksId=8984382">Stord Fotball Kvinner Senior A - Åsane Kvinner 2
+ </a></h4>\n                        <p>3. div. kvinner Vestland (runde 13)
+ </p>\n                        <p>Spilles på <a href="https://www.fotball.
+ no/fotballdata/anlegg/hjem/?fiksId=7949">Vikahaugane Kunstgress</a> manda
+ g 24.08.26 19:30</p>\n                        <br/><a href="http://www.fo
+ tball.no">fotball.no</a>\n                    </body></html>
+END:VEVENT
+BEGIN:VEVENT
+DESCRIPTION:3. div. kvinner Vestland (runde 14)\n\nAskøy FK Kvinner 1 - St
+ ord Fotball Kvinner Senior A\nFollese Tertnes Holding Arena søndag 30.08.
+ 26 17:00\n\nwww.fotball.no
+DTEND;TZID=Europe/Oslo:20260830T184400
+DTSTAMP:20261013T001742Z
+DTSTART;TZID=Europe/Oslo:20260830T170000
+LOCATION:Follese Tertnes Holding Arena
+SEQUENCE:0
+SUMMARY:Askøy FK Kvinner 1 - Stord Fotball Kvinner Senior A
+UID:0153962c-d2d4-4110-b556-0c06cd3712bf
+URL:https://www.fotball.no/fotballdata/kamp/?fiksId=8984388
+X-ALT-DESC;FMTTYPE=text/html:\n                    <html><head></head><bod
+ y>\n                        <h4><a href="https://www.fotball.no/fotballda
+ ta/kamp/?fiksId=8984388">Askøy FK Kvinner 1 - Stord Fotball Kvinner Senio
+ r A</a></h4>\n                        <p>3. div. kvinner Vestland (runde 
+ 14)</p>\n                        <p>Spilles på <a href="https://www.fotba
+ ll.no/fotballdata/anlegg/hjem/?fiksId=1019">Follese Tertnes Holding Arena
+ </a> søndag 30.08.26 17:00</p>\n                        <br/><a href="htt
+ p://www.fotball.no">fotball.no</a>\n                    </body></html>
+END:VEVENT
+BEGIN:VEVENT
+DESCRIPTION:3. div. kvinner Vestland (runde 15)\n\nArna-Bjørnar Kvinner Se
+ nior B - Stord Fotball Kvinner Senior A\nArna Idrettspark søndag 06.09.26
+  16:00\n\nwww.fotball.no
+DTEND;TZID=Europe/Oslo:20260906T174400
+DTSTAMP:20261013T001742Z
+DTSTART;TZID=Europe/Oslo:20260906T160000
+LOCATION:Arna Idrettspark
+SEQUENCE:0
+SUMMARY:Arna-Bjørnar Kvinner Senior B - Stord Fotball Kvinner Senior A
+UID:f71ecc90-8fa6-466a-a3f7-da574bc28f61
+URL:https://www.fotball.no/fotballdata/kamp/?fiksId=8984395
+X-ALT-DESC;FMTTYPE=text/html:\n                    <html><head></head><bod
+ y>\n                        <h4><a href="https://www.fotball.no/fotballda
+ ta/kamp/?fiksId=8984395">Arna-Bjørnar Kvinner Senior B - Stord Fotball Kv
+ inner Senior A</a></h4>\n                        <p>3. div. kvinner Vestl
+ and (runde 15)</p>\n                        <p>Spilles på <a href="https:
+ //www.fotball.no/fotballdata/anlegg/hjem/?fiksId=13731">Arna Idrettspark<
+ /a> søndag 06.09.26 16:00</p>\n                        <br/><a href="http
+ ://www.fotball.no">fotball.no</a>\n                    </body></html>
+END:VEVENT
+BEGIN:VEVENT
+DESCRIPTION:3. div. kvinner Vestland (runde 17)\n\nOs kvinner senior A - S
+ tord Fotball Kvinner Senior A\nKuventræ kunstgress 01 onsdag 09.09.26 19:
+ 00\n\nwww.fotball.no
+DTEND;TZID=Europe/Oslo:20260909T204400
+DTSTAMP:20261013T001742Z
+DTSTART;TZID=Europe/Oslo:20260909T190000
+LOCATION:Kuventræ kunstgress 01
+SEQUENCE:0
+SUMMARY:Os kvinner senior A - Stord Fotball Kvinner Senior A
+UID:1c77dd46-c35e-4ecf-8f1c-b21f51512a48
+URL:https://www.fotball.no/fotballdata/kamp/?fiksId=8984402
+X-ALT-DESC;FMTTYPE=text/html:\n                    <html><head></head><bod
+ y>\n                        <h4><a href="https://www.fotball.no/fotballda
+ ta/kamp/?fiksId=8984402">Os kvinner senior A - Stord Fotball Kvinner Seni
+ or A</a></h4>\n                        <p>3. div. kvinner Vestland (runde
+  17)</p>\n                        <p>Spilles på <a href="https://www.fotb
+ all.no/fotballdata/anlegg/hjem/?fiksId=967">Kuventræ kunstgress 01</a> on
+ sdag 09.09.26 19:00</p>\n                        <br/><a href="http://www
+ .fotball.no">fotball.no</a>\n                    </body></html>
+END:VEVENT
+BEGIN:VEVENT
+DESCRIPTION:3. div. kvinner Vestland (runde 12)\n\nLyngbø Kvinner Senior A
+  - Stord Fotball Kvinner Senior A\nLyngbø Idrettspark tirsdag 15.09.26 19
+ :00\n\nwww.fotball.no
+DTEND;TZID=Europe/Oslo:20260915T204400
+DTSTAMP:20261013T001742Z
+DTSTART;TZID=Europe/Oslo:20260915T190000
+LOCATION:Lyngbø Idrettspark
+SEQUENCE:0
+SUMMARY:Lyngbø Kvinner Senior A - Stord Fotball Kvinner Senior A
+UID:9d7eb573-c877-4af5-91c1-1ef377f1e15a
+URL:https://www.fotball.no/fotballdata/kamp/?fiksId=8984375
+X-ALT-DESC;FMTTYPE=text/html:\n                    <html><head></head><bod
+ y>\n                        <h4><a href="https://www.fotball.no/fotballda
+ ta/kamp/?fiksId=8984375">Lyngbø Kvinner Senior A - Stord Fotball Kvinner 
+ Senior A</a></h4>\n                        <p>3. div. kvinner Vestland (r
+ unde 12)</p>\n                        <p>Spilles på <a href="https://www.
+ fotball.no/fotballdata/anlegg/hjem/?fiksId=775">Lyngbø Idrettspark</a> ti
+ rsdag 15.09.26 19:00</p>\n                        <br/><a href="http://ww
+ w.fotball.no">fotball.no</a>\n                    </body></html>
+END:VEVENT
+BEGIN:VEVENT
+DESCRIPTION:3. div. kvinner Vestland (runde 18)\n\nStord Fotball Kvinner S
+ enior A - Voss Kvinner Senior A\nVikahaugane Kunstgress lørdag 26.09.26 1
+ 3:00\n\nwww.fotball.no
+DTEND;TZID=Europe/Oslo:20260926T144400
+DTSTAMP:20261013T001742Z
+DTSTART;TZID=Europe/Oslo:20260926T130000
+LOCATION:Vikahaugane Kunstgress
+SEQUENCE:0
+SUMMARY:Stord Fotball Kvinner Senior A - Voss Kvinner Senior A
+UID:6fef3615-1682-4925-8c63-2236392a404f
+URL:https://www.fotball.no/fotballdata/kamp/?fiksId=8984409
+X-ALT-DESC;FMTTYPE=text/html:\n                    <html><head></head><bod
+ y>\n                        <h4><a href="https://www.fotball.no/fotballda
+ ta/kamp/?fiksId=8984409">Stord Fotball Kvinner Senior A - Voss Kvinner Se
+ nior A</a></h4>\n                        <p>3. div. kvinner Vestland (run
+ de 18)</p>\n                        <p>Spilles på <a href="https://www.fo
+ tball.no/fotballdata/anlegg/hjem/?fiksId=7949">Vikahaugane Kunstgress</a>
+  lørdag 26.09.26 13:00</p>\n                        <br/><a href="http://
+ www.fotball.no">fotball.no</a>\n                    </body></html>
+END:VEVENT
+BEGIN:VEVENT
+DESCRIPTION:3. div. kvinner Vestland (runde 19)\n\nFørde - Stord Fotball K
+ vinner Senior A\nHafstadparken 1 lørdag 03.10.26 13:00\n\nwww.fotball.no
+DTEND;TZID=Europe/Oslo:20261003T144400
+DTSTAMP:20261013T001742Z
+DTSTART;TZID=Europe/Oslo:20261003T130000
+LOCATION:Hafstadparken 1
+SEQUENCE:0
+SUMMARY:Førde - Stord Fotball Kvinner Senior A
+UID:3e131972-ae23-405d-8904-661e305d4dc9
+URL:https://www.fotball.no/fotballdata/kamp/?fiksId=8984415
+X-ALT-DESC;FMTTYPE=text/html:\n                    <html><head></head><bod
+ y>\n                        <h4><a href="https://www.fotball.no/fotballda
+ ta/kamp/?fiksId=8984415">Førde - Stord Fotball Kvinner Senior A</a></h4>\
+ n                        <p>3. div. kvinner Vestland (runde 19)</p>\n    
+                     <p>Spilles på <a href="https://www.fotball.no/fotball
+ data/anlegg/hjem/?fiksId=25678">Hafstadparken 1</a> lørdag 03.10.26 13:00
+ </p>\n                        <br/><a href="http://www.fotball.no">fotbal
+ l.no</a>\n                    </body></html>
+END:VEVENT
+BEGIN:VEVENT
+DESCRIPTION:3. div. kvinner Vestland (runde 20)\n\nStord Fotball Kvinner S
+ enior A - Fyllingsdalen Kvinner senior B\nVikahaugane Kunstgress søndag 1
+ 1.10.26 16:00\n\nwww.fotball.no
+DTEND;TZID=Europe/Oslo:20261011T174400
+DTSTAMP:20261013T001742Z
+DTSTART;TZID=Europe/Oslo:20261011T160000
+LOCATION:Vikahaugane Kunstgress
+SEQUENCE:0
+SUMMARY:Stord Fotball Kvinner Senior A - Fyllingsdalen Kvinner senior B
+UID:ad5c19a5-61c8-447e-a581-ab8663833902
+URL:https://www.fotball.no/fotballdata/kamp/?fiksId=8984424
+X-ALT-DESC;FMTTYPE=text/html:\n                    <html><head></head><bod
+ y>\n                        <h4><a href="https://www.fotball.no/fotballda
+ ta/kamp/?fiksId=8984424">Stord Fotball Kvinner Senior A - Fyllingsdalen K
+ vinner senior B</a></h4>\n                        <p>3. div. kvinner Vest
+ land (runde 20)</p>\n                        <p>Spilles på <a href="https
+ ://www.fotball.no/fotballdata/anlegg/hjem/?fiksId=7949">Vikahaugane Kunst
+ gress</a> søndag 11.10.26 16:00</p>\n                        <br/><a href
+ ="http://www.fotball.no">fotball.no</a>\n                    </body></htm
+ l>
+END:VEVENT
+BEGIN:VEVENT
+DESCRIPTION:3. div. kvinner Vestland (runde 21)\n\nBjarg Kvinner Senior A 
+ - Stord Fotball Kvinner Senior A\nStavollen Kunstgress 01 lørdag 17.10.26
+  14:00\n\nwww.fotball.no
+DTEND;TZID=Europe/Oslo:20261017T154400
+DTSTAMP:20261013T001742Z
+DTSTART;TZID=Europe/Oslo:20261017T140000
+LOCATION:Stavollen Kunstgress 01
+SEQUENCE:0
+SUMMARY:Bjarg Kvinner Senior A - Stord Fotball Kvinner Senior A
+UID:adc00523-afbe-45f0-ab4d-c9857f1a77c2
+URL:https://www.fotball.no/fotballdata/kamp/?fiksId=8984428
+X-ALT-DESC;FMTTYPE=text/html:\n                    <html><head></head><bod
+ y>\n                        <h4><a href="https://www.fotball.no/fotballda
+ ta/kamp/?fiksId=8984428">Bjarg Kvinner Senior A - Stord Fotball Kvinner S
+ enior A</a></h4>\n                        <p>3. div. kvinner Vestland (ru
+ nde 21)</p>\n                        <p>Spilles på <a href="https://www.f
+ otball.no/fotballdata/anlegg/hjem/?fiksId=730">Stavollen Kunstgress 01</a
+ > lørdag 17.10.26 14:00</p>\n                        <br/><a href="http:/
+ /www.fotball.no">fotball.no</a>\n                    </body></html>
+END:VEVENT
+BEGIN:VEVENT
+DESCRIPTION:3. div. kvinner Vestland (runde 22)\n\nStord Fotball Kvinner S
+ enior A - Bremnes Kvinner 1\nVikahaugane Kunstgress lørdag 24.10.26 13:00
+ \n\nwww.fotball.no
+DTEND;TZID=Europe/Oslo:20261024T144400
+DTSTAMP:20261013T001742Z
+DTSTART;TZID=Europe/Oslo:20261024T130000
+LOCATION:Vikahaugane Kunstgress
+SEQUENCE:0
+SUMMARY:Stord Fotball Kvinner Senior A - Bremnes Kvinner 1
+UID:5ce9548f-912b-4016-b2ef-c450b8e45964
+URL:https://www.fotball.no/fotballdata/kamp/?fiksId=8984434
+X-ALT-DESC;FMTTYPE=text/html:\n                    <html><head></head><bod
+ y>\n                        <h4><a href="https://www.fotball.no/fotballda
+ ta/kamp/?fiksId=8984434">Stord Fotball Kvinner Senior A - Bremnes Kvinner
+  1</a></h4>\n                        <p>3. div. kvinner Vestland (runde 2
+ 2)</p>\n                        <p>Spilles på <a href="https://www.fotbal
+ l.no/fotballdata/anlegg/hjem/?fiksId=7949">Vikahaugane Kunstgress</a> lør
+ dag 24.10.26 13:00</p>\n                        <br/><a href="http://www.
+ fotball.no">fotball.no</a>\n                    </body></html>
+END:VEVENT
+END:VCALENDAR

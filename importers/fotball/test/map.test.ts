@@ -23,6 +23,11 @@ const stord = teamBySlug('stord-fotball')!;
 const bremnes = teamBySlug('bremnes-fotball')!;
 const stordFeed = parseIcal(fixture('stord-133860.ics'));
 const bremnesFeed = parseIcal(fixture('bremnes-30365.ics'));
+const stordKvinner = teamBySlug('stord-fotball-kvinner')!;
+const bremnesKvinner = teamBySlug('bremnes-fotball-kvinner')!;
+const stordKvinnerFeed = parseIcal(fixture('stord-kvinner-153685.ics'));
+const bremnesKvinnerFeed = parseIcal(fixture('bremnes-kvinner-48835.ics'));
+const allFeeds = [...stordFeed, ...bremnesFeed, ...stordKvinnerFeed, ...bremnesKvinnerFeed];
 
 describe('unfold', () => {
 	it('joins a folded value back together', () => {
@@ -41,7 +46,7 @@ describe('unfold', () => {
 	it('rejoins the real folded values in the committed feed', () => {
 		const folded = stordFeed.find((e) => e.summary?.includes('Fløy-Flekkerøy'));
 		expect(folded, 'the fixture must contain a folded value, or this guards nothing').toBeTruthy();
-		for (const event of [...stordFeed, ...bremnesFeed]) {
+		for (const event of allFeeds) {
 			// A leftover fold shows up as a stray space mid-word or a lone continuation line.
 			expect(event.location).not.toMatch(/\n/);
 			expect(event.summary).not.toMatch(/\n/);
@@ -67,10 +72,12 @@ describe('parseIcal', () => {
 	it('reads every fixture in the committed feeds', () => {
 		expect(stordFeed).toHaveLength(32);
 		expect(bremnesFeed).toHaveLength(23);
+		expect(stordKvinnerFeed).toHaveLength(20);
+		expect(bremnesKvinnerFeed).toHaveLength(21);
 	});
 
 	it('reads the properties we depend on, on every event', () => {
-		for (const event of [...stordFeed, ...bremnesFeed]) {
+		for (const event of allFeeds) {
 			expect(event.uid).toMatch(/^[0-9a-f-]{36}$/);
 			expect(event.summary).toBeTruthy();
 			expect(event.location).toBeTruthy();
@@ -102,6 +109,35 @@ describe('isHomeMatch', () => {
 		expect(home).toHaveLength(12);
 		expect(isHomeMatch({ ...blank, location: 'Scale AQ Stadion' }, bremnes)).toBe(true);
 		expect(isHomeMatch({ ...blank, location: 'ScaleAQ Stadion' }, bremnes)).toBe(true);
+	});
+
+	it('finds the women’s home ground, which for Stord is not the men’s', () => {
+		const stordHome = stordKvinnerFeed.filter((e) => isHomeMatch(e, stordKvinner));
+		expect(stordHome).toHaveLength(9);
+		for (const event of stordHome) {
+			expect(event.summary).toMatch(/^Stord Fotball Kvinner Senior A - /);
+		}
+		// The one home fixture moved to Fitjar is dropped, not filed under Vikahaugane.
+		const moved = stordKvinnerFeed.find((e) => e.location?.startsWith('Trott stadion'));
+		expect(moved?.summary).toMatch(/^Stord Fotball Kvinner Senior A - /);
+		expect(isHomeMatch(moved!, stordKvinner)).toBe(false);
+
+		const bremnesHome = bremnesKvinnerFeed.filter((e) => isHomeMatch(e, bremnesKvinner));
+		expect(bremnesHome).toHaveLength(10);
+		for (const event of bremnesHome) expect(event.summary).toMatch(/^Bremnes Kvinner 1 - /);
+	});
+
+	it('imports the derby once, from the feed of the side at home', () => {
+		// Bremnes v Stord is in both women's feeds, twice: once at each ground.
+		const derby = (e: (typeof stordKvinnerFeed)[number]) =>
+			/bremnes/i.test(e.summary ?? '') && /stord/i.test(e.summary ?? '');
+		const stordHome = stordKvinnerFeed.filter(derby).filter((e) => isHomeMatch(e, stordKvinner));
+		const bremnesHome = bremnesKvinnerFeed
+			.filter(derby)
+			.filter((e) => isHomeMatch(e, bremnesKvinner));
+		expect(stordHome).toHaveLength(1);
+		expect(bremnesHome).toHaveLength(1);
+		expect(matchIdFrom(stordHome[0]!.url)).not.toBe(matchIdFrom(bremnesHome[0]!.url));
 	});
 
 	it('drops a fixture with no venue rather than assuming it is at home', () => {
@@ -151,11 +187,17 @@ describe('toInstant', () => {
 describe('mapEvent', () => {
 	const home = [
 		...stordFeed.filter((e) => isHomeMatch(e, stord)).map((e) => [e, stord] as const),
-		...bremnesFeed.filter((e) => isHomeMatch(e, bremnes)).map((e) => [e, bremnes] as const)
+		...bremnesFeed.filter((e) => isHomeMatch(e, bremnes)).map((e) => [e, bremnes] as const),
+		...stordKvinnerFeed
+			.filter((e) => isHomeMatch(e, stordKvinner))
+			.map((e) => [e, stordKvinner] as const),
+		...bremnesKvinnerFeed
+			.filter((e) => isHomeMatch(e, bremnesKvinner))
+			.map((e) => [e, bremnesKvinner] as const)
 	];
 
 	it('maps every home fixture without a rejection', () => {
-		expect(home).toHaveLength(25);
+		expect(home).toHaveLength(44);
 		for (const [event, team] of home) {
 			const mapped = mapEvent(event, team);
 			expect(isFailure(mapped) ? mapped.problem : null).toBeNull();
