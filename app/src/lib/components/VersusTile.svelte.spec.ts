@@ -86,17 +86,53 @@ describe('VersusTile', () => {
 		}
 	});
 
-	it('leaves the crests off a listing thumbnail', () => {
+	it('asks for no crest until a listing tile nears the screen', () => {
 		/*
-		 * Not a style rule, a weight one: NFF's crests average 33 KB and run to 82 KB, which is
-		 * five to twenty times the rest of the card. A listing full of them would be the one part
-		 * of this site that costs real bytes, and at 88px a crest is unreadable anyway.
+		 * A weight rule, not a style one: NFF's crests average 33 KB and run to 82 KB, five to twenty
+		 * times the rest of the card. Far below the fold a listing tile is the wordmark alone, which
+		 * is also all the server HTML ever carries.
 		 */
+		const below = document.createElement('div');
+		below.style.marginBlockStart = '400vh';
+		below.style.inlineSize = '400px';
+		document.body.append(below);
 		const { container } = render(VersusTile, {
-			id: 6,
-			fixture: fixture('Stord Fotball Menn Senior A - Vard Haugesund')
+			target: below,
+			props: { id: 6, fixture: fixture('Stord Fotball Menn Senior A - Vard Haugesund') }
 		});
 		expect(container.querySelectorAll('image')).toHaveLength(0);
+		expect(container.querySelector('.vs')!.classList.contains('vs--live')).toBe(false);
+		below.remove();
+	});
+
+	it('fights once it is on screen, and brings its crests', async () => {
+		const host = document.createElement('div');
+		host.style.inlineSize = '400px';
+		document.body.prepend(host);
+		const { container } = render(VersusTile, {
+			target: host,
+			props: { id: 8, fixture: fixture('Stord Fotball Menn Senior A - Vard Haugesund') }
+		});
+		const tile = container.querySelector('.vs')!;
+		await expect.poll(() => tile.classList.contains('vs--live')).toBe(true);
+		expect(container.querySelectorAll('image')).toHaveLength(2);
+		expect(getComputedStyle(tile.querySelector('.vs__mark')!).animationName).toMatch(/vs-drop$/);
+		host.remove();
+	});
+
+	it('keeps the wordmark alone on a tile too small for a crest to read', async () => {
+		// The 88px square beside the title on a phone: a crest there is four millimetres of mush.
+		const host = document.createElement('div');
+		host.style.inlineSize = '120px';
+		document.body.prepend(host);
+		const { container } = render(VersusTile, {
+			target: host,
+			props: { id: 9, fixture: fixture('Stord Fotball Menn Senior A - Vard Haugesund') }
+		});
+		const tile = container.querySelector('.vs')!;
+		await expect.poll(() => tile.classList.contains('vs--live')).toBe(true);
+		expect(container.querySelectorAll('image')).toHaveLength(0);
+		host.remove();
 	});
 
 	it('draws the wordmark alone for a club we have no crest for', () => {
@@ -109,14 +145,19 @@ describe('VersusTile', () => {
 		expect(container.querySelectorAll('image')).toHaveLength(1);
 	});
 
-	it('only moves when it is the card on an event page', async () => {
+	it('keeps only the event page card breathing at rest', async () => {
+		// The fight plays once. What loops forever is the feature card's mark, and nothing else's.
+		const below = document.createElement('div');
+		below.style.marginBlockStart = '400vh';
+		document.body.append(below);
 		const still = render(VersusTile, {
-			id: 3,
-			fixture: fixture('Os Menn Senior A - Bremnes Menn Senior A')
+			target: below,
+			props: { id: 3, fixture: fixture('Os Menn Senior A - Bremnes Menn Senior A') }
 		});
 		const mark = still.container.querySelector('.vs__mark')!;
 		expect(getComputedStyle(mark).animationName).toBe('none');
 		still.unmount();
+		below.remove();
 
 		const moving = render(VersusTile, {
 			id: 4,
