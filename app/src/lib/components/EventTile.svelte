@@ -3,6 +3,7 @@
 	import { eventPath } from '@hendingar/core/slug';
 	import { formatEventClock, formatStartsIn, machineDateTime } from '@hendingar/core/datetime';
 	import EventThumb from './EventThumb.svelte';
+	import CinemaFrame from './CinemaFrame.svelte';
 	import SourceIcon from './SourceIcon.svelte';
 	import HeartButton from './HeartButton.svelte';
 	import type { UpcomingEvent } from '../events.remote';
@@ -100,15 +101,25 @@
 </script>
 
 <article class={['tile frame', kit]} class:tile--featured={featured}>
-	<EventThumb
-		id={event.id}
-		posterUrl={event.posterUrl}
-		posterSrcset={event.posterSrcset}
-		trail={event.trail}
-		title={event.title}
-		category={event.category}
-		sourceSlugs={(event.sourceMarks ?? []).map((m) => m.slug)}
-	/>
+	{#snippet thumb()}
+		<EventThumb
+			id={event.id}
+			posterUrl={event.posterUrl}
+			posterSrcset={event.posterSrcset}
+			trail={event.trail}
+			title={event.title}
+			category={event.category}
+			sourceSlugs={(event.sourceMarks ?? []).map((m) => m.slug)}
+		/>
+	{/snippet}
+	{#if cinema}
+		<!-- A film is framed as a screen: letterbox, sprocket holes, a clapper — see CinemaFrame. -->
+		<CinemaFrame slate={formatEventClock(event.startsAt, event.venueTimeZone)}>
+			{@render thumb()}
+		</CinemaFrame>
+	{:else}
+		{@render thumb()}
+	{/if}
 
 	<div class="tile__body">
 		<p class="tile__top">

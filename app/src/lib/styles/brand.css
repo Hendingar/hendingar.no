@@ -80,6 +80,15 @@
 	--trail-ekspert: #0d0f14;
 	--trail-mark: #d1342f;
 
+	/*
+	 * The cinema's frame. A screen is black, not navy — the letterbox bars only read as bars,
+	 * rather than as more of the page, if they are darker than anything else on it. The hole is
+	 * the grey of a sprocket hole against the strip, and the light is a projector's warm white.
+	 */
+	--screen-black: #050608;
+	--screen-hole: #3a3d44;
+	--screen-light: #fff3d6;
+
 	/* --- type --- */
 	--font-display: 'Archivo Variable', 'Archivo', system-ui, sans-serif;
 	--font-mono: 'Space Mono', ui-monospace, 'SF Mono', monospace;
