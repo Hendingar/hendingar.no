@@ -79,7 +79,7 @@ test('every tile has a thumbnail and offers more', async ({ page }) => {
 	for (let i = 0; i < n; i++) {
 		await expect(tiles.nth(i).locator('.thumb')).toHaveCount(1);
 	}
-	await expect(page.getByRole('link', { name: 'Vis fleire' })).toBeVisible();
+	await expect(page.getByRole('link', { name: 'Alle hendingar →' })).toBeVisible();
 });
 
 test('an imported tile shows the mark of the source it came from', async ({ page }) => {
