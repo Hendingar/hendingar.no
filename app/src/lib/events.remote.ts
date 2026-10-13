@@ -1394,6 +1394,9 @@ export const getEvent = query(z.number().int().positive(), async (id) => {
 			organizerName: organizers.name,
 			/** A standing activity's timetable — shown in place of a start time it does not have. */
 			weeklyHours: events.weeklyHours,
+			// Read by the JSON-LD, as `typicalAgeRange`.
+			ageFrom: events.ageFrom,
+			ageTo: events.ageTo,
 			sourceName: sources.name,
 			sourceAttribution: sources.attribution,
 			sourceSiteUrl: sources.url,

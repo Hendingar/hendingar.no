@@ -1,4 +1,7 @@
 import { schemaDateTime } from '@hendingar/core/datetime';
+import { parseFixture } from '@hendingar/core/fixture';
+import { classifyEventKind } from '@hendingar/core/standing';
+import type { CategorySlug } from '@hendingar/core/taxonomy';
 import { plainText } from '@hendingar/core/text';
 
 /**
@@ -28,6 +31,7 @@ export type JsonLd = Record<string, unknown>;
 export type EventForJsonLd = {
 	title: string;
 	description: string | null;
+	category: CategorySlug;
 	startsAt: Date;
 	endsAt: Date | null;
 	posterUrl: string | null;
@@ -41,6 +45,9 @@ export type EventForJsonLd = {
 	venueLatitude: number | null;
 	venueLongitude: number | null;
 	venueTimeZone: string | null;
+	/** Who it is for, as the source states it. Both null means everyone, or unstated. */
+	ageFrom: number | null;
+	ageTo: number | null;
 	/** Every source that reported it — each one's own page for this event. */
 	reportedBy: readonly { eventUrl: string | null }[];
 };
@@ -48,13 +55,60 @@ export type EventForJsonLd = {
 const CONTEXT = 'https://schema.org';
 
 /**
- * One event, as `schema.org/Event`.
+ * The schema.org subtype each category is, where one exists that is plainly the same thing.
+ *
+ * Google accepts every `Event` subtype for the event result, and the subtype is the cheapest true
+ * thing we can add: the category is already ours, so this states nothing we have not decided.
+ * Where no subtype fits without stretching — a church service, a meeting, a market, a "show" —
+ * it stays `Event`. `SaleEvent` reads like a julemarknad and means a shop's discount weekend.
+ */
+const EVENT_TYPE: Record<CategorySlug, string> = {
+	musikk: 'MusicEvent',
+	teater: 'TheaterEvent',
+	utstilling: 'ExhibitionEvent',
+	sport: 'SportsEvent',
+	mote: 'Event',
+	kyrkjeliv: 'Event',
+	festival: 'Festival',
+	litteratur: 'LiteraryEvent',
+	'stand-up': 'ComedyEvent',
+	show: 'Event',
+	'mat-og-drikke': 'FoodEvent',
+	dans: 'DanceEvent',
+	marknad: 'Event',
+	konferanse: 'BusinessEvent',
+	kurs: 'EducationEvent',
+	anna: 'Event'
+};
+
+/**
+ * One event, as `schema.org/Event` — or null for a row that is not one.
  *
  * `canonical` is the absolute URL of our own page for it. Everything derived from it — `@id`,
- * `url`, the breadcrumb — is that one string, so the page cannot disagree with itself.
+ * `url`, the image fallback — is that one string, so the page cannot disagree with itself.
+ *
+ * ## Why a standing row gets nothing
+ *
+ * A weekly activity or an open-all-season place is stored with the span of its season, and on the
+ * live site that published Familiebading as one event from 2018-01-20 to 2030-12-20. Google's
+ * event guidelines name exactly this — a long time period marked up as a single event — as
+ * something not to do, and it is not a claim we would make to a reader either: the page itself
+ * shows a timetable, not a start time (ADR 0013, ADR 0021). The rule is `classifyEventKind`, the
+ * same one the generated `events.kind` column is built from, so markup and listings cannot
+ * disagree about which rows are events. The breadcrumb still describes the page.
  */
-export function eventJsonLd(event: EventForJsonLd, canonical: string): JsonLd {
+export function eventJsonLd(event: EventForJsonLd, canonical: string): JsonLd | null {
+	if (classifyEventKind(event.startsAt, event.endsAt) === 'standing') return null;
+
 	const description = plainText(event.description);
+	const fixture = parseFixture(event.title);
+	const ageRange = typicalAgeRange(event.ageFrom, event.ageTo);
+	const teams = fixture
+		? [fixture.home, fixture.away].map((side) => ({
+				'@type': 'SportsTeam',
+				name: side.grade ? `${side.club} ${side.grade}` : side.club
+			}))
+		: null;
 
 	/*
 	 * Every other page that describes this same event: the source's own listing, plus the listings
@@ -67,7 +121,11 @@ export function eventJsonLd(event: EventForJsonLd, canonical: string): JsonLd {
 
 	return {
 		'@context': CONTEXT,
-		'@type': 'Event',
+		/*
+		 * A fixture is a match whatever category its source filed it under, so the title's
+		 * evidence wins over the category's.
+		 */
+		'@type': fixture ? 'SportsEvent' : EVENT_TYPE[event.category],
 		'@id': canonical,
 		url: canonical,
 		/*
@@ -98,8 +156,23 @@ export function eventJsonLd(event: EventForJsonLd, canonical: string): JsonLd {
 		eventAttendanceMode: `${CONTEXT}/OfflineEventAttendanceMode`,
 		inLanguage: 'nn',
 		...(description ? { description } : {}),
-		...(event.posterUrl ? { image: [event.posterUrl] } : {}),
+		/*
+		 * Our own share card when the source gave no poster. Every published event has one at
+		 * `<page>/og.png` — 1200×630, its title, date and place — and it is the image a shared link
+		 * already shows, so this is the same picture we stand behind everywhere else rather than a
+		 * new claim. Search Console counted 22 events with no `image` before this.
+		 */
+		image: [event.posterUrl ?? `${canonical}/og.png`],
 		...(event.venueName ? { location: placeNode(event) } : {}),
+		...(ageRange ? { typicalAgeRange: ageRange } : {}),
+		/*
+		 * The two sides, when the title is a fixture. `competitor` rather than `homeTeam` and
+		 * `awayTeam`: `importers/fotball` deliberately does not decide which side is at home, and
+		 * the order NFF wrote them in is not evidence of it. `performer` is what Google's event
+		 * result reads, and for a match the teams are what performs. Every other event still has
+		 * no performer — we hold no line-up, and a guessed one is worse than the warning.
+		 */
+		...(teams ? { competitor: teams, performer: teams } : {}),
 		...(event.organizerName
 			? { organizer: { '@type': 'Organization', name: event.organizerName } }
 			: {}),
@@ -112,6 +185,15 @@ export function eventJsonLd(event: EventForJsonLd, canonical: string): JsonLd {
 			: {}),
 		...(sameAs.length > 0 ? { sameAs } : {})
 	};
+}
+
+/**
+ * schema.org's own form: `"8-10"`, or open-ended `"16-"`. A band with only an upper bound starts
+ * at zero, which is how `fitsAgeBand` already reads it.
+ */
+function typicalAgeRange(from: number | null, to: number | null): string | null {
+	if (from === null && to === null) return null;
+	return `${from ?? 0}-${to ?? ''}`;
 }
 
 function placeNode(event: EventForJsonLd): JsonLd {

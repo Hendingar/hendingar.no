@@ -201,6 +201,15 @@ function jsonLdBlocks(html: string): Record<string, unknown>[] {
 	);
 }
 
+/**
+ * The page's event node, whatever subtype it is. The category picks `MusicEvent`, `Festival` and
+ * so on (lib/jsonld.ts), so a literal `'Event'` would find nothing on most pages — and in the
+ * address sweep below, would quietly check fewer of them rather than fail.
+ */
+function isEventBlock(block: Record<string, unknown>): boolean {
+	return /(^|[a-z])(Event|Festival)$/.test(String(block['@type']));
+}
+
 test('an event describes itself, and points at itself', async ({ request }) => {
 	const listing = await (await request.get('/hendingar')).text();
 	const href = /href="(\/hending\/\d+[^"]*)"/.exec(listing)?.[1];
@@ -210,7 +219,7 @@ test('an event describes itself, and points at itself', async ({ request }) => {
 	const canonical = /<link rel="canonical" href="([^"]+)"/.exec(html)?.[1];
 	const blocks = jsonLdBlocks(html);
 
-	const event = blocks.find((b) => b['@type'] === 'Event');
+	const event = blocks.find(isEventBlock);
 	expect(event, 'the event page must carry an Event node').toBeTruthy();
 
 	// The fix. `url` and `@id` are us; an outbound link belongs in offers, a source page in sameAs.
@@ -268,9 +277,7 @@ test('an event with a known venue publishes a real postal address', async ({ req
 	 */
 	let placesWithoutAddress = 0;
 	for (const path of paths.slice(0, 12)) {
-		const event = jsonLdBlocks(await (await request.get(path!)).text()).find(
-			(b) => b['@type'] === 'Event'
-		);
+		const event = jsonLdBlocks(await (await request.get(path!)).text()).find(isEventBlock);
 		const location = event?.location;
 		if (!location || typeof location !== 'object') continue;
 		const address = (location as { address?: unknown }).address;

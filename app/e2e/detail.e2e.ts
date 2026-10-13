@@ -26,7 +26,8 @@ test('the event page is server-rendered, with structured data', async ({ request
 	// We are an index, not a destination: being legible to search engines and calendar tools is
 	// the job, so the JSON-LD is not optional decoration.
 	expect(html).toContain('application/ld+json');
-	expect(html).toContain('"@type":"Event"');
+	// Any subtype: the category decides between `Event`, `MusicEvent`, `Festival` and the rest.
+	expect(html).toMatch(/"@type":"(\w*Event|Festival)"/);
 	expect(html).toContain('rel="canonical"');
 });
 

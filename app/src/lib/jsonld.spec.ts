@@ -6,13 +6,14 @@ import {
 	jsonLdScript,
 	siteJsonLd
 } from './jsonld.ts';
-import type { EventForJsonLd } from './jsonld.ts';
+import type { EventForJsonLd, JsonLd } from './jsonld.ts';
 
 const CANONICAL = 'https://hendingar.no/hending/12-konsert';
 
 const base: EventForJsonLd = {
 	title: 'Konsert',
 	description: null,
+	category: 'anna',
 	startsAt: new Date('2026-09-12T18:00:00Z'),
 	endsAt: null,
 	posterUrl: null,
@@ -26,8 +27,17 @@ const base: EventForJsonLd = {
 	venueLatitude: null,
 	venueLongitude: null,
 	venueTimeZone: 'Europe/Oslo',
+	ageFrom: null,
+	ageTo: null,
 	reportedBy: []
 };
+
+/** The node for an event that is one — every test below except the standing ones. */
+function dated(event: EventForJsonLd, canonical: string): JsonLd {
+	const node = eventJsonLd(event, canonical);
+	if (!node) throw new Error('expected an Event node, got null');
+	return node;
+}
 
 describe('eventJsonLd', () => {
 	it('names our own page as the event, not the source', () => {
@@ -36,7 +46,7 @@ describe('eventJsonLd', () => {
 		 * rel=canonical said hendingar.no — two contradictory answers to "where does this live", one
 		 * of them handing the content to somebody else.
 		 */
-		const node = eventJsonLd(
+		const node = dated(
 			{ ...base, ctaUrl: 'https://kulturhus.no/billett', sourceUrl: 'https://kulturhus.no/event' },
 			CANONICAL
 		);
@@ -51,11 +61,11 @@ describe('eventJsonLd', () => {
 	});
 
 	it('writes the venue’s offset rather than UTC', () => {
-		expect(eventJsonLd(base, CANONICAL).startDate).toBe('2026-09-12T20:00:00+02:00');
+		expect(dated(base, CANONICAL).startDate).toBe('2026-09-12T20:00:00+02:00');
 	});
 
 	it('lists every source that reported it, once, and never itself', () => {
-		const node = eventJsonLd(
+		const node = dated(
 			{
 				...base,
 				sourceUrl: 'https://a.no/e',
@@ -72,7 +82,7 @@ describe('eventJsonLd', () => {
 	});
 
 	it('strips markup out of the description', () => {
-		const node = eventJsonLd(
+		const node = dated(
 			{ ...base, description: '<p>Ein <strong>fin</strong> kveld</p>' },
 			CANONICAL
 		);
@@ -80,18 +90,73 @@ describe('eventJsonLd', () => {
 	});
 
 	it('omits what it does not know instead of inventing it', () => {
-		const node = eventJsonLd(base, CANONICAL);
+		const node = dated(base, CANONICAL);
 		// No price column exists. `0` would claim every event is free.
 		expect(node.offers).toBeUndefined();
 		expect(node.endDate).toBeUndefined();
-		expect(node.image).toBeUndefined();
 		expect(node.organizer).toBeUndefined();
 		expect(node.sameAs).toBeUndefined();
+		expect(node.performer).toBeUndefined();
+		expect(node.typicalAgeRange).toBeUndefined();
+	});
+
+	it('falls back to our own share card when the source gave no poster', () => {
+		expect(dated(base, CANONICAL).image).toEqual([`${CANONICAL}/og.png`]);
+		expect(dated({ ...base, posterUrl: 'https://a.no/p.jpg' }, CANONICAL).image).toEqual([
+			'https://a.no/p.jpg'
+		]);
+	});
+
+	it('publishes no Event for a standing row', () => {
+		/*
+		 * Live before this: Familiebading as one event from 2018-01-20 to 2030-12-20. A season is
+		 * not an event, and Google's guidelines say not to mark up a long period as one.
+		 */
+		const season = {
+			...base,
+			startsAt: new Date('2018-01-19T23:00:00Z'),
+			endsAt: new Date('2030-12-20T22:59:00Z')
+		};
+		expect(eventJsonLd(season, CANONICAL)).toBeNull();
+		// A festival weekend is still an event.
+		expect(
+			eventJsonLd({ ...base, endsAt: new Date('2026-09-14T22:00:00Z') }, CANONICAL)
+		).not.toBeNull();
+	});
+
+	it('names the subtype its category plainly is, and nothing it is not', () => {
+		expect(dated({ ...base, category: 'musikk' }, CANONICAL)['@type']).toBe('MusicEvent');
+		expect(dated({ ...base, category: 'kurs' }, CANONICAL)['@type']).toBe('EducationEvent');
+		expect(dated({ ...base, category: 'marknad' }, CANONICAL)['@type']).toBe('Event');
+		expect(dated({ ...base, category: 'kyrkjeliv' }, CANONICAL)['@type']).toBe('Event');
+	});
+
+	it('names both sides of a fixture without deciding who is at home', () => {
+		const node = dated(
+			{ ...base, category: 'anna', title: 'Stord Fotball Menn Senior A - Vard Haugesund' },
+			CANONICAL
+		);
+		const teams = [
+			{ '@type': 'SportsTeam', name: 'Stord Fotball Menn Senior A' },
+			{ '@type': 'SportsTeam', name: 'Vard Haugesund' }
+		];
+		expect(node['@type']).toBe('SportsEvent');
+		expect(node.competitor).toEqual(teams);
+		expect(node.performer).toEqual(teams);
+		expect(node.homeTeam).toBeUndefined();
+		// A dash in a title is not a match.
+		expect(dated({ ...base, title: 'Konsert - Koret Lyren' }, CANONICAL).performer).toBeUndefined();
+	});
+
+	it('states who it is for when the source does', () => {
+		expect(dated({ ...base, ageFrom: 8, ageTo: 10 }, CANONICAL).typicalAgeRange).toBe('8-10');
+		expect(dated({ ...base, ageFrom: 16 }, CANONICAL).typicalAgeRange).toBe('16-');
+		expect(dated({ ...base, ageTo: 4 }, CANONICAL).typicalAgeRange).toBe('0-4');
 	});
 
 	it('refuses a non-http link rather than publishing it', () => {
 		for (const url of ['javascript:alert(1)', 'mailto:a@b.no', 'not a url', '']) {
-			expect(eventJsonLd({ ...base, ctaUrl: url }, CANONICAL).offers, url).toBeUndefined();
+			expect(dated({ ...base, ctaUrl: url }, CANONICAL).offers, url).toBeUndefined();
 		}
 	});
 
@@ -102,10 +167,7 @@ describe('eventJsonLd', () => {
 		 * database, because twelve importers received a street address and threw it away.
 		 */
 		expect(
-			eventJsonLd(
-				{ ...base, venueAddress: 'Kjøtteinsvegen 66', venuePostalCode: '5411' },
-				CANONICAL
-			)
+			dated({ ...base, venueAddress: 'Kjøtteinsvegen 66', venuePostalCode: '5411' }, CANONICAL)
 		).toMatchObject({
 			location: {
 				address: {
@@ -120,7 +182,7 @@ describe('eventJsonLd', () => {
 	});
 
 	it('emits an address for every event, down to the country we always know', () => {
-		expect(eventJsonLd(base, CANONICAL)).toMatchObject({
+		expect(dated(base, CANONICAL)).toMatchObject({
 			location: {
 				'@type': 'Place',
 				name: 'Den Blå Time',
@@ -138,7 +200,7 @@ describe('eventJsonLd', () => {
 		 * argument was about an *empty* PostalAddress asserting we know the address and that it is
 		 * nothing; a country-only address asserts only what is true.
 		 */
-		expect(eventJsonLd({ ...base, venueMunicipality: null }, CANONICAL)).toMatchObject({
+		expect(dated({ ...base, venueMunicipality: null }, CANONICAL)).toMatchObject({
 			location: {
 				'@type': 'Place',
 				name: 'Den Blå Time',
@@ -147,7 +209,7 @@ describe('eventJsonLd', () => {
 		});
 		// And no key claiming a value we do not have.
 		const address = (
-			eventJsonLd({ ...base, venueMunicipality: null }, CANONICAL).location as {
+			dated({ ...base, venueMunicipality: null }, CANONICAL).location as {
 				address: Record<string, unknown>;
 			}
 		).address;
@@ -161,7 +223,7 @@ describe('eventJsonLd', () => {
 		 * fixed too; this is the net under it, for the rows written before that fix — the same
 		 * argument `plainText` records for descriptions.
 		 */
-		const node = eventJsonLd(
+		const node = dated(
 			{ ...base, title: 'Viser, Historie og Humor &laquo;Frå Vestlandet til Amerika&raquo;' },
 			CANONICAL
 		);
@@ -171,7 +233,7 @@ describe('eventJsonLd', () => {
 	it('keeps a name rather than dropping the field when the title is only markup', () => {
 		// `plainText` returns null for a string that reduces to nothing. An Event with an ugly name
 		// beats an Event with no name at all.
-		const node = eventJsonLd({ ...base, title: '<p></p>' }, CANONICAL);
+		const node = dated({ ...base, title: '<p></p>' }, CANONICAL);
 		expect(node.name).toBe('<p></p>');
 	});
 });
@@ -258,7 +320,7 @@ describe('jsonLdScript', () => {
 	it('has no raw markup left to escape by the time a title reaches it', () => {
 		// Not a replacement for the guard above — belt to its braces. `plainText` strips the tag,
 		// so the dangerous substring never reaches the document even before escaping.
-		const node = eventJsonLd({ ...base, title: 'Slutt </script> her' }, CANONICAL);
+		const node = dated({ ...base, title: 'Slutt </script> her' }, CANONICAL);
 		expect(node.name).toBe('Slutt her');
 	});
 });
