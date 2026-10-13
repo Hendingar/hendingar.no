@@ -69,19 +69,28 @@
 	const days = $derived(byDay(events));
 </script>
 
+<!--
+	The date is a link to that day's own page. A reader looking at "Laurdag 17. oktober" in a
+	listing wants the whole of that day — the listing only holds as many as it loaded — and
+	`/kalender/<dato>` is the page that answers it. The count stays outside the link, so a screen
+	reader hears the day as the link's name rather than "Laurdag 17. oktober 27".
+-->
+{#snippet heading(day: Day)}
+	<a class="day__link" href="/kalender/{day.date}">{day.label}</a>
+	<span class="day__n">{day.events.length}</span>
+{/snippet}
+
 {#each days as day, dayIndex (day.date)}
 	<!-- Each day is its own labelled region, so the date is part of the document structure rather
 	     than a visual grouping a screen reader cannot perceive. -->
 	<section class="day" aria-labelledby={`day-${day.date}`}>
 		{#if headingLevel === 2}
 			<h2 id={`day-${day.date}`} class="display day__h">
-				{day.label}
-				<span class="day__n">{day.events.length}</span>
+				{@render heading(day)}
 			</h2>
 		{:else}
 			<h3 id={`day-${day.date}`} class="display day__h">
-				{day.label}
-				<span class="day__n">{day.events.length}</span>
+				{@render heading(day)}
 			</h3>
 		{/if}
 		<!-- The grid itself lives in EventGrid, because /kalender/<dato> needs it without a day
@@ -123,6 +132,17 @@
 			margin-block-end: 0.55rem;
 			padding-block: 0.45rem 0.4rem;
 		}
+	}
+
+	.day__link {
+		color: inherit;
+		text-decoration: none;
+	}
+	.day__link:hover,
+	.day__link:focus-visible {
+		text-decoration: underline;
+		text-decoration-thickness: var(--rule);
+		text-underline-offset: 0.18em;
 	}
 
 	.day__n {

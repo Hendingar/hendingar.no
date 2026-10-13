@@ -14,6 +14,19 @@ test('the full listing is day-grouped with thumbnails, server-rendered', async (
 	expect(html).toContain('<img');
 });
 
+test('a day heading takes you to that whole day', async ({ page }) => {
+	// The listing holds only as many events as it loaded; the day's own page holds all of them.
+	await page.goto('/hendingar');
+	const heading = page.locator('.day__h').first();
+	const date = (await heading.getAttribute('id'))!.replace(/^day-/, '');
+	const link = heading.locator('a.day__link');
+	await expect(link).toHaveAttribute('href', `/kalender/${date}`);
+	// Named by the day alone — the count beside it is not part of the link.
+	expect(await link.innerText()).not.toMatch(/\d+$/);
+	await link.click();
+	await expect(page).toHaveURL(new RegExp(`/kalender/${date}$`));
+});
+
 test('a category filter narrows the list in the server-rendered HTML', async ({ request }) => {
 	const all = await (await request.get('/hendingar')).text();
 	const filtered = await (await request.get('/hendingar?kategori=teater')).text();
