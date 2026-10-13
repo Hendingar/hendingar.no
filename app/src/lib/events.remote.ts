@@ -402,11 +402,13 @@ export const searchSuggestions = query(searchTermSchema, async (term) => {
 			.groupBy(events.category),
 
 		database
-			.select({ slug: sources.slug, name: sources.name, total: count() })
+			// The icon is the clue a name alone is not: "Stord kino" reads like a place until its own
+			// favicon says it is a calendar.
+			.select({ slug: sources.slug, name: sources.name, iconUrl: sources.iconUrl, total: count() })
 			.from(events)
 			.innerJoin(sources, eq(events.sourceId, sources.id))
 			.where(and(live(), head ? ilike(sources.name, head) : undefined))
-			.groupBy(sources.slug, sources.name)
+			.groupBy(sources.slug, sources.name, sources.iconUrl)
 			.orderBy(desc(count()))
 			.limit(3),
 

@@ -131,6 +131,25 @@ test('the field offers places, kinds and named events at once', async ({ page })
 	}
 });
 
+test('a calendar is offered with its own icon, and only a calendar is', async ({ page }) => {
+	await page.goto('/hendingar');
+	await page.locator('#hendingar-sok').click();
+	await expect(page.locator('.sugg__row').first()).toBeVisible();
+	// "Det skjer Sunnhordland" is the seed's source, and it carries an icon.
+	await page.locator('#hendingar-sok').fill('det');
+
+	const source = page.locator('.sugg__row').filter({ hasText: /^Kjelde/ });
+	await expect(source).toHaveCount(1);
+	await expect(source.locator('.icon')).toHaveCount(1);
+	// The clue belongs to sources: a place or an event row with a favicon would be noise.
+	await expect(
+		page
+			.locator('.sugg__row')
+			.filter({ hasNotText: /^Kjelde/ })
+			.locator('.icon')
+	).toHaveCount(0);
+});
+
 test('the suggestion list is a keyboard control', async ({ page }) => {
 	await page.goto('/hendingar');
 	const field = page.locator('#hendingar-sok');
