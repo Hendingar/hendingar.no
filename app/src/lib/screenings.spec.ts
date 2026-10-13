@@ -5,6 +5,7 @@ import { screeningDays, showsInSeveralRooms, type Screening } from './screenings
 const screening = (id: number, iso: string, localDate: string, room: string): Screening => ({
 	id,
 	startsAt: new Date(iso),
+	ctaUrl: null,
 	venueName: room,
 	venueTimeZone: 'Europe/Oslo',
 	localDate

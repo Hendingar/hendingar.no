@@ -7,6 +7,8 @@
 export type Screening = {
 	id: number;
 	startsAt: Date;
+	/** The ticket link for this one screening, as the cinema published it. Not yet validated. */
+	ctaUrl: string | null;
 	venueName: string | null;
 	venueTimeZone: string | null;
 	/** `YYYY-MM-DD` at the venue. */
