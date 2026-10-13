@@ -122,6 +122,7 @@ export const listHearted = query(
 				municipality: venues.municipality,
 				posterUrl: events.posterUrl,
 				posterSrcset: events.posterSrcset,
+				trail: events.trail,
 				sourceMarks: sql<SourceMark[]>`
 					coalesce((
 						select json_agg(m order by m.name)

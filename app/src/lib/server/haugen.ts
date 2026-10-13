@@ -69,6 +69,7 @@ export async function pileEvents() {
 			organizerName: organizers.name,
 			posterUrl: events.posterUrl,
 			posterSrcset: events.posterSrcset,
+			trail: events.trail,
 			sourceMarks: sourceMarksFor(events.id).as('source_marks'),
 			// The wall clock at the venue, for the words the ranker is told. Resolved in the
 			// database with the venue's zone, so a server in UTC cannot shift "kveld" to

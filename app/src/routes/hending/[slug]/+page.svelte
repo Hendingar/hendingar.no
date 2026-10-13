@@ -32,6 +32,8 @@
 	import { track } from '../../../lib/analytics.ts';
 	import { parseFixture } from '@hendingar/core/fixture';
 	import VersusTile from '../../../lib/components/VersusTile.svelte';
+	import TrailTile from '../../../lib/components/TrailTile.svelte';
+	import { TRAIL_AUDIENCE_LABELS, TRAIL_GRADE_LABELS } from '@hendingar/core/trail';
 	import { artworkFor } from '../../../lib/church-art.ts';
 	import { hasGardenSource } from '../../../lib/garden-sources.ts';
 	import GardenTile from '../../../lib/components/GardenTile.svelte';
@@ -342,9 +344,11 @@
 						referrerpolicy="no-referrer"
 					/>
 				{:else if fixture}
-					<!-- Drawn, not fetched — see VersusTile for why the club crests are off limits.
-					     `feature` is what makes this one move; the thumbnails in the listing do not. -->
+					<!-- Drawn from the feed's two club names, with crests where we have them — see
+					     VersusTile. `feature` keeps the mark breathing after its entrance. -->
 					<VersusTile id={event.id} {fixture} feature />
+				{:else if event.trail}
+					<TrailTile id={event.id} trail={event.trail} feature />
 				{:else if garden}
 					<GardenTile id={event.id} feature />
 				{:else if artwork}
@@ -458,6 +462,20 @@
 								{event.venueName}
 								{#if event.venueAddress}<br /><span class="muted">{event.venueAddress}</span>{/if}
 							</dd>
+						</div>
+					{/if}
+
+					<!-- The trip's grade and audiences, in words: the card draws them, this says them. -->
+					{#if event.trail?.grade}
+						<div>
+							<dt>Grad</dt>
+							<dd>{TRAIL_GRADE_LABELS[event.trail.grade]}</dd>
+						</div>
+					{/if}
+					{#if event.trail && event.trail.audiences.length > 0}
+						<div>
+							<dt>Passar for</dt>
+							<dd>{event.trail.audiences.map((a) => TRAIL_AUDIENCE_LABELS[a]).join(', ')}</dd>
 						</div>
 					{/if}
 

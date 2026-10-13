@@ -89,6 +89,7 @@
 								id={pick.eventId}
 								posterUrl={pick.posterUrl}
 								posterSrcset={pick.posterSrcset}
+								trail={pick.trail}
 								title={pick.title}
 								sizes={SIZES}
 							/>

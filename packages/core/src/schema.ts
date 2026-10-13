@@ -16,6 +16,7 @@ import { sql } from 'drizzle-orm';
 import { CATEGORY_SLUGS } from './taxonomy.ts';
 import { STANDING_SPAN_DAYS, type EventKind } from './standing.ts';
 import { RECURRENCE_FREQUENCIES } from './recurrence.ts';
+import type { Trail } from './trail.ts';
 import type { WeeklyHours } from './weekly-hours.ts';
 import { VERIFICATION_CHECKS, VERIFICATION_VERDICTS } from './verification.ts';
 
@@ -322,6 +323,16 @@ export const events = pgTable(
 		 */
 		ageFrom: integer('age_from'),
 		ageTo: integer('age_to'),
+		/**
+		 * How hard a trip is and who it is for, as the source grades it — DNT's
+		 * `level` and `targetGroups`. Null for everything that is not a graded trip.
+		 *
+		 * One jsonb column rather than two, because the two arrive together, are read together,
+		 * and come from one source today: a `difficulty` column would be empty on every row but
+		 * fifty. Typed by `Trail`, and only ever written through `parseTrail`, so the vocabulary
+		 * is core's (rule 1). Additive and nullable, per ADR 0010. See src/trail.ts.
+		 */
+		trail: jsonb('trail').$type<Trail>(),
 
 		/** Outbound ticket link. We never sell tickets — see README non-goals. */
 		ctaUrl: text('cta_url'),

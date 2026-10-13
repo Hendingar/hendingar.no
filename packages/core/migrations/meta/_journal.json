@@ -190,6 +190,13 @@
       "when": 1791007947371,
       "tag": "0026_nasty_penance",
       "breakpoints": true
+    },
+    {
+      "idx": 27,
+      "version": "7",
+      "when": 1791893393211,
+      "tag": "0027_fuzzy_agent_brand",
+      "breakpoints": true
     }
   ]
 }

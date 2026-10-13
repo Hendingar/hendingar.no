@@ -1,6 +1,7 @@
 import { and, asc, desc, eq, gte, isNull, lte, or } from 'drizzle-orm';
 import { curatorPicks, events, organizers, sources, venues } from '@hendingar/core/schema';
 import { stillListedUpstream } from '@hendingar/core/gone-upstream';
+import type { Trail } from '@hendingar/core/trail';
 import { DEFAULT_TIME_ZONE, weekendAhead } from '@hendingar/core/datetime';
 import { instantWindowForDays, localDayKey } from '../calendar.ts';
 import { currentSelection } from '../kurator.ts';
@@ -47,6 +48,8 @@ export type WeekendPick = {
 	venueTimeZone: string;
 	posterUrl: string | null;
 	posterSrcset: string | null;
+	/** A graded trip's difficulty and audiences, so a photo-less pick is still drawn as a trip. */
+	trail: Trail | null;
 };
 
 /** Today where the events are. The picks belong to a day, so a day is what keys them. */
@@ -165,7 +168,8 @@ export async function currentPicks(): Promise<WeekendPick[]> {
 		venueName: pick.venueName,
 		venueTimeZone: pick.venueTimeZone,
 		posterUrl: pick.posterUrl,
-		posterSrcset: pick.posterSrcset
+		posterSrcset: pick.posterSrcset,
+		trail: pick.trail
 	}));
 }
 
@@ -187,6 +191,7 @@ export async function picksFor(date: string): Promise<WeekendPick[]> {
 			venueTimeZone: venues.timezone,
 			posterUrl: events.posterUrl,
 			posterSrcset: events.posterSrcset,
+			trail: events.trail,
 			status: events.status,
 			duplicateOfId: events.duplicateOfId
 		})
@@ -217,7 +222,8 @@ export async function picksFor(date: string): Promise<WeekendPick[]> {
 			// does. Never the server's or the browser's — that silently shifts concerts by an hour.
 			venueTimeZone: row.venueTimeZone ?? DEFAULT_TIME_ZONE,
 			posterUrl: row.posterUrl,
-			posterSrcset: row.posterSrcset
+			posterSrcset: row.posterSrcset,
+			trail: row.trail
 		}));
 }
 

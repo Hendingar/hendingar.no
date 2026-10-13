@@ -1,6 +1,7 @@
 import { and, eq } from 'drizzle-orm';
 import { createDb, type Db } from '@hendingar/core/db';
 import { events, ingestRuns, sources, venues } from '@hendingar/core/schema';
+import { sameTrail } from '@hendingar/core/trail';
 import {
 	fetchAllPages,
 	parseDetails,
@@ -188,6 +189,7 @@ export async function ingestAssociation(
 				ctaUrl: mapped.ctaUrl,
 				posterUrl: mapped.posterUrl,
 				posterRightsVerified: mapped.posterRightsVerified,
+				trail: mapped.trail,
 				/*
 				 * A cancelled trip is stored, but never listed.
 				 *
@@ -220,6 +222,7 @@ export async function ingestAssociation(
 					ctaUrl: events.ctaUrl,
 					posterUrl: events.posterUrl,
 					posterRightsVerified: events.posterRightsVerified,
+					trail: events.trail,
 					status: events.status,
 					sourceUrl: events.sourceUrl
 				})
@@ -243,6 +246,7 @@ export async function ingestAssociation(
 				existing.ctaUrl === values.ctaUrl &&
 				existing.posterUrl === values.posterUrl &&
 				existing.posterRightsVerified === values.posterRightsVerified &&
+				sameTrail(existing.trail, values.trail) &&
 				existing.status === values.status &&
 				existing.sourceUrl === values.sourceUrl;
 

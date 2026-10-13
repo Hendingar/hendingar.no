@@ -289,6 +289,7 @@
 							id={ball.id}
 							posterUrl={ball.posterUrl}
 							posterSrcset={ball.posterSrcset}
+							trail={ball.trail}
 							title={ball.title}
 							category={ball.category}
 							sourceSlugs={ball.sourceSlugs}

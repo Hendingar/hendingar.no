@@ -66,6 +66,20 @@
 	--bloom: #f7a98a;
 	--bloom-heart: #e8842f;
 
+	/*
+	 * DNT's trail grades, the second borrowed vocabulary.
+	 *
+	 * Green, blue, red and black are what every Norwegian walker reads off a trail sign before a
+	 * word on it, so the trail card wears them rather than translating them into peach. The red is
+	 * also the painted T on a cairn. Decorative only: every chip carries its grade as a word, and
+	 * the card's label says it to a screen reader.
+	 */
+	--trail-enkel: #2e8b47;
+	--trail-middels: #2a64b4;
+	--trail-krevende: #d1342f;
+	--trail-ekspert: #0d0f14;
+	--trail-mark: #d1342f;
+
 	/* --- type --- */
 	--font-display: 'Archivo Variable', 'Archivo', system-ui, sans-serif;
 	--font-mono: 'Space Mono', ui-monospace, 'SF Mono', monospace;

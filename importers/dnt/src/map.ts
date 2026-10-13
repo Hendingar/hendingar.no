@@ -1,5 +1,6 @@
 import type { CategorySlug } from '@hendingar/core/taxonomy';
 import { plainText } from '@hendingar/core/text';
+import { parseTrail, type Trail } from '@hendingar/core/trail';
 import { subTypeList, type UpstreamActivity, type UpstreamDetails } from './api.ts';
 import { calendarUrl, type DntAssociation } from './associations.ts';
 
@@ -92,6 +93,8 @@ export type MappedEvent = {
 	posterUrl: string | null;
 	posterRightsVerified: boolean;
 	sourceUrl: string;
+	/** DNT's grade and target groups, which the card draws its mountains from. */
+	trail: Trail | null;
 	/** DNT says this trip is off. The ingest keeps it out of listings — see ingest.ts. */
 	cancelled: boolean;
 };
@@ -187,6 +190,11 @@ export function mapActivity(
 		 * the per-activity destination DNT itself offers.
 		 */
 		sourceUrl: calendarUrl(association),
+		/*
+		 * `level` is on the hit, `targetGroups` on its view model — both were read and dropped
+		 * until a trip with no photo needed something better than a pattern. See core's trail.ts.
+		 */
+		trail: parseTrail(input.level, vm.targetGroups),
 		cancelled: vm.isCancelled === true
 	};
 }
