@@ -58,7 +58,12 @@ export const TEAMS: readonly FotballTeam[] = [
 	},
 	{
 		slug: 'bremnes-fotball',
-		name: 'Bremnes',
+		/*
+		 * The club, not the place. "Bremnes" alone sat in the search suggestions beside Bremnes
+		 * Idrettslag and read as a village; Stord's sources already say "Fotball". The name is
+		 * display only — the source upsert rewrites it on the next run, and the slug stays put.
+		 */
+		name: 'Bremnes Fotball',
 		fiksId: '30365',
 		homeGround: /scale\s*aq\s*stadion/i,
 		venueName: 'ScaleAQ Stadion',
@@ -93,7 +98,7 @@ export const TEAMS: readonly FotballTeam[] = [
 	},
 	{
 		slug: 'bremnes-fotball-kvinner',
-		name: 'Bremnes Kvinner',
+		name: 'Bremnes Fotball Kvinner',
 		fiksId: '48835',
 		homeGround: /scale\s*aq\s*stadion/i,
 		venueName: 'ScaleAQ Stadion',
