@@ -16,7 +16,8 @@
 		VERIFICATION_CHECK_LABELS,
 		VERIFICATION_VERDICT_LABELS
 	} from '@hendingar/core/verification';
-	import { getEvent } from '../../../lib/events.remote';
+	import { filmScreenings, getEvent } from '../../../lib/events.remote';
+	import ScreeningTimes from '../../../lib/components/ScreeningTimes.svelte';
 	import { heartCounts } from '../../../lib/hearts.remote';
 	import HeartButton from '../../../lib/components/HeartButton.svelte';
 	import { recordView, viewCounts } from '../../../lib/views.remote';
@@ -45,6 +46,13 @@
 	 * is decided in the browser, because that is the only place that fact exists.
 	 */
 	const heartsForThis = (await heartCounts([event.id]))[0]?.hearts ?? 0;
+
+	/*
+	 * Every screening of the film, when this is one — what "Vis alle tider" on a cinema card links
+	 * to without JavaScript, and opens inline with it. Awaited here so it is in the HTML; for
+	 * anything that is not a film it is one indexed lookup that finds nothing.
+	 */
+	const screenings = await filmScreenings(event.id);
 
 	/*
 	 * How many browsers have opened this, server-rendered with the rest of the page.
@@ -461,6 +469,18 @@
 					{/if}
 				</dl>
 
+				{#if screenings.film}
+					<section class="ev__tider" id="tider" aria-labelledby="tider-h">
+						<h2 class="ev__tider-h label" id="tider-h">Alle tider</h2>
+						<ScreeningTimes
+							title={event.title}
+							screenings={screenings.screenings}
+							todayLocalDate={screenings.todayLocalDate}
+							currentId={event.id}
+						/>
+					</section>
+				{/if}
+
 				<!--
 					A real link, not a script-driven download.
 
@@ -628,6 +648,15 @@
 		font-size: var(--step-micro);
 		letter-spacing: 0.16em;
 		text-transform: uppercase;
+	}
+	.ev__tider {
+		margin-block: 1.25rem 0;
+		/* Clear of the sticky masthead when the card's link jumps here. */
+		scroll-margin-block-start: 6rem;
+	}
+	.ev__tider-h {
+		margin: 0 0 0.6rem;
+		font-size: var(--step-micro);
 	}
 	.ev__ics {
 		margin-block: 1.25rem 0.75rem;
