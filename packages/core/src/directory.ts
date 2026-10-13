@@ -122,6 +122,15 @@ export type SourcePlatform = {
 	url: string;
 	/** One sentence for a reader, saying what the platform is and what that means for the data. */
 	note: string;
+	/**
+	 * Which source slugs belong here, when it is not the `<slug>-` prefix.
+	 *
+	 * For one case: NFF's teams were named after their club long before they were grouped —
+	 * `stord-fotball`, `bremnes-fotball-kvinner` — and a source slug cannot be renamed, because
+	 * the importer keys every event on it and a new slug re-imports the season as duplicates
+	 * beside the old rows. So that group says which slugs are its own instead.
+	 */
+	members?: RegExp;
 };
 
 export const SOURCE_PLATFORMS: readonly SourcePlatform[] = [
@@ -142,6 +151,15 @@ export const SOURCE_PLATFORMS: readonly SourcePlatform[] = [
 		name: 'Den Norske Turistforening',
 		url: 'https://www.dnt.no',
 		note: 'Turlaga sine eigne aktivitetskalendrar, eitt lag om gongen.'
+	},
+	{
+		slug: 'fotball',
+		name: 'Norges Fotballforbund',
+		url: 'https://www.fotball.no',
+		note: 'Kampprogramma til dei lokale laga, frå kalenderabonnementet laget har på fotball.no. Vi hentar kvart lag for seg og tek berre heimekampane.',
+		// `<club>-fotball` and `<club>-fotball-kvinner`. A hyphen either side, so a hypothetical
+		// `stord-fotballgolf` is not swept in.
+		members: /-fotball(-|$)/
 	},
 	{
 		slug: 'hoopla',
@@ -203,5 +221,9 @@ export const SOURCE_PLATFORMS: readonly SourcePlatform[] = [
  * and never itself a row.
  */
 export function platformOf(sourceSlug: string): SourcePlatform | null {
-	return SOURCE_PLATFORMS.find((p) => sourceSlug.startsWith(`${p.slug}-`)) ?? null;
+	return (
+		SOURCE_PLATFORMS.find((p) =>
+			p.members ? p.members.test(sourceSlug) : sourceSlug.startsWith(`${p.slug}-`)
+		) ?? null
+	);
 }

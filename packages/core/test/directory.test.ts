@@ -11,6 +11,20 @@ describe('platformOf', () => {
 		expect(platformOf('ticketco-frugard')?.slug).toBe('ticketco');
 	});
 
+	it('groups every football team under NFF, though their slugs name the club first', () => {
+		for (const slug of [
+			'stord-fotball',
+			'bremnes-fotball',
+			'stord-fotball-kvinner',
+			'bremnes-fotball-kvinner'
+		]) {
+			expect(platformOf(slug)?.slug, slug).toBe('fotball');
+		}
+		// The segment, not the letters.
+		expect(platformOf('stord-fotballgolf')).toBeNull();
+		expect(platformOf('fotballklubben')).toBeNull();
+	});
+
 	it('leaves a source that stands on its own alone', () => {
 		/*
 		 * `bomlo-kulturhus` is the near-miss worth naming: `bomlo-teater` *is* a platform, so the
