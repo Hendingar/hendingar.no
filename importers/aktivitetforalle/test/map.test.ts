@@ -421,6 +421,16 @@ describe('mapCategory', () => {
 		)!;
 		expect(mapCategory([musikk[0]], vocabulary)).toBe('musikk');
 	});
+
+	it('files the portal’s own "Kino" tag as kino', () => {
+		// Bømlo kulturhus tags its films "Kino" (id 19 and 48 in the committed vocabulary). The
+		// name had no entry, so a film fell to whatever other tag it carried, or to `anna`.
+		const kino = [...vocabulary].filter(
+			([, f]) => f.type === 'category' && f.name.toLowerCase() === 'kino'
+		);
+		expect(kino.length).toBeGreaterThan(0);
+		for (const [id] of kino) expect(mapCategory([id], vocabulary)).toBe('kino');
+	});
 });
 
 describe('sites', () => {

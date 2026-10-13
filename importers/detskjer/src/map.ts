@@ -43,6 +43,8 @@ const CATEGORY_BY_NAME: Record<string, CategorySlug> = {
 	litteratur: 'litteratur',
 	'stand-up': 'stand-up',
 	show: 'show',
+	kino: 'kino',
+	film: 'kino',
 	'mat og drikke': 'mat-og-drikke',
 	dans: 'dans',
 	'marknad/shopping': 'marknad',

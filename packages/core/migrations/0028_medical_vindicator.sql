@@ -1,0 +1,1 @@
+ALTER TYPE "public"."category" ADD VALUE 'kino' BEFORE 'mat-og-drikke';

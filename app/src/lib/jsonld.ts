@@ -73,6 +73,7 @@ const EVENT_TYPE: Record<CategorySlug, string> = {
 	litteratur: 'LiteraryEvent',
 	'stand-up': 'ComedyEvent',
 	show: 'Event',
+	kino: 'ScreeningEvent',
 	'mat-og-drikke': 'FoodEvent',
 	dans: 'DanceEvent',
 	marknad: 'Event',

@@ -127,6 +127,7 @@ describe('eventJsonLd', () => {
 	it('names the subtype its category plainly is, and nothing it is not', () => {
 		expect(dated({ ...base, category: 'musikk' }, CANONICAL)['@type']).toBe('MusicEvent');
 		expect(dated({ ...base, category: 'kurs' }, CANONICAL)['@type']).toBe('EducationEvent');
+		expect(dated({ ...base, category: 'kino' }, CANONICAL)['@type']).toBe('ScreeningEvent');
 		expect(dated({ ...base, category: 'marknad' }, CANONICAL)['@type']).toBe('Event');
 		expect(dated({ ...base, category: 'kyrkjeliv' }, CANONICAL)['@type']).toBe('Event');
 	});

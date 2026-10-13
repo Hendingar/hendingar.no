@@ -21,7 +21,7 @@ const CATEGORY_BY_TYPE: Record<string, CategorySlug> = {
 	conference: 'konferanse',
 	class_training: 'kurs',
 	dinner: 'mat-og-drikke',
-	screening: 'show',
+	screening: 'kino',
 	race: 'sport',
 	game: 'sport',
 	tradeshow: 'marknad',

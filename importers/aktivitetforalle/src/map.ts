@@ -28,6 +28,12 @@ const CATEGORY_BY_NAME: Record<string, CategorySlug> = {
 	konsert: 'musikk',
 	teater: 'teater',
 	underholdning: 'show',
+	/*
+	 * Bømlo kulturhus files its films here — "Harila – Nådelause fjell" was landing on the next
+	 * tag it carried, or in `anna`, because this name had no entry.
+	 */
+	kino: 'kino',
+	film: 'kino',
 	utstilling: 'utstilling',
 	kunst: 'utstilling',
 	idrett: 'sport',
