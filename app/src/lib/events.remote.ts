@@ -9,6 +9,7 @@ import {
 	eq,
 	gte,
 	ilike,
+	inArray,
 	isNotNull,
 	isNull,
 	lte,
@@ -37,7 +38,7 @@ import {
 	eventQuerySchema,
 	weekendSchema
 } from '@hendingar/core/validation';
-import { SUBMITTED_SLUG } from '@hendingar/core/directory';
+import { CINEMA_SOURCE_SLUGS, SUBMITTED_SLUG } from '@hendingar/core/directory';
 import { likePattern, searchTermSchema, searchTokens } from '@hendingar/core/search';
 import { categoryLabel } from '@hendingar/core/taxonomy';
 import {
@@ -1497,3 +1498,80 @@ export const getEvent = query(z.number().int().positive(), async (id) => {
 });
 
 export type EventDetail = Awaited<ReturnType<typeof getEvent>>;
+
+/** Two weeks of a busy cinema is under forty screenings; this is a ceiling, not a page size. */
+const SCREENINGS_CAP = 60;
+
+/**
+ * Every upcoming screening of the film this event is one screening of.
+ *
+ * "Vis alle tider" on a cinema card and "Alle tider" on its page both read this. A screening is
+ * its own row, so the film is recovered as the same title from the same cinema — not the same
+ * venue: Stord kino plays one film in Storsalen and Småsalen in the same week, and those are two
+ * venues in our data and one film to anybody buying a ticket.
+ *
+ * The id may be a canonical row from another source (the cinema's row consolidated under the
+ * kulturhus programme's), so the cinema row is looked for among the event and its duplicates —
+ * the same set `reportedBy` reads. Anything that is not a screening answers `film: false` rather
+ * than an error: the card offers the button by source, and a stale guess should cost an empty
+ * panel, not a broken one.
+ */
+export const filmScreenings = query(z.number().int().positive(), async (id) => {
+	const database = db();
+	const [film] = await database
+		.select({ title: events.title, sourceId: events.sourceId })
+		.from(events)
+		.innerJoin(sources, eq(events.sourceId, sources.id))
+		.where(
+			and(
+				or(eq(events.id, id), eq(events.duplicateOfId, id)),
+				inArray(sources.slug, [...CINEMA_SOURCE_SLUGS])
+			)
+		)
+		.limit(1);
+	if (!film?.sourceId) return { film: false, screenings: [], todayLocalDate: null };
+
+	const rows = await database
+		.select({
+			id: events.id,
+			startsAt: events.startsAt,
+			venueName: venues.name,
+			venueTimeZone: venues.timezone,
+			localDate: sql<string>`
+				to_char(
+					${events.startsAt} at time zone coalesce(${venues.timezone}, 'Europe/Oslo'),
+					'YYYY-MM-DD'
+				)
+			`.as('local_date'),
+			todayLocalDate: sql<string>`
+				to_char(now() at time zone coalesce(${venues.timezone}, 'Europe/Oslo'), 'YYYY-MM-DD')
+			`.as('today_local_date')
+		})
+		.from(events)
+		.leftJoin(venues, eq(events.venueId, venues.id))
+		.where(
+			and(
+				eq(events.status, 'published'),
+				stillListed,
+				eq(events.sourceId, film.sourceId),
+				eq(events.title, film.title),
+				gte(events.startsAt, new Date())
+			)
+		)
+		.orderBy(asc(events.startsAt))
+		.limit(SCREENINGS_CAP);
+
+	return {
+		film: true,
+		screenings: rows.map((r) => ({
+			id: r.id,
+			startsAt: r.startsAt,
+			venueName: r.venueName,
+			venueTimeZone: r.venueTimeZone,
+			localDate: r.localDate
+		})),
+		todayLocalDate: rows[0]?.todayLocalDate ?? null
+	};
+});
+
+export type FilmScreenings = Awaited<ReturnType<typeof filmScreenings>>;

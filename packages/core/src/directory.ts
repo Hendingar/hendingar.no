@@ -49,6 +49,23 @@ export type LinkedSource = {
  */
 export const SUBMITTED_SLUG = 'innsendt';
 
+/**
+ * Sources where every event is one screening of a film.
+ *
+ * A film runs for a week or two, several times a day, and each screening is its own row — so the
+ * listing shows one card for "Pensjonskuppet" on Thursday and another on Sunday, and nothing on
+ * either says when else it is on. That question ("when can I see it?") is the one a cinema card
+ * has to answer, and these are the sources it applies to.
+ *
+ * A list rather than a category: `importers/kulturhus` files a film under `show` because that is
+ * what the taxonomy has, and the thing that makes a row a screening is where it came from.
+ */
+export const CINEMA_SOURCE_SLUGS: readonly string[] = ['stord-kino'];
+
+export function isCinemaSource(slug: string): boolean {
+	return CINEMA_SOURCE_SLUGS.includes(slug);
+}
+
 export const LINKED_SOURCES: readonly LinkedSource[] = [
 	{
 		slug: 'bomlo-teater',
