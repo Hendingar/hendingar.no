@@ -34,6 +34,7 @@
 	import type { Fixture } from '@hendingar/core/fixture';
 	import { fixtureTile } from '../fixture-tile.ts';
 	import { kitClass } from '../club-kits.ts';
+	import { revealOnce } from '../reveal-once.ts';
 
 	let {
 		id,
@@ -84,10 +85,6 @@
 
 	/** Narrower than this, a 56-unit crest renders under ~25 CSS px and stops being a crest. */
 	const CREST_MIN_WIDTH = 200;
-	/** How far below the fold a tile is armed and its crests requested, so they land in time. */
-	const ARM_MARGIN = '0px 0px 320px 0px';
-	/** How much of the tile has to be visible before it fights — enough that you see it happen. */
-	const LIVE_RATIO = 0.35;
 
 	const crests = $derived(
 		feature || roomy ? { home: tile.home.crest, away: tile.away.crest } : null
@@ -107,41 +104,20 @@
 		return `${(Math.cos(a) * r).toFixed(1)},${(Math.sin(a) * r).toFixed(1)}`;
 	}).join(' ');
 
+	/** When to fight, and whether there is room for crests — measured as the tile nears view. */
 	function reveal(node: HTMLElement) {
-		if (typeof IntersectionObserver === 'undefined') {
-			roomy = node.clientWidth >= CREST_MIN_WIDTH;
-			return;
-		}
-		// Already scrolled past — a restored scroll position, a back button. It stays settled.
-		if (node.getBoundingClientRect().bottom < 0) {
-			roomy = node.clientWidth >= CREST_MIN_WIDTH;
-			return;
-		}
-
-		const near = new IntersectionObserver(
-			(entries) => {
-				if (!entries.some((e) => e.isIntersecting)) return;
-				roomy = node.clientWidth >= CREST_MIN_WIDTH;
-				if (stage === 'rest') stage = 'armed';
-				near.disconnect();
+		const measure = () => (roomy = node.clientWidth >= CREST_MIN_WIDTH);
+		return revealOnce(node, {
+			settled: measure,
+			armed: () => {
+				measure();
+				stage = 'armed';
 			},
-			{ rootMargin: ARM_MARGIN }
-		);
-		const seen = new IntersectionObserver(
-			(entries) => {
-				if (!entries.some((e) => e.isIntersecting && e.intersectionRatio >= LIVE_RATIO)) return;
-				roomy = node.clientWidth >= CREST_MIN_WIDTH;
+			live: () => {
+				measure();
 				stage = 'live';
-				seen.disconnect();
-			},
-			{ threshold: LIVE_RATIO }
-		);
-		near.observe(node);
-		seen.observe(node);
-		return () => {
-			near.disconnect();
-			seen.disconnect();
-		};
+			}
+		});
 	}
 </script>
 

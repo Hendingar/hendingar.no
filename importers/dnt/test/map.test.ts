@@ -174,6 +174,21 @@ describe('mapActivity', () => {
 		expect(mapped.externalId).toBe('617197');
 	});
 
+	it('keeps the grade and who it is for, which used to be dropped', () => {
+		const mapped = mapActivity(cancelled, details617197, stordFitjar);
+		if (isFailure(mapped)) throw new Error(mapped.problem);
+		// "Middels" and "Seniorer" in the committed response.
+		expect(mapped.trail).toEqual({ grade: 'middels', audiences: ['seniorar'] });
+	});
+
+	it('grades every trip in the committed feeds', () => {
+		for (const activity of listing.activities) {
+			const mapped = mapActivity(activity, null, stordFitjar);
+			if (isFailure(mapped)) continue;
+			expect(mapped.trail?.grade, activity.pageTitle).not.toBeNull();
+		}
+	});
+
 	it('preserves the source offset rather than normalising to UTC', () => {
 		const mapped = mapActivity(cancelled, details617197, stordFitjar);
 		if (isFailure(mapped)) throw new Error(mapped.problem);

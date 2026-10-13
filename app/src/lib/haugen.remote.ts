@@ -39,6 +39,7 @@ export const pile = query(async () => {
 		venueTimeZone: e.venueTimeZone,
 		posterUrl: e.posterUrl,
 		posterSrcset: e.posterSrcset,
+		trail: e.trail,
 		sourceSlugs: (e.sourceMarks ?? []).map((m) => m.slug),
 		sourceNames: (e.sourceMarks ?? []).map((m) => m.name),
 		municipality: e.municipality,

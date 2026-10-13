@@ -16,6 +16,8 @@
 	import { artworkFor } from '../church-art.ts';
 	import { hasGardenSource } from '../garden-sources.ts';
 	import GardenTile from './GardenTile.svelte';
+	import TrailTile from './TrailTile.svelte';
+	import type { Trail } from '@hendingar/core/trail';
 
 	let {
 		id,
@@ -24,7 +26,8 @@
 		title,
 		category = '',
 		sourceSlugs,
-		sizes
+		sizes,
+		trail = null
 	}: {
 		id: number;
 		posterUrl?: string | null;
@@ -59,6 +62,12 @@
 		 * looks at a blurry poster and wonders why.
 		 */
 		sizes?: string;
+		/**
+		 * A graded trip's difficulty and audiences, when the source gave them. A trip with no
+		 * photo is then drawn as the mountain its grade describes rather than as a pattern.
+		 * Null by default: a caller that does not know gets what it got before.
+		 */
+		trail?: Trail | null;
 	} = $props();
 
 	// Deterministic per event: no Math.random, so a tile never changes between server and client
@@ -155,6 +164,8 @@
 	/>
 {:else if fixture}
 	<VersusTile {id} {fixture} />
+{:else if trail}
+	<TrailTile {id} {trail} />
 {:else if garden}
 	<GardenTile {id} />
 {:else if artwork}

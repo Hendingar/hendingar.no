@@ -37,6 +37,7 @@
 		id={offer.id}
 		posterUrl={offer.posterUrl}
 		posterSrcset={offer.posterSrcset}
+		trail={offer.trail}
 		title={offer.title}
 		category={offer.category}
 	/>

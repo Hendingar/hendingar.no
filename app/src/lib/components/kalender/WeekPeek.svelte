@@ -40,6 +40,7 @@
 		id={event.id}
 		posterUrl={event.posterUrl}
 		posterSrcset={event.posterSrcset}
+		trail={event.trail}
 		title={event.title}
 		category={event.category}
 	/>

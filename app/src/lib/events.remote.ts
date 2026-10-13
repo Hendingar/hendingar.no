@@ -100,6 +100,7 @@ export const listEvents = query(
 				municipality: venues.municipality,
 				posterUrl: events.posterUrl,
 				posterSrcset: events.posterSrcset,
+				trail: events.trail,
 				/*
 				 * The source, so a tile can show whose calendar an event came from. We are an index, not a
 				 * replacement — a tile that shows no origin quietly claims the event as ours. Null for human
@@ -601,6 +602,7 @@ export const standingOffers = query(async () => {
 			municipality: venues.municipality,
 			posterUrl: events.posterUrl,
 			posterSrcset: events.posterSrcset,
+			trail: events.trail,
 			sourceMarks: sourceMarksFor(events.id).as('source_marks')
 		})
 		.from(events)
@@ -681,6 +683,7 @@ export const listUpcoming = query(z.number().int().min(1).max(60).default(24), a
 			municipality: venues.municipality,
 			posterUrl: events.posterUrl,
 			posterSrcset: events.posterSrcset,
+			trail: events.trail,
 			sourceMarks: sourceMarksFor(events.id).as('source_marks'),
 			/*
 			 * The calendar day AT THE VENUE, resolved in SQL. Grouping by day is a calendar
@@ -773,6 +776,7 @@ export const listPopular = query(
 				municipality: venues.municipality,
 				posterUrl: events.posterUrl,
 				posterSrcset: events.posterSrcset,
+				trail: events.trail,
 				sourceMarks: sourceMarksFor(events.id).as('source_marks'),
 				hearts: hearts.mapWith(Number).as('hearts'),
 				views: views.mapWith(Number).as('views'),
@@ -959,6 +963,7 @@ export const listEventsOnDate = query(calendarDateSchema, async (date) => {
 			 * against an events table that did not have this column yet.
 			 */
 			posterSrcset: events.posterSrcset,
+			trail: events.trail,
 			sourceMarks: sourceMarksFor(events.id).as('source_marks')
 		})
 		.from(events)
@@ -1032,6 +1037,7 @@ export const weekendEvents = query(weekendSchema, async (which) => {
 			municipality: venues.municipality,
 			posterUrl: events.posterUrl,
 			posterSrcset: events.posterSrcset,
+			trail: events.trail,
 			sourceMarks: sourceMarksFor(events.id).as('source_marks')
 		})
 		.from(events)
@@ -1229,7 +1235,8 @@ export const weekEvents = query(calendarWeekSchema, async (weekKey) => {
 			 * busy Saturday, and the rows are already in hand.
 			 */
 			posterUrl: events.posterUrl,
-			posterSrcset: events.posterSrcset
+			posterSrcset: events.posterSrcset,
+			trail: events.trail
 		})
 		.from(events)
 		.leftJoin(venues, eq(events.venueId, venues.id))
@@ -1380,6 +1387,7 @@ export const getEvent = query(z.number().int().positive(), async (id) => {
 			endsAt: events.endsAt,
 			posterUrl: events.posterUrl,
 			posterSrcset: events.posterSrcset,
+			trail: events.trail,
 			// Decides what a shared link shows: a poster we may redraw goes into our own card, any
 			// other is pointed at where it already lives. See `shareImage` on the event page.
 			posterRightsVerified: events.posterRightsVerified,
