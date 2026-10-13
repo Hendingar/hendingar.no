@@ -68,6 +68,41 @@ export const TEAMS: readonly FotballTeam[] = [
 		scheduleCron: '0 5 * * *',
 		iconUrl: 'https://www.fotball.no/favicon.ico',
 		trusted: true
+	},
+	/*
+	 * The women's first teams are separate NFF teams with feeds of their own — the men's calendar
+	 * carries none of their fixtures — so each is its own source, not a second ground on the first.
+	 */
+	{
+		slug: 'stord-fotball-kvinner',
+		name: 'Stord Fotball Kvinner',
+		fiksId: '153685',
+		/*
+		 * Not Stord stadion: the women play at home on the artificial pitch at Vikahaugane. One
+		 * 2026 home fixture was moved to Trott stadion in Fitjar; it is dropped rather than stored
+		 * under the wrong ground, and Fitjar's ground is not this team's.
+		 */
+		homeGround: /vikahaugane\s*kunstgress/i,
+		venueName: 'Vikahaugane kunstgras',
+		region: 'Sunnhordland',
+		attribution: 'Norges Fotballforbund',
+		timezone: 'Europe/Oslo',
+		scheduleCron: '0 5 * * *',
+		iconUrl: 'https://www.fotball.no/favicon.ico',
+		trusted: true
+	},
+	{
+		slug: 'bremnes-fotball-kvinner',
+		name: 'Bremnes Kvinner',
+		fiksId: '48835',
+		homeGround: /scale\s*aq\s*stadion/i,
+		venueName: 'ScaleAQ Stadion',
+		region: 'Sunnhordland',
+		attribution: 'Norges Fotballforbund',
+		timezone: 'Europe/Oslo',
+		scheduleCron: '0 5 * * *',
+		iconUrl: 'https://www.fotball.no/favicon.ico',
+		trusted: true
 	}
 ];
 

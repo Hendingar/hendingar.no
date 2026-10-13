@@ -79,6 +79,14 @@ describe('layoutClubName', () => {
 	});
 });
 
+/**
+ * Opponents of the two women's teams, added with the feeds in October 2026, whose crest id nobody
+ * has read off fotball.no yet. They draw the wordmark. Named here so that leaving them without a
+ * crest is the decision the test above asks for — and so that filling one in fails this list until
+ * it is taken off it.
+ */
+const AWAITING_CREST = ['Arna-Bjørnar', 'Bjarg', 'Lyngbø', 'Sotra', 'Voss'];
+
 describe('the crest table', () => {
 	it('covers every club in the committed feeds', () => {
 		/*
@@ -87,7 +95,7 @@ describe('the crest table', () => {
 		 * but it should be a decision someone took, not one nobody noticed.
 		 */
 		const missing = clubs.filter((club) => crestUrl(club) === null);
-		expect(missing).toEqual([]);
+		expect(missing).toEqual(AWAITING_CREST);
 	});
 
 	it('answers null for a club nobody has written down', () => {

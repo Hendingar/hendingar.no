@@ -33,6 +33,8 @@
  */
 const CREST_IDS: Readonly<Record<string, string>> = {
 	askøy: '1681',
+	// The women's feeds write the club as "Askøy FK"; the men's as "Askøy". One club.
+	'askøy fk': '1681',
 	austevoll: '877',
 	brann: '781',
 	bremnes: '827',
