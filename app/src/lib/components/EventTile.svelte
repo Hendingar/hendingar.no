@@ -5,9 +5,8 @@
 	import EventThumb from './EventThumb.svelte';
 	import SourceIcon from './SourceIcon.svelte';
 	import HeartButton from './HeartButton.svelte';
-	import { filmScreenings, type FilmScreenings, type UpcomingEvent } from '../events.remote';
+	import type { UpcomingEvent } from '../events.remote';
 	import { isCinemaSource } from '@hendingar/core/directory';
-	import ScreeningTimes from './ScreeningTimes.svelte';
 	import type { Occurrence } from '../occurrences.ts';
 	import { page } from '$app/state';
 	import { surfaceOf, track } from '../analytics.ts';
@@ -84,29 +83,14 @@
 	 * A cinema card answers "when else is it on?", which no single screening's card can.
 	 *
 	 * Offered by source rather than counted: knowing whether a film has a second screening would
-	 * mean a subquery on every row of every listing, for a button on a handful of them. The panel
-	 * says so when there is only the one.
+	 * mean a subquery on every row of every listing, for a link on a handful of them. The page it
+	 * goes to says so when there is only the one.
 	 *
-	 * A link to the event page's `#tider` first, a disclosure second. Without JavaScript the link
-	 * goes to the same list, server-rendered; with it, the list opens on the card and is fetched
-	 * only when asked for.
+	 * A link to the film's own programme, `/hending/<screening>/tider`, not a panel on the card.
+	 * Planning a visit means comparing days, rooms and ticket links, which does not fit a
+	 * thumbnail's width — the times opened inline first, and read as a list squeezed into a card.
 	 */
 	const cinema = $derived(marks.some((m) => isCinemaSource(m.slug)));
-	let showtimesOpen = $state(false);
-	let showtimes = $state<FilmScreenings | null>(null);
-	let showtimesFailed = $state(false);
-
-	async function toggleShowtimes(click: MouseEvent) {
-		click.preventDefault();
-		showtimesOpen = !showtimesOpen;
-		if (!showtimesOpen || showtimes) return;
-		showtimesFailed = false;
-		try {
-			showtimes = await filmScreenings(event.id);
-		} catch {
-			showtimesFailed = true;
-		}
-	}
 
 	const marksTitle = $derived(
 		marks.length === 1
@@ -273,34 +257,7 @@
 		{/if}
 
 		{#if cinema}
-			<a
-				class="tile__alle"
-				href={`${eventPath(event.id, event.title)}#tider`}
-				aria-expanded={showtimesOpen}
-				aria-controls={`tider-${event.id}`}
-				onclick={toggleShowtimes}
-			>
-				{showtimesOpen ? 'Skjul tider' : 'Vis alle tider'}
-			</a>
-			{#if showtimesOpen}
-				<div class="tile__tider" id={`tider-${event.id}`}>
-					{#if showtimes}
-						<ScreeningTimes
-							title={event.title}
-							screenings={showtimes.screenings}
-							todayLocalDate={showtimes.todayLocalDate}
-							currentId={event.id}
-						/>
-					{:else if showtimesFailed}
-						<p class="tile__tidermsg">
-							Fekk ikkje henta tidene.
-							<a href={`${eventPath(event.id, event.title)}#tider`}>Sjå dei på sida til filmen</a>.
-						</p>
-					{:else}
-						<p class="tile__tidermsg" role="status">Hentar tider …</p>
-					{/if}
-				</div>
-			{/if}
+			<a class="tile__alle" href={`${eventPath(event.id, event.title)}/tider`}>Vis alle tider</a>
 		{/if}
 
 		{#if views !== null}
@@ -439,7 +396,7 @@
 
 	/*
 	 * Above the link's stretched ::after, like the repeat times, or the card swallows the click and
-	 * the button opens the film instead of its times.
+	 * the link opens this screening instead of the film's programme.
 	 */
 	.tile__alle {
 		position: relative;
@@ -459,25 +416,9 @@
 			background-color var(--dur-fast) ease,
 			color var(--dur-fast) ease;
 	}
-	.tile__alle:hover,
-	.tile__alle[aria-expanded='true'] {
+	.tile__alle:hover {
 		background: var(--peach);
 		color: var(--navy-900);
-	}
-	.tile__tider {
-		position: relative;
-		z-index: 1;
-		margin-block-start: 0.35rem;
-		padding-block-start: 0.5rem;
-		border-block-start: var(--rule) solid var(--peach-line);
-	}
-	.tile__tidermsg {
-		margin: 0;
-		font-size: var(--step-micro);
-		color: var(--peach-dim);
-	}
-	.tile__tidermsg a {
-		color: var(--peach);
 	}
 
 	/*

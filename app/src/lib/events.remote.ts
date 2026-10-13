@@ -1505,7 +1505,8 @@ const SCREENINGS_CAP = 60;
 /**
  * Every upcoming screening of the film this event is one screening of.
  *
- * "Vis alle tider" on a cinema card and "Alle tider" on its page both read this. A screening is
+ * The film's own page (`/hending/<screening>/tider`, where "Vis alle tider" on a cinema card goes)
+ * and the short "Alle tider" list on a screening's page both read this. A screening is
  * its own row, so the film is recovered as the same title from the same cinema — not the same
  * venue: Stord kino plays one film in Storsalen and Småsalen in the same week, and those are two
  * venues in our data and one film to anybody buying a ticket.
@@ -1535,6 +1536,7 @@ export const filmScreenings = query(z.number().int().positive(), async (id) => {
 		.select({
 			id: events.id,
 			startsAt: events.startsAt,
+			ctaUrl: events.ctaUrl,
 			venueName: venues.name,
 			venueTimeZone: venues.timezone,
 			localDate: sql<string>`
@@ -1566,6 +1568,7 @@ export const filmScreenings = query(z.number().int().positive(), async (id) => {
 		screenings: rows.map((r) => ({
 			id: r.id,
 			startsAt: r.startsAt,
+			ctaUrl: r.ctaUrl,
 			venueName: r.venueName,
 			venueTimeZone: r.venueTimeZone,
 			localDate: r.localDate

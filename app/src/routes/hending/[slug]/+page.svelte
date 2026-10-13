@@ -48,8 +48,8 @@
 	const heartsForThis = (await heartCounts([event.id]))[0]?.hearts ?? 0;
 
 	/*
-	 * Every screening of the film, when this is one — what "Vis alle tider" on a cinema card links
-	 * to without JavaScript, and opens inline with it. Awaited here so it is in the HTML; for
+	 * Every screening of the film, when this is one — the short list beside the details. The full
+	 * programme, with ticket links, is the page `/tider` below this one. Awaited here so it is in the HTML; for
 	 * anything that is not a film it is one indexed lookup that finds nothing.
 	 */
 	const screenings = await filmScreenings(event.id);
@@ -478,6 +478,10 @@
 							todayLocalDate={screenings.todayLocalDate}
 							currentId={event.id}
 						/>
+						<!-- The whole programme, a day at a time with ticket links, for planning a visit. -->
+						<p class="ev__tider-more">
+							<a href="{eventPath(event.id, event.title)}/tider">Sjå alle tider →</a>
+						</p>
 					</section>
 				{/if}
 
@@ -651,12 +655,17 @@
 	}
 	.ev__tider {
 		margin-block: 1.25rem 0;
-		/* Clear of the sticky masthead when the card's link jumps here. */
-		scroll-margin-block-start: 6rem;
 	}
 	.ev__tider-h {
 		margin: 0 0 0.6rem;
 		font-size: var(--step-micro);
+	}
+	.ev__tider-more {
+		margin: 0.75rem 0 0;
+		font-family: var(--font-mono);
+		font-size: var(--step-micro);
+		letter-spacing: 0.14em;
+		text-transform: uppercase;
 	}
 	.ev__ics {
 		margin-block: 1.25rem 0.75rem;
