@@ -12,8 +12,11 @@
 	 * client state would also have shipped an empty control to every crawler and to anyone without
 	 * JavaScript, on the one row of the site that is meant to move people onward.
 	 *
-	 * The counts are what make them worth pressing. "I dag" is a label; "I dag / 6 hendingar" is a
-	 * reason — and it means nobody arrives at an empty page, because the number told them first.
+	 * The counts are still fetched, but no longer printed. Five numbers in display type, above a
+	 * row of sixteen more on the category chips, made the front page read as a table of figures
+	 * before it read as a list of things to do. A day with nothing on is still greyed, which keeps
+	 * the one thing the number did that mattered — nobody presses through to an empty page — and a
+	 * screen reader still hears the count.
 	 *
 	 * Top-level await, so all four are in the server-rendered HTML (CLAUDE.md).
 	 */
@@ -46,9 +49,6 @@
 			<li>
 				<a class="ways__a" class:ways__a--empty={way.n === 0} href={way.href}>
 					<span class="ways__t">{way.label}</span>
-					<!-- The number alone is enough to see; the noun is there to be heard. "I dag 1
-					     hending" on screen was a second word to read on every tile of the row. -->
-					<span class="ways__n" aria-hidden="true">{way.n}</span>
 					<span class="visually-hidden">{way.n} {way.n === 1 ? 'hending' : 'hendingar'}</span>
 				</a>
 			</li>
@@ -102,12 +102,7 @@
 
 	.ways__a {
 		display: flex;
-		/*
-		 * Label and count on one line, the count pushed to the far edge — one line to read per tile
-		 * instead of two. Baseline-aligned so the mono numeral sits on the display label's line.
-		 */
-		align-items: baseline;
-		justify-content: space-between;
+		align-items: center;
 		gap: 0.75rem;
 		/* Still past the 44px floor — this is the row the page is built to have pressed. */
 		min-block-size: 3.25rem;
@@ -148,19 +143,12 @@
 		font-family: var(--font-display);
 		font-weight: 800;
 		font-stretch: 108%;
-		/* Capped at 1.15rem: five columns, each now sharing its line with a count, and the longest
-		   label has to fit beside it without breaking. */
+		/* Capped at 1.15rem: five columns, and the longest label has to fit without breaking. */
 		font-size: clamp(1rem, 1.8vw, 1.15rem);
 		line-height: 1;
 		letter-spacing: -0.01em;
 		text-transform: uppercase;
 		color: var(--peach);
-	}
-	.ways__n {
-		font-family: var(--font-mono);
-		font-size: 0.9375rem;
-		font-weight: 700;
-		font-variant-numeric: tabular-nums;
 	}
 
 	/*

@@ -1,6 +1,6 @@
 <script lang="ts">
 	import Ask from '../lib/components/landing/Ask.svelte';
-	import CategoryLinks from '../lib/components/landing/CategoryLinks.svelte';
+	import Search from '../lib/components/landing/Search.svelte';
 	import UpcomingByDay from '../lib/components/landing/UpcomingByDay.svelte';
 	import CoverageStatus from '../lib/components/landing/CoverageStatus.svelte';
 	import StandingOffers from '../lib/components/landing/StandingOffers.svelte';
@@ -63,10 +63,10 @@
 </svelte:boundary>
 
 <svelte:boundary>
-	<CategoryLinks />
+	<Search />
 	{#snippet failed()}
-		<!-- A navigation row that cannot load is simply absent. Every category is still reachable
-		     from /hendingar, which is one of the four ways in above. -->
+		<!-- A field that cannot load is simply absent. Every filter is still reachable from
+		     /hendingar, which "Alt framover" above links to. -->
 	{/snippet}
 </svelte:boundary>
 
