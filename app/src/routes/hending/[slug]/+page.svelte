@@ -209,12 +209,14 @@
 	 * What we tell machines this page is.
 	 *
 	 * Built by `lib/jsonld.ts` rather than inline, so the claims are unit-tested. Two nodes: the
-	 * event itself, and the trail that gets Google to render "hendingar.no › Hendingar › …" under
+	 * event itself (when it is one), and the trail that gets Google to render "hendingar.no › Hendingar › …" under
 	 * the result instead of a bare URL.
 	 */
 	const canonicalHref = $derived(canonicalUrl(page.url, canonical));
+	const eventNode = $derived(eventJsonLd(event, canonicalHref));
 	const jsonLd = $derived([
-		eventJsonLd(event, canonicalHref),
+		// Null for a standing row — a season is not an event. See eventJsonLd.
+		...(eventNode ? [eventNode] : []),
 		breadcrumbJsonLd([
 			{ name: 'Framsida', url: canonicalUrl(page.url, '/') },
 			{ name: 'Hendingar', url: canonicalUrl(page.url, '/hendingar') },
