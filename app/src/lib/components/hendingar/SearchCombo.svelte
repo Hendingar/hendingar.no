@@ -7,6 +7,7 @@
 	import { formatEventTime } from '@hendingar/core/datetime';
 	import { dropFirstToken } from '@hendingar/core/search';
 	import { searchSuggestions, type SearchSuggestions } from '../../events.remote';
+	import SourceIcon from '../SourceIcon.svelte';
 	import {
 		hiddenFilterFields,
 		listingHref,
@@ -101,7 +102,15 @@
 	 * the same thing — and what keeps the whole control a set of links rather than a set of
 	 * handlers that happen to change some state.
 	 */
-	type Option = { id: string; kind: string; label: string; hint: string; href: string };
+	type Option = {
+		id: string;
+		kind: string;
+		label: string;
+		hint: string;
+		href: string;
+		/** A source's favicon, so a calendar is recognisable before its name is read. */
+		icon?: string | null;
+	};
 
 	/*
 	 * Accepting a suggestion consumes the word that produced it.
@@ -144,7 +153,8 @@
 				kind: 'Kjelde',
 				label: source.name,
 				hint: String(source.total),
-				href: accepting('kjelde', source.slug)
+				href: accepting('kjelde', source.slug),
+				icon: source.iconUrl
 			});
 		}
 		for (const event of found.events) {
@@ -397,7 +407,13 @@
 						}}
 					>
 						<span class="sugg__kind">{option.kind}</span>
-						<span class="sugg__label">{option.label}</span>
+						<span class="sugg__label">
+							{#if option.icon !== undefined}
+								<!-- Initials when the source has no icon, the same fallback /datasamling uses. -->
+								<SourceIcon src={option.icon} name={option.label} size="1.1rem" />
+							{/if}
+							{option.label}
+						</span>
 						<span class="sugg__hint">{option.hint}</span>
 					</a>
 				</li>
@@ -538,6 +554,9 @@
 		color: var(--peach-quiet);
 	}
 	.sugg__label {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
 		overflow-wrap: anywhere;
 	}
 	.sugg__hint {
