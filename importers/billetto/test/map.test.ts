@@ -157,6 +157,10 @@ describe('mapCategory', () => {
 		expect(mapCategory('party', 'music')).toBe('dans');
 	});
 
+	it('files a screening as kino', () => {
+		expect(mapCategory('screening', 'film')).toBe('kino');
+	});
+
 	it('falls back to the broad category when the type says nothing useful', () => {
 		expect(mapCategory('other', 'performing_arts')).toBe('teater');
 		expect(mapCategory(null, 'sports')).toBe('sport');

@@ -92,6 +92,13 @@
 	 * thumbnail's width — the times opened inline first, and read as a list squeezed into a card.
 	 */
 	const cinema = $derived(marks.some((m) => isCinemaSource(m.slug)));
+	/*
+	 * Framed as a screen: anything a cinema reported, and any film another calendar files as
+	 * `kino` — Bømlo kulturhus's films arrive through aktivitetforalle, not from a cinema source.
+	 * Wider than `cinema` on purpose: the frame is about what the event is, the "alle tider" link
+	 * about whether there is a programme page to send people to.
+	 */
+	const film = $derived(cinema || event.category === 'kino');
 
 	const marksTitle = $derived(
 		marks.length === 1
@@ -112,7 +119,7 @@
 			sourceSlugs={(event.sourceMarks ?? []).map((m) => m.slug)}
 		/>
 	{/snippet}
-	{#if cinema}
+	{#if film}
 		<!-- A film is framed as a screen: letterbox, sprocket holes, a clapper — see CinemaFrame. -->
 		<CinemaFrame slate={formatEventClock(event.startsAt, event.venueTimeZone)}>
 			{@render thumb()}

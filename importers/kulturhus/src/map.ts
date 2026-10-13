@@ -54,8 +54,9 @@ const CATEGORY_BY_NAME: Record<string, CategorySlug> = {
 	kurs: 'kurs',
 	konferanse: 'konferanse',
 	utstilling: 'utstilling',
-	film: 'show',
-	kino: 'show',
+	// Films had to borrow `show` until the taxonomy had a shelf of their own.
+	film: 'kino',
+	kino: 'kino',
 	// Public swimming sessions — an activity you turn up and do, not a performance you watch.
 	'offentleg bading': 'sport',
 	'offentlig bading': 'sport',

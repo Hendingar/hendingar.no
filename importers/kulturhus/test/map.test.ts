@@ -557,10 +557,10 @@ describe('the cinema programme', () => {
 		expect(screenings).toHaveLength(45);
 	});
 
-	it('files a film as a show, whatever shelf the cinema puts it on', () => {
+	it('files a film as kino, whatever shelf the cinema puts it on', () => {
 		// The upstream category is "På kino nå" on every row: a shelf, not a kind of thing.
 		expect(films.every((f) => f.category === 'På kino nå')).toBe(true);
-		for (const s of screenings) if (!isFailure(s)) expect(s.category).toBe('show');
+		for (const s of screenings) if (!isFailure(s)) expect(s.category).toBe('kino');
 	});
 
 	it('still rejects an untimed entry on a day with no timed screening', () => {
