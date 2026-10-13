@@ -16,6 +16,7 @@
 	 */
 	import type { Fixture } from '@hendingar/core/fixture';
 	import { fixtureTile } from '../fixture-tile.ts';
+	import { kitClass } from '../club-kits.ts';
 
 	let {
 		id,
@@ -36,6 +37,8 @@
 	} = $props();
 
 	const tile = $derived(fixtureTile(fixture));
+	/* The home club's colours, which every navy and peach token below then resolves to. */
+	const kit = $derived(kitClass(fixture));
 
 	/**
 	 * Baselines, counted from the top for the home side and up from the bottom for the away one.
@@ -95,7 +98,7 @@
 	beside the title below 34rem. A card that answered to `.vs` alone would keep its 16:9 box on a
 	phone and push the row off the screen.
 -->
-<div class="thumb vs" class:vs--feature={feature} role="img" aria-label={tile.label}>
+<div class={['thumb vs', kit]} class:vs--feature={feature} role="img" aria-label={tile.label}>
 	<svg viewBox="0 0 400 225" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
 		<defs>
 			<pattern id={`vs-dots-${id}`} width="9" height="9" patternUnits="userSpaceOnUse">

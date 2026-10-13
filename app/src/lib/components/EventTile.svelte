@@ -9,6 +9,8 @@
 	import type { Occurrence } from '../occurrences.ts';
 	import { page } from '$app/state';
 	import { surfaceOf, track } from '../analytics.ts';
+	import { parseFixture } from '@hendingar/core/fixture';
+	import { kitClass } from '../club-kits.ts';
 
 	/**
 	 * `occurrences` is every time this event runs today, the lead included.
@@ -61,6 +63,12 @@
 	const startsIn = $derived(formatStartsIn(event.minutesUntilStart));
 
 	/*
+	 * A home match wears its club's colours on the whole card, not only on the tile — a yellow
+	 * versus tile above a peach title reads as two cards glued together. See club-kits.ts.
+	 */
+	const kit = $derived(kitClass(parseFixture(event.title)));
+
+	/*
 	 * Three marks fit the corner; a fourth starts crowding the venue line on a narrow tile.
 	 *
 	 * Capping rather than wrapping keeps the corner a corner — a mark row that grows onto a second
@@ -77,7 +85,7 @@
 	);
 </script>
 
-<article class="tile frame" class:tile--featured={featured}>
+<article class={['tile frame', kit]} class:tile--featured={featured}>
 	<EventThumb
 		id={event.id}
 		posterUrl={event.posterUrl}

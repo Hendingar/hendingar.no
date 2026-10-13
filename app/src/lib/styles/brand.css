@@ -201,6 +201,63 @@ body {
 	margin: 0;
 }
 
+/* --- club kits -----------------------------------------------------------
+ * A home club's colours, worn by the card of its match (club-kits.ts picks the class).
+ *
+ * A kit is not new styling: it re-points the two duotone ramps on the element it is set on, so
+ * everything inside that was drawn in navy and peach is drawn in the kit instead — the versus
+ * tile, the time chip, the title, the frame, the heart. No component knows kits exist. It holds
+ * only because no token on :root is derived from another; one that were would be resolved there
+ * and ignore the kit.
+ *
+ * The one thing a re-pointed token cannot reach is an inherited `color`: it is inherited as the
+ * value body already computed, peach, so a title that never names a colour stays peach under a
+ * yellow kit. Each kit therefore sets `color` itself, at the end of its block.
+ *
+ * Same roles, same alphas, measured on the kit's own grounds (WCAG, against the 900/800/700):
+ *   bremnes  ink 13.4 / 12.6 / 11.5   dim 9.2 / 8.7 / 8.2   quiet 4.2 / 4.2 / 4.1
+ *   stord    ink 16.5 / 15.2 / 13.5   dim 11.1 / 10.5 / 9.5  quiet 5.0 / 4.9 / 4.7
+ * Every one is above the navy-and-peach figure it replaces. ADR 0023 is why a third hue is here.
+ */
+.kit--bremnes {
+	--navy-900: #0e0d08;
+	--navy-800: #17150c;
+	--navy-700: #211e12;
+	--navy-600: #2e2a18;
+	--navy-dim: rgb(14 13 8 / 78%);
+	--navy-line: rgb(14 13 8 / 30%);
+	--peach: #ffd200;
+	--peach-hi: #ffe14d;
+	--peach-dim: rgb(255 210 0 / 82%);
+	--peach-quiet: rgb(255 210 0 / 52%);
+	--peach-line: rgb(255 210 0 / 30%);
+	--peach-ghost: rgb(255 210 0 / 8%);
+	--peach-wash-1: rgb(255 210 0 / 6%);
+	--peach-wash-2: rgb(255 210 0 / 12%);
+	--peach-wash-3: rgb(255 210 0 / 18%);
+	--peach-wash-4: rgb(255 210 0 / 22%);
+	color: var(--peach);
+}
+.kit--stord {
+	--navy-900: #0d0d0d;
+	--navy-800: #171717;
+	--navy-700: #222222;
+	--navy-600: #303030;
+	--navy-dim: rgb(13 13 13 / 78%);
+	--navy-line: rgb(13 13 13 / 30%);
+	--peach: #ececec;
+	--peach-hi: #ffffff;
+	--peach-dim: rgb(236 236 236 / 82%);
+	--peach-quiet: rgb(236 236 236 / 52%);
+	--peach-line: rgb(236 236 236 / 30%);
+	--peach-ghost: rgb(236 236 236 / 8%);
+	--peach-wash-1: rgb(236 236 236 / 6%);
+	--peach-wash-2: rgb(236 236 236 / 12%);
+	--peach-wash-3: rgb(236 236 236 / 18%);
+	--peach-wash-4: rgb(236 236 236 / 22%);
+	color: var(--peach);
+}
+
 /* Buttons. A primitive, not a page detail — the submission form, filter UI and detail pages all
    need these, and scoped inside one route's <style> they were invisible to every other file. */
 .btn {

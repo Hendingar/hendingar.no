@@ -15,6 +15,8 @@ actually look like — and because a grassroots culture platform should not look
 | `--peach-hi` | `#ffbb99` | Emphasis, focus rings                 |
 
 Tints of the same two hues are fine. **A third hue is not**, and adding one needs a decision record.
+The one record so far is [ADR 0023](decisions/0023-club-kits.md): a home match's card wears its
+club's colours (`.kit--*` in `brand.css`), still two hues per card.
 Everything lives in `app/src/lib/styles/brand.css` — one source of truth, no colour literals in
 components.
 
