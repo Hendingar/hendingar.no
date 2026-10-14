@@ -340,3 +340,137 @@ describe('keepKnownCategory', () => {
 		expect(keepKnownCategory('anna', 'anna')).toBe('anna');
 	});
 });
+
+describe('one festival, three calendars', () => {
+	/*
+	 * The Falturiltu week as production held it on 2026-10-14: Stord kulturhus and Det skjer
+	 * Sunnhordland each list the festival's acts, titled their own way, and most pairs were
+	 * published twice. Falturiltu's own programme is the third listing. Titles, venues and minutes
+	 * are copied from the three sources; each row must end in one group.
+	 */
+	const FESTIVAL = 1;
+	const KULTURHUS = 2;
+	const DETSKJER = 3;
+	let id = 0;
+	const row = (
+		source: number,
+		slug: string,
+		title: string,
+		startsAt: string,
+		venue: string
+	): Candidate => ev((id += 1), source, title, startsAt, venue, slug);
+	const f = (t: string, at: string, v: string) => row(FESTIVAL, 'falturiltu', t, at, v);
+	const k = (t: string, at: string, v: string) => row(KULTURHUS, 'stord-kulturhus', t, at, v);
+	const d = (t: string, at: string, v: string) => row(DETSKJER, 'detskjer-sunnhordland', t, at, v);
+
+	const triples: Candidate[][] = [
+		[
+			f(
+				'Salmar på Falturiltu – ein hyllest til Kenneth Sivertsen',
+				'2026-10-29T18:30:00Z',
+				'Stord kulturhus'
+			),
+			k('Salmar på Falturiltu - Melk og honning (18+)', '2026-10-29T18:30:00Z', 'Vestibylen'),
+			d(
+				'Salmar på Falturiltu - Melk og honning - ein hyllest til Kenneth Sivertsen',
+				'2026-10-29T18:30:00Z',
+				'Stord Kulturhus'
+			)
+		],
+		[
+			f(
+				'Bokbar og mållagskveld med Djønne, Eikemo, Haugland og Lillegraven',
+				'2026-10-29T19:45:00Z',
+				'Stord kulturhus'
+			),
+			k(
+				'Bokbar med Djønne, Eikemo, Haugland & Lillegraven (18+)',
+				'2026-10-29T19:45:00Z',
+				'Vestibylen'
+			),
+			d(
+				'Mållagskveld med Leander Djønne, Marit Eikemo, Tormod Haugland & Ruth Lillegraven',
+				'2026-10-29T19:45:00Z',
+				'Stord Kulturhus'
+			)
+		],
+		[
+			f('Husdraumar med Marit Eikemo og Marita Aarekol', '2026-10-30T11:00:00Z', 'Stord bibliotek'),
+			k('Husdraumar med Marit Eikemo og Marita Aarekol', '2026-10-30T11:00:00Z', 'Biblioteket'),
+			d(
+				'Husdraumar - forlatne heimar på Vestlandet - Marit Eikemo og Marita Aarekol',
+				'2026-10-30T11:00:00Z',
+				'Stord bibliotek'
+			)
+		],
+		[
+			f('Jubileumsfest – stjerneglimt frå 20 år!', '2026-10-30T18:30:00Z', 'Stord kulturhus'),
+			k('Jubileumsfest - stjerneglimt frå 20 år (18+)', '2026-10-30T18:30:00Z', 'Vestibylen'),
+			d(
+				'Jubileumsfest - stjerneglimt frå 20 år - med Gabriels Novgorod',
+				'2026-10-30T18:30:00Z',
+				'Stord Kulturhus'
+			)
+		],
+		[
+			f(
+				'Kammeriltu – Sunnhordland kammerorkester med Tor Arve Røssland',
+				'2026-10-31T17:30:00Z',
+				'Stord kulturhus'
+			),
+			k('Kammeriltu - Sunnhordland kammerorkester (18+)', '2026-10-31T17:30:00Z', 'Vestibylen'),
+			d(
+				'Sunnhordland kammerorkester med Tor Arve Røssland og Stordøya kvedarlag',
+				'2026-10-31T17:30:00Z',
+				'Stord Kulturhus'
+			)
+		],
+		[
+			f('SYMRE', '2026-10-31T18:45:00Z', 'Stord kulturhus'),
+			k('SYMRE (18+)', '2026-10-31T18:45:00Z', 'Vestibylen'),
+			d('SYMRE', '2026-10-31T18:45:00Z', 'Stord Kulturhus')
+		],
+		[
+			f('Finn Erix', '2026-10-31T20:00:00Z', 'Stord kulturhus'),
+			k('Finn Erix (18+)', '2026-10-31T20:00:00Z', 'Storsalen'),
+			d("Finn Erix's jubileumsbasar", '2026-10-31T20:00:00Z', 'Stord Kulturhus')
+		],
+		[
+			f('Bokbad: Frode Grytten', '2026-10-31T12:15:00Z', 'Stord bibliotek'),
+			k('Bokbad: Frode Grytten', '2026-10-31T12:15:00Z', 'Biblioteket'),
+			d('Bokbad: Frode Grytten', '2026-10-31T12:15:00Z', 'Stord bibliotek')
+		]
+	];
+
+	it.each(triples.map((t) => [t[0]!.title, t]))('%s is one event', (_title, triple) => {
+		const groups = groupDuplicates(triple);
+		expect(groups).toHaveLength(1);
+		expect(groups[0]!.duplicateIds).toHaveLength(2);
+	});
+
+	it('keeps the festival week apart from what else is on that evening', () => {
+		// Everything at once: eight groups, and nothing pulled in from the neighbours.
+		const others = [
+			// Same minute as SYMRE, a different building.
+			row(4, 'stord-kyrkja', 'Salmar på Osvald', '2026-10-29T18:30:00Z', 'Osvald Pub'),
+			// Same building and minute as Finn Erix, a different show in the other hall.
+			row(5, 'stord-kino', 'Paw Patrol: Filmen', '2026-10-31T20:00:00Z', 'Småsalen')
+		];
+		const groups = groupDuplicates([...triples.flat(), ...others]);
+		expect(groups).toHaveLength(triples.length);
+		const grouped = new Set(groups.flatMap((g) => [g.canonicalId, ...g.duplicateIds]));
+		for (const other of others) expect(grouped.has(other.id)).toBe(false);
+	});
+
+	it('still refuses a same-slot pair whose titles share no name', () => {
+		const a = f('Linda Eide med Ruth Lillegraven', '2026-10-30T17:30:00Z', 'Stord kulturhus');
+		const b = d('Riksteatret: Apestjernen', '2026-10-30T17:30:00Z', 'Stord Kulturhus');
+		expect(comparePair(a, b).same).toBe(false);
+	});
+
+	it('needs a venue on both sides', () => {
+		const a = f('Finn Erix', '2026-10-31T20:00:00Z', 'Stord kulturhus');
+		const b = ev(99, 50, "Finn Erix's jubileumsbasar", '2026-10-31T20:00:00Z', null);
+		expect(comparePair(a, b).same).toBe(false);
+	});
+});

@@ -2,6 +2,7 @@ import {
 	DUPLICATE_TITLE_THRESHOLD,
 	normaliseTitle,
 	titleSimilarity,
+	tokenOverlap,
 	venueSimilarity
 } from './similarity.ts';
 import type { CategorySlug } from './taxonomy.ts';
@@ -110,6 +111,7 @@ export function comparePair(a: Candidate, b: Candidate): PairVerdict {
 
 	const score = titleSimilarity(a.title, b.title);
 	if (score < DUPLICATE_TITLE_THRESHOLD) {
+		if (sameSlot(a, b)) return { same: true, score };
 		return { same: false, reason: 'titles too different', score };
 	}
 
@@ -135,6 +137,44 @@ export function comparePair(a: Candidate, b: Candidate): PairVerdict {
 	}
 
 	return { same: true, score };
+}
+
+/**
+ * How much of the shorter title must appear in the longer for a same-slot pair to be one event.
+ *
+ * Measured on the Falturiltu week, where three calendars list one festival and title each act
+ * their own way, all at the same minute in the same building:
+ *
+ *   SYMRE                     / SYMRE (18+)                                            1.00
+ *   Finn Erix                 / Finn Erix's jubileumsbasar                             1.00
+ *   Kammeriltu - Sunnhordland kammerorkester (18+)
+ *                             / Sunnhordland kammerorkester med Tor Arve Røssland …    0.67
+ *   Bokbar med Djønne, Eikemo, Haugland & Lillegraven (18+)
+ *                             / Mållagskveld med Leander Djønne, Marit Eikemo, …       0.80
+ *
+ * Every one of those scored under DUPLICATE_TITLE_THRESHOLD on title alone and was published
+ * twice. Two different shows in one building at one minute — Storsalen and Småsalen both starting
+ * at 19:00 — share no names, and score 0.
+ */
+export const SAME_SLOT_OVERLAP = 0.6;
+
+/**
+ * The same minute, the same building, and one title naming the other.
+ *
+ * A second route to "same", for titles too unlike to be believed on their own. It asks for more
+ * than the title rule does everywhere else: the exact instant rather than the hour's window, and a
+ * venue on *both* sides that resolves to the same place — so it never applies to a human
+ * submission with no venue, and never across two churches. Within that, the question is only
+ * whether the titles share their names, which is what a festival programme and a venue's own
+ * listing of the same act reliably do and two different acts reliably do not.
+ */
+function sameSlot(a: Candidate, b: Candidate): boolean {
+	if (a.startsAt.getTime() !== b.startsAt.getTime()) return false;
+	if (!a.venueName || !b.venueName) return false;
+	const venueA = resolveVenueName(a.sourceSlug, a.venueName);
+	const venueB = resolveVenueName(b.sourceSlug, b.venueName);
+	if (venueSimilarity(venueA, venueB) < VENUE_MISMATCH_THRESHOLD) return false;
+	return tokenOverlap(a.title, b.title) >= SAME_SLOT_OVERLAP;
 }
 
 export type Group = { canonicalId: number; duplicateIds: number[] };

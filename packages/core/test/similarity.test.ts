@@ -189,3 +189,24 @@ describe('jaccard', () => {
 		expect(jaccard('a b', 'c d')).toBe(0);
 	});
 });
+
+describe('age limits in titles', () => {
+	it.each([
+		['SYMRE (18+)', 'symre'],
+		[
+			'Bård Tufte Johansen - Prøver å være positiv (18 år)',
+			'baard tufte johansen proever aa vaere positiv'
+		],
+		['Barneteater (frå 6 år)', 'barneteater'],
+		['Finn Erix 18+', 'finn erix']
+	])('%s compares as %s', (title, normalised) => {
+		expect(normaliseTitle(title)).toBe(normalised);
+	});
+
+	it('leaves a year or a number that is part of the name alone', () => {
+		expect(normaliseTitle('Jubileumsfest – stjerneglimt frå 20 år!')).toBe(
+			'jubileumsfest stjerneglimt fraa 20 aar'
+		);
+		expect(normaliseTitle('Falturiltu 2026')).toBe('falturiltu 2026');
+	});
+});

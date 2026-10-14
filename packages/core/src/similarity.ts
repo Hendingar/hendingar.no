@@ -19,9 +19,20 @@
  * reader sees, so it uses both signals.
  */
 
-/** Lowercase, fold Norwegian letters, drop punctuation, collapse whitespace. */
+/**
+ * An age limit written into a title: "(18+)", "(18 år)", "(frå 6 år)", a trailing "18+".
+ *
+ * Stord kulturhus writes the bar's age limit into every Falturiltu title — "SYMRE (18+)" — and no
+ * other calendar does, so "SYMRE" and "SYMRE (18+)" scored 0.63 and were listed twice. The limit
+ * is a fact about the event, not part of its name; it stays in the stored title and is only left
+ * out of the comparison.
+ */
+const AGE_LIMIT = /\(\s*(?:fr[åa]\s*)?\d{1,2}\s*(?:\+|år|aar)\s*\)|(?<!\S)\d{1,2}\s*\+(?!\S)/giu;
+
+/** Lowercase, drop age limits, fold Norwegian letters, drop punctuation, collapse whitespace. */
 export function normaliseTitle(value: string): string {
 	return value
+		.replace(AGE_LIMIT, ' ')
 		.toLowerCase()
 		.replace(/æ/g, 'ae')
 		.replace(/ø/g, 'oe')
@@ -98,6 +109,65 @@ export function titleSimilarity(a: string, b: string): number {
 			: 0;
 
 	return Math.max(levenshteinRatio(left, right), jaccard(left, right), contained);
+}
+
+/**
+ * Words that carry no identity in an event title. Folded, as `normaliseTitle` leaves them.
+ *
+ * "Linda Eide med Ruth Lillegraven" and "Husdraumar med Marit Eikemo og Marita Aarekol" share
+ * "med" and "og", and that is not evidence of anything.
+ */
+const FILLER = new Set([
+	'og',
+	'med',
+	'paa',
+	'i',
+	'aa',
+	'til',
+	'for',
+	'av',
+	'om',
+	'ein',
+	'eit',
+	'ei',
+	'en',
+	'et',
+	'fraa',
+	'fra',
+	'the',
+	'and',
+	'of',
+	'with',
+	's'
+]);
+
+/** The words of a title that could tell it apart from another. */
+export function contentTokens(value: string): Set<string> {
+	return new Set(
+		normaliseTitle(value)
+			.split(' ')
+			.filter((token) => token && !FILLER.has(token))
+	);
+}
+
+/**
+ * How much of the shorter title the longer one contains — the overlap coefficient, on content
+ * words only.
+ *
+ * Not a general title score, and `titleSimilarity` does not use it. It answers a narrower
+ * question that only makes sense once two listings are already known to be at the same place at
+ * the same minute: is one title a fuller or a shorter name for the other? A festival lists
+ * "Finn Erix"; the newspaper lists "Finn Erix's jubileumsbasar". Every word of the first is in the
+ * second, which scores 1 here and 0.35 on edit distance.
+ */
+export function tokenOverlap(a: string, b: string): number {
+	const left = contentTokens(a);
+	const right = contentTokens(b);
+	const smaller = Math.min(left.size, right.size);
+	if (smaller === 0) return 0;
+	let shared = 0;
+	for (const token of left) if (right.has(token)) shared += 1;
+	return shared / smaller;
 }
 
 /**
