@@ -4,6 +4,7 @@ import {
 	titleSimilarity,
 	venueSimilarity
 } from './similarity.ts';
+import type { CategorySlug } from './taxonomy.ts';
 import { resolveVenueName } from './venue-aliases.ts';
 
 /**
@@ -209,4 +210,41 @@ export function groupDuplicates(candidates: readonly Candidate[]): Group[] {
 			duplicateIds: members.filter((id) => id !== canonicalId).sort((x, y) => x - y)
 		}))
 		.sort((x, y) => x.canonicalId - y.canonicalId);
+}
+
+/**
+ * The category a group's canonical row should carry, when its own is the fallback.
+ *
+ * The canonical is the lowest id, which is whichever source happened to report first — and that
+ * can be the one that knows least. aktivitetforalle mirrors Bømlo's films from eBillett with no
+ * tag at all, so "Harila – Nådeløse fjell" was `anna` while Bømlo kino, reporting the same
+ * screening, said `kino`. `anna` is "we were not told", not a claim, so a duplicate that *was*
+ * told fills it in.
+ *
+ * Only when every duplicate that knows agrees. Two sources saying `musikk` and `festival` are a
+ * disagreement, and picking one would be inventing the answer — the row stays `anna`.
+ *
+ * Returns null when nothing should change.
+ */
+export function filledCategory(
+	canonical: CategorySlug,
+	duplicates: readonly CategorySlug[]
+): CategorySlug | null {
+	if (canonical !== 'anna') return null;
+	const known = new Set(duplicates.filter((c) => c !== 'anna'));
+	if (known.size !== 1) return null;
+	const [only] = known;
+	return only ?? null;
+}
+
+/**
+ * What an importer should store when the source has just said "I don't know".
+ *
+ * Without this the fill above would undo itself every night: the mirror's importer maps the same
+ * untagged row to `anna` again, writes it over the filled-in value, and consolidation puts it back
+ * — a row that flips twice a run and an `updated` count that is never true. A fallback never
+ * replaces a category somebody stated.
+ */
+export function keepKnownCategory(existing: CategorySlug, incoming: CategorySlug): CategorySlug {
+	return incoming === 'anna' && existing !== 'anna' ? existing : incoming;
 }

@@ -142,6 +142,30 @@ export const INSTANCES: readonly KulturhusInstance[] = [
 		scheduleCron: '0 5 * * *',
 		trusted: true,
 		posterRightsCleared: true
+	},
+	{
+		/*
+		 * Bømlo's cinema, on its own page exactly as Stord's is: `kinoprogram`, same page-data
+		 * route, films as `type: 'movie'`. Found because aktivitetforalle mirrors these films from
+		 * eBillett with no category tag at all — "Harila – Nådeløse fjell" arrived as `anna`, and
+		 * the portal has nothing better to read. The house's own programme says it is a film.
+		 * Same robots.txt as the house: no rules, no reservation. Measured 2026-10-14.
+		 */
+		slug: 'bomlo-kino',
+		name: 'Bømlo kino',
+		url: 'https://bomlokulturhus.no/kinoprogram',
+		endpoint: 'https://bomlokulturhus.no/page-data/kinoprogram/page-data.json',
+		pageData: 'json',
+		origin: 'https://bomlokulturhus.no',
+		region: 'Sunnhordland',
+		attribution: 'Bømlo kino',
+		timezone: 'Europe/Oslo',
+		venueFallback: 'Bømlo kulturhus',
+		iconUrl: 'https://dx-cw-static-files.imgix.net/121/favicon.png',
+		scheduleCron: '0 5 * * *',
+		trusted: true,
+		// The distributor's poster, not the house's — the same reasoning as Stord kino above.
+		posterRightsCleared: false
 	}
 ];
 

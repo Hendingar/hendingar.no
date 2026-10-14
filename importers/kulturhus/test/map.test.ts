@@ -592,3 +592,32 @@ describe('Bømlo on Gatsby 5', () => {
 		expect(showings).toHaveLength(41);
 	});
 });
+
+describe('Bømlo kino', () => {
+	/*
+	 * Bømlo kulturhus's `kinoprogram`, committed 2026-10-14. Added because aktivitetforalle mirrors
+	 * these films with no category tag, so "Harila – Nådeløse fjell" was filed under `anna`.
+	 */
+	const kino = instanceBySlug('bomlo-kino')!;
+	const films = extractEvents(
+		JSON.parse(
+			readFileSync(
+				fileURLToPath(new URL('./fixtures/bomlo-kinoprogram.json', import.meta.url)),
+				'utf8'
+			)
+		)
+	);
+	const screenings = mapEvents(films, kino);
+
+	it('maps every screening as kino, Harila among them', () => {
+		expect(screenings.length).toBeGreaterThan(0);
+		// The only refusals are the house's `mc-` date markers on days with no timed screening.
+		expect(screenings.filter(isFailure).every((f) => f.externalId.startsWith('mc-'))).toBe(true);
+		for (const s of screenings) if (!isFailure(s)) expect(s.category).toBe('kino');
+		expect(screenings.some((s) => !isFailure(s) && s.title.startsWith('Harila'))).toBe(true);
+	});
+
+	it('claims no rights to a distributor’s poster', () => {
+		expect(kino.posterRightsCleared).toBe(false);
+	});
+});

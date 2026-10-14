@@ -11,6 +11,7 @@ import { createDb } from '../src/db.ts';
 import {
 	DUPLICATE_WINDOW_MS,
 	comparePair,
+	filledCategory,
 	groupDuplicates,
 	type Candidate
 } from '../src/consolidate.ts';
@@ -41,6 +42,7 @@ const rows = await db
 		// stable name, because a serial id differs between this database and production.
 		sourceSlug: sources.slug,
 		title: events.title,
+		category: events.category,
 		startsAt: events.startsAt,
 		venueName: venues.name
 	})
@@ -150,6 +152,26 @@ for (const group of groups) {
 		.where(inArray(events.id, group.duplicateIds));
 	marked += group.duplicateIds.length;
 }
+
+/*
+ * A canonical that says `anna` takes the category its duplicates agree on. See `filledCategory`:
+ * the canonical is whoever reported first, which is not always whoever knew what the event is.
+ */
+let filled = 0;
+for (const group of groups) {
+	const categoryOf = (id: number) => rows.find((r) => r.id === id)?.category;
+	const canonical = categoryOf(group.canonicalId);
+	if (!canonical) continue;
+	const better = filledCategory(
+		canonical,
+		group.duplicateIds.map(categoryOf).filter((c) => c !== undefined)
+	);
+	if (!better) continue;
+	await db.update(events).set({ category: better }).where(eq(events.id, group.canonicalId));
+	filled += 1;
+}
+if (filled > 0)
+	console.log(`filled in the category of ${filled} canonical rows from their duplicates`);
 
 // A canonical must never point at anything, or a listing that filters on null would hide the row
 // it just chose to keep.
