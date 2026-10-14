@@ -21,6 +21,7 @@
 		"db:seed": "pnpm --filter @hendingar/core db:seed",
 		"consolidate": "pnpm --filter @hendingar/core consolidate",
 		"expire": "pnpm --filter @hendingar/core expire",
+		"await-migrations": "pnpm --filter @hendingar/core await-migrations",
 		"db:sources": "pnpm --filter @hendingar/core db:sources",
 		"db:pull": "./scripts/db-pull.sh",
 		"db:up": "./scripts/db.sh up",
