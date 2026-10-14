@@ -75,7 +75,9 @@ test('every tool answers against real data', async ({ request }) => {
 		get_event: { event: 1 },
 		events_on_date: { date: '2026-10-16' },
 		week_events: { week: '2026-W43' },
-		resolve_names: { term: 'stord' }
+		resolve_names: { term: 'stord' },
+		// An id that may not exist is still a valid call: it comes back under `missing`.
+		show_events: { ids: [1] }
 	};
 	for (const tool of tools) {
 		const body = await rpc(request, 'tools/call', {
@@ -133,4 +135,80 @@ test('/ki shows the address to paste, and fits a narrow phone', async ({ page })
 test('the footer links to /ki from every page', async ({ request }) => {
 	const html = await (await request.get('/')).text();
 	expect(html).toContain('href="/ki"');
+});
+
+/**
+ * The MCP App view, drawn the way a host draws it: the `ui://` page in a sandboxed frame, with the
+ * test page playing the host — answering the handshake, delivering the tool result, and recording
+ * what the view asks it to do. The protocol is ext-apps' (ui/initialize → tool-result → open-link);
+ * a real host adds its own CSP and chrome, which only a real client can show.
+ */
+test('show_events draws as cards in a host, and every button asks the host', async ({
+	page,
+	request
+}) => {
+	const found = await callTool(request, 'search_events', { limit: 3 });
+	const ids: number[] = found.events.map((e: { id: number }) => e.id);
+	const shown = await rpc(request, 'tools/call', {
+		name: 'show_events',
+		arguments: { ids, heading: 'Test frå e2e' }
+	});
+	const view = await rpc(request, 'resources/read', { uri: 'ui://hendingar/events.html' });
+	const html: string = view.result.contents[0].text;
+
+	await page.setContent(
+		'<iframe sandbox="allow-scripts" style="width:420px;height:900px"></iframe>'
+	);
+	await page.evaluate(
+		({ html, result }) => {
+			const frame = document.querySelector('iframe')!;
+			const log: Array<{ method?: string; params?: unknown }> = [];
+			Object.assign(window, { hostLog: log });
+			window.addEventListener('message', (e) => {
+				if (e.source !== frame.contentWindow) return;
+				const msg = e.data;
+				log.push(msg);
+				const send = (body: object) =>
+					frame.contentWindow!.postMessage({ jsonrpc: '2.0', ...body }, '*');
+				if (msg.method === 'ui/initialize') {
+					send({
+						id: msg.id,
+						result: {
+							protocolVersion: '2026-01-26',
+							hostInfo: { name: 'e2e', version: '0' },
+							hostCapabilities: { openLinks: {} },
+							hostContext: { theme: 'dark' }
+						}
+					});
+				} else if (msg.method === 'ui/notifications/initialized') {
+					send({ method: 'ui/notifications/tool-result', params: result });
+				} else if (msg.id !== undefined) {
+					send({ id: msg.id, result: {} });
+				}
+			});
+			frame.srcdoc = html;
+		},
+		{ html, result: shown.result }
+	);
+
+	const frame = page.frameLocator('iframe');
+	await expect(frame.getByRole('heading', { name: 'Test frå e2e' })).toBeVisible();
+	for (const event of found.events) {
+		await expect(frame.getByRole('link', { name: event.title })).toBeVisible();
+	}
+
+	// Links are asked of the host, never navigated inside the frame.
+	await frame.getByRole('link', { name: 'Legg i kalender' }).first().click();
+	await expect
+		.poll(() =>
+			page.evaluate(() => JSON.stringify((window as unknown as { hostLog: unknown[] }).hostLog))
+		)
+		.toContain(found.events[0].icsUrl);
+
+	await frame.getByRole('button', { name: 'Fortel meir' }).first().click();
+	await expect
+		.poll(() =>
+			page.evaluate(() => JSON.stringify((window as unknown as { hostLog: unknown[] }).hostLog))
+		)
+		.toContain('ui/message');
 });

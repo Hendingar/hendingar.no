@@ -170,6 +170,9 @@ app/src/lib/server/mcp/            the read-only MCP server at /mcp (ADR 0024). 
                                    `liveCatalogue` — the site's own remote queries — and return
                                    `toPublicEvent` from packages/core/src/public-event.ts. A new
                                    tool is a public API change: contract.spec.ts pins the names
+app/src/lib/mcp-view/              the MCP App `show_events` is drawn with. NOT part of the site:
+                                   view-plugin.ts bundles it into one inline page. Never import
+                                   `$app/*` here — it does not exist outside SvelteKit
 
 services/verifier/src/verifier/
   llm.py                   Entra credential → Agent Framework client. EVERY agent is built here

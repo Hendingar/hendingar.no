@@ -146,7 +146,9 @@ export function toPublicEvent(row: ListingRowInput, origin: string): PublicEvent
 		municipality: row.municipality ?? null,
 		url,
 		icsUrl: `${url}/kalender.ics`,
-		posterUrl: row.posterUrl ?? null,
+		// Absolute, because the reader is not on our page: a seed poster is `/seed-poster.svg`, which
+		// means nothing to a model and resolves against the wrong origin inside an MCP App's frame.
+		posterUrl: row.posterUrl ? absolute(origin, row.posterUrl) : null,
 		sources: (row.sourceMarks ?? []).map((m) => ({ slug: m.slug, name: m.name }))
 	};
 }
@@ -188,3 +190,22 @@ export function toPublicEventDetail(row: DetailRowInput, origin: string): Public
 		removedUpstream: row.removedUpstreamAt !== null
 	};
 }
+
+/**
+ * What `show_events` returns, and what the MCP App's view reads (ADR 0024).
+ *
+ * Here rather than beside the tool because it is a wire type with two ends: the server writes it
+ * and a bundle running in somebody else's iframe parses it. One schema, so the two cannot drift.
+ */
+export const showEventsResultSchema = z.object({
+	/** A short heading the assistant chose, or null for the view's own. */
+	heading: z.string().nullable(),
+	/** Today at the venues, `YYYY-MM-DD`, so the view can say "i dag" and "i morgon". */
+	today: z.string(),
+	timeZone: z.string(),
+	events: z.array(publicEventDetailSchema),
+	/** Ids that were asked for and are not published events, so the assistant can say so. */
+	missing: z.array(z.number().int())
+});
+
+export type ShowEventsResult = z.infer<typeof showEventsResultSchema>;

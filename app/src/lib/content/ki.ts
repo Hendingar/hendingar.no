@@ -52,7 +52,8 @@ export const CAN_ASK: string[] = [
 	'Kva dagar det skjer mest, månad for månad',
 	'Faste aktivitetar med timeplan, og stader som alltid er opne',
 	'Kuratoren sine tre val for helga, med grunngjeving',
-	'Kva kjelder vi hentar frå, og når dei sist vart henta'
+	'Kva kjelder vi hentar frå, og når dei sist vart henta',
+	'Vise det han tilrår som kort med plakat, tid, stad og knappar for kalender og billettar — i assistentar som kan teikne dei'
 ];
 
 /** The promises. Each is enforced in code, and the ADR says where. */
