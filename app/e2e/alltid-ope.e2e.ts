@@ -263,7 +263,12 @@ test('a weekly activity’s page says when it meets, not midnight on its first d
 
 	const when = page.locator('dd.weekly');
 	await expect(when).toContainText('Tysdag og onsdag 18:00–19:30');
-	await expect(when).toContainText(/Til \w+ \d+\. \w+ \d{4}/);
+	/*
+	 * `\p{L}`, never `\w`: JavaScript's `\w` is ASCII, and the season's last day is computed from
+	 * today, so on any date where it falls on a måndag or a søndag this assertion failed — a
+	 * calendar-dependent red build that had nothing to do with the change under test.
+	 */
+	await expect(when).toContainText(/Til \p{L}+ \d+\. \p{L}+ \d{4}/u);
 	await expect(page.locator('.facts')).not.toContainText('00:00');
 });
 
