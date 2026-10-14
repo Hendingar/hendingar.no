@@ -27,7 +27,11 @@ import {
 	weeklyActivities
 } from '../../events.remote.ts';
 import { listCollection } from '../../collection.remote.ts';
+import { and, eq, gte, isNotNull, isNull, or, sql } from 'drizzle-orm';
+import { events } from '@hendingar/core/schema';
+import { db } from '../db';
 import { currentPicks } from '../kurator.ts';
+import { stillListed } from '../listing.ts';
 import type { Catalogue } from './tools.ts';
 
 /**
@@ -73,5 +77,32 @@ export const liveCatalogue = {
 		await searchSuggestions(term),
 	listCategoryCounts: async () => await listCategoryCounts(),
 	listSources: async () => (await listCollection()).sources,
-	siteStatus: async () => await siteStatus()
+	siteStatus: async () => await siteStatus(),
+	posterOrigins
 } satisfies Catalogue;
+
+/**
+ * Every origin a listed event's poster is hot-linked from, for the MCP App view's CSP.
+ *
+ * The view runs in a frame whose policy lists, by origin, where it may load images from — and
+ * posters live on whatever CDN each source uses. This is the one read here that is not a page's
+ * query: no page needs the list, because the site's own CSP allows `https:` for images. Published,
+ * not duplicates, still listed, not over: the same rows any tool can return.
+ */
+async function posterOrigins(): Promise<string[]> {
+	const rows = await db()
+		.selectDistinct({
+			origin: sql<string | null>`substring(${events.posterUrl} from '^(https://[^/]+)')`
+		})
+		.from(events)
+		.where(
+			and(
+				eq(events.status, 'published'),
+				isNull(events.duplicateOfId),
+				stillListed,
+				isNotNull(events.posterUrl),
+				or(gte(events.startsAt, sql`now()`), gte(events.endsAt, sql`now()`))
+			)
+		);
+	return rows.flatMap((row) => (row.origin ? [row.origin] : []));
+}

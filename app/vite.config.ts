@@ -2,11 +2,18 @@ import { defineConfig } from 'vitest/config';
 import { playwright } from '@vitest/browser-playwright';
 import adapter from '@sveltejs/adapter-node';
 import { sveltekit } from '@sveltejs/kit/vite';
+import { fileURLToPath } from 'node:url';
+import { mcpView } from './src/lib/server/mcp/view-plugin.ts';
 
 export default defineConfig({
 	// One .env for the whole workspace, at the repo root. `pnpm db:up` creates it.
 	envDir: '..',
 	plugins: [
+		// The MCP App view, built into one inline page for the `ui://` resource (ADR 0024).
+		mcpView({
+			root: fileURLToPath(new URL('.', import.meta.url)),
+			viewDir: fileURLToPath(new URL('./src/lib/mcp-view', import.meta.url))
+		}),
 		sveltekit({
 			compilerOptions: {
 				// Force runes mode for the project, except for libraries. Can be removed in svelte 6.

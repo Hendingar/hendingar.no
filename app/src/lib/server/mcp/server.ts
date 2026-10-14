@@ -1,9 +1,14 @@
+import { registerAppResource, RESOURCE_MIME_TYPE } from '@modelcontextprotocol/ext-apps/server';
 import { McpServer, ResourceTemplate } from '@modelcontextprotocol/server';
+import viewHtml from 'virtual:hendingar-mcp-view';
 import { z } from 'zod';
 import { COVERED_MUNICIPALITIES } from '@hendingar/core/coverage';
 import { toPublicEventDetail } from '@hendingar/core/public-event';
 import { CATEGORIES } from '@hendingar/core/taxonomy';
-import { ABOUT_NOTES, registerTools, resolveEventRef, type Catalogue } from './tools.ts';
+import { ABOUT_NOTES, registerTools, resolveEventRef, VIEW_URI, type Catalogue } from './tools.ts';
+
+/** Where images in the view may come from besides the posters: the church paintings (church-art.ts). */
+const VIEW_IMAGE_ORIGINS = ['https://upload.wikimedia.org'];
 
 /**
  * The MCP server: what an assistant sees when somebody connects hendingar.no to it. ADR 0024.
@@ -23,7 +28,7 @@ const INSTRUCTIONS = [
 	"The data is in Norwegian, mostly Nynorsk. Answer in the user's language; keep names as written.",
 	'Search is plain text matching. For a broad question, run several short searches (or `weekend_events` / `events_on_date`) and choose yourself.',
 	"Always give each event's `url`, and name its source. hendingar.no is an index and the sources are the origin.",
-	'Presentation: list events grouped by day, each title a Markdown link to its `url`, with the time from `when`, the venue, an "add to calendar" link to `icsUrl`, and `ticketUrl` when present. Tool results repeat this as a short hint.',
+	'To show events, call `show_events` with the ids you chose: it draws them as cards where the client can. Otherwise, list events grouped by day, each title a Markdown link to its `url`, with the time from `when`, the venue, an "add to calendar" link to `icsUrl`, and `ticketUrl` when present. Tool results repeat this as a short hint.',
 	"Use `when` or `startsAt` exactly as given — they are already in the venue's time zone.",
 	'Never invent prices, line-ups, age limits or availability. If it is not in the record, it is unknown; tickets are at `ticketUrl`.',
 	'This server is read-only. To add or correct an event, send people to https://hendingar.no/send-inn.'
@@ -55,6 +60,34 @@ export function buildMcpServer(catalogue: Catalogue, origin: string): McpServer 
 						uri: uri.href,
 						mimeType: 'application/json',
 						text: JSON.stringify(toPublicEventDetail(row, origin))
+					}
+				]
+			};
+		}
+	);
+
+	registerAppResource(
+		server,
+		'events-view',
+		VIEW_URI,
+		{
+			title: 'hendingar.no — hendingar som kort',
+			description: 'The cards `show_events` is drawn with, in clients that support MCP Apps.',
+			mimeType: RESOURCE_MIME_TYPE
+		},
+		async (uri) => {
+			// Posters are hot-linked from each source's CDN, so the frame's image policy is built
+			// from where the listed ones actually live — and our own origin, for the seed's.
+			const resourceDomains = [
+				...new Set([origin, ...VIEW_IMAGE_ORIGINS, ...(await catalogue.posterOrigins())])
+			];
+			return {
+				contents: [
+					{
+						uri: uri.href,
+						mimeType: RESOURCE_MIME_TYPE,
+						text: viewHtml,
+						_meta: { ui: { csp: { resourceDomains }, prefersBorder: false } }
 					}
 				]
 			};

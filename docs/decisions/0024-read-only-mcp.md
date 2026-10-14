@@ -93,6 +93,25 @@ connect: the first real conversation through Claude had `url`, `icsUrl` and `pos
 event and used none of them. A line read with the data is what changed that. `contract.spec.ts`
 pins the hints' presence.
 
+### Cards, where the client can draw them (MCP Apps)
+
+`show_events` takes the ids the assistant chose (at most twelve) and is the one tool with a view:
+`ui://hendingar/events.html`, an MCP App the client draws inline as cards — the site's own
+thumbnails, the day headings, and buttons to add an event to the calendar, open its tickets, or
+ask the assistant for more. Every other tool stays data-only, deliberately: an assistant runs four
+or five searches to answer one question, and a widget per search would fill the chat with
+half-relevant cards. It researches with the data tools and then shows what it picked.
+
+- **The view is Svelte, built into one inline page.** `server/mcp/view-plugin.ts` runs a nested
+  Vite build of `src/lib/mcp-view/` (reusing `EventThumb` and `brand.css`) and hands the server the
+  HTML as a string. No script or style is loaded from anywhere, so the frame's CSP need only name
+  image origins: ours, Wikimedia's (the church paintings), and the CDNs the listed posters are
+  hot-linked from, read from the database when the resource is read.
+- **It fetches nothing and navigates nowhere.** The host delivers the tool result; every link is
+  opened by asking the host (`ui/open-link`); "Fortel meir" asks the assistant (`ui/message`). The
+  result is parsed with `showEventsResultSchema` from core, the same schema the server writes it with.
+- A client without MCP Apps gets the same events as JSON and a hint, and loses nothing.
+
 ### Nothing is logged
 
 Not the tool, not its arguments, not the search words. The README's "no search terms" applies to

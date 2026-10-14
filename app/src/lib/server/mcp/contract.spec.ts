@@ -3,9 +3,13 @@ import { fileURLToPath } from 'node:url';
 import { createMcpHandler } from '@modelcontextprotocol/server';
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
-import { publicEventDetailSchema, publicEventSchema } from '@hendingar/core/public-event';
+import {
+	publicEventDetailSchema,
+	publicEventSchema,
+	showEventsResultSchema
+} from '@hendingar/core/public-event';
 import { buildMcpServer } from './server.ts';
-import { DETAIL_HINT, LIST_HINT, resolveEventRef, type Catalogue } from './tools.ts';
+import { DETAIL_HINT, LIST_HINT, resolveEventRef, VIEW_URI, type Catalogue } from './tools.ts';
 
 /**
  * The MCP server's public contract (ADR 0024, and the condition ADR 0001 set for any public API):
@@ -92,6 +96,7 @@ function stubCatalogue(calls: string[] = []): Catalogue {
 		}),
 		listCategoryCounts: seen('listCategoryCounts', [{ slug: 'musikk', total: 1 }]),
 		listSources: seen('listSources', []),
+		posterOrigins: seen('posterOrigins', ['https://cdn.example']),
 		siteStatus: seen('siteStatus', {
 			upcomingCount: 1,
 			standingCount: 0,
@@ -190,6 +195,7 @@ describe('the MCP contract', () => {
 				'popular_events',
 				'resolve_names',
 				'search_events',
+				'show_events',
 				'upcoming_events',
 				'week_events',
 				'weekend_events',
@@ -218,7 +224,8 @@ describe('the MCP contract', () => {
 			.parse(await rpc('resources/list'));
 		expect(resources.resources.map((r) => r.uri).sort()).toEqual([
 			'hendingar://about',
-			'hendingar://categories'
+			'hendingar://categories',
+			'ui://hendingar/events.html'
 		]);
 		const templates = z
 			.object({ resourceTemplates: z.array(z.object({ uriTemplate: z.string() })) })
@@ -269,6 +276,53 @@ describe('the MCP contract', () => {
 	it('tells the assistant how to show one event', async () => {
 		const result = await callTool('get_event', { event: 42 });
 		expect(texts(result)).toContain(DETAIL_HINT);
+	});
+
+	it('draws show_events with the view, and no other tool', async () => {
+		const listed = z
+			.object({
+				tools: z.array(
+					z.object({ name: z.string(), _meta: z.record(z.string(), z.unknown()).optional() })
+				)
+			})
+			.parse(await rpc('tools/list'));
+		const withView = listed.tools.filter((t) => t._meta?.ui !== undefined);
+		expect(withView.map((t) => t.name)).toEqual(['show_events']);
+		expect(withView[0]?._meta?.ui).toEqual({ resourceUri: VIEW_URI });
+	});
+
+	it('serves the view as one self-contained page, with posters allowed by origin', async () => {
+		const read = z
+			.object({
+				contents: z.array(
+					z.object({
+						uri: z.string(),
+						mimeType: z.string(),
+						text: z.string(),
+						_meta: z.object({
+							ui: z.object({ csp: z.object({ resourceDomains: z.array(z.string()) }) })
+						})
+					})
+				)
+			})
+			.parse(await rpc('resources/read', { uri: VIEW_URI }));
+		const view = read.contents[0];
+		expect(view?.mimeType).toBe('text/html;profile=mcp-app');
+		expect(view?.text).toMatch(/^<!doctype html>/);
+		expect(view?.text).toContain('<div id="app"></div>');
+		// Nothing loaded from elsewhere: the script and the style are inline.
+		expect(view?.text).not.toMatch(/<script[^>]+src=|<link[^>]+stylesheet/);
+		expect(view?._meta.ui.csp.resourceDomains).toEqual(
+			expect.arrayContaining([ORIGIN, 'https://cdn.example', 'https://upload.wikimedia.org'])
+		);
+	});
+
+	it('shows the events asked for, and says which were not found', async () => {
+		const result = await callTool('show_events', { ids: [42, 7, 42], heading: 'Fredag' });
+		const shown = showEventsResultSchema.parse(result.structuredContent);
+		expect(shown.events.map((e) => e.id)).toEqual([42]);
+		expect(shown.missing).toEqual([7]);
+		expect(shown.heading).toBe('Fredag');
 	});
 
 	it('resolves a pasted link to the event it names', async () => {

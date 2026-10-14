@@ -1,3 +1,4 @@
+import { RESOURCE_URI_META_KEY } from '@modelcontextprotocol/ext-apps/server';
 import type { McpServer, ToolAnnotations } from '@modelcontextprotocol/server';
 import { z } from 'zod';
 import { COVERED_MUNICIPALITIES } from '@hendingar/core/coverage';
@@ -10,6 +11,7 @@ import {
 import {
 	publicEventDetailSchema,
 	publicEventSchema,
+	showEventsResultSchema,
 	toPublicEvent,
 	toPublicEventDetail,
 	type DetailRowInput,
@@ -108,6 +110,8 @@ export type Catalogue = {
 			runs: Array<{ startedAt: Date; status: string }>;
 		}>
 	>;
+	/** Where listed posters are hot-linked from: the MCP App view's image CSP. */
+	posterOrigins(): Promise<string[]>;
 	siteStatus(): Promise<{
 		upcomingCount: number;
 		standingCount: number;
@@ -170,7 +174,16 @@ function result<T extends Record<string, unknown>>(structured: T) {
  * addressed to the model, not to the reader.
  */
 export const LIST_HINT =
-	'Presentation: group events by day using `startsAt`, in time order. Make each title a Markdown link to its `url`. Give the time from `when` and the venue with its municipality. Add a short "add to calendar" link to `icsUrl`, and a ticket link to `ticketUrl` when an event has one. Name the source(s). Keep it compact: one or two lines per event.';
+	'Presentation: group events by day using `startsAt`, in time order. Make each title a Markdown link to its `url`. Give the time from `when` and the venue with its municipality. Add a short "add to calendar" link to `icsUrl`, and a ticket link to `ticketUrl` when an event has one. Name the source(s). Keep it compact: one or two lines per event. Once you have chosen what to recommend, call `show_events` with their ids: clients that can draw it show them as cards with posters and calendar buttons, and then your text can stay short.';
+
+/** The MCP App view, served by `server.ts`. A tool that names it is drawn with it. */
+export const VIEW_URI = 'ui://hendingar/events.html';
+
+/** Enough for a weekend; more than that is a listing, and the site is better at those. */
+const SHOW_MAX = 12;
+
+export const SHOW_HINT =
+	'These events are now shown to the user as cards (in clients that draw them). Do not repeat each one in full: add a sentence or two on why you picked them, and mention anything in `missing`.';
 
 export const PICKS_HINT =
 	"Presentation: if there are picks, show them in `rank` order, each as the title linked to `url`, its `when` and venue, and the kurator's `reason` quoted as written (translate it if the user writes another language). Say they are hendingar.no's own weekend picks. If there are none, say so plainly and use `weekend_events` instead.";
@@ -629,6 +642,44 @@ export function registerTools(server: McpServer, catalogue: Catalogue, origin: s
 						lastRun: last ? { at: last.startedAt.toISOString(), status: last.status } : null
 					};
 				})
+			});
+		}
+	);
+
+	server.registerTool(
+		'show_events',
+		{
+			title: 'Show events as cards',
+			description:
+				'Show the user the events you are recommending, as cards: poster, time, place, and buttons to add each to their calendar, buy tickets, or ask for more. Call it once, after you have searched, with the ids you chose (up to 12) — not for every search. Clients that cannot draw cards get the same events as data. Keep your own text short afterwards: the cards carry the details.',
+			inputSchema: z.object({
+				ids: z
+					.array(z.number().int().positive())
+					.min(1)
+					.max(SHOW_MAX)
+					.describe(`Event ids to show, from any other tool. At most ${SHOW_MAX}.`),
+				heading: z
+					.string()
+					.trim()
+					.max(80)
+					.optional()
+					.describe('A short heading in the user\'s language, e.g. "Laurdag på Stord".')
+			}),
+			outputSchema: showEventsResultSchema,
+			annotations: READ_ONLY,
+			_meta: { ui: { resourceUri: VIEW_URI }, [RESOURCE_URI_META_KEY]: VIEW_URI }
+		},
+		async ({ ids, heading }) => {
+			const unique = [...new Set(ids)];
+			const rows = await Promise.all(unique.map((id) => catalogue.getEvent(id)));
+			const events = rows.flatMap((row) => (row ? [toPublicEventDetail(row, origin)] : []));
+			const found = new Set(events.map((e) => e.id));
+			return withHint(SHOW_HINT, {
+				heading: heading || null,
+				today: today(),
+				timeZone: DEFAULT_TIME_ZONE,
+				events,
+				missing: unique.filter((id) => !found.has(id))
 			});
 		}
 	);

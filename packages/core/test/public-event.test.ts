@@ -81,6 +81,15 @@ describe('toPublicEvent', () => {
 		expect(event.timeZone).toBe('Europe/Oslo');
 	});
 
+	it('makes a same-origin poster absolute, and leaves a hot-linked one alone', () => {
+		expect(toPublicEvent({ ...row, posterUrl: '/seed-poster.svg' }, ORIGIN).posterUrl).toBe(
+			'https://hendingar.no/seed-poster.svg'
+		);
+		expect(
+			toPublicEvent({ ...row, posterUrl: 'https://cdn.example/p.jpg' }, ORIGIN).posterUrl
+		).toBe('https://cdn.example/p.jpg');
+	});
+
 	it('names a row with no sources as having none, rather than inventing one', () => {
 		expect(toPublicEvent({ ...row, sourceMarks: null }, ORIGIN).sources).toEqual([]);
 	});
