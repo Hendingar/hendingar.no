@@ -12,6 +12,9 @@ param containerImage string
 param acrLoginServer string
 param managedEnvironmentId string
 param runtimeIdentityId string
+
+@description('Client id of runtimeIdentityId. DefaultAzureCredential needs it to pick a user-assigned identity.')
+param runtimeIdentityClientId string
 param postgresFqdn string
 param postgresAdminUser string
 
@@ -141,6 +144,23 @@ resource app 'Microsoft.App/containerApps@2024-03-01' = {
               // unset and the UI hides the photo shortcut rather than offering a dead button.
               name: 'VERIFIER_URL'
               value: verifierUrl
+            }
+            {
+              /*
+               * Where approved posters are written. This parameter existed from the first poster
+               * PR and was never put into the environment, so `posterStorageEnabled()` was false in
+               * production, every upload answered 503, and no submitted picture was ever kept —
+               * while the receipt showed the local copy and said it would be the thumbnail.
+               */
+              name: 'POSTER_CONTAINER_URL'
+              value: posterContainerUrl
+            }
+            {
+              // The blob client authenticates with DefaultAzureCredential, which cannot choose a
+              // user-assigned identity on its own. The verifier sets the same variable for the
+              // same reason.
+              name: 'AZURE_CLIENT_ID'
+              value: runtimeIdentityClientId
             }
           ]
         }

@@ -29,6 +29,7 @@
 		submitEvent,
 		type ContributionTarget
 	} from '../../submit.remote';
+	import { eventTile } from '../../events.remote';
 	import { describeFields } from '@hendingar/core/contribution';
 	import { ensureClientId, existingClientId } from '../../client-id.ts';
 	import { claimTypedBeforeHydration } from '../../typed-before-hydration.ts';
@@ -359,6 +360,8 @@
 					body: blob
 				});
 				posterState = response.ok ? 'saved' : 'skipped';
+				// The card on the verdict was drawn before the picture landed; draw it again with it.
+				if (response.ok && result.eventId) void eventTile(result.eventId).refresh();
 			} catch {
 				posterState = 'skipped';
 			}
@@ -844,6 +847,7 @@
 		checks={verdict.checks}
 		sourceUrl={verdict.sourceUrl}
 		{poster}
+		eventId={verdict.eventId}
 	/>
 {:else}
 	<!--

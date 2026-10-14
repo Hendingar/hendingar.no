@@ -118,6 +118,7 @@
 			sourceUrl={verdict.sourceUrl}
 			poster={verdict.posterUrl}
 			contributed={verdict.contributed}
+			eventId={verdict.id}
 		/>
 
 		{#if candidates.length > 0}

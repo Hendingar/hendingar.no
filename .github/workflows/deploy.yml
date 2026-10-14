@@ -225,6 +225,7 @@ jobs:
               acrLoginServer="${{ steps.infra.outputs.acrLoginServer }}" \
               managedEnvironmentId="${{ steps.infra.outputs.managedEnvironmentId }}" \
               runtimeIdentityId="${{ steps.infra.outputs.runtimeIdentityId }}" \
+              runtimeIdentityClientId="${{ steps.infra.outputs.runtimeIdentityClientId }}" \
               postgresFqdn="${{ steps.infra.outputs.postgresFqdn }}" \
               postgresAdminUser="${{ steps.infra.outputs.postgresAdminUserOut }}" \
               postgresAdminPassword="$POSTGRES_ADMIN_PASSWORD" \

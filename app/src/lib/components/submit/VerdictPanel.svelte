@@ -13,6 +13,7 @@
 		type ContributableField
 	} from '@hendingar/core/contribution';
 	import { linkLabel, safeHttpUrl } from '../../source-link.ts';
+	import ReceiptCard from './ReceiptCard.svelte';
 
 	type Check = {
 		check: VerificationCheck;
@@ -33,7 +34,8 @@
 		checks,
 		poster = null,
 		sourceUrl = null,
-		contributed = []
+		contributed = [],
+		eventId = null
 	}: {
 		status: 'published' | 'pending' | 'rejected';
 		/** What we concluded, which is the part the sender actually needs told. */
@@ -73,7 +75,15 @@
 		 * saying what landed is indistinguishable from a polite refusal.
 		 */
 		contributed?: readonly ContributableField[];
+		/**
+		 * The submission's own row. For an approved one that is a published event, and the panel
+		 * shows it as its card — in place of the local poster, because the card shows whether the
+		 * picture actually reached the event rather than promising that it will.
+		 */
+		eventId?: number | null;
 	} = $props();
+
+	const showCard = $derived(outcome === 'approved' && eventId !== null);
 
 	/* Re-checked at the href rather than trusted: see source-link.ts. */
 	const safeSource = $derived(safeHttpUrl(sourceUrl));
@@ -239,7 +249,13 @@
 		</aside>
 	{/if}
 
-	{#if poster}
+	{#if showCard && eventId !== null}
+		<!-- A card that cannot load costs the link, never the verdict: the button below still goes there. -->
+		<svelte:boundary>
+			<ReceiptCard id={eventId} />
+			{#snippet failed()}{/snippet}
+		</svelte:boundary>
+	{:else if poster}
 		<!--
 			The image the reasoning is about.
 			
