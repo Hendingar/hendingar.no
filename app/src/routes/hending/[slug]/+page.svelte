@@ -31,7 +31,9 @@
 	import { plainText } from '@hendingar/core/text';
 	import { track } from '../../../lib/analytics.ts';
 	import { parseFixture } from '@hendingar/core/fixture';
+	import { parseHandballMatch } from '@hendingar/core/handball';
 	import VersusTile from '../../../lib/components/VersusTile.svelte';
+	import HandballTile from '../../../lib/components/HandballTile.svelte';
 	import TrailTile from '../../../lib/components/TrailTile.svelte';
 	import { TRAIL_AUDIENCE_LABELS, TRAIL_GRADE_LABELS } from '@hendingar/core/trail';
 	import { artworkFor } from '../../../lib/church-art.ts';
@@ -128,6 +130,8 @@
 	 * that is a fixture rather than a title with a dash in it.
 	 */
 	const fixture = $derived(parseFixture(event.title));
+	/* A handball match: the same idea, its own card — see HandballTile. */
+	const handball = $derived(parseHandballMatch(event.title));
 	/*
 	 * A painting for a church notice, which is the one place its caption fits.
 	 *
@@ -343,6 +347,8 @@
 						decoding="async"
 						referrerpolicy="no-referrer"
 					/>
+				{:else if handball}
+					<HandballTile id={event.id} match={handball} feature />
 				{:else if fixture}
 					<!-- Drawn from the feed's two club names, with crests where we have them — see
 					     VersusTile. `feature` keeps the mark breathing after its entrance. -->

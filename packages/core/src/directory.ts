@@ -162,6 +162,12 @@ export const SOURCE_PLATFORMS: readonly SourcePlatform[] = [
 		members: /-fotball(-|$)/
 	},
 	{
+		slug: 'handball',
+		name: 'Norges Håndballforbund',
+		url: 'https://www.handball.no',
+		note: 'Terminlista til dei lokale laga på handball.no. Vi hentar kvart lag for seg og tek berre heimekampane.'
+	},
+	{
 		slug: 'hoopla',
 		name: 'Hoopla',
 		url: 'https://hoopla.no',

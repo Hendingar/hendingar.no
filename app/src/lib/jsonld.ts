@@ -1,5 +1,6 @@
 import { schemaDateTime } from '@hendingar/core/datetime';
 import { parseFixture } from '@hendingar/core/fixture';
+import { parseHandballMatch } from '@hendingar/core/handball';
 import { classifyEventKind } from '@hendingar/core/standing';
 import type { CategorySlug } from '@hendingar/core/taxonomy';
 import { plainText } from '@hendingar/core/text';
@@ -102,7 +103,8 @@ export function eventJsonLd(event: EventForJsonLd, canonical: string): JsonLd | 
 	if (classifyEventKind(event.startsAt, event.endsAt) === 'standing') return null;
 
 	const description = plainText(event.description);
-	const fixture = parseFixture(event.title);
+	// Either sport: a handball match is a `Fixture` too, and the two titles never overlap.
+	const fixture = parseFixture(event.title) ?? parseHandballMatch(event.title);
 	const ageRange = typicalAgeRange(event.ageFrom, event.ageTo);
 	const teams = fixture
 		? [fixture.home, fixture.away].map((side) => ({

@@ -149,6 +149,18 @@ describe('eventJsonLd', () => {
 		expect(dated({ ...base, title: 'Konsert - Koret Lyren' }, CANONICAL).performer).toBeUndefined();
 	});
 
+	it('names both sides of a handball match, with the team', () => {
+		const node = dated(
+			{ ...base, category: 'sport', title: 'Handball: Stord - Ros (menn)' },
+			CANONICAL
+		);
+		expect(node['@type']).toBe('SportsEvent');
+		expect(node.competitor).toEqual([
+			{ '@type': 'SportsTeam', name: 'Stord Menn' },
+			{ '@type': 'SportsTeam', name: 'Ros Menn' }
+		]);
+	});
+
 	it('states who it is for when the source does', () => {
 		expect(dated({ ...base, ageFrom: 8, ageTo: 10 }, CANONICAL).typicalAgeRange).toBe('8-10');
 		expect(dated({ ...base, ageFrom: 16 }, CANONICAL).typicalAgeRange).toBe('16-');

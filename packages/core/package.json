@@ -27,6 +27,7 @@
 		"./contribution": "./src/contribution.ts",
 		"./coverage": "./src/coverage.ts",
 		"./fixture": "./src/fixture.ts",
+		"./handball": "./src/handball.ts",
 		"./gone-upstream": "./src/gone-upstream.ts",
 		"./weekly-hours": "./src/weekly-hours.ts",
 		"./trail": "./src/trail.ts",
