@@ -161,6 +161,51 @@ function result<T extends Record<string, unknown>>(structured: T) {
 	};
 }
 
+/**
+ * How to show what came back, said once per result rather than only in the server instructions.
+ *
+ * An assistant handed `url`, `icsUrl` and `posterUrl` for every event used none of them until it
+ * was told to (reported 2026-10-14). Instructions are read once at connect and are easy to lose by
+ * the third tool call; a line beside the data is read with the data. English, because it is
+ * addressed to the model, not to the reader.
+ */
+export const LIST_HINT =
+	'Presentation: group events by day using `startsAt`, in time order. Make each title a Markdown link to its `url`. Give the time from `when` and the venue with its municipality. Add a short "add to calendar" link to `icsUrl`, and a ticket link to `ticketUrl` when an event has one. Name the source(s). Keep it compact: one or two lines per event.';
+
+export const PICKS_HINT =
+	"Presentation: if there are picks, show them in `rank` order, each as the title linked to `url`, its `when` and venue, and the kurator's `reason` quoted as written (translate it if the user writes another language). Say they are hendingar.no's own weekend picks. If there are none, say so plainly and use `weekend_events` instead.";
+
+export const DETAIL_HINT =
+	'Presentation: title as a Markdown link to `url`; then when, where (address) and who organises it; the description in a sentence or two; then links: "add to calendar" (`icsUrl`), tickets (`ticketUrl`), and each source by name linked to its `eventUrl` or `siteUrl`. Show `posterUrl` as an image if you can render images. For a film, list the `screenings`.';
+
+/**
+ * A list result: the JSON, the hint, and one `resource_link` per event, so a client that renders
+ * links as chips can show each event as something to open — and read in full through the
+ * `hendingar://event/{id}` resource, without another search.
+ */
+function listResult(structured: ListResult & Record<string, unknown>) {
+	return {
+		structuredContent: structured,
+		content: [
+			{ type: 'text' as const, text: JSON.stringify(structured) },
+			{ type: 'text' as const, text: LIST_HINT },
+			...structured.events.map((event) => ({
+				type: 'resource_link' as const,
+				uri: `hendingar://event/${event.id}`,
+				name: event.title,
+				title: event.title,
+				description: [event.when, event.venue, event.municipality].filter(Boolean).join(' · '),
+				mimeType: 'application/json'
+			}))
+		]
+	};
+}
+
+function withHint<T extends Record<string, unknown>>(hint: string, structured: T) {
+	const answer = result(structured);
+	return { ...answer, content: [...answer.content, { type: 'text' as const, text: hint }] };
+}
+
 function failure(text: string) {
 	return { isError: true, content: [{ type: 'text' as const, text }] };
 }
@@ -224,7 +269,7 @@ export function registerTools(server: McpServer, catalogue: Catalogue, origin: s
 			outputSchema: listResultSchema,
 			annotations: READ_ONLY
 		},
-		async (input) => result(listOf(await catalogue.listEvents(input), origin))
+		async (input) => listResult(listOf(await catalogue.listEvents(input), origin))
 	);
 
 	server.registerTool(
@@ -256,7 +301,7 @@ export function registerTools(server: McpServer, catalogue: Catalogue, origin: s
 			if (!row) return failure(`Fann inga publisert hending med id ${id}.`);
 			const detail = toPublicEventDetail(row, origin);
 			const film = row.category === 'kino' ? await catalogue.filmScreenings(id) : null;
-			return result({
+			return withHint(DETAIL_HINT, {
 				...detail,
 				...(film?.film
 					? {
@@ -282,7 +327,7 @@ export function registerTools(server: McpServer, catalogue: Catalogue, origin: s
 			outputSchema: listResultSchema,
 			annotations: READ_ONLY
 		},
-		async ({ date }) => result(listOf(await catalogue.listEventsOnDate(date), origin))
+		async ({ date }) => listResult(listOf(await catalogue.listEventsOnDate(date), origin))
 	);
 
 	server.registerTool(
@@ -300,7 +345,7 @@ export function registerTools(server: McpServer, catalogue: Catalogue, origin: s
 			outputSchema: listResultSchema,
 			annotations: READ_ONLY
 		},
-		async ({ which }) => result(listOf(await catalogue.weekendEvents(which), origin))
+		async ({ which }) => listResult(listOf(await catalogue.weekendEvents(which), origin))
 	);
 
 	server.registerTool(
@@ -318,7 +363,7 @@ export function registerTools(server: McpServer, catalogue: Catalogue, origin: s
 		async ({ week }) => {
 			const answer = await catalogue.weekEvents(week);
 			const list = listOf([...answer.timed, ...answer.spanning], origin);
-			return result({ ...list, dates: answer.dates });
+			return listResult({ ...list, dates: answer.dates });
 		}
 	);
 
@@ -364,7 +409,7 @@ export function registerTools(server: McpServer, catalogue: Catalogue, origin: s
 			outputSchema: listResultSchema,
 			annotations: READ_ONLY
 		},
-		async ({ limit }) => result(listOf(await catalogue.listUpcoming(limit), origin))
+		async ({ limit }) => listResult(listOf(await catalogue.listUpcoming(limit), origin))
 	);
 
 	server.registerTool(
@@ -377,7 +422,7 @@ export function registerTools(server: McpServer, catalogue: Catalogue, origin: s
 			outputSchema: listResultSchema,
 			annotations: READ_ONLY
 		},
-		async () => result(listOf(await catalogue.standingOffers(), origin))
+		async () => listResult(listOf(await catalogue.standingOffers(), origin))
 	);
 
 	server.registerTool(
@@ -451,7 +496,7 @@ export function registerTools(server: McpServer, catalogue: Catalogue, origin: s
 		},
 		async () => {
 			const picks = await catalogue.weekendPicks();
-			return result({
+			return withHint(PICKS_HINT, {
 				picks: picks.map((p) => ({
 					rank: p.rank,
 					reason: p.reason,
@@ -479,7 +524,7 @@ export function registerTools(server: McpServer, catalogue: Catalogue, origin: s
 			outputSchema: listResultSchema,
 			annotations: READ_ONLY
 		},
-		async (input) => result(listOf(await catalogue.listPopular(input), origin))
+		async (input) => listResult(listOf(await catalogue.listPopular(input), origin))
 	);
 
 	server.registerTool(

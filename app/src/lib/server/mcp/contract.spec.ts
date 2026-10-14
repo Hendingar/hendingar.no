@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
 import { publicEventDetailSchema, publicEventSchema } from '@hendingar/core/public-event';
 import { buildMcpServer } from './server.ts';
-import { resolveEventRef, type Catalogue } from './tools.ts';
+import { DETAIL_HINT, LIST_HINT, resolveEventRef, type Catalogue } from './tools.ts';
 
 /**
  * The MCP server's public contract (ADR 0024, and the condition ADR 0001 set for any public API):
@@ -154,8 +154,22 @@ const toolList = z.object({
 const callResult = z.object({
 	isError: z.boolean().optional(),
 	structuredContent: z.record(z.string(), z.unknown()).optional(),
-	content: z.array(z.object({ type: z.string(), text: z.string() }))
+	content: z.array(
+		z.union([
+			z.object({ type: z.literal('text'), text: z.string() }),
+			z.object({
+				type: z.literal('resource_link'),
+				uri: z.string(),
+				name: z.string(),
+				description: z.string().optional()
+			})
+		])
+	)
 });
+
+function texts(result: z.infer<typeof callResult>): string[] {
+	return result.content.flatMap((block) => (block.type === 'text' ? [block.text] : []));
+}
 
 async function callTool(name: string, args: Record<string, unknown> = {}, catalogue?: Catalogue) {
 	return callResult.parse(await rpc('tools/call', { name, arguments: args }, catalogue));
@@ -225,7 +239,36 @@ describe('the MCP contract', () => {
 		expect(events[0]?.sources).toEqual([{ slug: 'stord-kulturhus', name: 'Stord kulturhus' }]);
 		expect(events[0]?.startsAt).toBe('2026-10-16T20:00:00+02:00');
 		// The same answer as text, for the clients that read only that.
-		expect(JSON.parse(result.content[0]?.text ?? '')).toEqual(result.structuredContent);
+		expect(JSON.parse(texts(result)[0] ?? '')).toEqual(result.structuredContent);
+	});
+
+	it('tells the assistant how to show a list, beside the list', async () => {
+		const result = await callTool('weekend_events');
+		expect(texts(result)).toContain(LIST_HINT);
+		expect(LIST_HINT).toMatch(/`url`/);
+		expect(LIST_HINT).toMatch(/`icsUrl`/);
+	});
+
+	it('links every listed event as a resource the client can open', async () => {
+		const result = await callTool('search_events', { q: 'jazz' });
+		const links = result.content.filter((block) => block.type === 'resource_link');
+		expect(links).toEqual([
+			expect.objectContaining({
+				uri: 'hendingar://event/42',
+				name: 'Jazzkveld på Leirvik',
+				description: expect.stringContaining('Stord kulturhus')
+			})
+		]);
+		// And the link resolves: the resource template answers it with the same event.
+		const read = z
+			.object({ contents: z.array(z.object({ text: z.string() })) })
+			.parse(await rpc('resources/read', { uri: 'hendingar://event/42' }));
+		expect(publicEventDetailSchema.parse(JSON.parse(read.contents[0]?.text ?? '')).id).toBe(42);
+	});
+
+	it('tells the assistant how to show one event', async () => {
+		const result = await callTool('get_event', { event: 42 });
+		expect(texts(result)).toContain(DETAIL_HINT);
 	});
 
 	it('resolves a pasted link to the event it names', async () => {
@@ -240,7 +283,7 @@ describe('the MCP contract', () => {
 	it('answers an unknown event as a tool error the assistant can read, not a crash', async () => {
 		const result = await callTool('get_event', { event: 7 });
 		expect(result.isError).toBe(true);
-		expect(result.content[0]?.text).toContain('7');
+		expect(texts(result)[0]).toContain('7');
 	});
 
 	it('refuses input the site itself would refuse', async () => {
@@ -256,8 +299,7 @@ describe('the MCP contract', () => {
 
 	it('hands out no hearts or views, even from the tool ordered by them', async () => {
 		const result = await callTool('popular_events', { by: 'hearts' });
-		const text = result.content[0]?.text ?? '';
-		expect(text).not.toMatch(/"hearts"|"views"/);
+		expect(texts(result).join('\n')).not.toMatch(/"hearts"|"views"/);
 	});
 });
 

@@ -23,6 +23,7 @@ const INSTRUCTIONS = [
 	"The data is in Norwegian, mostly Nynorsk. Answer in the user's language; keep names as written.",
 	'Search is plain text matching. For a broad question, run several short searches (or `weekend_events` / `events_on_date`) and choose yourself.',
 	"Always give each event's `url`, and name its source. hendingar.no is an index and the sources are the origin.",
+	'Presentation: list events grouped by day, each title a Markdown link to its `url`, with the time from `when`, the venue, an "add to calendar" link to `icsUrl`, and `ticketUrl` when present. Tool results repeat this as a short hint.',
 	"Use `when` or `startsAt` exactly as given — they are already in the venue's time zone.",
 	'Never invent prices, line-ups, age limits or availability. If it is not in the record, it is unknown; tickets are at `ticketUrl`.',
 	'This server is read-only. To add or correct an event, send people to https://hendingar.no/send-inn.'
