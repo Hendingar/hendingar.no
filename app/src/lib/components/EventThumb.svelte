@@ -12,7 +12,9 @@
 	 * their CDN, and looks like the rest of the site rather than like someone else's JPEG.
 	 */
 	import { parseFixture } from '@hendingar/core/fixture';
+	import { parseHandballMatch } from '@hendingar/core/handball';
 	import VersusTile from './VersusTile.svelte';
+	import HandballTile from './HandballTile.svelte';
 	import { artworkFor } from '../church-art.ts';
 	import { hasGardenSource } from '../garden-sources.ts';
 	import GardenTile from './GardenTile.svelte';
@@ -90,6 +92,12 @@
 	 */
 	const fixture = $derived(parseFixture(title));
 
+	/*
+	 * A handball match, whose title `importers/handball` writes and `parseHandballMatch` reads
+	 * back. Asked before football: the two rules do not overlap, but this one is exact.
+	 */
+	const handball = $derived(parseHandballMatch(title));
+
 	/**
 	 * A painting, for a church notice that will never have a picture of its own.
 	 *
@@ -162,6 +170,8 @@
 		referrerpolicy="no-referrer"
 		onerror={() => (posterFailed = true)}
 	/>
+{:else if handball}
+	<HandballTile {id} match={handball} />
 {:else if fixture}
 	<VersusTile {id} {fixture} />
 {:else if trail}

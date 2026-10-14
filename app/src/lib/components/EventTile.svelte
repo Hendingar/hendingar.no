@@ -12,6 +12,7 @@
 	import { page } from '$app/state';
 	import { surfaceOf, track } from '../analytics.ts';
 	import { parseFixture } from '@hendingar/core/fixture';
+	import { parseHandballMatch } from '@hendingar/core/handball';
 	import { kitClass } from '../club-kits.ts';
 
 	/**
@@ -68,7 +69,7 @@
 	 * A home match wears its club's colours on the whole card, not only on the tile — a yellow
 	 * versus tile above a peach title reads as two cards glued together. See club-kits.ts.
 	 */
-	const kit = $derived(kitClass(parseFixture(event.title)));
+	const kit = $derived(kitClass(parseFixture(event.title) ?? parseHandballMatch(event.title)));
 
 	/*
 	 * Three marks fit the corner; a fourth starts crowding the venue line on a narrow tile.
