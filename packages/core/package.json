@@ -40,6 +40,7 @@
 		"db:sources": "node --env-file-if-exists=../../.env --experimental-strip-types scripts/sources.ts",
 		"consolidate": "node --env-file-if-exists=../../.env --experimental-strip-types scripts/consolidate.ts",
 		"expire": "node --env-file-if-exists=../../.env --experimental-strip-types scripts/expire-submissions.ts",
+		"await-migrations": "node --env-file-if-exists=../../.env --experimental-strip-types scripts/await-migrations.ts",
 		"db:seed": "node --env-file-if-exists=../../.env --experimental-strip-types scripts/seed.ts"
 	},
 	"dependencies": {
