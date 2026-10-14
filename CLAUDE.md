@@ -166,6 +166,11 @@ app/src/lib/components/hendingar/  single-use sections owned by `/hendingar`
 app/src/lib/listing-url.ts         filters ↔ URL. The page, the tokens and the suggestions all
                                    compose addresses through it, so they cannot disagree
 
+app/src/lib/server/mcp/            the read-only MCP server at /mcp (ADR 0024). Tools read through
+                                   `liveCatalogue` — the site's own remote queries — and return
+                                   `toPublicEvent` from packages/core/src/public-event.ts. A new
+                                   tool is a public API change: contract.spec.ts pins the names
+
 services/verifier/src/verifier/
   llm.py                   Entra credential → Agent Framework client. EVERY agent is built here
   extract.py               the vision call. Nynorsk prompt, strict json_schema

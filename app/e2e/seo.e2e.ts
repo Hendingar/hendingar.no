@@ -53,6 +53,7 @@ test('every indexable page declares one canonical URL', async ({ request, baseUR
 		'/kalender',
 		'/datasamling',
 		'/send-inn',
+		'/ki',
 		'/poppis/hjarta',
 		'/poppis/vist'
 	];
@@ -117,7 +118,8 @@ test('every indexable page carries a full share card', async ({ request }) => {
 		'/alltid-ope',
 		'/kalender',
 		'/datasamling',
-		'/send-inn'
+		'/send-inn',
+		'/ki'
 	]) {
 		const html = await (await request.get(path)).text();
 

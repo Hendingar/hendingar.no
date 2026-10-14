@@ -14,7 +14,8 @@
 		<p class="label">
 			<a href="/datasamling">Kjelder og status</a> ·
 			<a href="/hendingar">Alle hendingar</a> ·
-			<a href="/send-inn">Send inn</a>
+			<a href="/send-inn">Send inn</a> ·
+			<a href="/ki">Bruk med KI</a>
 		</p>
 		<!--
 			The three promises, moved down here from a full-screen band on the front page.

@@ -28,6 +28,9 @@ lock-in — community-owned infrastructure for public-good information.
 - **Verifies submissions with an agent pipeline** — see below
 - **Shows events on a map** — find what's happening near you
 - **Exports openly** — RSS and iCal per location, so your calendar app is a first-class client
+- **Answers your assistant** — a read-only [MCP server](https://hendingar.no/ki) at
+  `https://hendingar.no/mcp`, so Claude, ChatGPT or Cursor can answer "what's on" from the listing,
+  with links and sources ([ADR 0024](docs/decisions/0024-read-only-mcp.md))
 - **Keeps data in the EU** — GDPR by architecture, not by policy page
 
 ## What it does not do
