@@ -60,7 +60,7 @@ export const SUBMITTED_SLUG = 'innsendt';
  * A list rather than a category: `importers/kulturhus` files a film under `show` because that is
  * what the taxonomy has, and the thing that makes a row a screening is where it came from.
  */
-export const CINEMA_SOURCE_SLUGS: readonly string[] = ['stord-kino'];
+export const CINEMA_SOURCE_SLUGS: readonly string[] = ['stord-kino', 'bomlo-kino'];
 
 export function isCinemaSource(slug: string): boolean {
 	return CINEMA_SOURCE_SLUGS.includes(slug);

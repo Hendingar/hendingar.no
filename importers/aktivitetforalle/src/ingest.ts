@@ -3,6 +3,7 @@ import { createDb, type Db } from '@hendingar/core/db';
 import { events, ingestRuns, organizers, sources, venues } from '@hendingar/core/schema';
 import { markGoneUpstream } from '@hendingar/core/gone-upstream';
 import { sameWeeklyHours } from '@hendingar/core/weekly-hours';
+import { keepKnownCategory } from '@hendingar/core/consolidate';
 import {
 	orNull,
 	parseEvents,
@@ -292,6 +293,13 @@ export async function ingestSite(
 				created += 1;
 				continue;
 			}
+
+			/*
+			 * An untagged row maps to `anna`, and the portal leaves eBillett's mirrored films
+			 * untagged. When consolidation has since filled the category in from another source,
+			 * writing `anna` back would undo it every night. See `keepKnownCategory`.
+			 */
+			values.category = keepKnownCategory(existing.category, values.category);
 
 			const same =
 				existing.title === values.title &&

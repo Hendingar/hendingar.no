@@ -189,6 +189,25 @@ export const VENUE_ALIASES: readonly VenueAlias[] = [
 	 * comparison at all — the threshold is 0.7. A venue alias cannot help a pair refused a step
 	 * earlier.
 	 */
+	/*
+	 * Bømlo kino — the house's film programme, collected on its own page. The films play in the
+	 * same two halls, and the municipal calendar mirrors them from eBillett under the same ticket
+	 * id, so without these the pair is refused on venue exactly as described above.
+	 */
+	{
+		source: 'bomlo-kino',
+		name: 'Litlesalen',
+		place: 'Bømlo Kulturhus',
+		evidence:
+			'"Harila - Nådeløse fjell" 14 Oct 16:30Z is eBillett 45255 in both: bomlo-aktivitetforalle\'s event_external_id and this source\'s ticket e-1210000045255, both in Litlesalen.'
+	},
+	{
+		source: 'bomlo-kino',
+		name: 'Storsalen',
+		place: 'Bømlo Kulturhus',
+		evidence:
+			'The main hall, where the larger screenings run; bomlo-aktivitetforalle mirrors them from the same eBillett ids (e.g. 45233, 5 Nov 18:30).'
+	},
 	{
 		source: 'bomlo-kulturhus',
 		name: 'Storsalen',

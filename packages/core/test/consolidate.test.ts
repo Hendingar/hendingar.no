@@ -2,7 +2,9 @@ import { describe, expect, it } from 'vitest';
 import {
 	DUPLICATE_WINDOW_MS,
 	comparePair,
+	filledCategory,
 	groupDuplicates,
+	keepKnownCategory,
 	type Candidate
 } from '../src/consolidate.ts';
 
@@ -306,5 +308,35 @@ describe('groupDuplicates', () => {
 
 	it('uses a window that is an hour, not a day', () => {
 		expect(DUPLICATE_WINDOW_MS).toBe(3_600_000);
+	});
+});
+
+describe('filledCategory', () => {
+	it('fills a canonical that was never told what it is, from the duplicate that was', () => {
+		// Harila: aktivitetforalle (first, untagged) and Bømlo kino (second, a film).
+		expect(filledCategory('anna', ['kino'])).toBe('kino');
+		expect(filledCategory('anna', ['anna', 'kino'])).toBe('kino');
+	});
+
+	it('never overrides a category somebody stated', () => {
+		expect(filledCategory('musikk', ['kino'])).toBeNull();
+	});
+
+	it('leaves it alone when the duplicates disagree, or know nothing either', () => {
+		expect(filledCategory('anna', ['musikk', 'festival'])).toBeNull();
+		expect(filledCategory('anna', ['anna'])).toBeNull();
+		expect(filledCategory('anna', [])).toBeNull();
+	});
+});
+
+describe('keepKnownCategory', () => {
+	it('does not let a fallback overwrite a stated category', () => {
+		expect(keepKnownCategory('kino', 'anna')).toBe('kino');
+	});
+
+	it('still takes any real answer the source gives', () => {
+		expect(keepKnownCategory('kino', 'musikk')).toBe('musikk');
+		expect(keepKnownCategory('anna', 'kino')).toBe('kino');
+		expect(keepKnownCategory('anna', 'anna')).toBe('anna');
 	});
 });
