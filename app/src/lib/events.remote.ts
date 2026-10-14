@@ -666,45 +666,53 @@ export type WeeklyActivity = Awaited<ReturnType<typeof weeklyActivities>>['activ
 export type EventSummary = Awaited<ReturnType<typeof listEvents>>[number];
 
 /**
+ * The columns an `EventTile` draws, in one place.
+ *
+ * Shared by the front-page listing and `eventTile`, so the card a sender sees on their receipt is
+ * the same card the listing shows — not a third shape that drifts from it.
+ */
+const upcomingColumns = {
+	id: events.id,
+	title: events.title,
+	category: events.category,
+	startsAt: events.startsAt,
+	endsAt: events.endsAt,
+	venueName: venues.name,
+	venueTimeZone: venues.timezone,
+	municipality: venues.municipality,
+	posterUrl: events.posterUrl,
+	posterSrcset: events.posterSrcset,
+	trail: events.trail,
+	sourceMarks: sourceMarksFor(events.id).as('source_marks'),
+	/*
+	 * The calendar day AT THE VENUE, resolved in SQL. Grouping by day is a calendar
+	 * question, not an instant one — deriving it in JS from the server's clock would put a
+	 * late Helsinki concert in the wrong group for a reader in Norway.
+	 *
+	 * greatest(starts_at, now()) so a multi-day exhibition that opened last week is grouped
+	 * under TODAY, where a visitor can actually go to it, rather than under a heading dated
+	 * before the page they are reading.
+	 */
+	localDate: sql<string>`
+			to_char(
+				greatest(${events.startsAt}, now())
+					at time zone coalesce(${venues.timezone}, 'Europe/Oslo'),
+				'YYYY-MM-DD'
+			)
+		`.as('local_date'),
+	todayLocalDate: sql<string>`
+			to_char(now() at time zone coalesce(${venues.timezone}, 'Europe/Oslo'), 'YYYY-MM-DD')
+		`.as('today_local_date')
+};
+
+/**
  * The front-page listing: the nearest events, in order, each carrying the calendar day it falls on
  * at its own venue so the page can group by date.
  */
 export const listUpcoming = query(z.number().int().min(1).max(60).default(24), async (limit) => {
 	const now = new Date();
 	const rows = await db()
-		.select({
-			id: events.id,
-			title: events.title,
-			category: events.category,
-			startsAt: events.startsAt,
-			endsAt: events.endsAt,
-			venueName: venues.name,
-			venueTimeZone: venues.timezone,
-			municipality: venues.municipality,
-			posterUrl: events.posterUrl,
-			posterSrcset: events.posterSrcset,
-			trail: events.trail,
-			sourceMarks: sourceMarksFor(events.id).as('source_marks'),
-			/*
-			 * The calendar day AT THE VENUE, resolved in SQL. Grouping by day is a calendar
-			 * question, not an instant one — deriving it in JS from the server's clock would put a
-			 * late Helsinki concert in the wrong group for a reader in Norway.
-			 *
-			 * greatest(starts_at, now()) so a multi-day exhibition that opened last week is grouped
-			 * under TODAY, where a visitor can actually go to it, rather than under a heading dated
-			 * before the page they are reading.
-			 */
-			localDate: sql<string>`
-				to_char(
-					greatest(${events.startsAt}, now())
-						at time zone coalesce(${venues.timezone}, 'Europe/Oslo'),
-					'YYYY-MM-DD'
-				)
-			`.as('local_date'),
-			todayLocalDate: sql<string>`
-				to_char(now() at time zone coalesce(${venues.timezone}, 'Europe/Oslo'), 'YYYY-MM-DD')
-			`.as('today_local_date')
-		})
+		.select(upcomingColumns)
 		.from(events)
 		.leftJoin(venues, eq(events.venueId, venues.id))
 		.leftJoin(sources, eq(events.sourceId, sources.id))
@@ -727,6 +735,31 @@ export const listUpcoming = query(z.number().int().min(1).max(60).default(24), a
 });
 
 export type UpcomingEvent = Awaited<ReturnType<typeof listUpcoming>>[number];
+
+/**
+ * One published event, as a listing tile — or null when it is not on the listing.
+ *
+ * For the submission receipt: "Publisert" with nothing to click left the sender to go and find
+ * their own event. Public on purpose, like `getEvent`: it returns nothing an event page does not
+ * already show, and only for an event that is published and canonical.
+ */
+export const eventTile = query(z.number().int().positive(), async (id) => {
+	const now = new Date();
+	const rows = await db()
+		.select(upcomingColumns)
+		.from(events)
+		.leftJoin(venues, eq(events.venueId, venues.id))
+		.where(
+			and(
+				eq(events.id, id),
+				eq(events.status, 'published'),
+				stillListed,
+				isNull(events.duplicateOfId)
+			)
+		)
+		.limit(1);
+	return withStartsIn(rows, now)[0] ?? null;
+});
 
 /**
  * What is coming up that people actually engaged with — hearts, or opens.
