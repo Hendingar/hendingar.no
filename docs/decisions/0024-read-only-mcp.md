@@ -95,12 +95,19 @@ pins the hints' presence.
 
 ### Cards, where the client can draw them (MCP Apps)
 
-`show_events` takes the ids the assistant chose (at most twelve) and is the one tool with a view:
-`ui://hendingar/events.html`, an MCP App the client draws inline as cards — the site's own
-thumbnails, the day headings, and buttons to add an event to the calendar, open its tickets, or
-ask the assistant for more. Every other tool stays data-only, deliberately: an assistant runs four
-or five searches to answer one question, and a widget per search would fill the chat with
-half-relevant cards. It researches with the data tools and then shows what it picked.
+The tools that answer a whole question in one call — `weekend_events`, `events_on_date`,
+`week_events`, `upcoming_events` — and `show_events` (a selection the assistant made, at most
+twelve) name a view: `ui://hendingar/events.html`, an MCP App the client draws inline as cards —
+the site's own thumbnails, the day headings, and buttons to add an event to the calendar, open its
+tickets, or ask the assistant for more. `search_events` deliberately does not: an assistant runs
+four or five searches to answer one question, and a widget per search would fill the chat with
+half-relevant cards.
+
+At first only `show_events` had the view, and the first real conversation never called it. Asked
+what was on at the weekend, Claude called `weekend_events`, got 62 rows and wrote them out as a
+list; a twelve-card picker did not look like the tool for an overview. The view now accepts any
+of these results (`viewResultSchema`: a listing row, or a full record), so the call the model
+already makes is the one that draws.
 
 - **The view is Svelte, built into one inline page.** `server/mcp/view-plugin.ts` runs a nested
   Vite build of `src/lib/mcp-view/` (reusing `EventThumb` and `brand.css`) and hands the server the

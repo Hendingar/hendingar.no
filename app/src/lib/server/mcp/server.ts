@@ -28,7 +28,7 @@ const INSTRUCTIONS = [
 	"The data is in Norwegian, mostly Nynorsk. Answer in the user's language; keep names as written.",
 	'Search is plain text matching. For a broad question, run several short searches (or `weekend_events` / `events_on_date`) and choose yourself.',
 	"Always give each event's `url`, and name its source. hendingar.no is an index and the sources are the origin.",
-	'To show events, call `show_events` with the ids you chose: it draws them as cards where the client can. Otherwise, list events grouped by day, each title a Markdown link to its `url`, with the time from `when`, the venue, an "add to calendar" link to `icsUrl`, and `ticketUrl` when present. Tool results repeat this as a short hint.',
+	'`weekend_events`, `events_on_date`, `week_events`, `upcoming_events` and `show_events` draw their events as cards where the client can (MCP Apps); then keep your text short instead of listing every event again. Without cards, list events grouped by day, each title a Markdown link to its `url`, with the time from `when`, the venue, and an "add to calendar" link to `icsUrl`.',
 	"Use `when` or `startsAt` exactly as given — they are already in the venue's time zone.",
 	'Never invent prices, line-ups, age limits or availability. If it is not in the record, it is unknown; tickets are at `ticketUrl`.',
 	'This server is read-only. To add or correct an event, send people to https://hendingar.no/send-inn.'

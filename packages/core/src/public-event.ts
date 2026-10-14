@@ -209,3 +209,25 @@ export const showEventsResultSchema = z.object({
 });
 
 export type ShowEventsResult = z.infer<typeof showEventsResultSchema>;
+
+/**
+ * One event as the MCP App view can draw it: everything a listing row has, and whatever more a
+ * detail record adds. The list tools (`weekend_events`, `events_on_date`, …) hand the view rows;
+ * `show_events` hands it full records. One card, which simply has less to say about a row.
+ */
+export const viewEventSchema = publicEventDetailSchema.partial().extend(publicEventSchema.shape);
+
+export type ViewEvent = z.infer<typeof viewEventSchema>;
+
+/**
+ * Every tool result the view accepts. A list tool's result carries no heading and no `missing`;
+ * extra fields (`count`, a week's `dates`) are dropped by the parse rather than refused.
+ */
+export const viewResultSchema = z.object({
+	heading: z.string().nullable().optional(),
+	today: z.string(),
+	timeZone: z.string(),
+	events: z.array(viewEventSchema)
+});
+
+export type ViewResult = z.infer<typeof viewResultSchema>;

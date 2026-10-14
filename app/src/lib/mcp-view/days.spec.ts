@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import type { PublicEventDetail } from '@hendingar/core/public-event';
+import { publicEventSchema, type ViewEvent } from '@hendingar/core/public-event';
 import { groupByDay, placeOf, timeOf } from './days.ts';
 
-function event(overrides: Partial<PublicEventDetail>): PublicEventDetail {
+function event(overrides: Partial<ViewEvent>): ViewEvent {
 	return {
 		id: 1,
 		title: 'Konsert',
@@ -77,6 +77,13 @@ describe('timeOf', () => {
 
 	it('says how long something that spans days runs', () => {
 		expect(timeOf(event({ endsAt: '2026-10-23T18:00:00+02:00' }))).toBe('til 23. oktober');
+	});
+
+	it('draws a bare listing row, which has no detail fields at all', () => {
+		// What a list tool sends: the row schema keeps its own fields and drops the rest.
+		const row = publicEventSchema.parse(event({}));
+		expect('weeklyHours' in row).toBe(false);
+		expect(timeOf(row)).toBe('20:00');
 	});
 
 	it('leaves a weekly activity to its timetable', () => {

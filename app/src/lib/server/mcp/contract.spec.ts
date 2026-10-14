@@ -6,10 +6,18 @@ import { z } from 'zod';
 import {
 	publicEventDetailSchema,
 	publicEventSchema,
-	showEventsResultSchema
+	showEventsResultSchema,
+	viewResultSchema
 } from '@hendingar/core/public-event';
 import { buildMcpServer } from './server.ts';
-import { DETAIL_HINT, LIST_HINT, resolveEventRef, VIEW_URI, type Catalogue } from './tools.ts';
+import {
+	DETAIL_HINT,
+	LIST_HINT,
+	resolveEventRef,
+	VIEW_LIST_HINT,
+	VIEW_URI,
+	type Catalogue
+} from './tools.ts';
 
 /**
  * The MCP server's public contract (ADR 0024, and the condition ADR 0001 set for any public API):
@@ -250,7 +258,7 @@ describe('the MCP contract', () => {
 	});
 
 	it('tells the assistant how to show a list, beside the list', async () => {
-		const result = await callTool('weekend_events');
+		const result = await callTool('search_events', { q: 'jazz' });
 		expect(texts(result)).toContain(LIST_HINT);
 		expect(LIST_HINT).toMatch(/`url`/);
 		expect(LIST_HINT).toMatch(/`icsUrl`/);
@@ -278,7 +286,7 @@ describe('the MCP contract', () => {
 		expect(texts(result)).toContain(DETAIL_HINT);
 	});
 
-	it('draws show_events with the view, and no other tool', async () => {
+	it('draws the answer-shaped tools with the view, and never a search', async () => {
 		const listed = z
 			.object({
 				tools: z.array(
@@ -287,8 +295,17 @@ describe('the MCP contract', () => {
 			})
 			.parse(await rpc('tools/list'));
 		const withView = listed.tools.filter((t) => t._meta?.ui !== undefined);
-		expect(withView.map((t) => t.name)).toEqual(['show_events']);
-		expect(withView[0]?._meta?.ui).toEqual({ resourceUri: VIEW_URI });
+		expect(withView.map((t) => t.name).sort()).toEqual(
+			['events_on_date', 'show_events', 'upcoming_events', 'week_events', 'weekend_events'].sort()
+		);
+		for (const tool of withView) expect(tool._meta?.ui).toEqual({ resourceUri: VIEW_URI });
+	});
+
+	it('hands a drawn list to the view in a shape the view accepts', async () => {
+		const result = await callTool('weekend_events', { which: 'denne' });
+		const drawn = viewResultSchema.parse(result.structuredContent);
+		expect(drawn.events.map((e) => e.id)).toEqual([42]);
+		expect(texts(result)).toContain(VIEW_LIST_HINT);
 	});
 
 	it('serves the view as one self-contained page, with posters allowed by origin', async () => {

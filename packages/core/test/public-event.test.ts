@@ -4,6 +4,7 @@ import {
 	publicEventSchema,
 	toPublicEvent,
 	toPublicEventDetail,
+	viewResultSchema,
 	type DetailRowInput,
 	type ListingRowInput
 } from '../src/public-event.ts';
@@ -143,5 +144,25 @@ describe('toPublicEventDetail', () => {
 		for (const banned of ['hearts', 'views', 'rank', 'popularity']) {
 			expect(keys).not.toContain(banned);
 		}
+	});
+});
+
+describe('viewResultSchema', () => {
+	it('takes a list tool result as it is, and a show_events result too', () => {
+		const listed = {
+			today: '2026-10-16',
+			timeZone: 'Europe/Oslo',
+			count: 1,
+			events: [toPublicEvent(row, ORIGIN)]
+		};
+		expect(viewResultSchema.parse(listed).events[0]?.ticketUrl).toBeUndefined();
+		const shown = {
+			heading: 'Fredag',
+			today: '2026-10-16',
+			timeZone: 'Europe/Oslo',
+			events: [toPublicEventDetail(detail, ORIGIN)],
+			missing: []
+		};
+		expect(viewResultSchema.parse(shown).events[0]?.description).toBe('Ta med & byt kort.');
 	});
 });

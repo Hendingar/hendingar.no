@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { PublicEventDetail } from '@hendingar/core/public-event';
+	import type { ViewEvent } from '@hendingar/core/public-event';
 	import EventThumb from '../components/EventThumb.svelte';
 	import { placeOf, timeOf } from './days.ts';
 
@@ -17,9 +17,9 @@
 		ask,
 		wide = false
 	}: {
-		event: PublicEventDetail;
+		event: ViewEvent;
 		open: (url: string) => void;
-		ask: (event: PublicEventDetail) => void;
+		ask: (event: ViewEvent) => void;
 		/** The only card in the answer: room for the picture and the description. */
 		wide?: boolean;
 	} = $props();
