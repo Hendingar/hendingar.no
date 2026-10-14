@@ -12,7 +12,7 @@ import { publicSubmissionTitle } from '@hendingar/core/verification';
 import { db } from './server/db';
 
 /**
- * Everything /datasamling shows. Read-only, no arguments — the page is a public status board.
+ * Everything /datasamling shows. Read-only, no arguments — the page is a public list of sources.
  *
  * The numbers come from `ingest_runs`, not from a config file, so the page cannot claim a source
  * is being collected unless a run actually happened.
@@ -97,6 +97,36 @@ export const listCollection = query(async () => {
 		})
 	);
 
+	// Events with no source are human submissions. Counted here only for the link to
+	// /innsendingar, which is where they are listed and where the checks are accounted for.
+	const [submitted] = await database
+		.select({ total: count() })
+		.from(events)
+		.where(sql`${events.sourceId} is null`);
+
+	const [pending] = await database
+		.select({ total: count() })
+		.from(events)
+		.where(and(sql`${events.sourceId} is null`, eq(events.status, 'pending')));
+
+	return {
+		generatedAt: now,
+		sources: collected,
+		submittedCount: submitted?.total ?? 0,
+		pendingCount: pending?.total ?? 0
+	};
+});
+
+/**
+ * Everything /innsendingar shows: what people sent in, and what the checks decided.
+ *
+ * Split from `listCollection` so the sources page does not run the submission queries, and the
+ * submissions page does not run one query per source.
+ */
+export const listSubmissions = query(async () => {
+	const database = db();
+	const now = new Date();
+
 	// Events with no source are human submissions — worth showing, since "anyone can submit" is a
 	// stated feature and the page would otherwise imply importers are the only way in.
 	const [submitted] = await database
@@ -107,9 +137,8 @@ export const listCollection = query(async () => {
 	/*
 	 * The submission log.
 	 *
-	 * /datasamling could account for every imported event and none of the submitted ones, so the
-	 * half of the pipeline with a person in it was invisible. A count is not enough: the point of
-	 * publishing verification reasoning is that someone can read it, and that means a list.
+	 * A count is not enough: the point of publishing verification reasoning is that someone can
+	 * read it, and that means a list.
 	 *
 	 * Titles are shown for pending and published rows but withheld for rejected ones — a rejected
 	 * submission is retained as evidence (see submit.remote.ts), and republishing the text of
@@ -130,9 +159,9 @@ export const listCollection = query(async () => {
 		.leftJoin(venues, eq(events.venueId, venues.id))
 		.where(sql`${events.sourceId} is null`)
 		.orderBy(desc(events.createdAt))
-		// Five. The log is a "what just happened" signal on a status board, not an archive: a long
-		// scroll of submissions pushes the source rows — the other half of the page — below the fold.
-		.limit(5);
+		// The page is the log, so it can hold more than the five it had as a section of
+		// /datasamling — but it is still "what happened lately", not an archive.
+		.limit(20);
 
 	const [pending] = await database
 		.select({ total: count() })
@@ -168,13 +197,8 @@ export const listCollection = query(async () => {
 	/*
 	 * What the checks actually decided, across every submission we have ever had.
 	 *
-	 * The page could already say exactly how each source is collected and nothing whatever about
-	 * the half of the pipeline that judges. That is the wrong half to be quiet about: the README
-	 * promises the agents' reasoning is auditable, and "auditable" has meant "readable one
-	 * submission at a time" — you could see why *your* event was declined and never whether the
-	 * checks are any good.
-	 *
-	 * Both ADR 0017 and ADR 0018 name a falsification condition that needs numbers nobody was
+	 * The README promises the agents' reasoning is auditable; one submission at a time, you can
+	 * see why *your* event was declined but never whether the checks are any good. Both ADR 0017 and ADR 0018 name a falsification condition that needs numbers nobody was
 	 * keeping. This is the shape of that: per check, what it decided and how sure it was, and — for
 	 * the two that call a model — what the calls cost.
 	 *
@@ -218,7 +242,6 @@ export const listCollection = query(async () => {
 
 	return {
 		generatedAt: now,
-		sources: collected,
 		submittedCount: submitted?.total ?? 0,
 		/** Published, upcoming, and reachable at `/hendingar?kjelde=innsendt`. */
 		submittedLiveCount: submittedLive?.total ?? 0,
@@ -241,7 +264,8 @@ export const listCollection = query(async () => {
 });
 
 export type Collection = Awaited<ReturnType<typeof listCollection>>;
-export type SubmissionLogRow = Collection['submissions'][number];
+export type Submissions = Awaited<ReturnType<typeof listSubmissions>>;
+export type SubmissionLogRow = Submissions['submissions'][number];
 export type CollectedSource = Collection['sources'][number];
-export type CheckStats = Collection['checks'][number];
+export type CheckStats = Submissions['checks'][number];
 export type IngestRunSummary = CollectedSource['runs'][number];

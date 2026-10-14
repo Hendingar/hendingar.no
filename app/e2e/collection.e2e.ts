@@ -104,8 +104,8 @@ test('a source is one compact row until you open it', async ({ page }) => {
 
 	const row = page.locator('details.row').filter({ hasText: /det skjer sunnhordland/i });
 	await expect(row).toBeVisible();
-	// Scannable without opening: who it is, how we collect it.
-	await expect(row).toContainText('JSON-API');
+	// Scannable without opening: who it is, and how much it contributes.
+	await expect(row.locator('.row__count')).toContainText(/\d+\s*framover/);
 	// The detail is deliberately not on screen yet — that is the whole point of the change.
 	// Scoped to this row: with more than one collected source, a page-wide text match resolves to
 	// every source's schedule and says nothing about whether THIS row is closed.
@@ -194,15 +194,15 @@ test('every source row carries an icon or its initials', async ({ page }) => {
 });
 
 test('the submission log lists what people sent and what was decided', async ({ page }) => {
-	await page.goto('/datasamling');
+	await page.goto('/innsendingar');
 	const log = page.locator('.log');
 	await expect(log).toBeVisible();
 	const entries = await log.locator('.entry').all();
-	// Structure, not specific rows. The log shows only the five most recent submissions, and the
+	// Structure, not specific rows. The log shows only the twenty most recent submissions, and the
 	// submission specs run in parallel with this file — asserting on a seeded title meant asserting
 	// that nothing else had been submitted yet, which is a race, not a requirement.
 	expect(entries.length).toBeGreaterThan(0);
-	expect(entries.length).toBeLessThanOrEqual(5);
+	expect(entries.length).toBeLessThanOrEqual(20);
 	for (const entry of entries) {
 		await expect(entry).toHaveAttribute('data-status', /published|pending|rejected/);
 		await expect(entry.locator('.entry__method')).toHaveCount(1);
@@ -211,7 +211,7 @@ test('the submission log lists what people sent and what was decided', async ({ 
 });
 
 test('a submission that went out can be opened from the log', async ({ page }) => {
-	await page.goto('/datasamling');
+	await page.goto('/innsendingar');
 
 	/*
 	 * Nothing that is not published is a link.
@@ -225,7 +225,7 @@ test('a submission that went out can be opened from the log', async ({ page }) =
 	}
 
 	/*
-	 * The log holds the five most recent submissions and the submission specs run alongside this
+	 * The log holds the twenty most recent submissions and the submission specs run alongside this
 	 * file, so the seed's published row can legitimately be outside the window — the same race the
 	 * spec above documents. When it is there, it must work.
 	 */
@@ -252,7 +252,7 @@ test('a submission that went out can be opened from the log', async ({ page }) =
 });
 
 test('the submission section leads to the submissions that are live', async ({ page }) => {
-	await page.goto('/datasamling');
+	await page.goto('/innsendingar');
 
 	/*
 	 * The page talked about submissions all the way down and then pointed at nothing. The listing
@@ -275,9 +275,9 @@ test('the submission section leads to the submissions that are live', async ({ p
 });
 
 test('a rejected submission never has its text republished', async ({ page }) => {
-	await page.goto('/datasamling');
+	await page.goto('/innsendingar');
 	// The mapping rule itself is unit-tested in packages/core (publicSubmissionTitle) because
-	// whether a given rejected row is inside the five-row window depends on what else was
+	// whether a given rejected row is inside the twenty-row window depends on what else was
 	// submitted. What is always true, and worth asserting on the real page, is the outcome:
 	// the seed's rejected row is advertising copy, and it must never appear anywhere.
 	await expect(page.locator('body')).not.toContainText('BILLIGE KLOKKER');
@@ -302,7 +302,7 @@ test('site navigation reaches both pages', async ({ page }) => {
 
 test('no horizontal overflow on the new pages', async ({ page }) => {
 	await page.setViewportSize({ width: 320, height: 800 });
-	for (const path of ['/', '/datasamling', '/hendingar', '/send-inn']) {
+	for (const path of ['/', '/datasamling', '/innsendingar', '/hendingar', '/send-inn']) {
 		await page.goto(path);
 		const overflow = await page.evaluate(
 			() => document.documentElement.scrollWidth - document.documentElement.clientWidth
@@ -311,17 +311,14 @@ test('no horizontal overflow on the new pages', async ({ page }) => {
 	}
 });
 
-test('the status board accounts for the checks, not only the sources', async ({ request }) => {
+test('the submissions page accounts for the checks', async ({ request }) => {
 	/*
-	 * /datasamling could say exactly how every source is collected and nothing whatever about the
-	 * half of the pipeline that judges — so the page that exists to show its work showed half of it.
-	 *
 	 * Requested without a browser for the same reason as every other assertion on this page: it is
 	 * built on a top-level `await`, and a query moved behind a `.loading` flag would put a
 	 * placeholder in the HTML and ship no data (CLAUDE.md). A crawler and a no-JS reader would find
 	 * the heading and an empty box.
 	 */
-	const html = await (await request.get('/datasamling')).text();
+	const html = await (await request.get('/innsendingar')).text();
 	expect(html).not.toContain('Lastar…');
 
 	const section = html.match(/<section[^>]*aria-labelledby="h-checks"[\s\S]*?<\/section>/)?.[0];
@@ -340,4 +337,45 @@ test('the status board accounts for the checks, not only the sources', async ({ 
 	);
 	const empty = section!.includes('ingenting å telje');
 	expect(counted || empty, 'the ledger must name every check or say it has nothing').toBe(true);
+});
+
+test('the sources page leads to the submissions page', async ({ page }) => {
+	await page.goto('/datasamling');
+	await page.getByRole('link', { name: /sendt inn av folk/i }).click();
+	await expect(page).toHaveURL(/\/innsendingar$/);
+	await expect(page.getByRole('heading', { level: 1, name: 'Innsendingar' })).toBeVisible();
+	// And the submission log is no longer on the sources page.
+	await page.goto('/datasamling');
+	await expect(page.locator('.log')).toHaveCount(0);
+});
+
+test('searching the sources works without JavaScript', async ({ request }) => {
+	// A GET form: Enter submits `?q=`, and the server renders the filtered list.
+	const html = await (await request.get('/datasamling?q=det+skjer')).text();
+	expect(html).toMatch(/Det skjer Sunnhordland/);
+	expect(html).toMatch(/Viser 1 av \d+ kjelder/);
+	expect(html).toMatch(/value="det skjer"/);
+});
+
+test('the sources filter as you type, and the address follows', async ({ page }) => {
+	await page.goto('/datasamling');
+	const rows = page.locator('details.row');
+	const all = await rows.count();
+
+	await page.getByRole('searchbox', { name: /søk etter kjelde/i }).fill('det skjer');
+	await expect(rows).toHaveCount(1);
+	await expect(rows.first()).toContainText(/det skjer sunnhordland/i);
+	await expect(page).toHaveURL(/\?q=det\+skjer$/);
+
+	await page.getByRole('searchbox', { name: /søk etter kjelde/i }).fill('');
+	await expect(rows).toHaveCount(all);
+});
+
+test('a view chip narrows the list to sources we only link to', async ({ page }) => {
+	await page.goto('/datasamling');
+	await page.getByRole('link', { name: /^Berre lenkje/ }).click();
+	await expect(page).toHaveURL(/vis=lenkje/);
+	// Retrying assertions: the address changes before the list re-renders.
+	await expect(page.locator('details.row:not([data-kind="link"])')).toHaveCount(0);
+	await expect(page.locator('details.row[data-kind="link"]').first()).toBeVisible();
 });

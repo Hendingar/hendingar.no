@@ -1,258 +1,235 @@
 <script lang="ts">
+	import { onMount, untrack } from 'svelte';
+	import { page } from '$app/state';
+	import { afterNavigate, goto } from '$app/navigation';
 	import { formatEventTime } from '@hendingar/core/datetime';
-	import { freshness } from '@hendingar/core/schedule';
 	import SourceRow from '../../lib/components/collection/SourceRow.svelte';
-	import PlatformGroup from '../../lib/components/collection/PlatformGroup.svelte';
-	import { SOURCE_PLATFORMS, platformOf } from '@hendingar/core/directory';
-	import SubmissionLog from '../../lib/components/collection/SubmissionLog.svelte';
-	import CheckLedger from '../../lib/components/collection/CheckLedger.svelte';
 	import PageMeta from '../../lib/components/PageMeta.svelte';
 	import { listCollection } from '../../lib/collection.remote';
-	import { CHECK_COUNT_WORD } from '../../lib/checks.ts';
+	import { claimTypedBeforeHydration } from '../../lib/typed-before-hydration.ts';
+	import {
+		listSources,
+		sourceListHref,
+		sourceListParams,
+		viewCounts,
+		type SourceListParams,
+		type SourceView
+	} from '../../lib/source-list.ts';
 
-	// Top-level await so the status board is in the server-rendered HTML (CLAUDE.md).
+	// Top-level await so the list is in the server-rendered HTML (CLAUDE.md).
 	const data = await listCollection();
 	const now = data.generatedAt;
 
-	const states = data.sources
-		.filter((s) => s.active)
-		.map((s) => freshness(s.lastRunAt, s.scheduleCron, now));
-	const allFresh = states.length > 0 && states.every((s) => s === 'fresh');
-	const anyBroken = states.some((s) => s === 'stale' || s === 'never');
+	const INPUT_ID = 'kjelde-sok';
 
 	/*
-	 * Platform organisers fold into their platform; everything else is a row of its own.
+	 * The search box is local state; the view and the sort are the URL.
 	 *
-	 * Derived here rather than stored on the source, because the slug prefix every platform
-	 * importer already uses IS the fact — so adding an organiser stays one config entry in its
-	 * importer, with no second edit here and no chance of the two drifting apart. See
-	 * `platformOf` in packages/core.
+	 * Typing filters at once and writes `?q=` back with a shallow `goto`, so the address stays
+	 * shareable without a navigation per keystroke.
 	 *
-	 * Order is preserved from the query (by name), and a platform takes the position of its first
-	 * organiser, so the page does not reshuffle when a profile is added.
+	 * What was typed before hydration is read here, while the DOM still holds it
+	 * (lib/typed-before-hydration.ts), but applied only once mounted. Starting `q` from it would
+	 * make the first client render a different list from the server's, and hydrating a keyed list
+	 * against rows it does not match left the wrong source on screen under the right count.
 	 */
-	type CollectedRow = (typeof data.sources)[number];
-	type Entry =
-		| { kind: 'source'; source: CollectedRow }
-		| {
-				kind: 'platform';
-				platform: (typeof SOURCE_PLATFORMS)[number];
-				sources: CollectedRow[];
-		  };
+	const typedBefore = claimTypedBeforeHydration().get(INPUT_ID);
+	const fromUrl = $derived(sourceListParams(page.url.searchParams));
+	let q = $state(untrack(() => sourceListParams(page.url.searchParams).q));
 
-	const entries = $derived.by(() => {
-		/*
-		 * One pass, appending each organiser to its platform's entry if that entry already exists.
-		 *
-		 * A platform takes the position of its FIRST organiser, so the page keeps the query's
-		 * ordering and does not reshuffle when a profile is added.
-		 *
-		 * No Map or Set to key the lookup on: the repo's lint rule asks for the reactive versions
-		 * wherever a built-in collection appears in a component, and reaching for reactive state to
-		 * deduplicate inside a derived would be answering a question nobody asked. A linear scan
-		 * over what is currently eighteen sources is not the thing to optimise.
-		 */
-		const out: Entry[] = [];
-
-		for (const source of data.sources) {
-			const platform = platformOf(source.slug);
-			if (!platform) {
-				out.push({ kind: 'source', source });
-				continue;
-			}
-			const existing = out.find(
-				(entry) => entry.kind === 'platform' && entry.platform.slug === platform.slug
-			);
-			if (existing?.kind === 'platform') {
-				existing.sources.push(source);
-				continue;
-			}
-			out.push({ kind: 'platform', platform, sources: [source] });
-		}
-		return out;
+	onMount(() => {
+		if (typedBefore !== undefined && typedBefore !== q) search(typedBefore);
 	});
 
-	const totalEvents = data.sources.reduce((n, s) => n + s.eventsTotal, 0);
-	const totalUpcoming = data.sources.reduce((n, s) => n + s.eventsUpcoming, 0);
+	// Back and forward land on a different `?q=`; the box follows. Not on the first load, where
+	// the value above may be what somebody typed before the script arrived.
+	afterNavigate((navigation) => {
+		if (navigation.type !== 'enter' && !navigation.shallow) q = fromUrl.q;
+	});
 
-	const method = [
-		{
-			n: '01',
-			name: 'Hent',
-			what: 'Vi kallar eit JSON-endepunkt med eigen User-Agent, og følgjer sidevindauga til dei tek slutt. Ingen innlogging, ingenting bak betalingsmur.'
-		},
-		{
-			n: '02',
-			name: 'Valider',
-			what: 'Kvart svar blir sjekka mot eit skjema. Endrar kjelda form, stoppar køyringa med ein presis feil i staden for å skrive tull i databasen.'
-		},
-		{
-			n: '03',
-			name: 'Kartlegg',
-			what: 'Rein omforming til vår modell: kategori, tidspunkt med tidssone, stad, arrangør. Same input gir alltid same output.'
-		},
-		{
-			n: '04',
-			name: 'Skriv',
-			what: 'Upsert på (kjelde, ekstern id). Ei ny køyring oppdaterer, ho duplikerer ikkje. Difor er dagleg henting trygt.'
-		}
+	const params: SourceListParams = $derived({ ...fromUrl, q });
+	const rows = $derived(listSources(data.sources, params, now));
+	const counts = viewCounts(data.sources, now);
+	const max = Math.max(1, ...data.sources.map((s) => s.eventsUpcoming));
+
+	const collected = data.sources.filter((s) => s.active && s.kind !== 'link');
+	const upcoming = data.sources.reduce((n, s) => n + s.eventsUpcoming, 0);
+	const latestRun = collected
+		.map((s) => s.lastRunAt)
+		.filter((d) => d !== null)
+		.sort((a, b) => b.getTime() - a.getTime())[0];
+
+	const VIEWS: { vis: SourceView | null; label: string; count: number }[] = [
+		{ vis: null, label: 'Alle', count: data.sources.length },
+		{ vis: 'tilsyn', label: 'Treng tilsyn', count: counts.tilsyn },
+		{ vis: 'tomme', label: 'Ingenting framover', count: counts.tomme },
+		{ vis: 'lenkje', label: 'Berre lenkje', count: counts.lenkje }
 	];
+
+	function search(value: string) {
+		q = value;
+		void goto(sourceListHref(params), { shallow: true, replace: true });
+	}
 </script>
 
 <PageMeta
-	title="Kjelder og status — hendingar.no"
-	description="Kvar hendingane kjem frå, kor ofte vi hentar dei, kva som skjedde sist — og kva kalendrar vi ikkje klarer å hente."
+	title="Kjelder — hendingar.no"
+	description="Alle kalendrane hendingar.no hentar frå, kor mykje kvar av dei bidreg med, og om hentinga går som ho skal."
 	path="/datasamling"
 />
 
 <div class="shell head">
-	<p class="label">Systemstatus</p>
-	<h1 class="display head__h">Kjelder og status</h1>
+	<p class="label">Datasamling</p>
+	<h1 class="display head__h">Kjelder</h1>
 	<p class="head__lede">
-		Kvar hendingane kjem frå, kor ofte vi hentar dei, og kva som faktisk skjedde sist. Tala under
-		kjem frå køyringane sjølve, ikkje frå ei liste nokon har skrive — og kalendrar vi ikkje klarer å
-		hente står her òg, med grunnen.
+		Hendingane her kjem frå {collected.length} kalendrar i Sunnhordland. Vi hentar frå kvar av dei éin
+		gong i døgnet, og kvar hending lenkjer tilbake dit ho kom frå.
+	</p>
+
+	<!-- One line of status, in words. Trouble is named with a link straight to it. -->
+	<p class="status" data-ok={counts.tilsyn === 0}>
+		<span class="status__dot" aria-hidden="true"></span>
+		{#if counts.tilsyn === 0}
+			Alt går som det skal
+		{:else}
+			<a href={sourceListHref({ q: '', vis: 'tilsyn', sorter: null })} data-sveltekit-reset="false">
+				{counts.tilsyn === 1 ? '1 kjelde treng' : `${counts.tilsyn} kjelder treng`} tilsyn
+			</a>
+		{/if}
+		<span class="status__sep" aria-hidden="true">·</span>
+		{upcoming} hendingar framover
+		{#if latestRun}
+			<span class="status__sep" aria-hidden="true">·</span>
+			sist henta
+			<time datetime={latestRun.toISOString()}
+				>{formatEventTime(latestRun, 'Europe/Oslo', 'card')}</time
+			>
+		{/if}
 	</p>
 </div>
 
-<section class="summary invert" aria-labelledby="h-summary">
-	<h2 id="h-summary" class="visually-hidden">Samandrag</h2>
-	<div class="shell summary__grid">
-		<div class="stat">
-			<p class="stat__n display">{data.sources.filter((s) => s.active).length}</p>
-			<p class="stat__l">aktive kjelder</p>
-		</div>
-		<div class="stat">
-			<p class="stat__n display">{totalEvents}</p>
-			<p class="stat__l">hendingar henta</p>
-		</div>
-		<div class="stat">
-			<p class="stat__n display">{totalUpcoming}</p>
-			<p class="stat__l">framover i tid</p>
-		</div>
-		<div class="stat">
-			<p class="stat__n display">{data.submittedCount}</p>
-			<p class="stat__l">sendt inn av folk</p>
-		</div>
-		<div class="stat">
-			<p class="stat__n display">{data.pendingCount}</p>
-			<p class="stat__l">ikkje avgjort enno</p>
-		</div>
-		<div class="stat stat--wide">
-			<p class="stat__n display stat__n--sm">
-				{#if anyBroken}Treng tilsyn{:else if allFresh}Alt går som det skal{:else}Noko heng etter{/if}
-			</p>
-			<p class="stat__l">
-				oppdatert
-				<time datetime={now.toISOString()}>{formatEventTime(now, 'Europe/Oslo', 'full')}</time>
-			</p>
-		</div>
-	</div>
-</section>
+<section class="shell list" aria-labelledby="h-sources">
+	<h2 id="h-sources" class="visually-hidden">Alle kjelder</h2>
 
-<section class="shell block" aria-labelledby="h-submissions">
-	<p class="label">Innsendingar</p>
-	<h2 id="h-submissions" class="display block__h">Sendt inn av folk</h2>
-	<p class="block__lede">
-		Kva som er kome inn gjennom <a href="/send-inn">skjemaet</a> eller frå eit bilete, og kva dei
-		{CHECK_COUNT_WORD} kontrollane avgjorde. Alt blir avgjort med ein gong — kom hendinga ikkje ut, kan
-		den som sende henne rette og prøve igjen, og ho blir sletta om ingen gjer det innan 48 timar.
-	</p>
-	<SubmissionLog submissions={data.submissions} />
+	<!--
+		A GET form, so search works with JavaScript off: Enter submits `?q=`, and the hidden fields
+		carry the view and sort along. With JavaScript the list filters as you type.
+	-->
+	<form class="tools" method="get" action="/datasamling" role="search">
+		<label class="tools__search">
+			<span class="visually-hidden">Søk etter kjelde</span>
+			<input
+				id={INPUT_ID}
+				name="q"
+				type="search"
+				placeholder="Søk etter kjelde eller plattform"
+				autocomplete="off"
+				value={q}
+				oninput={(event) => search(event.currentTarget.value)}
+			/>
+		</label>
+		{#if params.vis}<input type="hidden" name="vis" value={params.vis} />{/if}
+		{#if params.sorter}<input type="hidden" name="sorter" value={params.sorter} />{/if}
 
-	{#if data.submittedLiveCount > 0}
-		<!--
-			The log is the last five, decisions and all. This is where the ones that went out live.
-
-			`/hendingar?kjelde=innsendt` is not a new page: the listing already treats submissions as
-			a source of their own, because they have no `sources` row and the join could not see
-			them. It simply had no way in from here — the page that talks about submissions all the
-			way down and then pointed at nothing.
-
-			Rendered only when the filter has something in it. An unknown or empty `kjelde` is
-			dropped rather than refused, so a link to nothing would quietly show the whole listing,
-			which is the one outcome a reader could not tell from a bug.
-		-->
-		<p class="block__more">
-			<a href="/hendingar?kjelde=innsendt">
-				<!-- "alle 1" is not a sentence. One is a different word here, as it is on /alltid-ope. -->
-				{data.submittedLiveCount === 1
-					? 'Sjå den eine innsende hendinga som ligg ute'
-					: `Sjå alle dei ${data.submittedLiveCount} innsende hendingane som ligg ute`} →
-			</a>
-		</p>
-	{/if}
-</section>
-
-<section class="shell block" aria-labelledby="h-checks">
-	<p class="label">Kontrollane</p>
-	<h2 id="h-checks" class="display block__h">Kva kontrollane har avgjort</h2>
-	<p class="block__lede">
-		Kvar innsending blir lesen av {CHECK_COUNT_WORD} kontrollar, og kvar av dei skriv ned kva ho fann.
-		Den som sender inn får lese si eiga grunngjeving — dette er dei same avgjerdene talde opp, så det
-		går an å sjå om kontrollane er gode og ikkje berre at dei finst.
-	</p>
-	<CheckLedger checks={data.checks} curator={data.curator} />
-</section>
-
-<section class="shell block" aria-labelledby="h-sources">
-	<p class="label">Kjelder</p>
-	<h2 id="h-sources" class="display block__h">Kvar det kjem frå</h2>
-	<p class="block__lede">
-		Éi linje per kjelde. Opne ei av dei for rytme, endepunkt og køyringshistorikk. Nokre kjelder er
-		plattformer der fleire arrangørar legg ut kvar for seg — dei ligg samla under plattforma.
-	</p>
-
-	{#if data.sources.length === 0}
-		<p class="empty">Ingen kjelder registrerte enno.</p>
-	{:else}
-		<div class="rows">
-			{#each entries as entry (entry.kind === 'platform' ? entry.platform.slug : entry.source.slug)}
-				{#if entry.kind === 'platform'}
-					<PlatformGroup platform={entry.platform} sources={entry.sources} {now} />
-				{:else}
-					<SourceRow source={entry.source} {now} />
+		<nav class="tools__views" aria-label="Vis">
+			{#each VIEWS as view (view.label)}
+				{#if view.vis === null || view.count > 0}
+					<a
+						class="chip"
+						href={sourceListHref({ ...params, vis: view.vis })}
+						aria-current={params.vis === view.vis ? 'true' : undefined}
+						data-sveltekit-reset="false"
+					>
+						{view.label} <span class="chip__n">{view.count}</span>
+					</a>
 				{/if}
 			{/each}
+		</nav>
+
+		<p class="tools__sort">
+			Sorter:
+			<a
+				href={sourceListHref({ ...params, sorter: null })}
+				aria-current={params.sorter === null ? 'true' : undefined}
+				data-sveltekit-reset="false">flest hendingar</a
+			>
+			/
+			<a
+				href={sourceListHref({ ...params, sorter: 'namn' })}
+				aria-current={params.sorter === 'namn' ? 'true' : undefined}
+				data-sveltekit-reset="false">A–Å</a
+			>
+		</p>
+	</form>
+
+	<p class="list__count" aria-live="polite">
+		{rows.length === data.sources.length
+			? `${rows.length} kjelder`
+			: `Viser ${rows.length} av ${data.sources.length} kjelder`}
+	</p>
+
+	{#if rows.length === 0}
+		<p class="empty">
+			{#if data.sources.length === 0}
+				Ingen kjelder registrerte enno.
+			{:else}
+				Ingen kjelder passar.
+				<a href="/datasamling" data-sveltekit-reset="false" onclick={() => (q = '')}>Vis alle</a>
+			{/if}
+		</p>
+	{:else}
+		<div class="rows">
+			{#each rows as source (source.slug)}
+				<!--
+					Wrapped, not bare. With the component as the each block's only child, the production
+					build removed the wrong rows when the list was filtered after hydration — the right
+					count, the wrong sources. An element per item gives the block a node of its own to
+					key on. Measured; see the filter specs in e2e/collection.e2e.ts.
+				-->
+				<div class="rows__item"><SourceRow {source} {now} {max} /></div>
+			{/each}
 		</div>
 	{/if}
 </section>
 
-<section class="method" aria-labelledby="h-method">
-	<div class="shell">
-		<p class="label">Metode</p>
-		<h2 id="h-method" class="display method__h">Korleis vi gjer det</h2>
-		<p class="method__lede">
-			Innhentinga er heilt deterministisk. Same kjelde inn gir same resultat ut, kvar gong.
-		</p>
-		<ol class="steps">
-			{#each method as step (step.n)}
-				<li class="step">
-					<span class="step__n" aria-hidden="true">{step.n}</span>
-					<span class="step__name">{step.name}</span>
-					<span class="step__what">{step.what}</span>
-				</li>
-			{/each}
+<section class="shell more" aria-labelledby="h-more">
+	<h2 id="h-more" class="visually-hidden">Meir om korleis hendingane kjem inn</h2>
+	<a class="card" href="/innsendingar">
+		<span class="label">Innsendingar</span>
+		<span class="card__h">Sendt inn av folk</span>
+		<span class="card__p">
+			{data.submittedCount} hendingar er sende inn gjennom skjemaet{#if data.pendingCount > 0}, og
+				{data.pendingCount} ventar på kontroll{/if}. Sjå kva som kom inn, og kva kontrollane
+			avgjorde →
+		</span>
+	</a>
+
+	<details class="how">
+		<summary class="how__sum">Korleis hentinga fungerer</summary>
+		<ol class="how__steps">
+			<li><strong>Hent.</strong> Vi les kalenderen til kjelda, slik ho sjølv publiserer han.</li>
+			<li>
+				<strong>Sjekk.</strong> Kvart svar blir sjekka mot eit fast format. Endrar kjelda seg, stoppar
+				hentinga i staden for å lagre feil.
+			</li>
+			<li>
+				<strong>Omset.</strong> Tid, stad, kategori og arrangør blir gjort om til vårt format — same input
+				gir alltid same resultat.
+			</li>
+			<li>
+				<strong>Lagre.</strong> Ei hending vi har frå før blir oppdatert, ikkje lagra på nytt.
+			</li>
 		</ol>
-		<p class="fineprint">
-			<strong>Ingen språkmodell hentar data.</strong> Ein importør som gir ulikt svar på same input er
-			ikkje mogleg å feilsøkje, og oppdikta hendingar er verre enn ingen hendingar. Agentar verifiserer
-			innsende hendingar seinare i løypa — på data som allereie er strukturert, og med eit svar til den
-			som sende inn på alt som ikkje går gjennom.
+		<p class="how__note">
+			Ingen språkmodell hentar data. Vi respekterer <code>robots.txt</code>, seier kven vi er, og
+			tek berre med plakatar når kjelda seier at bilderettane er avklarte.
 		</p>
-		<p class="fineprint">
-			Vi respekterer <code>robots.txt</code>, oppgir kven vi er i User-Agent, og hentar éin gong i
-			døgnet. Plakatar blir berre tekne med når kjelda seier at bilderettane er avklarte.
-		</p>
-	</div>
+	</details>
 </section>
 
 <section class="cta invert" aria-labelledby="h-add">
 	<div class="shell cta__inner">
-		<div>
-			<p class="label">Ver med</p>
-			<h2 id="h-add" class="display cta__h">Kjenner du ein kalender vi bør hente frå?</h2>
-		</div>
+		<h2 id="h-add" class="display cta__h">Manglar det ein kalender?</h2>
 		<div class="cta__actions">
 			<a
 				class="btn btn--invert"
@@ -277,150 +254,195 @@
 	}
 	.head__h {
 		font-size: clamp(1.9rem, 13cqw, 7rem);
-		margin-block: 0.25em 0.4em;
+		margin-block: 0.25em 0.3em;
 	}
 	.head__lede {
 		max-inline-size: 54ch;
-		margin: 0 0 var(--section-y);
+		margin: 0 0 1.25rem;
 	}
 
-	.summary {
-		padding-block: clamp(1.5rem, 4vw, 2.5rem);
-		border-block: var(--rule-fat) solid var(--navy-900);
-	}
-	.summary__grid {
-		display: grid;
-		grid-template-columns: repeat(auto-fit, minmax(min(100%, 9rem), 1fr));
-		gap: 1.25rem var(--gutter);
-	}
-	.stat {
-		container-type: inline-size;
-	}
-	/*
-	 * `span 2` inside a single-column grid does not clamp — it creates an implicit second column
-	 * and doubles the grid's width, which pushed the whole page 66px past a 320px viewport. Only
-	 * span once there are genuinely two columns to span.
-	 */
-	@media (width >= 34rem) {
-		.stat--wide {
-			grid-column: span 2;
-		}
-	}
-	.stat__n {
-		font-size: clamp(1.75rem, 30cqw, 3.5rem);
+	.status {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 0.35rem 0.6rem;
 		margin: 0;
-	}
-	.stat__n--sm {
-		font-size: clamp(1rem, 11cqw, 1.6rem);
-	}
-	.stat__l {
-		margin: 0.4rem 0 0;
 		font-family: var(--font-mono);
-		font-size: var(--step-micro);
-		letter-spacing: 0.18em;
-		text-transform: uppercase;
-		color: rgb(22 34 59 / 78%);
-	}
-
-	.block {
-		/* Was --section-y (up to 9rem) per section. With two list sections plus the method band
-		   that put most of the page's height into empty space between headings. */
-		padding-block: clamp(2.5rem, 6vw, 4.5rem);
-		container-type: inline-size;
-	}
-	.block__h {
-		/* Was 11cqw, up to 5rem — a heading taller than the list it introduced. The lists are the
-		   content here; the headings only have to separate them. */
-		font-size: clamp(1.5rem, 6cqw, 2.5rem);
-		margin-block: 0.25em 0.4em;
-	}
-	.block__lede {
-		margin: 0 0 1.75rem;
-		max-inline-size: 62ch;
+		font-size: 0.8125rem;
 		color: var(--peach-dim);
 	}
-	/* Under the list it belongs to, in the same mono the log's own timestamps use. */
-	.block__more {
-		margin: 1.25rem 0 0;
+	.status__dot {
+		inline-size: 0.6rem;
+		block-size: 0.6rem;
+		border-radius: 50%;
+		background: var(--peach);
+	}
+	/* Trouble is a hollow ring rather than a different colour — the palette is one hue. */
+	.status[data-ok='false'] .status__dot {
+		background: transparent;
+		border: 2px solid var(--peach-hi);
+	}
+	.status[data-ok='false'] a {
+		color: var(--peach-hi);
+	}
+
+	.list {
+		padding-block: clamp(2rem, 5vw, 3.5rem) clamp(2.5rem, 6vw, 4.5rem);
+	}
+	.tools {
+		display: grid;
+		gap: 0.9rem;
+		margin-block-end: 1rem;
+	}
+	.tools__search input {
+		inline-size: 100%;
+		box-sizing: border-box;
+		padding: 0.8rem 1rem;
+		font: inherit;
+		color: var(--peach);
+		background: var(--peach-ghost);
+		border: var(--rule) solid var(--peach-line);
+	}
+	.tools__search input::placeholder {
+		color: var(--peach-dim);
+	}
+	.tools__search input:focus-visible {
+		outline: var(--rule-fat) solid var(--peach-hi);
+		outline-offset: 0;
+	}
+	.tools__views {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.5rem;
+	}
+	.chip {
+		font-family: var(--font-mono);
+		font-size: var(--step-micro);
+		letter-spacing: 0.08em;
+		text-transform: uppercase;
+		text-decoration: none;
+		padding: 0.45em 0.8em;
+		border: var(--rule) solid var(--peach-line);
+	}
+	.chip:hover {
+		border-color: var(--peach);
+	}
+	.chip[aria-current='true'] {
+		background: var(--peach);
+		color: var(--navy-900);
+		border-color: var(--peach);
+	}
+	.chip__n {
+		opacity: 0.75;
+	}
+	.tools__sort {
+		margin: 0;
+		font-family: var(--font-mono);
+		font-size: 0.8125rem;
+		color: var(--peach-dim);
+	}
+	.tools__sort a {
+		color: var(--peach-dim);
+	}
+	.tools__sort a[aria-current='true'] {
+		color: var(--peach-hi);
+		text-decoration: none;
+		font-weight: 700;
+	}
+	.list__count {
+		margin: 0 0 0.5rem;
 		font-family: var(--font-mono);
 		font-size: var(--step-micro);
 		letter-spacing: 0.14em;
 		text-transform: uppercase;
+		color: var(--peach-dim);
 	}
 	.rows {
 		border-block-start: var(--rule) solid var(--peach-line);
 	}
 	.empty {
-		font-family: var(--font-display);
-		font-weight: 800;
-		text-transform: uppercase;
+		padding-block: 1.5rem;
+		margin: 0;
 	}
 
-	.method {
-		background: var(--navy-900);
-		border-block: var(--rule) solid var(--peach-line);
-		padding-block: var(--section-y);
-		container-type: inline-size;
-	}
-	.method__h {
-		font-size: clamp(1.75rem, 8cqw, 4rem);
-		margin-block: 0.3em 0.6em;
-	}
-	.method__lede {
-		max-inline-size: 52ch;
-		margin: 0 0 2.5rem;
-	}
-	.steps {
-		list-style: none;
-		padding: 0;
-		margin: 0 0 1.5rem;
+	.more {
 		display: grid;
-		grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
+		gap: 1.5rem;
+		padding-block-end: var(--section-y);
 	}
-	.step {
+	.card {
 		display: grid;
-		gap: 0.3rem;
-		padding: 1.4rem 1.4rem 1.6rem 0;
-		border-block-start: var(--rule) solid var(--peach-line);
-		align-content: start;
+		gap: 0.35rem;
+		padding: 1.4rem 1.5rem;
+		text-decoration: none;
+		border: var(--rule-fat) solid var(--peach);
+		transition: background var(--dur-fast) ease;
 	}
-	.step__n {
-		font-family: var(--font-display);
-		font-weight: 900;
-		font-stretch: 125%;
-		font-size: 2.6rem;
-		line-height: 0.8;
-		color: var(--peach-quiet);
+	.card:hover {
+		background: var(--peach-ghost);
 	}
-	.step__name {
+	.card .label {
+		margin: 0;
+	}
+	.card__h {
 		font-family: var(--font-display);
 		font-weight: 900;
 		font-stretch: 112%;
 		text-transform: uppercase;
-		font-size: 1.1rem;
+		font-size: var(--step-mid);
 	}
-	.step__what {
+	.card__p {
+		max-inline-size: 62ch;
 		color: var(--peach-dim);
+	}
+	@media (prefers-reduced-motion: reduce) {
+		.card {
+			transition: none;
+		}
+	}
+
+	.how {
+		border-block: var(--rule) solid var(--peach-line);
+	}
+	.how__sum {
+		padding: 1rem 0;
+		cursor: pointer;
+		font-family: var(--font-display);
+		font-weight: 800;
+		font-size: 1.0625rem;
+	}
+	.how__steps {
+		margin: 0;
+		padding-inline-start: 1.4rem;
+		display: grid;
+		gap: 0.5rem;
+		max-inline-size: 62ch;
+	}
+	.how__note {
+		margin: 1rem 0 1.25rem;
+		max-inline-size: 62ch;
 		font-size: 0.875rem;
-		line-height: 1.6;
+		color: var(--peach-dim);
+	}
+	.how__note code {
+		font-family: var(--font-mono);
+		font-size: 0.8125rem;
 	}
 
 	.cta {
-		padding-block: var(--section-y);
+		padding-block: clamp(2.5rem, 6vw, 4.5rem);
 		border-block-start: var(--rule-fat) solid var(--navy-900);
 	}
 	.cta__inner {
 		display: grid;
 		grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr));
 		gap: var(--gutter);
-		align-items: end;
-	}
-	.cta__inner > div:first-child {
+		align-items: center;
 		container-type: inline-size;
 	}
 	.cta__h {
-		font-size: clamp(1.2rem, 7.5cqw, 2.75rem);
-		margin-block: 0.3em 0;
+		font-size: clamp(1.2rem, 5cqw, 2.5rem);
+		margin: 0;
 	}
 	.cta__actions {
 		display: flex;

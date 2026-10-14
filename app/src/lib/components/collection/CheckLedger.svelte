@@ -10,9 +10,8 @@
 	/**
 	 * What every check has decided, and what the two that call a model cost to ask.
 	 *
-	 * `/datasamling` could account for every imported event down to the endpoint it came from, and
-	 * say nothing whatever about the half of the pipeline that judges. That is the wrong half to be
-	 * quiet about. The README promises the agents' reasoning is auditable, and until now "auditable"
+	 * `/innsendingar`'s account of the half of the pipeline that judges, as `/datasamling` is of the
+	 * half that collects. The README promises the agents' reasoning is auditable, and until now "auditable"
 	 * meant one submission at a time: you could read why *your* event was declined and never find
 	 * out whether the checks are any good.
 	 *
@@ -132,16 +131,14 @@
 		</div>
 
 		<p class="ledger__note">
-			Tomme felt i siste kolonne er kontrollar som blir avgjorde av ein regel — same kva, kvar gong,
-			utan å spørje ein modell. Tid er snitt over dei kalla som faktisk blei gjorde: ei innsending
-			som ein regel stoppar, kjem aldri så langt, og blir ikkje rekna med.
+			«—» under tid betyr at kontrollen er ein fast regel og ikkje spør ein språkmodell.
 		</p>
 	{/if}
 
 	{#if curator.nights > 0}
 		<p class="ledger__note">
-			Kuratoren har stått bak <strong>{curator.picks}</strong>
-			val over
+			Kuratoren har valt ut <strong>{curator.picks}</strong>
+			hendingar over
 			<strong>{curator.nights}</strong>
 			{curator.nights === 1 ? 'kveld' : 'kveldar'}, sist
 			<!--
@@ -152,8 +149,8 @@
 				have. ISO is unambiguous and needs no locale, which is the other half of the reason
 				(CLAUDE.md: `nn-NO` does not exist in browser ICU).
 			-->
-			<time datetime={curator.latest}>{curator.latest}</time>. Tre er taket og aldri eit mål — ein
-			kveld utan noko å peike på er eit ærleg svar, og ingenting blir fylt opp for å nå tre.
+			<time datetime={curator.latest}>{curator.latest}</time>. Inntil tre per kveld — er det
+			ingenting verdt å peike på, vel han ingenting.
 		</p>
 	{/if}
 </div>

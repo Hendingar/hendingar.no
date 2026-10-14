@@ -76,6 +76,7 @@ export const GET: RequestHandler = async ({ url }) => {
 		'/alltid-ope',
 		'/kalender',
 		'/datasamling',
+		'/innsendingar',
 		'/send-inn',
 		'/ki',
 		'/poppis/hjarta',
