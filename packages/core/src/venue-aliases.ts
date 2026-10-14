@@ -131,6 +131,13 @@ export const VENUE_ALIASES: readonly VenueAlias[] = [
 		place: 'Stord vidaregåande skule',
 		evidence: 'The same school, abbreviated.'
 	},
+	{
+		source: 'falturiltu',
+		name: 'Stord VGS konsertsalen',
+		place: 'Stord vidaregåande skule',
+		evidence:
+			'The concert hall stord-kulturhus writes as "Stord VGS konsertsal"; Falturiltu\'s litterær lunsj there is the school\'s own event.'
+	},
 
 	/*
 	 * Bømlo Kulturhus — the municipal activity calendar names its rooms the same way, and reuses
