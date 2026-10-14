@@ -1,5 +1,5 @@
 import { formatDayLabel, MONTH_NAMES } from '@hendingar/core/datetime';
-import type { PublicEventDetail } from '@hendingar/core/public-event';
+import type { ViewEvent } from '@hendingar/core/public-event';
 
 /**
  * The MCP App view's arithmetic, apart from the component so it can be tested without a frame.
@@ -11,7 +11,7 @@ import type { PublicEventDetail } from '@hendingar/core/public-event';
  * browser in another country is exactly where it would bite.
  */
 
-export type Day = { date: string; label: string; events: PublicEventDetail[] };
+export type Day = { date: string; label: string; events: ViewEvent[] };
 
 const dayOf = (iso: string) => iso.slice(0, 10);
 
@@ -21,8 +21,8 @@ const dayOf = (iso: string) => iso.slice(0, 10);
  * An event that began before today and is still running is listed under today, as the site's own
  * listing does — a festival on its third day is something to go to now, not something in the past.
  */
-export function groupByDay(events: readonly PublicEventDetail[], today: string): Day[] {
-	const byDay = new Map<string, PublicEventDetail[]>();
+export function groupByDay(events: readonly ViewEvent[], today: string): Day[] {
+	const byDay = new Map<string, ViewEvent[]>();
 	const sorted = [...events].sort((a, b) => Date.parse(a.startsAt) - Date.parse(b.startsAt));
 	for (const event of sorted) {
 		const start = dayOf(event.startsAt);
@@ -39,7 +39,7 @@ export function groupByDay(events: readonly PublicEventDetail[], today: string):
  * When, as a card says it: "20:00", "18:00–21:00", or "til 23. oktober" for something that runs
  * for days. Null for a weekly activity, whose timetable says it better than a start time can.
  */
-export function timeOf(event: PublicEventDetail): string | null {
+export function timeOf(event: ViewEvent): string | null {
 	if (event.weeklyHours) return null;
 	const start = event.startsAt.slice(11, 16);
 	if (!event.endsAt) return start;
@@ -52,7 +52,7 @@ export function timeOf(event: PublicEventDetail): string | null {
 }
 
 /** "Stord kulturhus, Stord" — the place without saying the municipality twice. */
-export function placeOf(event: PublicEventDetail): string | null {
+export function placeOf(event: ViewEvent): string | null {
 	const { venue, municipality } = event;
 	if (!venue) return municipality;
 	if (!municipality || venue.includes(municipality)) return venue;

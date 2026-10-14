@@ -1,4 +1,4 @@
-import { expect, test, type APIRequestContext } from '@playwright/test';
+import { expect, test, type APIRequestContext, type Page } from '@playwright/test';
 
 /**
  * The MCP server at `/mcp`, end to end, against the seed (ADR 0024).
@@ -143,19 +143,9 @@ test('the footer links to /ki from every page', async ({ request }) => {
  * what the view asks it to do. The protocol is ext-apps' (ui/initialize → tool-result → open-link);
  * a real host adds its own CSP and chrome, which only a real client can show.
  */
-test('show_events draws as cards in a host, and every button asks the host', async ({
-	page,
-	request
-}) => {
-	const found = await callTool(request, 'search_events', { limit: 3 });
-	const ids: number[] = found.events.map((e: { id: number }) => e.id);
-	const shown = await rpc(request, 'tools/call', {
-		name: 'show_events',
-		arguments: { ids, heading: 'Test frå e2e' }
-	});
+async function drawInHost(page: Page, request: APIRequestContext, toolResult: unknown) {
 	const view = await rpc(request, 'resources/read', { uri: 'ui://hendingar/events.html' });
 	const html: string = view.result.contents[0].text;
-
 	await page.setContent(
 		'<iframe sandbox="allow-scripts" style="width:420px;height:900px"></iframe>'
 	);
@@ -188,10 +178,27 @@ test('show_events draws as cards in a host, and every button asks the host', asy
 			});
 			frame.srcdoc = html;
 		},
-		{ html, result: shown.result }
+		{ html, result: toolResult }
 	);
+	return {
+		frame: page.frameLocator('iframe'),
+		hostLog: () =>
+			page.evaluate(() => JSON.stringify((window as unknown as { hostLog: unknown[] }).hostLog))
+	};
+}
 
-	const frame = page.frameLocator('iframe');
+test('show_events draws as cards in a host, and every button asks the host', async ({
+	page,
+	request
+}) => {
+	const found = await callTool(request, 'search_events', { limit: 3 });
+	const ids: number[] = found.events.map((e: { id: number }) => e.id);
+	const shown = await rpc(request, 'tools/call', {
+		name: 'show_events',
+		arguments: { ids, heading: 'Test frå e2e' }
+	});
+	const { frame, hostLog } = await drawInHost(page, request, shown.result);
+
 	await expect(frame.getByRole('heading', { name: 'Test frå e2e' })).toBeVisible();
 	for (const event of found.events) {
 		await expect(frame.getByRole('link', { name: event.title })).toBeVisible();
@@ -199,16 +206,23 @@ test('show_events draws as cards in a host, and every button asks the host', asy
 
 	// Links are asked of the host, never navigated inside the frame.
 	await frame.getByRole('link', { name: 'Legg i kalender' }).first().click();
-	await expect
-		.poll(() =>
-			page.evaluate(() => JSON.stringify((window as unknown as { hostLog: unknown[] }).hostLog))
-		)
-		.toContain(found.events[0].icsUrl);
+	await expect.poll(hostLog).toContain(found.events[0].icsUrl);
 
 	await frame.getByRole('button', { name: 'Fortel meir' }).first().click();
-	await expect
-		.poll(() =>
-			page.evaluate(() => JSON.stringify((window as unknown as { hostLog: unknown[] }).hostLog))
-		)
-		.toContain('ui/message');
+	await expect.poll(hostLog).toContain('ui/message');
+});
+
+test('a weekend listing draws itself as cards, from the plain list result', async ({
+	page,
+	request
+}) => {
+	const weekend = await rpc(request, 'tools/call', {
+		name: 'weekend_events',
+		arguments: { which: 'denne' }
+	});
+	const events: Array<{ title: string }> = weekend.result.structuredContent.events;
+	test.skip(events.length === 0, 'the seed has nothing this weekend');
+	const { frame } = await drawInHost(page, request, weekend.result);
+	await expect(frame.getByRole('link', { name: events[0]!.title }).first()).toBeVisible();
+	await expect(frame.getByText('Klarte ikkje å vise')).toHaveCount(0);
 });

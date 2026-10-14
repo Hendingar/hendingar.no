@@ -174,10 +174,24 @@ function result<T extends Record<string, unknown>>(structured: T) {
  * addressed to the model, not to the reader.
  */
 export const LIST_HINT =
-	'Presentation: group events by day using `startsAt`, in time order. Make each title a Markdown link to its `url`. Give the time from `when` and the venue with its municipality. Add a short "add to calendar" link to `icsUrl`, and a ticket link to `ticketUrl` when an event has one. Name the source(s). Keep it compact: one or two lines per event. Once you have chosen what to recommend, call `show_events` with their ids: clients that can draw it show them as cards with posters and calendar buttons, and then your text can stay short.';
+	'Presentation: group events by day using `startsAt`, in time order. Make each title a Markdown link to its `url`. Give the time from `when` and the venue with its municipality. Add a short "add to calendar" link to `icsUrl`, and a ticket link to `ticketUrl` when an event has one. Name the source(s). Keep it compact: one or two lines per event. Once you have chosen what to recommend from these, call `show_events` with their ids: clients that can draw it show them as cards with posters and calendar buttons, and then your text can stay short.';
 
 /** The MCP App view, served by `server.ts`. A tool that names it is drawn with it. */
 export const VIEW_URI = 'ui://hendingar/events.html';
+
+/**
+ * Drawn with the view. Only the tools that answer a whole question in one call — a day, a weekend,
+ * a week, what is next — plus `show_events`. Not `search_events`: an answer runs four or five
+ * searches, and a card set per search would fill the chat with half-relevant widgets.
+ *
+ * It used to be `show_events` alone, and the first real conversation never called it: asked what
+ * was on at the weekend, Claude called `weekend_events`, had 62 rows, and wrote them out as a list
+ * — a twelve-card picker did not look like the tool for an overview. So the overview draws itself.
+ */
+const VIEW_META = { ui: { resourceUri: VIEW_URI }, [RESOURCE_URI_META_KEY]: VIEW_URI };
+
+export const VIEW_LIST_HINT =
+	'In clients that draw MCP Apps, these events are already shown to the user as cards, grouped by day, with calendar buttons. Then do not list them all again: answer in a few sentences, highlight what stands out, and mention the rest by count. In clients without cards, present them as a list: group by day, make each title a Markdown link to its `url`, give the time from `when` and the venue.';
 
 /** Enough for a weekend; more than that is a listing, and the site is better at those. */
 const SHOW_MAX = 12;
@@ -196,12 +210,12 @@ export const DETAIL_HINT =
  * links as chips can show each event as something to open — and read in full through the
  * `hendingar://event/{id}` resource, without another search.
  */
-function listResult(structured: ListResult & Record<string, unknown>) {
+function listResult(structured: ListResult & Record<string, unknown>, hint = LIST_HINT) {
 	return {
 		structuredContent: structured,
 		content: [
 			{ type: 'text' as const, text: JSON.stringify(structured) },
-			{ type: 'text' as const, text: LIST_HINT },
+			{ type: 'text' as const, text: hint },
 			...structured.events.map((event) => ({
 				type: 'resource_link' as const,
 				uri: `hendingar://event/${event.id}`,
@@ -338,9 +352,11 @@ export function registerTools(server: McpServer, catalogue: Catalogue, origin: s
 				'Every event on one calendar day at the venues, including ones earlier that day and multi-day events that span it. Use this for "what is on Saturday 18 October", not for ranges.',
 			inputSchema: z.object({ date: calendarDateSchema.describe('The day, YYYY-MM-DD.') }),
 			outputSchema: listResultSchema,
-			annotations: READ_ONLY
+			annotations: READ_ONLY,
+			_meta: VIEW_META
 		},
-		async ({ date }) => listResult(listOf(await catalogue.listEventsOnDate(date), origin))
+		async ({ date }) =>
+			listResult(listOf(await catalogue.listEventsOnDate(date), origin), VIEW_LIST_HINT)
 	);
 
 	server.registerTool(
@@ -356,9 +372,11 @@ export function registerTools(server: McpServer, catalogue: Catalogue, origin: s
 					.describe('`denne` = this weekend, `neste` = next.')
 			}),
 			outputSchema: listResultSchema,
-			annotations: READ_ONLY
+			annotations: READ_ONLY,
+			_meta: VIEW_META
 		},
-		async ({ which }) => listResult(listOf(await catalogue.weekendEvents(which), origin))
+		async ({ which }) =>
+			listResult(listOf(await catalogue.weekendEvents(which), origin), VIEW_LIST_HINT)
 	);
 
 	server.registerTool(
@@ -371,12 +389,13 @@ export function registerTools(server: McpServer, catalogue: Catalogue, origin: s
 				week: calendarWeekSchema.describe('ISO week, YYYY-Www, e.g. 2026-W43.')
 			}),
 			outputSchema: listResultSchema.extend({ dates: z.array(z.string()) }),
-			annotations: READ_ONLY
+			annotations: READ_ONLY,
+			_meta: VIEW_META
 		},
 		async ({ week }) => {
 			const answer = await catalogue.weekEvents(week);
 			const list = listOf([...answer.timed, ...answer.spanning], origin);
-			return listResult({ ...list, dates: answer.dates });
+			return listResult({ ...list, dates: answer.dates }, VIEW_LIST_HINT);
 		}
 	);
 
@@ -420,9 +439,11 @@ export function registerTools(server: McpServer, catalogue: Catalogue, origin: s
 				limit: z.number().int().min(1).max(60).default(24).describe('How many, 1–60.')
 			}),
 			outputSchema: listResultSchema,
-			annotations: READ_ONLY
+			annotations: READ_ONLY,
+			_meta: VIEW_META
 		},
-		async ({ limit }) => listResult(listOf(await catalogue.listUpcoming(limit), origin))
+		async ({ limit }) =>
+			listResult(listOf(await catalogue.listUpcoming(limit), origin), VIEW_LIST_HINT)
 	);
 
 	server.registerTool(
@@ -651,7 +672,7 @@ export function registerTools(server: McpServer, catalogue: Catalogue, origin: s
 		{
 			title: 'Show events as cards',
 			description:
-				'Show the user the events you are recommending, as cards: poster, time, place, and buttons to add each to their calendar, buy tickets, or ask for more. Call it once, after you have searched, with the ids you chose (up to 12) — not for every search. Clients that cannot draw cards get the same events as data. Keep your own text short afterwards: the cards carry the details.',
+				'Show the user a selection you made, as cards: poster, time, place, and buttons to add each to their calendar, buy tickets, or ask for more. Use it after `search_events` or to narrow a long list to what fits the user — the day, weekend and week tools already draw their own cards. Call it once, with the ids you chose (up to 12). Clients that cannot draw cards get the same events as data. Keep your own text short afterwards: the cards carry the details.',
 			inputSchema: z.object({
 				ids: z
 					.array(z.number().int().positive())
@@ -667,7 +688,7 @@ export function registerTools(server: McpServer, catalogue: Catalogue, origin: s
 			}),
 			outputSchema: showEventsResultSchema,
 			annotations: READ_ONLY,
-			_meta: { ui: { resourceUri: VIEW_URI }, [RESOURCE_URI_META_KEY]: VIEW_URI }
+			_meta: VIEW_META
 		},
 		async ({ ids, heading }) => {
 			const unique = [...new Set(ids)];

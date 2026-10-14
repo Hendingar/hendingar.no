@@ -1,10 +1,6 @@
 <script lang="ts">
 	import { App } from '@modelcontextprotocol/ext-apps';
-	import {
-		showEventsResultSchema,
-		type PublicEventDetail,
-		type ShowEventsResult
-	} from '@hendingar/core/public-event';
+	import { viewResultSchema, type ViewEvent, type ViewResult } from '@hendingar/core/public-event';
 	import { groupByDay } from './days.ts';
 	import ViewCard from './ViewCard.svelte';
 
@@ -16,14 +12,14 @@
 	 * parsed with the same schema the server wrote it with, so a malformed one is a stated failure
 	 * rather than a half-drawn card.
 	 */
-	let result = $state<ShowEventsResult | null>(null);
+	let result = $state<ViewResult | null>(null);
 	let failed = $state(false);
 
 	const app = new App({ name: 'hendingar.no', version: '1.0.0' });
 
 	// Handlers before `connect`, or a result delivered during the handshake is lost.
 	app.ontoolresult = ({ structuredContent }) => {
-		const parsed = showEventsResultSchema.safeParse(structuredContent);
+		const parsed = viewResultSchema.safeParse(structuredContent);
 		if (parsed.success) result = parsed.data;
 		else failed = true;
 	};
@@ -34,7 +30,7 @@
 	}
 
 	/** Ask the assistant, in the reader's place, for more on one event. */
-	function ask(event: PublicEventDetail) {
+	function ask(event: ViewEvent) {
 		void app.sendMessage({
 			role: 'user',
 			content: [{ type: 'text', text: `Fortel meir om «${event.title}» (hending ${event.id}).` }]
