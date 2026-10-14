@@ -42,7 +42,13 @@ const POLICIES = {
 	/** A heart toggled. A person taps; a script inflates a count. */
 	heart: new RateLimiter(60, MINUTE),
 	/** One more view. Counted per page open, so a person browsing quickly stays far below it. */
-	view: new RateLimiter(60, MINUTE)
+	view: new RateLimiter(60, MINUTE),
+	/**
+	 * One call to the MCP server (ADR 0024). Free to answer — every tool is a read the site already
+	 * serves by GET — so this bounds database load, not a bill. An assistant answering one question
+	 * makes three to ten calls; sixty a minute is a busy conversation, not a crawl.
+	 */
+	mcp: new RateLimiter(60, MINUTE)
 } satisfies Record<string, RateLimiter>;
 
 export type Policy = keyof typeof POLICIES;

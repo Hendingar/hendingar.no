@@ -77,6 +77,7 @@ export const GET: RequestHandler = async ({ url }) => {
 		'/kalender',
 		'/datasamling',
 		'/send-inn',
+		'/ki',
 		'/poppis/hjarta',
 		'/poppis/vist',
 		// A category listing has its own title and its own set of events — a real page, not a facet.
