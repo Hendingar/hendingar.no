@@ -271,19 +271,29 @@ export function mapTicket(
 }
 
 /**
- * A ticket entry that is a date and nothing else, on a day the same event already has a real,
- * timed showing.
+ * A ticket entry that is a date and nothing else, beside an event that has real, timed showings.
  *
- * The cinema page carries these — `mc-` ids, no clock, no room, no link, no sale — beside the
- * screenings they share a date with; most likely the premiere marker. They are not showings, and
- * rejecting them made every run `partial` for two rows that were never events. Only this exact
- * shape is skipped: an untimed entry on a day with no timed showing is still a rejection, because
- * that one might be a real showing whose time we do not know.
+ * The cinema pages carry these — `mc-` ids, no clock, no room, no link, no sale — next to the
+ * eBillett screenings (`e-` ids). They are not showings, and rejecting them made every run
+ * `partial` for rows that were never events.
+ *
+ * Two placements, both measured on the live pages:
+ *
+ * - on a day the film also has a timed screening (Stord, 2026-10-05) — any untimed entry there is
+ *   redundant whatever its id;
+ * - on a day *before* every screening: "Monster Mia" marked 16 Oct and screened from 17 Oct,
+ *   "Markens grøde" marked 30 Oct and screened 2, 4 and 5 Nov (2026-10-14). A release-date
+ *   marker, not a screening — which is why this case asks for the `mc-` id as well.
+ *
+ * An untimed entry on an event with no timed showing at all is still a rejection: that might be a
+ * real showing whose time we do not know, and it should be loud.
  */
 function isDateMarker(ticket: UpstreamTicket, siblings: readonly UpstreamTicket[]): boolean {
 	const date = ticket.date.trim();
 	if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || ticket.link || ticket.location) return false;
-	return siblings.some((t) => t !== ticket && t.date.startsWith(`${date} `));
+	const timed = siblings.filter((t) => t !== ticket && splitLocalDateTime(t.date) !== null);
+	if (timed.some((t) => t.date.startsWith(`${date} `))) return true;
+	return ticket.id.startsWith('mc-') && timed.length > 0;
 }
 
 /** Every showing of every event, flattened. */
