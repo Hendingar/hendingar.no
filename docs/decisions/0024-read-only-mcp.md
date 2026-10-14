@@ -83,6 +83,16 @@ and as the wall clock a person reads, so an assistant has nothing to convert and
 wrong. No hearts, views or rank appear in any payload, the same rule as ADR 0018, and
 `popular_events` says in its description that it measures attention, not quality.
 
+### How it should look is said beside the data
+
+Every list result carries, after its JSON, a one-line presentation hint (group by day, title
+linked to `url`, an add-to-calendar link to `icsUrl`, the ticket link, the source), and one
+`resource_link` per event pointing at `hendingar://event/{id}`. `get_event` and `weekend_picks`
+carry their own hint. The server instructions say it too, but instructions are read once at
+connect: the first real conversation through Claude had `url`, `icsUrl` and `posterUrl` for every
+event and used none of them. A line read with the data is what changed that. `contract.spec.ts`
+pins the hints' presence.
+
 ### Nothing is logged
 
 Not the tool, not its arguments, not the search words. The README's "no search terms" applies to
