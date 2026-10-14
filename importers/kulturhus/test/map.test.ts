@@ -571,6 +571,68 @@ describe('the cinema programme', () => {
 		);
 		expect(lone.filter(isFailure)).toHaveLength(1);
 	});
+
+	it('skips a release-date marker that comes before every screening', () => {
+		// The two shapes live on 2026-10-14, copied from both cinema pages.
+		const [film] = films;
+		const shown = (id: string, date: string, location: string) => ({
+			id,
+			date,
+			location,
+			link: `https://checkout.ebillett.no/events/${id}/purchase`
+		});
+		const monsterMia = mapEvents(
+			[
+				{
+					...film!,
+					title: 'Monster Mia',
+					tickets: [
+						shown('e-1690000101491', '2026-10-17 11:00:00', 'Småsalen'),
+						{ id: 'mc-16988789', date: '2026-10-16', location: null, link: null }
+					]
+				}
+			],
+			kino
+		);
+		expect(monsterMia.filter(isFailure)).toEqual([]);
+		expect(monsterMia).toHaveLength(1);
+
+		const markensGrode = mapEvents(
+			[
+				{
+					...film!,
+					title: 'Markens grøde',
+					tickets: [
+						shown('e-1210000045214', '2026-11-02 11:30:00', 'Litlesalen'),
+						shown('e-1210000045215', '2026-11-04 11:30:00', 'Litlesalen'),
+						shown('e-1210000045233', '2026-11-05 18:30:00', 'Storsalen'),
+						{ id: 'mc-12184133', date: '2026-10-30', location: null, link: null }
+					]
+				}
+			],
+			kino
+		);
+		expect(markensGrode.filter(isFailure)).toEqual([]);
+		expect(markensGrode).toHaveLength(3);
+	});
+
+	it('still rejects an untimed entry that is not a cinema marker', () => {
+		// Same shape on another day, but with no `mc-` id: it could be a showing we cannot time.
+		const [film] = films;
+		const unknown = mapEvents(
+			[
+				{
+					...film!,
+					tickets: [
+						{ id: 'e-1', date: '2026-11-02 11:30:00', location: 'Litlesalen', link: 'https://x/1' },
+						{ id: 'e-2', date: '2026-10-30', location: null, link: null }
+					]
+				}
+			],
+			kino
+		);
+		expect(unknown.filter(isFailure)).toHaveLength(1);
+	});
 });
 
 describe('Bømlo on Gatsby 5', () => {
@@ -611,8 +673,8 @@ describe('Bømlo kino', () => {
 
 	it('maps every screening as kino, Harila among them', () => {
 		expect(screenings.length).toBeGreaterThan(0);
-		// The only refusals are the house's `mc-` date markers on days with no timed screening.
-		expect(screenings.filter(isFailure).every((f) => f.externalId.startsWith('mc-'))).toBe(true);
+		// The house's `mc-` date markers are skipped, not refused.
+		expect(screenings.filter(isFailure)).toEqual([]);
 		for (const s of screenings) if (!isFailure(s)) expect(s.category).toBe('kino');
 		expect(screenings.some((s) => !isFailure(s) && s.title.startsWith('Harila'))).toBe(true);
 	});
