@@ -43,7 +43,12 @@
 	);
 </script>
 
-<div class="thumb garden" class:garden--feature={feature} role="img" aria-label="Hageselskapet">
+<div
+	class="thumb thumb-box garden"
+	class:garden--feature={feature}
+	role="img"
+	aria-label="Hageselskapet"
+>
 	<svg viewBox="0 0 400 225" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
 		<rect width="400" height="225" fill="var(--paper)" />
 
@@ -98,24 +103,9 @@
 </div>
 
 <style>
-	/*
-	 * The box, same four declarations every thumbnail in this listing needs. `.thumb` is declared
-	 * in EventThumb's scoped stylesheet and does not reach here; the class on the root is for the
-	 * parents' `:global` rules — the hover scale, and the 5.5rem square below 34rem.
-	 */
+	/* The box is `.thumb-box` in brand.css; a garden is drawn on paper, not navy. */
 	.garden {
-		display: block;
-		inline-size: 100%;
-		block-size: auto;
-		aspect-ratio: 16 / 9;
-		overflow: hidden;
 		background: var(--paper);
-		border-block-end: var(--rule) solid var(--peach-line);
-	}
-	.garden svg {
-		display: block;
-		inline-size: 100%;
-		block-size: 100%;
 	}
 
 	/*

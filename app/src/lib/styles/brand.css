@@ -391,6 +391,29 @@ body {
 }
 
 /*
+ * A thumbnail's box: 16:9, on navy, with a hairline under it — the shape every picture in a listing
+ * shares, so a poster, a drawn match and a generated pattern line up in one row. Was copied into
+ * five components because each one's scoped `.thumb` could not reach the others.
+ *
+ * Its own class rather than `.thumb`, which the parents reach into with `:global(.thumb)` for
+ * placement and which CinemaFrame also carries — with a clapper `<svg>` of its own inside.
+ */
+.thumb-box {
+	display: block;
+	inline-size: 100%;
+	block-size: auto;
+	aspect-ratio: 16 / 9;
+	overflow: hidden;
+	background: var(--navy-900);
+	border-block-end: var(--rule) solid var(--peach-line);
+}
+.thumb-box > svg {
+	display: block;
+	inline-size: 100%;
+	block-size: 100%;
+}
+
+/*
  * The grid every card list sits in — events and standing offers alike, so the two lists on one
  * page line up column for column. One to four columns at the same breakpoints.
  */

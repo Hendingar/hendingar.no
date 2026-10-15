@@ -115,7 +115,7 @@
 
 <!-- `thumb` for the parents' `:global(.thumb)` rules — see VersusTile for the whole reason. -->
 <div
-	class={['thumb tt', trail.grade ? `tt--${trail.grade}` : 'tt--ungraded']}
+	class={['thumb thumb-box tt', trail.grade ? `tt--${trail.grade}` : 'tt--ungraded']}
 	class:tt--feature={feature}
 	class:tt--armed={stage === 'armed'}
 	class:tt--live={stage === 'live'}
@@ -243,22 +243,6 @@
 </div>
 
 <style>
-	/* The box, as VersusTile has it: same shape as the posters beside it. */
-	.tt {
-		display: block;
-		inline-size: 100%;
-		block-size: auto;
-		aspect-ratio: 16 / 9;
-		overflow: hidden;
-		background: var(--navy-900);
-		border-block-end: var(--rule) solid var(--peach-line);
-	}
-	.tt svg {
-		display: block;
-		inline-size: 100%;
-		block-size: 100%;
-	}
-
 	.tt--enkel {
 		--grade: var(--trail-enkel);
 	}
