@@ -7,6 +7,7 @@ import type { CategorySlug } from '@hendingar/core/taxonomy';
 import { plainText } from '@hendingar/core/text';
 import type { CardTimes, UpstreamEvent } from './api.ts';
 import type { MecInstance } from './instances.ts';
+import { slugifyVenue } from '@hendingar/core/slug';
 
 /**
  * Pure mapping: MEC's page → our shape. No I/O, no clock, no randomness.
@@ -25,19 +26,6 @@ import type { MecInstance } from './instances.ts';
  * (ADR 0004, ADR 0008). An importer's job is to be right, not to guess.
  */
 export const DEFAULT_CATEGORY: CategorySlug = 'anna';
-
-export function slugifyVenue(name: string): string {
-	return name
-		.toLowerCase()
-		.replace(/æ/g, 'ae')
-		.replace(/ø/g, 'oe')
-		.replace(/å/g, 'aa')
-		.normalize('NFD')
-		.replace(/[̀-ͯ]/g, '')
-		.replace(/[^a-z0-9]+/g, '-')
-		.replace(/^-+|-+$/g, '')
-		.slice(0, 120);
-}
 
 export type MappedEvent = {
 	externalId: string;

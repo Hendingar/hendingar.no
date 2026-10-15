@@ -3,14 +3,8 @@ import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { CATEGORY_SLUGS } from '@hendingar/core/taxonomy';
 import { INSTANCES, buildBody, instanceBySlug, responseSchema } from '../src/api.ts';
-import {
-	isFailure,
-	mapCategory,
-	mapEvent,
-	posterFrom,
-	posterUrlFor,
-	slugifyVenue
-} from '../src/map.ts';
+import { isFailure, mapCategory, mapEvent, posterFrom, posterUrlFor } from '../src/map.ts';
+import { slugifyVenue } from '@hendingar/core/slug';
 
 /**
  * Against a committed real response. No network (CLAUDE.md rule 6).

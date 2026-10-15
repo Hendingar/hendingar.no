@@ -1,6 +1,7 @@
 import type { CategorySlug } from '@hendingar/core/taxonomy';
 import { CATEGORY_SLUGS } from '@hendingar/core/taxonomy';
 import { SOURCE, type UpstreamEvent } from './api.ts';
+import { slugifyVenue } from '@hendingar/core/slug';
 
 /**
  * Pure mapping: upstream shape → our shape. No I/O, no clock, no randomness — so it is fully
@@ -66,19 +67,6 @@ export function mapCategory(id: number | null, name: string | null): CategorySlu
 export const MAPPED_SLUGS: readonly CategorySlug[] = [
 	...new Set([...Object.values(CATEGORY_BY_ID), ...Object.values(CATEGORY_BY_NAME)])
 ];
-
-export function slugifyVenue(name: string): string {
-	return name
-		.toLowerCase()
-		.replace(/æ/g, 'ae')
-		.replace(/ø/g, 'oe')
-		.replace(/å/g, 'aa')
-		.normalize('NFD')
-		.replace(/[̀-ͯ]/g, '')
-		.replace(/[^a-z0-9]+/g, '-')
-		.replace(/^-+|-+$/g, '')
-		.slice(0, 120);
-}
 
 export type MappedEvent = {
 	externalId: string;

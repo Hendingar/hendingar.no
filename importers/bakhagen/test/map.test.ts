@@ -13,9 +13,9 @@ import {
 	mapEvent,
 	normaliseDateTime,
 	occurrenceId,
-	slugifyVenue,
 	venueNameFrom
 } from '../src/map.ts';
+import { slugifyVenue } from '@hendingar/core/slug';
 
 /**
  * Against committed real pages. No network, no clock (CLAUDE.md rule 6).

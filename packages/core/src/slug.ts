@@ -22,6 +22,27 @@ export function slugify(value: string): string {
 		.replace(/-+$/g, '');
 }
 
+/**
+ * A venue's or organiser's key in `venues.slug` / `organizers.slug`.
+ *
+ * Those columns are unique across every source, so two importers that slug the same name
+ * differently store the same hall twice. Twenty-three importers carried their own copy of this;
+ * twenty were identical and three spelled the mark-stripping differently. It is not `slugify`:
+ * the cut is at 120 rather than 80, and changing either would re-key existing rows.
+ */
+export function slugifyVenue(name: string): string {
+	return name
+		.toLowerCase()
+		.replace(/æ/g, 'ae')
+		.replace(/ø/g, 'oe')
+		.replace(/å/g, 'aa')
+		.normalize('NFD')
+		.replace(/[\u0300-\u036f]/g, '')
+		.replace(/[^a-z0-9]+/g, '-')
+		.replace(/^-+|-+$/g, '')
+		.slice(0, 120);
+}
+
 export function eventPath(id: number, title: string): string {
 	const slug = slugify(title);
 	return slug ? `/hending/${id}-${slug}` : `/hending/${id}`;

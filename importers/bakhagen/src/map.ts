@@ -1,6 +1,7 @@
 import type { CategorySlug } from '@hendingar/core/taxonomy';
 import type { RawEvent, UpstreamDetail } from './api.ts';
 import type { BakhagenInstance } from './instances.ts';
+import { slugifyVenue } from '@hendingar/core/slug';
 
 /**
  * Pure mapping: a Bakhagen activity card → our shape. No I/O, no clock, no randomness.
@@ -134,19 +135,6 @@ export function isAllDay(
 export function venueNameFrom(location: string): string {
 	const [first] = location.split(',');
 	return (first ?? '').trim();
-}
-
-export function slugifyVenue(name: string): string {
-	return name
-		.toLowerCase()
-		.replace(/æ/g, 'ae')
-		.replace(/ø/g, 'oe')
-		.replace(/å/g, 'aa')
-		.normalize('NFD')
-		.replace(/[̀-ͯ]/g, '')
-		.replace(/[^a-z0-9]+/g, '-')
-		.replace(/^-+|-+$/g, '')
-		.slice(0, 120);
 }
 
 /**

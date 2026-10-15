@@ -3,7 +3,8 @@ import { createDb, type Db } from '@hendingar/core/db';
 import { events, ingestRuns, sources, venues } from '@hendingar/core/schema';
 import { fetchListing, parseListing, type FetchListing } from './api.ts';
 import { SHOPS, listingUrl, type TicketcoShop } from './instances.ts';
-import { isCancelled, isFailure, mapEvent, slugifyVenue } from './map.ts';
+import { isCancelled, isFailure, mapEvent } from './map.ts';
+import { slugifyVenue } from '@hendingar/core/slug';
 
 /**
  * Deterministic: fetch → parse → validate → upsert. No language model touches this path.

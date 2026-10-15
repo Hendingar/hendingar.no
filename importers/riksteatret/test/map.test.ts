@@ -12,14 +12,8 @@ import {
 	type RawPerformance
 } from '../src/api.ts';
 import { INSTANCES, instanceBySlug } from '../src/instances.ts';
-import {
-	CATEGORY,
-	isFailure,
-	mapPerformance,
-	occurrenceId,
-	parseWallClock,
-	slugifyVenue
-} from '../src/map.ts';
+import { CATEGORY, isFailure, mapPerformance, occurrenceId, parseWallClock } from '../src/map.ts';
+import { slugifyVenue } from '@hendingar/core/slug';
 
 /**
  * Against committed real pages. No network, no clock (CLAUDE.md rule 6).

@@ -2,6 +2,7 @@ import { zonedWallClockToInstant } from '@hendingar/core/datetime';
 import type { CategorySlug } from '@hendingar/core/taxonomy';
 import type { UpstreamCard } from './api.ts';
 import { eventUrl, SITE } from './site.ts';
+import { slugifyVenue } from '@hendingar/core/slug';
 
 /**
  * Pure mapping: one card → our shape. No I/O, no clock, no randomness.
@@ -59,19 +60,6 @@ export function mapCategory(title: string): CategorySlug {
 	if (text.includes('konferanse')) return 'konferanse';
 	if (text.includes('kurs') || text.includes('seminar')) return 'kurs';
 	return 'mote';
-}
-
-export function slugifyVenue(name: string): string {
-	return name
-		.toLowerCase()
-		.replace(/æ/g, 'ae')
-		.replace(/ø/g, 'oe')
-		.replace(/å/g, 'aa')
-		.normalize('NFD')
-		.replace(/[̀-ͯ]/g, '')
-		.replace(/[^a-z0-9]+/g, '-')
-		.replace(/^-+|-+$/g, '')
-		.slice(0, 120);
 }
 
 export type MappedEvent = {

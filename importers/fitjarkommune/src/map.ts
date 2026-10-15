@@ -8,6 +8,7 @@ import type { CategorySlug } from '@hendingar/core/taxonomy';
 import { plainText } from '@hendingar/core/text';
 import type { ListingItem, UpstreamEntry } from './api.ts';
 import { entryUrl, SITE } from './site.ts';
+import { slugifyVenue } from '@hendingar/core/slug';
 
 /**
  * Pure mapping: a listed entry, and its page when we could read it → our shape. No I/O, no clock,
@@ -25,19 +26,6 @@ import { entryUrl, SITE } from './site.ts';
  * judgement belongs to the verification service (ADR 0004, ADR 0008).
  */
 export const DEFAULT_CATEGORY: CategorySlug = 'anna';
-
-export function slugifyVenue(name: string): string {
-	return name
-		.toLowerCase()
-		.replace(/æ/g, 'ae')
-		.replace(/ø/g, 'oe')
-		.replace(/å/g, 'aa')
-		.normalize('NFD')
-		.replace(/[̀-ͯ]/g, '')
-		.replace(/[^a-z0-9]+/g, '-')
-		.replace(/^-+|-+$/g, '')
-		.slice(0, 120);
-}
 
 export type MappedEvent = {
 	externalId: string;

@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { decodeEntities } from '@hendingar/core/text';
 import { CUSTOMER_ID, yearEndpoint } from './site.ts';
 
 /**
@@ -42,15 +43,14 @@ export type UpstreamCard = {
 
 export type Parsed = { rows: UpstreamCard[]; rejected: string[] };
 
+/**
+ * Tags out, entities decoded, one line.
+ *
+ * Core's decoder rather than a local list of six: WordPress writes `&#8211;`, `&#8217;` and
+ * `&laquo;…&raquo;` into titles, and none of those were decoded here.
+ */
 function decode(value: string): string {
-	return value
-		.replace(/<[^>]*>/g, ' ')
-		.replace(/&nbsp;/g, ' ')
-		.replace(/&amp;/g, '&')
-		.replace(/&quot;/g, '"')
-		.replace(/&#0?39;|&apos;/g, "'")
-		.replace(/&lt;/g, '<')
-		.replace(/&gt;/g, '>')
+	return decodeEntities(value.replace(/<[^>]*>/g, ' '))
 		.replace(/\s+/g, ' ')
 		.trim();
 }

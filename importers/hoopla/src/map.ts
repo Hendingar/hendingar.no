@@ -3,6 +3,7 @@ import type { CategorySlug } from '@hendingar/core/taxonomy';
 import { plainText } from '@hendingar/core/text';
 import type { UpstreamEvent } from './api.ts';
 import { eventUrl, type HooplaShop } from './shops.ts';
+import { slugifyVenue } from '@hendingar/core/slug';
 
 /**
  * Pure mapping: one Hoopla event → our shape. No I/O, no clock, no randomness (CLAUDE.md rule 6).
@@ -31,19 +32,6 @@ export type MapFailure = { externalId: string; title: string; problem: string };
 
 export function isFailure(v: MappedEvent | MapFailure): v is MapFailure {
 	return 'problem' in v;
-}
-
-export function slugifyVenue(name: string): string {
-	return name
-		.toLowerCase()
-		.replace(/æ/g, 'ae')
-		.replace(/ø/g, 'oe')
-		.replace(/å/g, 'aa')
-		.normalize('NFD')
-		.replace(/\p{Mn}/gu, '')
-		.replace(/[^a-z0-9]+/g, '-')
-		.replace(/^-+|-+$/g, '')
-		.slice(0, 120);
 }
 
 /**

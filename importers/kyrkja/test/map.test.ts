@@ -8,9 +8,9 @@ import {
 	isFailure,
 	isPrivateOccasion,
 	mapCategory,
-	mapEvent,
-	slugifyVenue
+	mapEvent
 } from '../src/map.ts';
+import { slugifyVenue } from '@hendingar/core/slug';
 
 /**
  * Against the committed real page. No network (CLAUDE.md rule 6).

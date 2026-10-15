@@ -22,9 +22,9 @@ import {
 	isPublishable,
 	mapEvent,
 	posterUrlOf,
-	slugifyVenue,
 	venueNameOf
 } from '../src/map.ts';
+import { slugifyVenue } from '@hendingar/core/slug';
 
 /**
  * Against committed real responses. No network, no clock (CLAUDE.md rule 6).

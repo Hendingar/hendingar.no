@@ -7,6 +7,7 @@ import {
 	type UpstreamEvent,
 	type UpstreamShowing
 } from './api.ts';
+import { slugifyVenue } from '@hendingar/core/slug';
 
 /**
  * Pure mapping: one showing → our shape. No I/O, no clock, no randomness.
@@ -48,19 +49,6 @@ const CATEGORY_BY_SLUG: Record<string, CategorySlug> = {
 export function mapCategory(subCategorySlug: string | null): CategorySlug {
 	if (!subCategorySlug) return 'anna';
 	return CATEGORY_BY_SLUG[subCategorySlug] ?? 'anna';
-}
-
-export function slugifyVenue(name: string): string {
-	return name
-		.toLowerCase()
-		.replace(/æ/g, 'ae')
-		.replace(/ø/g, 'oe')
-		.replace(/å/g, 'aa')
-		.normalize('NFD')
-		.replace(/[̀-ͯ]/g, '')
-		.replace(/[^a-z0-9]+/g, '-')
-		.replace(/^-+|-+$/g, '')
-		.slice(0, 120);
 }
 
 export type MappedEvent = {

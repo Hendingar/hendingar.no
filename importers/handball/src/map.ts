@@ -3,25 +3,13 @@ import { handballTitle } from '@hendingar/core/handball';
 import type { CategorySlug } from '@hendingar/core/taxonomy';
 import type { RawMatch } from './api.ts';
 import { matchUrl, type HandballTeam } from './teams.ts';
+import { slugifyVenue } from '@hendingar/core/slug';
 
 /**
  * Pure mapping: one schedule row → our shape. No I/O, no clock, no randomness.
  */
 
 export const CATEGORY: CategorySlug = 'sport';
-
-export function slugifyVenue(name: string): string {
-	return name
-		.toLowerCase()
-		.replace(/æ/g, 'ae')
-		.replace(/ø/g, 'oe')
-		.replace(/å/g, 'aa')
-		.normalize('NFD')
-		.replace(/[̀-ͯ]/g, '')
-		.replace(/[^a-z0-9]+/g, '-')
-		.replace(/^-+|-+$/g, '')
-		.slice(0, 120);
-}
 
 /**
  * A home match, by the schedule's own team id.

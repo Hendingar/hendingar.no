@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { parseItems, parseProgram } from '../src/api.ts';
+import { excerptText, parseItems, parseProgram } from '../src/api.ts';
 import { isFailure, isSkip, mapCard, startOf, type MappedEvent } from '../src/map.ts';
 
 const html = readFileSync(new URL('./fixtures/program.html', import.meta.url), 'utf8');
@@ -95,5 +95,17 @@ describe('one event', () => {
 		const keys = events.map((e) => e.externalId);
 		expect(new Set(keys).size).toBe(keys.length);
 		for (const key of keys) expect(key).toMatch(/^[a-z0-9-]+@\d{4}-\d{2}-\d{2}$/);
+	});
+});
+
+describe('entities in an excerpt', () => {
+	it('leaves an impossible code point as written rather than throwing', () => {
+		const item = {
+			id: 1,
+			link: '',
+			excerpt: { rendered: '<p>A &#1114112; B &raquo;</p>' },
+			program_item_cat: []
+		};
+		expect(excerptText(item)).toBe('A &#1114112; B »');
 	});
 });

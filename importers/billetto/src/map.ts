@@ -1,6 +1,7 @@
 import type { CategorySlug } from '@hendingar/core/taxonomy';
 import type { UpstreamEvent } from './api.ts';
 import { organiserUrl, type BillettoOrganiser } from './organisers.ts';
+import { slugifyVenue } from '@hendingar/core/slug';
 
 /**
  * Pure mapping: one Billetto hit → our shape. No I/O, no clock, no randomness.
@@ -50,19 +51,6 @@ export function mapCategory(
 	if (byType) return byType;
 	const byCategory = category ? CATEGORY_BY_CATEGORY[category.trim().toLowerCase()] : undefined;
 	return byCategory ?? 'anna';
-}
-
-export function slugifyVenue(name: string): string {
-	return name
-		.toLowerCase()
-		.replace(/æ/g, 'ae')
-		.replace(/ø/g, 'oe')
-		.replace(/å/g, 'aa')
-		.normalize('NFD')
-		.replace(/[̀-ͯ]/g, '')
-		.replace(/[^a-z0-9]+/g, '-')
-		.replace(/^-+|-+$/g, '')
-		.slice(0, 120);
 }
 
 export type MappedEvent = {

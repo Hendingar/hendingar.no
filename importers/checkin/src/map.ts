@@ -1,6 +1,7 @@
 import type { CategorySlug } from '@hendingar/core/taxonomy';
 import { plainText } from '@hendingar/core/text';
 import { MEDIA_BASE, eventUrl, type CheckinInstance, type UpstreamEvent } from './api.ts';
+import { slugifyVenue } from '@hendingar/core/slug';
 
 /**
  * Pure mapping: Checkin's shape → ours. No I/O, no clock, no randomness.
@@ -60,19 +61,6 @@ export function mapCategory(topics: readonly (string | null | undefined)[]): Cat
 	}
 	// A generic topic is still better evidence than nothing, but it only ever means 'anna'.
 	return 'anna';
-}
-
-export function slugifyVenue(name: string): string {
-	return name
-		.toLowerCase()
-		.replace(/æ/g, 'ae')
-		.replace(/ø/g, 'oe')
-		.replace(/å/g, 'aa')
-		.normalize('NFD')
-		.replace(/[̀-ͯ]/g, '')
-		.replace(/[^a-z0-9]+/g, '-')
-		.replace(/^-+|-+$/g, '')
-		.slice(0, 120);
 }
 
 export type MappedEvent = {

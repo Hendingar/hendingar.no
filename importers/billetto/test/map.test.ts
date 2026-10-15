@@ -11,14 +11,8 @@ import {
 	organiserUrl,
 	searchUrl
 } from '../src/organisers.ts';
-import {
-	MAX_DESCRIPTION,
-	isFailure,
-	mapCategory,
-	mapEvent,
-	slugifyVenue,
-	trimDescription
-} from '../src/map.ts';
+import { MAX_DESCRIPTION, isFailure, mapCategory, mapEvent, trimDescription } from '../src/map.ts';
+import { slugifyVenue } from '@hendingar/core/slug';
 
 /**
  * Against a committed real response. No network, no clock (CLAUDE.md rule 6).
