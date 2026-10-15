@@ -97,7 +97,7 @@
 
 <section class="shell queue">
 	<p class="label">Dine innsendingar</p>
-	<h1 class="display queue__h">Kø</h1>
+	<h1 class="display page-title">Kø</h1>
 
 	{#if !loaded}
 		<p class="queue__note">Hentar innsendingane dine …</p>
@@ -288,10 +288,7 @@
 <style>
 	.queue {
 		padding-block: var(--section-y);
-	}
-	.queue__h {
-		font-size: clamp(2rem, 7vw, 4rem);
-		margin-block: 0.2em 0.5em;
+		container-type: inline-size;
 	}
 	.queue__note {
 		max-inline-size: 58ch;

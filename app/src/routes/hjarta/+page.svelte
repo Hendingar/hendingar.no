@@ -56,7 +56,7 @@
 
 <section class="shell hearts">
 	<p class="label">Dine</p>
-	<h1 class="display hearts__h">Hjarta</h1>
+	<h1 class="display page-title">Hjarta</h1>
 
 	{#if !loaded}
 		<p class="hearts__note">Hentar dine hjarta …</p>
@@ -87,10 +87,7 @@
 <style>
 	.hearts {
 		padding-block: var(--section-y);
-	}
-	.hearts__h {
-		font-size: clamp(2rem, 7vw, 4rem);
-		margin-block: 0.2em 0.5em;
+		container-type: inline-size;
 	}
 	.hearts__note {
 		max-inline-size: 56ch;

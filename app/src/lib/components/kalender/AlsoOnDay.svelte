@@ -86,6 +86,8 @@
 		margin-block-start: 2rem;
 		display: grid;
 		gap: 1rem;
+		/* The heading is sized against this, not the viewport — `cqw`, never `vw` (docs/brand.md). */
+		container-type: inline-size;
 	}
 	.also-day__top {
 		display: flex;
@@ -99,7 +101,7 @@
 		font-family: var(--font-display);
 		font-weight: 800;
 		font-stretch: 108%;
-		font-size: clamp(1.15rem, 2.4vw, 1.5rem);
+		font-size: clamp(1.15rem, 2.6cqw, 1.5rem);
 		line-height: 1;
 		text-transform: uppercase;
 		display: flex;

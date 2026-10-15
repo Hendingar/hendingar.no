@@ -555,6 +555,16 @@ button:focus-visible {
 	padding-inline: var(--gutter);
 }
 
+/*
+ * The h1 of a page that is mostly a list of the reader's own things — /hjarta, /kø. Sized against
+ * the section, which must be a size container: `cqw`, never `vw` (docs/brand.md). 7.6cqw of the
+ * content box is what 7vw of the viewport was at every width the clamp does not pin.
+ */
+.page-title {
+	font-size: clamp(2rem, 7.6cqw, 4rem);
+	margin-block: 0.2em 0.5em;
+}
+
 .visually-hidden {
 	position: absolute;
 	inline-size: 1px;
