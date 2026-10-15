@@ -96,9 +96,10 @@
 {/snippet}
 
 <!-- `thumb` as well as `hb`: the parents reach into a thumbnail with `:global(.thumb)` for the
-     hover scale and the phone-width square. See VersusTile for the whole reason. -->
+     hover scale and the phone-width square, and `thumb--whole` to be let out of that square again.
+     See VersusTile for the whole reason. -->
 <div
-	class={['thumb hb', kit]}
+	class={['thumb thumb--whole hb', kit]}
 	class:hb--feature={feature}
 	class:hb--armed={stage === 'armed'}
 	class:hb--live={stage === 'live'}
@@ -107,9 +108,10 @@
 	{@attach reveal}
 >
 	<!--
-		Cropped from the right, not the middle. On a phone the listing paints this as an 88px
-		square beside the title, and the middle of the card is the end of a name and a goalpost;
-		the right of it is the goal, the ball and the hand, which is the picture on its own.
+		Cropped from the right, not the middle, wherever a parent paints this in a box that is not
+		16:9. The listing no longer does — `thumb--whole` keeps it whole on a phone — but a square
+		crop of the middle is the end of a name and a goalpost, and the right of it is the goal, the
+		ball and the hand, which is the picture on its own.
 	-->
 	<svg viewBox="0 0 400 225" preserveAspectRatio="xMaxYMid slice" aria-hidden="true">
 		<defs>
