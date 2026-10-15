@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { WEEKDAY_ABBR, WEEKDAY_NAMES } from '@hendingar/core/datetime';
 	import { eventPath } from '@hendingar/core/slug';
 	import { clubsOf, type WeeklyActivityRow } from '../../weekly-view.ts';
 
@@ -22,11 +23,10 @@
 	const total = $derived(clubs.reduce((n, c) => n + c.activities.length, 0));
 
 	const SHOWN = 3;
-	const DAYS = ['Må', 'Ty', 'On', 'To', 'Fr', 'La', 'Su'];
-	const NAMES = ['måndag', 'tysdag', 'onsdag', 'torsdag', 'fredag', 'laurdag', 'sundag'];
+	const DAYS = WEEKDAY_ABBR.map((d) => d.charAt(0).toUpperCase() + d.slice(1));
 
 	function meetsText(meets: boolean[]): string {
-		const days = NAMES.filter((_, i) => meets[i]);
+		const days = WEEKDAY_NAMES.filter((_, i) => meets[i]);
 		return days.length === 7
 			? 'Møtest alle dagar i veka'
 			: `Møtest ${days.length > 1 ? `${days.slice(0, -1).join(', ')} og ${days.at(-1)}` : days[0]}`;

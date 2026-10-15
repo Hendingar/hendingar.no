@@ -24,7 +24,7 @@ test('both orderings are server-rendered, not fetched after load', async ({ page
 		const response = await page.request.get(path);
 		expect(response.ok(), path).toBe(true);
 		const html = await response.text();
-		expect(html, path).toContain('class="grid');
+		expect(html, path).toContain('class="tile-grid');
 		expect(html, path).not.toContain('Lastar');
 	}
 });

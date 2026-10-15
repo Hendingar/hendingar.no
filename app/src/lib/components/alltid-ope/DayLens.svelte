@@ -1,9 +1,9 @@
 <script lang="ts">
+	import { formatWeekdayDate } from '@hendingar/core/datetime';
 	import { eventPath } from '@hendingar/core/slug';
 	import { AGE_BANDS } from '@hendingar/core/weekly-hours';
 	import {
 		bandLabel,
-		dayLabel,
 		dayView,
 		nextDateFor,
 		weekStrip,
@@ -40,7 +40,7 @@
 	const strip = $derived(weekStrip(activities, today, params.band));
 	const view = $derived(dayView(activities, date, params.band));
 	const band = $derived(bandLabel(params.band));
-	const when = $derived(isToday ? 'i dag' : dayLabel(date));
+	const when = $derived(isToday ? 'i dag' : formatWeekdayDate(date));
 </script>
 
 <section id="dag" class="lens" aria-labelledby="h-lens">
@@ -59,7 +59,7 @@
 				class:day--on={d.index === day}
 				href={weeklyHref(d.index, params.band)}
 				aria-current={d.index === day ? 'date' : undefined}
-				aria-label="{dayLabel(d.date)}, {d.count} aktivitetar"
+				aria-label="{formatWeekdayDate(d.date)}, {d.count} aktivitetar"
 			>
 				<span class="day__short">{d.short}</span>
 				<span class="day__n">{d.count}</span>

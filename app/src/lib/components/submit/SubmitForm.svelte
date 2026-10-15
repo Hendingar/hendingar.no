@@ -1,6 +1,11 @@
 <script lang="ts">
 	import { CATEGORIES } from '@hendingar/core/taxonomy';
-	import { DEFAULT_TIME_ZONE, formatEventTime, formatTimeDigits } from '@hendingar/core/datetime';
+	import {
+		DEFAULT_TIME_ZONE,
+		formatEventTime,
+		formatTimeDigits,
+		formatWeekdayDate
+	} from '@hendingar/core/datetime';
 	import {
 		RECURRENCE_FREQUENCIES,
 		WEEKDAY_NAMES,
@@ -755,16 +760,6 @@
 		f.extraDates.set(extraDates.filter((d) => d !== day));
 	}
 
-	/** "torsdag 29. oktober" — the date as somebody would read it off the poster. */
-	function formatListedDate(day: string): string {
-		const [year, month, date] = day.split('-').map(Number);
-		return new Intl.DateTimeFormat('nn-NO', {
-			weekday: 'long',
-			day: 'numeric',
-			month: 'long'
-		}).format(new Date(Date.UTC(year!, month! - 1, date!, 12)));
-	}
-
 	const repeating = $derived(Boolean(f.repeats.value()) && f.repeats.value() !== 'nei');
 
 	/** Live echo of the chosen rule, so nobody has to reason about checkboxes in their head. */
@@ -1336,12 +1331,12 @@
 						<ul class="dates__list">
 							{#each extraDates as day (day)}
 								<li class="dates__item">
-									<span>{formatListedDate(day)}</span>
+									<span>{formatWeekdayDate(day)}</span>
 									<button
 										type="button"
 										class="dates__drop"
 										onclick={() => dropDate(day)}
-										aria-label="Fjern {formatListedDate(day)}"
+										aria-label="Fjern {formatWeekdayDate(day)}"
 									>
 										×
 									</button>

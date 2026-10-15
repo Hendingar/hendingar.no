@@ -91,6 +91,8 @@
 								posterSrcset={pick.posterSrcset}
 								trail={pick.trail}
 								title={pick.title}
+								category={pick.category}
+								sourceSlugs={pick.sourceSlugs}
 								sizes={SIZES}
 							/>
 							<!--

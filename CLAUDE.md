@@ -136,7 +136,7 @@ event card was written twice. The convention now:
 
 ```
 app/src/lib/
-  components/            reusable across routes — EventCard, EventList, SiteFooter
+  components/            reusable across routes — EventTile, EventGrid, SiteFooter
   components/landing/    single-use sections owned by `/`
   content/               copy as named, typed data — not string arrays inside layout code
   styles/brand.css       tokens AND cross-route primitives (.btn, .display--*, .fineprint)

@@ -231,8 +231,19 @@ export function formatWeekendRange(dates: readonly string[]): string {
 export function formatCalendarDate(localDate: string): string {
 	const [y, m, d] = localDate.split('-').map(Number);
 	if (y === undefined || m === undefined || d === undefined) return localDate;
-	const weekday = WEEKDAY_NAMES[weekdayIndex(localDate)] ?? '';
-	return `${capitalise(weekday)} ${d}. ${MONTH_NAMES[m - 1] ?? ''} ${y}`;
+	return `${capitalise(formatWeekdayDate(localDate))} ${y}`;
+}
+
+/**
+ * A date without its year, the way a poster writes it: "torsdag 29. oktober".
+ *
+ * From the tables above rather than `Intl.DateTimeFormat('nn-NO')`: browsers ship no `nn-NO`, so
+ * that call renders the visitor's own language and the server and client disagree.
+ */
+export function formatWeekdayDate(localDate: string): string {
+	const [, m, d] = localDate.split('-').map(Number);
+	if (m === undefined || d === undefined) return localDate;
+	return `${WEEKDAY_NAMES[weekdayIndex(localDate)] ?? ''} ${d}. ${MONTH_NAMES[m - 1] ?? ''}`;
 }
 
 /** A month, spelled out: "September 2026". */

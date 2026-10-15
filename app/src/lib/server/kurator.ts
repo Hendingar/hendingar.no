@@ -2,10 +2,12 @@ import { and, asc, desc, eq, gte, isNull, lte, or } from 'drizzle-orm';
 import { curatorPicks, events, organizers, sources, venues } from '@hendingar/core/schema';
 import { stillListedUpstream } from '@hendingar/core/gone-upstream';
 import type { Trail } from '@hendingar/core/trail';
+import type { CategorySlug } from '@hendingar/core/taxonomy';
 import { DEFAULT_TIME_ZONE, weekendAhead } from '@hendingar/core/datetime';
 import { instantWindowForDays, localDayKey } from '../calendar.ts';
 import { currentSelection } from '../kurator.ts';
 import { db } from './db';
+import { sourceMarksFor } from './listing.ts';
 import { curateWeekend, verifierEnabled } from './verifier';
 
 /**
@@ -43,6 +45,7 @@ export type WeekendPick = {
 	rank: number;
 	reason: string;
 	title: string;
+	category: CategorySlug;
 	startsAt: Date;
 	venueName: string | null;
 	venueTimeZone: string;
@@ -50,6 +53,8 @@ export type WeekendPick = {
 	posterSrcset: string | null;
 	/** A graded trip's difficulty and audiences, so a photo-less pick is still drawn as a trip. */
 	trail: Trail | null;
+	/** Whose calendars reported it — what picks the garden or the church art over the pattern. */
+	sourceSlugs: string[];
 };
 
 /** Today where the events are. The picks belong to a day, so a day is what keys them. */
@@ -159,18 +164,8 @@ export async function currentPicks(): Promise<WeekendPick[]> {
 		localDate: localDayKey(pick.startsAt, pick.venueTimeZone)
 	}));
 
-	return currentSelection(rows, today()).map((pick) => ({
-		eventId: pick.eventId,
-		rank: pick.rank,
-		reason: pick.reason,
-		title: pick.title,
-		startsAt: pick.startsAt,
-		venueName: pick.venueName,
-		venueTimeZone: pick.venueTimeZone,
-		posterUrl: pick.posterUrl,
-		posterSrcset: pick.posterSrcset,
-		trail: pick.trail
-	}));
+	// Each row as `picksFor` read it, so a field added there reaches the page without a second list.
+	return currentSelection(rows, today());
 }
 
 /**
@@ -186,12 +181,14 @@ export async function picksFor(date: string): Promise<WeekendPick[]> {
 			rank: curatorPicks.rank,
 			reason: curatorPicks.reason,
 			title: events.title,
+			category: events.category,
 			startsAt: events.startsAt,
 			venueName: venues.name,
 			venueTimeZone: venues.timezone,
 			posterUrl: events.posterUrl,
 			posterSrcset: events.posterSrcset,
 			trail: events.trail,
+			sourceMarks: sourceMarksFor(events.id).as('source_marks'),
 			status: events.status,
 			duplicateOfId: events.duplicateOfId
 		})
@@ -216,6 +213,7 @@ export async function picksFor(date: string): Promise<WeekendPick[]> {
 			rank: row.rank,
 			reason: row.reason,
 			title: row.title,
+			category: row.category,
 			startsAt: row.startsAt,
 			venueName: row.venueName,
 			// A venue without a zone is formatted in the pilot's, which is what every other listing
@@ -223,7 +221,8 @@ export async function picksFor(date: string): Promise<WeekendPick[]> {
 			venueTimeZone: row.venueTimeZone ?? DEFAULT_TIME_ZONE,
 			posterUrl: row.posterUrl,
 			posterSrcset: row.posterSrcset,
-			trail: row.trail
+			trail: row.trail,
+			sourceSlugs: row.sourceMarks.map((m) => m.slug)
 		}));
 }
 

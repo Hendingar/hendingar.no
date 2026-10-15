@@ -43,7 +43,7 @@
 	} = $props();
 </script>
 
-<ul class="grid" class:grid--featured={featured}>
+<ul class="tile-grid" class:tile-grid--featured={featured}>
 	<!--
 		Repeats of the same event share a card. Public swimming runs four times a day; four
 		identical posters spend a screenful saying one thing. Each time is still its own event
@@ -63,36 +63,6 @@
 </ul>
 
 <style>
-	.grid {
-		list-style: none;
-		margin: 0;
-		padding: 0;
-		display: grid;
-		grid-template-columns: 1fr;
-		gap: clamp(0.75rem, 1.5vw, 1.25rem);
-	}
-	/* Grid children default to min-width:auto, which lets a long title push its track wider than
-	   its column. This is the single most common source of sideways scroll. */
-	.grid li {
-		display: grid;
-		min-inline-size: 0;
-	}
-	@media (width >= 34rem) {
-		.grid {
-			grid-template-columns: repeat(2, 1fr);
-		}
-	}
-	@media (width >= 60rem) {
-		.grid {
-			grid-template-columns: repeat(3, 1fr);
-		}
-	}
-	@media (width >= 80rem) {
-		.grid {
-			grid-template-columns: repeat(4, 1fr);
-		}
-	}
-
 	/*
 	 * The leading day gets one column fewer at every step, so its cards are wider.
 	 *
@@ -102,12 +72,12 @@
 	 * that is exactly the width where density matters most.
 	 */
 	@media (width >= 60rem) {
-		.grid--featured {
+		.tile-grid--featured {
 			grid-template-columns: repeat(2, 1fr);
 		}
 	}
 	@media (width >= 80rem) {
-		.grid--featured {
+		.tile-grid--featured {
 			grid-template-columns: repeat(3, 1fr);
 		}
 	}
