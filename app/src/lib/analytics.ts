@@ -17,7 +17,17 @@
 import { LIVE_HOSTS } from './origin.ts';
 
 const MEASUREMENT_ID = '05801cfd-cf47-4892-9a2a-b301f6b2c429';
-const COLLECTOR = `https://global.t.d8a.tech/${MEASUREMENT_ID}/d/c`;
+
+/**
+ * Where every hit goes, and therefore the one origin the CSP's `connect-src` must name.
+ *
+ * vite.config.ts imports this rather than spelling the host a second time. The CSP landed with
+ * `connect-src 'self'` alone and the tracker's `fetch` and `sendBeacon` were refused from that
+ * deploy on — silently, because failing quietly is this file's whole contract. The dashboard
+ * just went to zero. One constant in two places cannot drift that way.
+ */
+export const COLLECTOR_ORIGIN = 'https://global.t.d8a.tech';
+const COLLECTOR = `${COLLECTOR_ORIGIN}/${MEASUREMENT_ID}/d/c`;
 
 /** Anything but the live site — localhost, a preview, CI — reports nothing. */
 export function shouldTrack(hostname: string): boolean {

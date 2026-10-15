@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { COLLECTOR_ORIGIN } from '../src/lib/analytics.ts';
 
 /**
  * The parts of the site only a crawler reads.
@@ -324,4 +325,18 @@ test('an event with a known venue publishes a real postal address', async ({ req
 		}
 		if (address.postalCode) expect(String(address.postalCode)).toMatch(/^\d{4}$/);
 	}
+});
+
+/*
+ * Analytics never runs here — the tracker is gated on the live hostname — so the CSP is the only
+ * part of it a spec can see. It is also the part that broke: `connect-src 'self'` shipped, the
+ * browser refused every hit, and nothing on the page looked any different.
+ */
+test('the CSP lets the analytics collector be reached', async ({ request }) => {
+	const response = await request.get('/');
+	const connect = (response.headers()['content-security-policy'] ?? '')
+		.split(';')
+		.map((d) => d.trim())
+		.find((d) => d.startsWith('connect-src'));
+	expect(connect?.split(/\s+/)).toContain(COLLECTOR_ORIGIN);
 });
