@@ -45,12 +45,18 @@ def _request(candidates: list[CuratorCandidate] | None = None) -> CuratorRequest
     )
 
 
-def _draft(*picks: tuple[int, str], note: str = "Ei brei helg.") -> str:
+def _draft(*picks: tuple[int, str] | tuple[int, str, str], note: str = "Ei brei helg.") -> str:
+    """The kurator's answer. A pick is (id, reason), titled as `_candidate` titles that id, or
+    (id, reason, title) to have the kurator name a different event than the id it gives."""
     return json.dumps(
         {
             "picks": [
-                {"event_id": event_id, "rank": rank, "reason": reason}
-                for rank, (event_id, reason) in enumerate(picks, start=1)
+                {
+                    "event_id": pick[0],
+                    "title": pick[2] if len(pick) == 3 else f"Hending {pick[0]}",
+                    "reason": pick[1],
+                }
+                for pick in picks
             ],
             "note": note,
         }
@@ -225,6 +231,72 @@ class TestTheSecondReader:
 
         assert selection.picks == []
         assert selection.note
+
+
+class TestTheReasonBelongsToItsEvent:
+    """From production, 2026-10-13.
+
+    The kurator wrote "lære å lage kanadisk Thanksgiving-mat med Skyler Milner" — the cooking
+    class's own description — against the id of "Improteater med Småsceneri". Motlesaren, reading
+    it under the whole weekend's listing, found every word of it in *a* record and passed it. The
+    improv night went on the front page explaining itself as a dinner.
+    """
+
+    def _weekend(self) -> list[CuratorCandidate]:
+        return [
+            _candidate(959, "teater", title="Improteater med Småsceneri, 16. oktober!"),
+            _candidate(
+                992,
+                "mat-og-drikke",
+                title="Kokkekurs: Canadian Thanksgiving Vol. 2 med Skyler Milner",
+                description="Lær å lage kanadisk Thanksgiving-mat med Skyler Milner.",
+            ),
+            _candidate(3, "marknad"),
+            _candidate(4, "sport"),
+        ]
+
+    async def test_a_reason_given_under_another_events_id_is_dropped(self):
+        fake = FakeOpenAI(
+            _draft(
+                (959, "Lær å lage kanadisk Thanksgiving-mat.", "Kokkekurs: Canadian Thanksgiving"),
+                (3, "Verdt turen for loppene."),
+            ),
+            # The second reader would have passed it, as it did. The rule does not ask.
+            _review((959, True, ""), (3, True, "")),
+        )
+        selection = await curate(factory_for(fake), CuratorRequest(candidates=self._weekend()))
+
+        assert [p.event_id for p in selection.picks] == [3]
+        assert all("Thanksgiving" not in p.reason for p in selection.picks)
+
+    async def test_a_title_copied_with_slips_still_names_its_event(self):
+        """Punctuation and case are copying, not a different event."""
+        fake = FakeOpenAI(
+            _draft((959, "Verdt ein latter.", "improteater med småsceneri 16 oktober")),
+            _review((959, True, "")),
+        )
+        selection = await curate(factory_for(fake), CuratorRequest(candidates=self._weekend()))
+        assert [p.event_id for p in selection.picks] == [959]
+
+    async def test_the_second_reader_sees_each_reason_under_its_own_record_and_nothing_else(self):
+        fake = FakeOpenAI(
+            _draft((959, "Verdt ein latter.", self._weekend()[0].title)),
+            _review((959, True, "")),
+        )
+        await curate(factory_for(fake), CuratorRequest(candidates=self._weekend()))
+
+        assert len(fake.calls) == 2
+        dossier = "\n".join(
+            str(message["content"])
+            for message in fake.calls[1]["messages"]
+            if message["role"] != "system"
+        )
+        assert "[959] Improteater" in dossier
+        assert dossier.index("[959]") < dossier.index("GRUNNGJEVING: Verdt ein latter.")
+        # The records it was not asked about are not there to find a claim in.
+        assert "Thanksgiving" not in dossier
+        assert "[992]" not in dossier
+        assert "[3]" not in dossier
 
 
 class TestWhenItDeclines:

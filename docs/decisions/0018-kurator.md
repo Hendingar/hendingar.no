@@ -1,6 +1,6 @@
 # 0018 — A kurator picks three events a weekend, and the app is what calls it
 
-**Status:** accepted (2026-09-15)
+**Status:** accepted (2026-09-15), amended 2026-10-15 — see [Amendment](#amendment-2026-10-15-the-second-reader-sees-only-what-was-picked)
 **Builds on:** [ADR 0016](0016-agent-framework.md) (the group chat), [ADR 0017](0017-written-suggestions.md) (a second agent audits the first)
 **Bounded by:** [ADR 0008](0008-verification-service.md) — the verifier is the only place a model runs, and it is not on the internet
 
@@ -25,7 +25,7 @@ a feature that works for a month.
 **A kurator chooses up to three of the weekend's events, states why in one sentence each, and the
 picks are stored for the day.** `services/verifier/src/verifier/kurator.py`.
 
-It is a group chat, and the second seat is the point:
+It was a group chat, and the second seat is the point (the seat stays; the chat went — see the amendment):
 
 - **Kuratoren** makes the call and is told to have an opinion — pick broadly, pick the small thing,
   pick what is legible as an actual event rather than a standing offer.
@@ -110,3 +110,28 @@ with, and why there is no score anywhere.
   argued for separately or removed.
 - Nobody notices it. Then it is two model calls a night for decoration, and deleting it costs one
   migration and a component.
+
+## Amendment (2026-10-15): the second reader sees only what was picked
+
+The second bullet above happened. The selection made on 2026-10-13 put "Improteater med
+Småsceneri" on the front page with the reason "du kan lære å lage kanadisk Thanksgiving-mat med
+Skyler Milner" — the description of a cooking class elsewhere on the same weekend. The kurator had
+written that reason against the improv night's id; Motlesaren passed it.
+
+Motlesaren was not careless so much as asked the wrong question. In a group chat it read the
+kurator's answer beneath the whole listing, sixty records long, and every word of that reason _was_
+in "oppføringa" — in record 992, not 959. A reader that can see every record can always find a
+claim in one of them. So:
+
+- **No group chat.** Two plain agent calls, still two a night. Motlesaren is handed only the
+  picked records, each followed by the reason given for it, and told a claim found in another
+  record does not count. It cannot match a reason to the wrong event because the wrong event is
+  not in front of it.
+- **The kurator names what it picked.** Each pick carries the title, copied from the list, beside
+  the id. A rule compares it with the record behind the id — letters and digits, case-folded — and
+  drops the pick on a mismatch before any model is asked. The reason is written about the event
+  the model has in mind, and the title says which that was; the id is the number it can transpose.
+  This is the fourth rule that is a rule.
+
+The bad selection was not deleted by hand: the next nightly run writes a newer one, and
+`currentPicks` shows the newest.

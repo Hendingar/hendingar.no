@@ -227,9 +227,9 @@ def create_app(
     async def kurator(request: CuratorRequest) -> CuratorSelection:
         """This weekend's picks: a judgement, made once a night and stored by the caller.
 
-        The second endpoint that is a group chat, and the first that is asked for an opinion rather
-        than a fact. `kurator.py` carries the reasoning, including why the candidates arrive with
-        no heart or view counts on them.
+        Two agents, and the first endpoint asked for an opinion rather than a fact. `kurator.py`
+        carries the reasoning, including why the candidates arrive with no heart or view counts on
+        them, and why the second agent sees only the events that were picked.
 
         A 502 costs a section on a page, and nothing else: the app renders the weekend listing it
         would have rendered anyway.
