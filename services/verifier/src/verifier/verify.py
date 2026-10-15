@@ -8,6 +8,7 @@ would not build.
 
 import logging
 import re
+import unicodedata
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 
@@ -195,8 +196,18 @@ def check_coverage(request: VerifyRequest) -> CheckResult:
     )
 
 
+_FOLD = str.maketrans({"æ": "ae", "ø": "oe", "å": "aa"})
+
+
 def _normalise(text: str) -> str:
-    return re.sub(r"[^a-z0-9]+", " ", text.lower()).strip()
+    """Lowercase, fold the Norwegian letters, drop punctuation — as `normaliseTitle` in core does.
+
+    Without the fold, `[^a-z0-9]` deleted æ, ø and å outright: "Hå kyrkje" and "Hø kyrkje" both
+    became "h kyrkje", one venue, and the two scorers disagreed about the same pair of titles.
+    """
+    folded = unicodedata.normalize("NFD", text.lower().translate(_FOLD))
+    stripped = "".join(c for c in folded if not unicodedata.combining(c))
+    return re.sub(r"[^a-z0-9]+", " ", stripped).strip()
 
 
 def _similarity(a: str, b: str) -> float:

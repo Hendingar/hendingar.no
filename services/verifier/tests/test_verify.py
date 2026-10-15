@@ -92,6 +92,23 @@ class TestDuplicate:
         )
         assert result.verdict == "uncertain"
 
+    def test_tells_apart_names_that_differ_only_in_a_norwegian_letter(self):
+        result = check_duplicate(
+            _request(
+                title="Konsert i Hå kyrkje",
+                venue_name="Hå kyrkje",
+                candidates=[
+                    CandidateEvent(
+                        id=1,
+                        title="Konsert i Hø kyrkje",
+                        starts_at="2026-09-12T20:00:00+02:00",
+                        venue_name="Hø kyrkje",
+                    )
+                ],
+            )
+        )
+        assert result.verdict != "fail"
+
     def test_ignores_an_unrelated_event(self):
         result = check_duplicate(
             _request(

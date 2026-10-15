@@ -51,6 +51,7 @@ from typing import Any
 
 from pydantic import BaseModel, Field
 
+from .coverage import covered_sentence
 from .llm import AgentFactory, parse_answer
 from .models import CuratorCandidate, CuratorPick, CuratorRequest, CuratorSelection
 
@@ -71,7 +72,7 @@ MAX_CANDIDATES = 60
 CURATOR = "kuratoren"
 READER = "motlesaren"
 
-CURATOR_BRIEF = f"""Du er kurator for hendingar.no, ein open kalender for Stord, Bømlo og Fitjar.
+CURATOR_BRIEF = f"""Du er kurator for hendingar.no, ein open kalender for {covered_sentence()}.
 
 Du får alt som skjer i helga som kjem. Vel inntil {MAX_PICKS} som du meiner er verdt å gå ut for,
 og grunngjev kvart val med éi setning på nynorsk.
