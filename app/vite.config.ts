@@ -4,6 +4,7 @@ import adapter from '@sveltejs/adapter-node';
 import { sveltekit } from '@sveltejs/kit/vite';
 import { fileURLToPath } from 'node:url';
 import { mcpView } from './src/lib/server/mcp/view-plugin.ts';
+import { COLLECTOR_ORIGIN } from './src/lib/analytics.ts';
 
 export default defineConfig({
 	// One .env for the whole workspace, at the repo root. `pnpm db:up` creates it.
@@ -36,6 +37,9 @@ export default defineConfig({
 			 * Images are the exception, and deliberately: importers hotlink posters from whatever
 			 * CDN the source uses, and the submit form previews a photo as a `blob:`. Inline styles
 			 * are allowed because Svelte writes `style=` attributes; a style cannot run code.
+			 *
+			 * `connect-src` names the analytics collector and nothing else off-site. It was `self`
+			 * alone for ten days, and every page view in that time was refused by the browser.
 			 */
 			csp: {
 				mode: 'auto',
@@ -44,7 +48,7 @@ export default defineConfig({
 					'script-src': ['self'],
 					'style-src': ['self', 'unsafe-inline'],
 					'img-src': ['self', 'https:', 'data:', 'blob:'],
-					'connect-src': ['self'],
+					'connect-src': ['self', COLLECTOR_ORIGIN],
 					'font-src': ['self'],
 					'object-src': ['none'],
 					'base-uri': ['self'],
