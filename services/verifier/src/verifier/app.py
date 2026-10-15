@@ -1,9 +1,12 @@
 """HTTP surface. Internal-only ingress in Azure — never exposed to the internet."""
 
 import logging
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import StreamingResponse
+from pydantic import BaseModel
 
 from .appeal import JURORS, QUORUM, judge_appeal, juror_by_id
 from .config import Config, load_config
@@ -48,6 +51,51 @@ MAX_IMAGE_BASE64_BYTES = 8 * 1024 * 1024
 MAX_PAGE_TEXT_CHARS = 40_000
 
 
+def _refuse_large_image(image_base64: str) -> None:
+    if len(image_base64) > MAX_IMAGE_BASE64_BYTES:
+        raise HTTPException(status_code=413, detail="image too large; downscale before sending")
+
+
+@asynccontextmanager
+async def _upstream(label: str, *, log_as: str) -> AsyncIterator[None]:
+    """Any failure inside is logged and answered as a 502 that names only the exception's type."""
+    try:
+        yield
+    except Exception as exc:
+        log.exception(log_as)
+        raise HTTPException(
+            status_code=502, detail=f"{label} failed ({type(exc).__name__})"
+        ) from exc
+
+
+def _event_stream(
+    stream: AsyncIterator[tuple[str, BaseModel]], *, log_as: str
+) -> StreamingResponse:
+    """Server-sent events, one frame per `(kind, payload)`.
+
+    Errors are frames, not statuses: by the time anything can fail the headers are long gone.
+    """
+
+    async def frames() -> AsyncIterator[str]:
+        try:
+            async for kind, payload in stream:
+                yield f"event: {kind}\ndata: {payload.model_dump_json()}\n\n"
+        except Exception as exc:
+            log.exception(log_as)
+            yield f'event: error\ndata: {{"detail": "{type(exc).__name__}"}}\n\n'
+
+    return StreamingResponse(
+        frames(),
+        media_type="text/event-stream",
+        headers={
+            "cache-control": "no-store",
+            # A proxy that buffers holds the whole stream and delivers it at once, which is
+            # precisely the experience the streaming endpoints exist to avoid.
+            "x-accel-buffering": "no",
+        },
+    )
+
+
 def create_app(
     config: Config | None = None,
     factory: AgentFactory | None = None,
@@ -73,15 +121,9 @@ def create_app(
 
     @app.post("/extract", response_model=ExtractedEvent)
     async def extract(request: ExtractRequest) -> ExtractedEvent:
-        if len(request.image_base64) > MAX_IMAGE_BASE64_BYTES:
-            raise HTTPException(status_code=413, detail="image too large; downscale before sending")
-        try:
+        _refuse_large_image(request.image_base64)
+        async with _upstream("extraction", log_as="extraction failed"):
             return await extract_poster(factory, request)
-        except Exception as exc:
-            log.exception("extraction failed")
-            raise HTTPException(
-                status_code=502, detail=f"extraction failed ({type(exc).__name__})"
-            ) from exc
 
     @app.post("/extract/stream")
     async def extract_streaming(request: ExtractRequest) -> StreamingResponse:
@@ -99,21 +141,10 @@ def create_app(
 
         A `field` frame is for reading. Only `event` — validated, whole — may reach a form.
         """
-        if len(request.image_base64) > MAX_IMAGE_BASE64_BYTES:
-            raise HTTPException(status_code=413, detail="image too large; downscale before sending")
+        _refuse_large_image(request.image_base64)
 
-        async def frames():
-            try:
-                async for kind, payload in extract_poster_stream(factory, request):
-                    yield f"event: {kind}\ndata: {payload.model_dump_json()}\n\n"
-            except Exception as exc:
-                log.exception("streamed extraction failed")
-                yield f'event: error\ndata: {{"detail": "{type(exc).__name__}"}}\n\n'
-
-        return StreamingResponse(
-            frames(),
-            media_type="text/event-stream",
-            headers={"cache-control": "no-store", "x-accel-buffering": "no"},
+        return _event_stream(
+            extract_poster_stream(factory, request), log_as="streamed extraction failed"
         )
 
     @app.post("/crop", response_model=CropSuggestion)
@@ -127,15 +158,9 @@ def create_app(
         A failure here is a 502 and the caller shrugs: it keeps the whole image and the card still
         gets a real picture. That is why this endpoint is allowed to be the thin thing it is.
         """
-        if len(request.image_base64) > MAX_IMAGE_BASE64_BYTES:
-            raise HTTPException(status_code=413, detail="image too large; downscale before sending")
-        try:
+        _refuse_large_image(request.image_base64)
+        async with _upstream("crop", log_as="crop suggestion failed"):
             return await suggest_crop(factory, request)
-        except Exception as exc:
-            log.exception("crop suggestion failed")
-            raise HTTPException(
-                status_code=502, detail=f"crop failed ({type(exc).__name__})"
-            ) from exc
 
     @app.post("/extract-page", response_model=ExtractedEvent)
     async def extract_page_route(request: ExtractPageRequest) -> ExtractedEvent:
@@ -149,23 +174,13 @@ def create_app(
             raise HTTPException(
                 status_code=413, detail="page text too long; truncate before sending"
             )
-        try:
+        async with _upstream("extraction", log_as="page extraction failed"):
             return await extract_page(factory, request)
-        except Exception as exc:
-            log.exception("page extraction failed")
-            raise HTTPException(
-                status_code=502, detail=f"extraction failed ({type(exc).__name__})"
-            ) from exc
 
     @app.post("/verify", response_model=VerifyResponse)
     async def verify(request: VerifyRequest) -> VerifyResponse:
-        try:
+        async with _upstream("verification", log_as="verification failed"):
             return await run_verify(factory, request)
-        except Exception as exc:
-            log.exception("verification failed")
-            raise HTTPException(
-                status_code=502, detail=f"verification failed ({type(exc).__name__})"
-            ) from exc
 
     @app.post("/improve", response_model=ImproveSuggestion)
     async def improve(request: ImproveRequest) -> ImproveSuggestion:
@@ -178,13 +193,8 @@ def create_app(
         A 502 costs nothing. Nobody is blocked on this — the person is looking at a form they
         filled in themselves, and the worst outcome is that they keep their own words.
         """
-        try:
+        async with _upstream("improve", log_as="improvement failed"):
             return await run_improve(factory, request)
-        except Exception as exc:
-            log.exception("improvement failed")
-            raise HTTPException(
-                status_code=502, detail=f"improve failed ({type(exc).__name__})"
-            ) from exc
 
     @app.post("/improve/stream")
     async def improve_streaming(request: ImproveRequest) -> StreamingResponse:
@@ -204,23 +214,8 @@ def create_app(
         person keeps the words they wrote, which is what this feature protects anyway.
         """
 
-        async def frames():
-            try:
-                async for kind, payload in run_improve_stream(factory, request):
-                    yield f"event: {kind}\ndata: {payload.model_dump_json()}\n\n"
-            except Exception as exc:
-                log.exception("streamed improvement failed")
-                yield f'event: error\ndata: {{"detail": "{type(exc).__name__}"}}\n\n'
-
-        return StreamingResponse(
-            frames(),
-            media_type="text/event-stream",
-            headers={
-                "cache-control": "no-store",
-                # A proxy that buffers holds the whole stream and delivers it at once, which is
-                # precisely the experience this endpoint exists to avoid.
-                "x-accel-buffering": "no",
-            },
+        return _event_stream(
+            run_improve_stream(factory, request), log_as="streamed improvement failed"
         )
 
     @app.post("/kurator", response_model=CuratorSelection)
@@ -234,13 +229,8 @@ def create_app(
         A 502 costs a section on a page, and nothing else: the app renders the weekend listing it
         would have rendered anyway.
         """
-        try:
+        async with _upstream("curation", log_as="curation failed"):
             return await run_curate(factory, request)
-        except Exception as exc:
-            log.exception("curation failed")
-            raise HTTPException(
-                status_code=502, detail=f"curation failed ({type(exc).__name__})"
-            ) from exc
 
     @app.post("/haugen", response_model=HaugenRanking)
     async def haugen(request: HaugenRequest) -> HaugenRanking:

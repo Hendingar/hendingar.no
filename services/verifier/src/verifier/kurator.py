@@ -51,7 +51,7 @@ from typing import Any
 
 from pydantic import BaseModel, Field
 
-from .llm import AgentFactory
+from .llm import AgentFactory, parse_answer
 from .models import CuratorCandidate, CuratorPick, CuratorRequest, CuratorSelection
 
 log = logging.getLogger(__name__)
@@ -194,16 +194,13 @@ def _dossier(picks: list[_DraftPick], candidates: list[CuratorCandidate]) -> str
     return "\n".join(lines)
 
 
-def _parse(response: Any, model: type[BaseModel]) -> Any:
-    """One agent's structured answer, or None — never an exception for a model that misbehaved."""
-    text = getattr(response, "text", "")
-    if getattr(response, "finish_reason", None) == "content_filter" or not text:
-        return None
-    try:
-        return model.model_validate_json(text)
-    except ValueError:
-        log.warning("%s said something unparseable", model.__name__)
-        return None
+def _parse[M: BaseModel](response: Any, model: type[M]) -> M | None:
+    return parse_answer(
+        getattr(response, "text", ""),
+        model,
+        finish_reason=getattr(response, "finish_reason", None),
+        who=model.__name__,
+    )
 
 
 def _same_title(stated: str, actual: str) -> bool:

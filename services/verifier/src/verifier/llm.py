@@ -49,6 +49,23 @@ SEED = 20260828
 log = logging.getLogger(__name__)
 
 
+def parse_answer[M: BaseModel](
+    text: str | None, model: type[M], *, finish_reason: object = None, who: str
+) -> M | None:
+    """An agent's structured answer, or None — never an exception for a model that misbehaved.
+
+    A filtered or empty answer and one that fails its own schema are the same thing to every
+    caller: nothing to act on. The strict schema makes the last close to unreachable.
+    """
+    if finish_reason == "content_filter" or not text:
+        return None
+    try:
+        return model.model_validate_json(text)
+    except ValueError:
+        log.warning("%s said something unparseable", who)
+        return None
+
+
 def get_credential(client_id: str | None = None, tenant_id: str | None = None):
     """Pin the user-assigned managed identity in Azure; fall back to `az login` locally.
 

@@ -423,8 +423,9 @@ async def model_checks(factory: AgentFactory, request: VerifyRequest) -> list[Ch
         results: dict[str, CheckResult] = {}
         for response in responses:
             check: CheckName = response.executor_id  # the agent's name is the check's name
-            text = response.agent_response.messages[-1].text if response.agent_response else ""
-            if response.agent_response.finish_reason == "content_filter" or not text:
+            answer = response.agent_response
+            text = answer.messages[-1].text if answer else ""
+            if not answer or answer.finish_reason == "content_filter" or not text:
                 results[check] = _undecided(check, factory.model)
                 continue
             try:
