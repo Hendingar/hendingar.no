@@ -65,7 +65,7 @@ Reglar:
   enn ingen.
 
 Kategoriar: musikk, teater, utstilling, sport, mote, kyrkjeliv, festival, litteratur, stand-up,
-show, mat-og-drikke, dans, marknad, konferanse, kurs, anna."""
+show, kino, mat-og-drikke, dans, marknad, konferanse, kurs, anna."""
 
 
 SYSTEM_PAGE = """Du hentar ut informasjon om lokale arrangement i Noreg frå teksten på ei nettside, og
@@ -92,7 +92,7 @@ Reglar:
 - `thumbnail` skal alltid stå tomt her. Det finst ikkje noko bilete å skjere ut av ein tekst.
 
 Kategoriar: musikk, teater, utstilling, sport, mote, kyrkjeliv, festival, litteratur, stand-up,
-show, mat-og-drikke, dans, marknad, konferanse, kurs, anna."""
+show, kino, mat-og-drikke, dans, marknad, konferanse, kurs, anna."""
 
 # A page is mostly not the event. Enough for a long listing, capped so one enormous page cannot
 # become one enormous bill — the app truncates too, and this is the backstop.

@@ -19,6 +19,7 @@ CategorySlug = Literal[
     "litteratur",
     "stand-up",
     "show",
+    "kino",
     "mat-og-drikke",
     "dans",
     "marknad",
