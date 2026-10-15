@@ -190,3 +190,14 @@ describe('monthNumber and mapCategory', () => {
 		expect(mapCategory('Lunchmøte med Sparebank 1')).toBe('mote');
 	});
 });
+
+describe('entities in a card', () => {
+	it('decodes the ones WordPress writes, not only the six it used to know', () => {
+		const raw = readFileSync(
+			fileURLToPath(new URL('./fixtures/aktivitetar-2026.json', import.meta.url)),
+			'utf8'
+		).replace('Berekraftnettverket i Sunnhordland', 'Berekraft &#8211; &laquo;Sunnhordland&raquo;');
+		const titles = parseYear(JSON.parse(raw)).rows.map((r) => r.title);
+		expect(titles).toContain('Berekraft – «Sunnhordland»');
+	});
+});

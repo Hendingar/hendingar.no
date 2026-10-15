@@ -2,6 +2,7 @@ import { zonedWallClockToInstant } from '@hendingar/core/datetime';
 import type { CategorySlug } from '@hendingar/core/taxonomy';
 import { excerptText, type Card, type Item } from './api.ts';
 import { SITE } from './site.ts';
+import { slugifyVenue } from '@hendingar/core/slug';
 
 /**
  * Pure mapping: one programme card (and its REST item, if any) → our shape.
@@ -31,19 +32,6 @@ export function isFailure(v: MappedEvent | MapFailure | Skip): v is MapFailure {
 
 export function isSkip(v: MappedEvent | MapFailure | Skip): v is Skip {
 	return 'skip' in v;
-}
-
-export function slugifyVenue(name: string): string {
-	return name
-		.toLowerCase()
-		.replace(/æ/g, 'ae')
-		.replace(/ø/g, 'oe')
-		.replace(/å/g, 'aa')
-		.normalize('NFD')
-		.replace(/[̀-ͯ]/g, '')
-		.replace(/[^a-z0-9]+/g, '-')
-		.replace(/^-+|-+$/g, '')
-		.slice(0, 120);
 }
 
 /** `program_item_cat` 23 is "Seminar". Everything else is the festival's own programme. */

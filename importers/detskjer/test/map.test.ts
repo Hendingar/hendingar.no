@@ -3,14 +3,8 @@ import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { CATEGORY_SLUGS } from '@hendingar/core/taxonomy';
 import { collectPages, upstreamPageSchema, type FetchPage, SOURCE } from '../src/api.ts';
-import {
-	MAPPED_SLUGS,
-	isFailure,
-	mapCategory,
-	mapEvent,
-	posterFrom,
-	slugifyVenue
-} from '../src/map.ts';
+import { MAPPED_SLUGS, isFailure, mapCategory, mapEvent, posterFrom } from '../src/map.ts';
+import { slugifyVenue } from '@hendingar/core/slug';
 
 /** Committed fixtures, captured from the live API. No test here touches the network. */
 function fixture(page: number): unknown {

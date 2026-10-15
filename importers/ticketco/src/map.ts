@@ -20,19 +20,6 @@ import { eventUrl, type TicketcoShop } from './instances.ts';
  */
 export const DEFAULT_CATEGORY: CategorySlug = 'anna';
 
-export function slugifyVenue(name: string): string {
-	return name
-		.toLowerCase()
-		.replace(/æ/g, 'ae')
-		.replace(/ø/g, 'oe')
-		.replace(/å/g, 'aa')
-		.normalize('NFD')
-		.replace(/\p{Mn}/gu, '')
-		.replace(/[^a-z0-9]+/g, '-')
-		.replace(/^-+|-+$/g, '')
-		.slice(0, 120);
-}
-
 export type MappedEvent = {
 	externalId: string;
 	title: string;

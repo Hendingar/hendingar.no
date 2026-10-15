@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { decodeEntities } from '@hendingar/core/text';
 import { SITE, itemsUrl, programUrl } from './site.ts';
 
 /**
@@ -20,33 +21,14 @@ export type Card = {
 	ticketUrl: string | null;
 };
 
-/** The named entities WordPress's typography filter writes into titles. */
-const NAMED: Record<string, string> = {
-	laquo: '«',
-	raquo: '»',
-	ndash: '–',
-	mdash: '—',
-	hellip: '…',
-	lsquo: '‘',
-	rsquo: '’',
-	ldquo: '“',
-	rdquo: '”',
-	nbsp: ' '
-};
-
+/**
+ * Tags out, entities decoded, one line.
+ *
+ * Core's decoder rather than a local table: this one had no bound on numeric references, so a
+ * title containing `&#1114112;` threw a RangeError and failed the whole parse.
+ */
 function decode(value: string): string {
-	return value
-		.replace(/<[^>]+>/g, ' ')
-		.replace(/&#(\d+);/g, (_, n: string) => String.fromCodePoint(Number(n)))
-		.replace(/&#x([0-9a-f]+);/gi, (_, n: string) => String.fromCodePoint(parseInt(n, 16)))
-		.replace(
-			/&(laquo|raquo|ndash|mdash|hellip|lsquo|rsquo|ldquo|rdquo|nbsp);/g,
-			(_, name: string) => NAMED[name] ?? ' '
-		)
-		.replace(/&amp;/g, '&')
-		.replace(/&quot;/g, '"')
-		.replace(/&lt;/g, '<')
-		.replace(/&gt;/g, '>')
+	return decodeEntities(value.replace(/<[^>]+>/g, ' '))
 		.replace(/\s+/g, ' ')
 		.trim();
 }

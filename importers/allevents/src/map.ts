@@ -3,6 +3,7 @@ import type { CategorySlug } from '@hendingar/core/taxonomy';
 import type { UpstreamDetail, UpstreamEvent } from './api.ts';
 import { organiserUrl, type AlleventsOrganiser } from './organisers.ts';
 import { fromLine, type ParsedAddress } from '@hendingar/core/address';
+import { slugifyVenue } from '@hendingar/core/slug';
 
 /**
  * Pure mapping: one allevents.in record → our shape. No I/O, no clock, no randomness.
@@ -128,19 +129,6 @@ export function venueNameFrom(
 	if (name.length < 2) return fallback;
 	if (street && firstSegment(street).toLowerCase() === name.toLowerCase()) return fallback;
 	return name;
-}
-
-export function slugifyVenue(name: string): string {
-	return name
-		.toLowerCase()
-		.replace(/æ/g, 'ae')
-		.replace(/ø/g, 'oe')
-		.replace(/å/g, 'aa')
-		.normalize('NFD')
-		.replace(/[̀-ͯ]/g, '')
-		.replace(/[^a-z0-9]+/g, '-')
-		.replace(/^-+|-+$/g, '')
-		.slice(0, 120);
 }
 
 /* ---------------------------------------------------------------------------------- poster ---- */

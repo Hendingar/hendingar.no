@@ -2,6 +2,7 @@ import { isCalendarDate, zonedWallClockToInstant } from '@hendingar/core/datetim
 import type { CategorySlug } from '@hendingar/core/taxonomy';
 import type { RawPerformance } from './api.ts';
 import type { RiksteatretInstance } from './instances.ts';
+import { slugifyVenue } from '@hendingar/core/slug';
 
 /**
  * Pure mapping: a Riksteatret programme card → our shape. No I/O, no clock, no randomness.
@@ -48,19 +49,6 @@ export function parseWallClock(value: string): { date: string; time: string } | 
 	if (!isCalendarDate(date)) return null;
 	if (Number(hour) > 23 || Number(minute) > 59) return null;
 	return { date, time: `${hour}:${minute}` };
-}
-
-export function slugifyVenue(name: string): string {
-	return name
-		.toLowerCase()
-		.replace(/æ/g, 'ae')
-		.replace(/ø/g, 'oe')
-		.replace(/å/g, 'aa')
-		.normalize('NFD')
-		.replace(/[̀-ͯ]/g, '')
-		.replace(/[^a-z0-9]+/g, '-')
-		.replace(/^-+|-+$/g, '')
-		.slice(0, 120);
 }
 
 /**

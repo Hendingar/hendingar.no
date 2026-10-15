@@ -12,14 +12,8 @@ import {
 } from '../src/api.ts';
 import { ASSOCIATIONS, associationBySlug, calendarUrl } from '../src/associations.ts';
 import { plainText } from '@hendingar/core/text';
-import {
-	isFailure,
-	mapActivity,
-	mapCategory,
-	PLACEHOLDER_IMAGE,
-	posterFor,
-	slugifyVenue
-} from '../src/map.ts';
+import { isFailure, mapActivity, mapCategory, PLACEHOLDER_IMAGE, posterFor } from '../src/map.ts';
+import { slugifyVenue } from '@hendingar/core/slug';
 
 /**
  * Against committed real responses. No network, no clock (CLAUDE.md rule 6).

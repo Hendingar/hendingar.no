@@ -2,6 +2,7 @@ import { zonedWallClockToInstant } from '@hendingar/core/datetime';
 import type { CategorySlug } from '@hendingar/core/taxonomy';
 import type { IcalEvent } from './ical.ts';
 import { teamUrl, type FotballTeam } from './teams.ts';
+import { slugifyVenue } from '@hendingar/core/slug';
 
 /**
  * Pure mapping: one VEVENT → our shape. No I/O, no clock, no randomness.
@@ -9,19 +10,6 @@ import { teamUrl, type FotballTeam } from './teams.ts';
 
 /** Every fixture is a match. The feed carries nothing else. */
 export const CATEGORY: CategorySlug = 'sport';
-
-export function slugifyVenue(name: string): string {
-	return name
-		.toLowerCase()
-		.replace(/æ/g, 'ae')
-		.replace(/ø/g, 'oe')
-		.replace(/å/g, 'aa')
-		.normalize('NFD')
-		.replace(/[̀-ͯ]/g, '')
-		.replace(/[^a-z0-9]+/g, '-')
-		.replace(/^-+|-+$/g, '')
-		.slice(0, 120);
-}
 
 /**
  * Is this a home match?

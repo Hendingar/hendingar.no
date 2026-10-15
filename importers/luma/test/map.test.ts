@@ -4,7 +4,8 @@ import { describe, expect, it } from 'vitest';
 import { CATEGORY_SLUGS } from '@hendingar/core/taxonomy';
 import { parseItems, type UpstreamEntry } from '../src/api.ts';
 import { CALENDARS, calendarBySlug, eventUrl, itemsUrl, listingUrl } from '../src/calendars.ts';
-import { isFailure, isPublishable, mapEntry, slugifyVenue } from '../src/map.ts';
+import { isFailure, isPublishable, mapEntry } from '../src/map.ts';
+import { slugifyVenue } from '@hendingar/core/slug';
 
 /**
  * Against committed real responses. No network, no clock (CLAUDE.md rule 6).

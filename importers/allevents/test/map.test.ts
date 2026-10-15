@@ -29,10 +29,10 @@ import {
 	posterFrom,
 	preferDescription,
 	cleanEventUrl,
-	slugifyVenue,
 	venueNameFrom,
 	wallClockToInstant
 } from '../src/map.ts';
+import { slugifyVenue } from '@hendingar/core/slug';
 
 /**
  * Against committed real responses. No network, no clock (CLAUDE.md rule 6).

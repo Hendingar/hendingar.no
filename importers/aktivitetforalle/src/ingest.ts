@@ -19,9 +19,9 @@ import {
 	isPublishableActivity,
 	isPublishableEvent,
 	mapEvent,
-	slugifyVenue,
 	type MappedEvent
 } from './map.ts';
+import { slugifyVenue } from '@hendingar/core/slug';
 
 /**
  * Deterministic: fetch → parse → validate → upsert. No language model touches this path.

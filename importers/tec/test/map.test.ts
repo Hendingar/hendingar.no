@@ -11,10 +11,10 @@ import {
 	mapEvent,
 	posterSrcsetFrom,
 	resolveZone,
-	slugifyVenue,
 	wallClockToInstant,
 	type MappedEvent
 } from '../src/map.ts';
+import { slugifyVenue } from '@hendingar/core/slug';
 
 /**
  * Against committed real responses. No network, no clock (CLAUDE.md rule 6).

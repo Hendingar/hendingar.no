@@ -4,6 +4,7 @@ import type { UpstreamCategory, UpstreamEvent, UpstreamImage } from './api.ts';
 import type { TecInstance } from './instances.ts';
 import { fromParts, type ParsedAddress } from '@hendingar/core/address';
 import { decodeEntities } from '@hendingar/core/text';
+import { slugifyVenue } from '@hendingar/core/slug';
 
 /**
  * Pure mapping: a tribe/events/v1 record → our shape. No I/O, no clock, no randomness.
@@ -273,19 +274,6 @@ export function posterSrcsetFrom(image: UpstreamImage | null): string | null {
 /** `[]` is how the API spells "no venue"; an object is the venue. */
 export function venueOf(input: UpstreamEvent) {
 	return input.venue && !Array.isArray(input.venue) ? input.venue : null;
-}
-
-export function slugifyVenue(name: string): string {
-	return name
-		.toLowerCase()
-		.replace(/æ/g, 'ae')
-		.replace(/ø/g, 'oe')
-		.replace(/å/g, 'aa')
-		.normalize('NFD')
-		.replace(/[̀-ͯ]/g, '')
-		.replace(/[^a-z0-9]+/g, '-')
-		.replace(/^-+|-+$/g, '')
-		.slice(0, 120);
 }
 
 /* -------------------------------------------------------------------------------------------- */

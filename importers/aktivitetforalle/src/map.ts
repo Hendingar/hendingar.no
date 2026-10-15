@@ -10,6 +10,7 @@ import {
 import { orNull, type FilterVocabulary, type UpstreamEvent, type UpstreamUpload } from './api.ts';
 import { activityUrl, eventUrl, listingUrl, type AfaSite } from './sites.ts';
 import { fromParts, type ParsedAddress } from '@hendingar/core/address';
+import { slugifyVenue } from '@hendingar/core/slug';
 
 /**
  * Pure mapping: one portal row → our shape. No I/O, no clock, no randomness.
@@ -74,19 +75,6 @@ export function mapCategory(
 		if (hit) return hit;
 	}
 	return 'anna';
-}
-
-export function slugifyVenue(name: string): string {
-	return name
-		.toLowerCase()
-		.replace(/æ/g, 'ae')
-		.replace(/ø/g, 'oe')
-		.replace(/å/g, 'aa')
-		.normalize('NFD')
-		.replace(/[̀-ͯ]/g, '')
-		.replace(/[^a-z0-9]+/g, '-')
-		.replace(/^-+|-+$/g, '')
-		.slice(0, 120);
 }
 
 /**

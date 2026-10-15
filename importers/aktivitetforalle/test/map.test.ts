@@ -14,9 +14,9 @@ import {
 	mapEvent,
 	mapWeeklyHours,
 	posterSrcsetFrom,
-	slugifyVenue,
 	toInstant
 } from '../src/map.ts';
+import { slugifyVenue } from '@hendingar/core/slug';
 
 /**
  * Against committed real responses. No network, no clock (CLAUDE.md rule 6).

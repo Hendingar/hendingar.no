@@ -10,9 +10,9 @@ import {
 	isFailure,
 	isSupersededOccurrenceId,
 	mapEvent,
-	occurrenceId,
-	slugifyVenue
+	occurrenceId
 } from '../src/map.ts';
+import { slugifyVenue } from '@hendingar/core/slug';
 
 /**
  * Against committed real pages. No network, no clock (CLAUDE.md rule 6).
