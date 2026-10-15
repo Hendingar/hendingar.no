@@ -2,6 +2,7 @@ import { error } from '@sveltejs/kit';
 import { z } from 'zod';
 import { enforce } from '../../../lib/server/limits';
 import { extractPosterStreaming, verifierEnabled } from '../../../lib/server/verifier';
+import { eventStream } from '../../../lib/server/sse.ts';
 import type { RequestHandler } from './$types';
 
 /**
@@ -35,10 +36,6 @@ const readSchema = z.object({
 	today: z.string().regex(/^\d{4}-\d{2}-\d{2}$/)
 });
 
-function sse(event: string, data: unknown): Uint8Array {
-	return new TextEncoder().encode(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
-}
-
 export const POST: RequestHandler = async (event) => {
 	const { request } = event;
 	// Hidden rather than offered as a button that cannot work (CLAUDE.md rule 8) — and the route
@@ -51,33 +48,19 @@ export const POST: RequestHandler = async (event) => {
 
 	const { imageBase64, mediaType, today } = parsed.data;
 
-	const stream = new ReadableStream<Uint8Array>({
-		async start(controller) {
-			try {
-				for await (const event of extractPosterStreaming(imageBase64, mediaType, today)) {
-					if (event.kind === 'field') controller.enqueue(sse('field', event.field));
-					else controller.enqueue(sse('event', event.event));
-				}
-			} catch {
-				/*
-				 * The headers left long ago, so there is no status to fail with — and a failed read
-				 * was never a failed submission anyway. The browser turns this into the sentence it
-				 * already had: fill in the form yourself, and the picture you chose is still held.
-				 */
-				controller.enqueue(sse('error', {}));
+	return eventStream(async (send) => {
+		try {
+			for await (const event of extractPosterStreaming(imageBase64, mediaType, today)) {
+				if (event.kind === 'field') send('field', event.field);
+				else send('event', event.event);
 			}
-			controller.close();
-		}
-	});
-
-	return new Response(stream, {
-		headers: {
-			'content-type': 'text/event-stream',
-			'cache-control': 'no-store',
-			// A proxy that buffers holds the whole stream and delivers it at once, which is exactly
-			// the experience this endpoint exists to avoid.
-			'x-accel-buffering': 'no',
-			connection: 'keep-alive'
+		} catch {
+			/*
+			 * The headers left long ago, so there is no status to fail with — and a failed read
+			 * was never a failed submission anyway. The browser turns this into the sentence it
+			 * already had: fill in the form yourself, and the picture you chose is still held.
+			 */
+			send('error', {});
 		}
 	});
 };

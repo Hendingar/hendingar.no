@@ -12,6 +12,8 @@ import {
 	verifierEnabled,
 	type JurorVerdict
 } from '../../../../lib/server/verifier';
+import { clientIdSchema } from '@hendingar/core/validation';
+import { eventStream } from '../../../../lib/server/sse.ts';
 import type { RequestHandler } from './$types';
 
 /**
@@ -33,10 +35,6 @@ const MAX_APPEAL = 2000;
 /** Shapes only; the length rules below answer in sentences rather than in a schema error. */
 const appealSchema = z.object({ clientId: z.unknown(), appeal: z.unknown() });
 
-function sse(event: string, data: unknown): Uint8Array {
-	return new TextEncoder().encode(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
-}
-
 export const POST: RequestHandler = async (event) => {
 	const { params, request } = event;
 	if (!verifierEnabled()) error(503, 'Appellpanelet er ikkje tilgjengeleg i dette miljøet.');
@@ -46,10 +44,10 @@ export const POST: RequestHandler = async (event) => {
 	if (!Number.isSafeInteger(id) || id <= 0) error(404, 'Fann ikkje innsendinga');
 
 	const body = appealSchema.safeParse(await request.json().catch(() => null));
-	const clientId = body.success ? body.data.clientId : null;
+	const clientId = body.success ? clientIdSchema.safeParse(body.data.clientId).data : undefined;
 	const appeal = body.success ? body.data.appeal : null;
 
-	if (typeof clientId !== 'string' || !/^[A-Za-z0-9-]{8,64}$/.test(clientId)) {
+	if (!clientId) {
 		error(403, 'Denne innsendinga er ikkje di.');
 	}
 	if (typeof appeal !== 'string' || appeal.trim().length < MIN_APPEAL) {
@@ -144,100 +142,84 @@ export const POST: RequestHandler = async (event) => {
 		.returning({ id: events.id });
 	if (claimed.length === 0) error(404, 'Fann ikkje ei innsending du kan appellere.');
 
-	const stream = new ReadableStream<Uint8Array>({
-		async start(controller) {
-			controller.enqueue(sse('panel', { jurors, quorum }));
+	return eventStream(async (send) => {
+		send('panel', { jurors, quorum });
 
-			const input = {
-				title: row.title,
-				description: row.description,
-				category: row.category,
-				startsAt: row.startsAt.toISOString(),
-				venueName: row.venueName,
-				municipality: row.venueMunicipality,
-				organizerName: null,
-				sourceUrl: row.sourceUrl,
-				rejectionReason: row.notes,
-				appeal: appeal.trim()
-			};
+		const input = {
+			title: row.title,
+			description: row.description,
+			category: row.category,
+			startsAt: row.startsAt.toISOString(),
+			venueName: row.venueName,
+			municipality: row.venueMunicipality,
+			organizerName: null,
+			sourceUrl: row.sourceUrl,
+			rejectionReason: row.notes,
+			appeal: appeal.trim()
+		};
 
-			const verdicts: JurorVerdict[] = [];
+		const verdicts: JurorVerdict[] = [];
 
-			/*
-			 * All three at once, each written out as it lands.
-			 *
-			 * `Promise.all` would work and would show nothing until the slowest one finished, which
-			 * defeats the point. `judgeAppeal` never throws for a juror-level problem — the service
-			 * turns that into a no vote with a reason — so a rejection here is a transport failure
-			 * and is reported as one rather than silently counting as a vote against.
-			 */
-			await Promise.all(
-				jurors.map(async (juror) => {
-					try {
-						const verdict = await judgeAppeal({ ...input, juror: juror.id });
-						verdicts.push(verdict);
-						controller.enqueue(sse('verdict', verdict));
-					} catch {
-						const failed: JurorVerdict = {
-							juror: juror.id,
-							name: juror.name,
-							publish: false,
-							confidence: 0,
-							reasoning: 'Denne juroren svarte ikkje.',
-							model: null
-						};
-						verdicts.push(failed);
-						controller.enqueue(sse('verdict', failed));
-					}
-				})
-			);
+		/*
+		 * All three at once, each written out as it lands.
+		 *
+		 * `Promise.all` would work and would show nothing until the slowest one finished, which
+		 * defeats the point. `judgeAppeal` never throws for a juror-level problem — the service
+		 * turns that into a no vote with a reason — so a rejection here is a transport failure
+		 * and is reported as one rather than silently counting as a vote against.
+		 */
+		await Promise.all(
+			jurors.map(async (juror) => {
+				try {
+					const verdict = await judgeAppeal({ ...input, juror: juror.id });
+					verdicts.push(verdict);
+					send('verdict', verdict);
+				} catch {
+					const failed: JurorVerdict = {
+						juror: juror.id,
+						name: juror.name,
+						publish: false,
+						confidence: 0,
+						reasoning: 'Denne juroren svarte ikkje.',
+						model: null
+					};
+					verdicts.push(failed);
+					send('verdict', failed);
+				}
+			})
+		);
 
-			const forPublishing = verdicts.filter((v) => v.publish).length;
-			const passed = forPublishing >= quorum;
+		const forPublishing = verdicts.filter((v) => v.publish).length;
+		const passed = forPublishing >= quorum;
 
-			/*
-			 * Written before the decision is announced.
-			 *
-			 * If the connection drops between the last verdict and the client acting on it, the
-			 * database still holds the outcome — the alternative is a panel that sat, decided, and
-			 * left no trace, which the sender would experience as their appeal vanishing.
-			 */
-			await database
-				.update(events)
-				.set({
-					appealVerdicts: JSON.stringify(verdicts),
-					...(passed
-						? {
-								status: 'published' as const,
-								submissionOutcome: 'approved' as const,
-								verificationNotes: `Publisert etter appell: ${forPublishing} av ${jurors.length} jurorar sa ja.`
-							}
-						: {}),
-					updatedAt: new Date()
-				})
-				.where(eq(events.id, row.id));
+		/*
+		 * Written before the decision is announced.
+		 *
+		 * If the connection drops between the last verdict and the client acting on it, the
+		 * database still holds the outcome — the alternative is a panel that sat, decided, and
+		 * left no trace, which the sender would experience as their appeal vanishing.
+		 */
+		await database
+			.update(events)
+			.set({
+				appealVerdicts: JSON.stringify(verdicts),
+				...(passed
+					? {
+							status: 'published' as const,
+							submissionOutcome: 'approved' as const,
+							verificationNotes: `Publisert etter appell: ${forPublishing} av ${jurors.length} jurorar sa ja.`
+						}
+					: {}),
+				updatedAt: new Date()
+			})
+			.where(eq(events.id, row.id));
 
-			controller.enqueue(
-				sse('decision', {
-					passed,
-					forPublishing,
-					of: jurors.length,
-					quorum,
-					eventId: row.id
-				})
-			);
-			controller.close();
-		}
-	});
-
-	return new Response(stream, {
-		headers: {
-			'content-type': 'text/event-stream',
-			'cache-control': 'no-store',
-			// Proxies that buffer will hold the whole stream and deliver it at once, which is
-			// exactly the experience this endpoint exists to avoid.
-			'x-accel-buffering': 'no',
-			connection: 'keep-alive'
-		}
+		send('decision', {
+			passed,
+			forPublishing,
+			of: jurors.length,
+			quorum,
+			eventId: row.id
+		});
 	});
 };

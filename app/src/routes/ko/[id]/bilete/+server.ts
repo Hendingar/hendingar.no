@@ -9,6 +9,7 @@ import {
 	removePoster,
 	storePoster
 } from '../../../../lib/server/posters';
+import { clientIdSchema } from '@hendingar/core/validation';
 import type { RequestHandler } from './$types';
 
 /**
@@ -38,8 +39,8 @@ export const POST: RequestHandler = async (event) => {
 	const id = Number(params.id);
 	if (!Number.isSafeInteger(id) || id <= 0) error(404, 'Fann ikkje hendinga');
 
-	const clientId = request.headers.get('x-client-id');
-	if (!clientId || !/^[A-Za-z0-9-]{8,64}$/.test(clientId)) {
+	const clientId = clientIdSchema.safeParse(request.headers.get('x-client-id')).data;
+	if (!clientId) {
 		error(403, 'Denne hendinga er ikkje di.');
 	}
 
