@@ -21,6 +21,7 @@
 		"./submissions": "./src/submissions.ts",
 		"./directory": "./src/directory.ts",
 		"./text": "./src/text.ts",
+		"./prose": "./src/prose.ts",
 		"./address": "./src/address.ts",
 		"./standing": "./src/standing.ts",
 		"./search": "./src/search.ts",

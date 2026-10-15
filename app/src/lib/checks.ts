@@ -10,6 +10,7 @@
  * written twice.
  */
 
+import { capitalise } from '@hendingar/core/prose';
 import {
 	VERIFICATION_CHECK_LABELS,
 	VERIFICATION_CHECK_QUESTIONS,
@@ -54,5 +55,4 @@ export const CHECK_COUNT_WORD: string =
 	NYNORSK_NUMERALS[PIPELINE.length] ?? String(PIPELINE.length);
 
 /** The same word where it opens a sentence. Nynorsk capitalises no differently; the copy does. */
-export const CHECK_COUNT_WORD_LEADING: string =
-	CHECK_COUNT_WORD.charAt(0).toUpperCase() + CHECK_COUNT_WORD.slice(1);
+export const CHECK_COUNT_WORD_LEADING: string = capitalise(CHECK_COUNT_WORD);

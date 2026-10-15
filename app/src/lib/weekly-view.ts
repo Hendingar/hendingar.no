@@ -1,3 +1,4 @@
+import { capitalise } from '@hendingar/core/prose';
 import { addDays, WEEKDAY_ABBR, weekdayIndex } from '@hendingar/core/datetime';
 import {
 	AGE_BANDS,
@@ -44,7 +45,7 @@ export const DAY_SLUGS = [
 	'laurdag',
 	'sundag'
 ] as const;
-const DAY_SHORT = WEEKDAY_ABBR.map((d) => d.charAt(0).toUpperCase() + d.slice(1));
+const DAY_SHORT = WEEKDAY_ABBR.map(capitalise);
 
 export type WeeklyParams = { day: number | null; band: AgeBand | null };
 

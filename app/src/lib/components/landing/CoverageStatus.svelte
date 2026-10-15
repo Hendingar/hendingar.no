@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { listSentence } from '@hendingar/core/prose';
 	import { formatEventTime } from '@hendingar/core/datetime';
 	import { siteStatus } from '../../events.remote';
 
@@ -15,13 +16,7 @@
 	 */
 	const status = await siteStatus();
 
-	const where = $derived(
-		status.regions.length === 0
-			? 'ingen område enno'
-			: status.regions.length === 1
-				? status.regions[0]
-				: `${status.regions.slice(0, -1).join(', ')} og ${status.regions.at(-1)}`
-	);
+	const where = $derived(listSentence(status.regions) || 'ingen område enno');
 </script>
 
 <aside class="coverage" aria-label="Kva denne lista dekkjer">

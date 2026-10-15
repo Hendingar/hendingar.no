@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { capitalise, listSentence } from '@hendingar/core/prose';
 	import { WEEKDAY_ABBR, WEEKDAY_NAMES } from '@hendingar/core/datetime';
 	import { eventPath } from '@hendingar/core/slug';
 	import { clubsOf, type WeeklyActivityRow } from '../../weekly-view.ts';
@@ -23,13 +24,11 @@
 	const total = $derived(clubs.reduce((n, c) => n + c.activities.length, 0));
 
 	const SHOWN = 3;
-	const DAYS = WEEKDAY_ABBR.map((d) => d.charAt(0).toUpperCase() + d.slice(1));
+	const DAYS = WEEKDAY_ABBR.map(capitalise);
 
 	function meetsText(meets: boolean[]): string {
 		const days = WEEKDAY_NAMES.filter((_, i) => meets[i]);
-		return days.length === 7
-			? 'Møtest alle dagar i veka'
-			: `Møtest ${days.length > 1 ? `${days.slice(0, -1).join(', ')} og ${days.at(-1)}` : days[0]}`;
+		return days.length === 7 ? 'Møtest alle dagar i veka' : `Møtest ${listSentence(days)}`;
 	}
 </script>
 

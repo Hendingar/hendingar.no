@@ -24,6 +24,7 @@
  * say, and every value in it can be described in one phrase and checked by a human.
  */
 
+import { listSentence } from './prose.ts';
 import { zonedWallClockToInstant, DEFAULT_TIME_ZONE } from './datetime.ts';
 
 /** How far ahead occurrences are materialised. Matches the importer's own forward cap. */
@@ -202,10 +203,7 @@ export function describeRecurrence(rule: Recurrence): string {
 		.slice()
 		.sort((a, b) => a - b)
 		.map((d) => WEEKDAY_NAMES[d]);
-	const dayList =
-		days.length <= 1
-			? (days[0] ?? '')
-			: `${days.slice(0, -1).join(', ')} og ${days[days.length - 1]}`;
+	const dayList = listSentence(days);
 
 	let phrase: string;
 	if (rule.freq === 'daily') {

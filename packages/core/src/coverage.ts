@@ -16,6 +16,8 @@
  * the check names are (CLAUDE.md rule 1, and the one place it cannot be enforced by a compiler).
  */
 
+import { listSentence } from './prose.ts';
+
 /** The municipalities we publish. Adding one here adds it everywhere, copy included. */
 export const COVERED_MUNICIPALITIES = ['Stord', 'Bømlo', 'Fitjar'] as const;
 
@@ -226,9 +228,5 @@ export function coveredMunicipalitiesIn(value: string | null | undefined): Cover
  * ("Skjer hendinga i Stord, Bømlo eller Fitjar?") and a statement does not.
  */
 export function coveredMunicipalitiesSentence(conjunction: 'og' | 'eller' = 'og'): string {
-	const names: string[] = [...COVERED_MUNICIPALITIES];
-	const last = names.pop();
-	if (last === undefined) return '';
-	if (names.length === 0) return last;
-	return `${names.join(', ')} ${conjunction} ${last}`;
+	return listSentence(COVERED_MUNICIPALITIES, conjunction);
 }
