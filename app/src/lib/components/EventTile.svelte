@@ -108,7 +108,7 @@
 	);
 </script>
 
-<article class={['tile frame', kit]} class:tile--featured={featured}>
+<article class={['tile card-shell frame', kit]} class:tile--featured={featured}>
 	{#snippet thumb()}
 		<EventThumb
 			id={event.id}
@@ -162,7 +162,7 @@
 		-->
 		<h3 class="display display--md tile__t vt-morph" style:--vt-name="event-title-{event.id}">
 			<a
-				class="tile__link"
+				class="tile__link card-shell__link"
 				href={eventPath(event.id, event.title)}
 				onclick={() =>
 					track('select_content', {
@@ -175,7 +175,9 @@
 		</h3>
 
 		{#if event.venueName}
-			<p class="tile__meta"><span class="visually-hidden">Stad: </span>{event.venueName}</p>
+			<p class="tile__meta card-shell__meta">
+				<span class="visually-hidden">Stad: </span>{event.venueName}
+			</p>
 		{/if}
 
 		<!--
@@ -314,7 +316,7 @@
 			repeating them as text on every tile would add noise to a screen reader for information a
 			reader can already reach. `title` still names them all for a pointer user.
 		-->
-		<span class="tile__src" title={marksTitle}>
+		<span class="tile__src card-shell__src" title={marksTitle}>
 			{#each shown as mark (mark.name)}
 				<SourceIcon src={mark.iconUrl} name={mark.name} size="1.1rem" />
 			{/each}
@@ -520,23 +522,8 @@
 		backdrop-filter: blur(2px);
 	}
 
-	.tile__src {
-		position: absolute;
-		inset-block-end: 0.55rem;
-		inset-inline-end: 0.55rem;
-		z-index: 1;
-		display: inline-flex;
-		align-items: center;
-		gap: 0.25rem;
-		pointer-events: none;
-		/* A third party's mark: dimmed so it sits inside our palette rather than competing with
-		   the title, and brought up on hover when the reader is actually looking at this card. */
-		opacity: 0.55;
-		transition: opacity var(--dur-fast) ease;
-	}
-	.tile:hover .tile__src {
-		opacity: 1;
-	}
+	/* The shell — frame, stretched link, hover, focus, venue line, source marks — is `.card-shell`
+	   in brand.css, shared with StandingCard. */
 	.tile__srcmore {
 		font-family: var(--font-mono);
 		font-size: var(--step-micro);
@@ -544,78 +531,6 @@
 		line-height: 1;
 	}
 
-	.tile {
-		position: relative;
-		display: grid;
-		grid-template-rows: auto 1fr;
-		block-size: 100%;
-		min-inline-size: 0;
-		container-type: inline-size;
-		background: var(--navy-900);
-		/* Clips the poster's hover scale. Without it the image grows past the frame and overlaps
-		   the tile beside it. An outline is not clipped by overflow, so focus is unaffected. */
-		overflow: hidden;
-	}
-	.tile__link {
-		color: inherit;
-		text-decoration: none;
-	}
-	/* The overlay is on the link, not the article, so the hit area and the focus ring agree. */
-	.tile__link::after {
-		content: '';
-		position: absolute;
-		inset: 0;
-	}
-	/*
-	 * Hover: lift, warm the frame, and let the poster breathe.
-	 *
-	 * `translateY` on the tile rather than a scale, because scaling resamples the poster and makes
-	 * text inside the card shimmer. The shadow is the navy ground darkened rather than black, so it
-	 * reads on the dark page instead of turning into a grey halo.
-	 */
-	.tile {
-		transition:
-			transform var(--dur-base) var(--ease-out),
-			border-color var(--dur-base) ease,
-			box-shadow var(--dur-base) ease;
-	}
-	.tile:hover {
-		transform: translateY(-3px);
-		border-color: var(--peach);
-		box-shadow: 0 10px 24px -12px rgb(0 0 0 / 0.75);
-	}
-	.tile:hover .tile__link {
-		color: var(--peach-hi);
-	}
-	.tile:hover :global(.thumb) {
-		transform: scale(1.03);
-	}
-	:global(.tile .thumb) {
-		transition: transform var(--dur-base) var(--ease-out);
-	}
-	/* Everything above is decoration on top of a working card. Anyone who has asked their system
-	   for less movement gets the colour change and none of the motion. */
-
-	@media (prefers-reduced-motion: reduce) {
-		.tile,
-		.tile__src,
-		:global(.tile .thumb) {
-			transition: none;
-		}
-		.tile:hover {
-			transform: none;
-		}
-		.tile:hover :global(.thumb) {
-			transform: none;
-		}
-	}
-	.tile:has(.tile__link:focus-visible) {
-		outline: 2px solid var(--peach);
-		outline-offset: 2px;
-	}
-	.tile__link:focus-visible {
-		outline: none;
-	}
 	.tile__body {
 		padding: 0.85rem 0.9rem 1rem;
 		display: grid;
@@ -643,14 +558,6 @@
 		font-size: clamp(0.9rem, 8cqw, 1.35rem);
 		margin: 0;
 		hyphens: auto;
-	}
-	.tile__meta {
-		margin: 0;
-		overflow-wrap: anywhere;
-		font-size: var(--step-micro);
-		letter-spacing: 0.16em;
-		text-transform: uppercase;
-		color: var(--peach-dim);
 	}
 	/*
 	 * Quieter than the venue line above it: it is the reason this card is where it is on the page,

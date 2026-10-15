@@ -32,7 +32,7 @@
 	);
 </script>
 
-<article class="card frame">
+<article class="card card-shell frame">
 	<EventThumb
 		id={offer.id}
 		posterUrl={offer.posterUrl}
@@ -52,16 +52,20 @@
 		</p>
 
 		<h3 class="display display--md card__t">
-			<a class="card__link" href={eventPath(offer.id, offer.title)}>{offer.title}</a>
+			<a class="card__link card-shell__link" href={eventPath(offer.id, offer.title)}
+				>{offer.title}</a
+			>
 		</h3>
 
 		{#if where.length > 0}
-			<p class="card__meta"><span class="visually-hidden">Stad: </span>{where.join(', ')}</p>
+			<p class="card__meta card-shell__meta">
+				<span class="visually-hidden">Stad: </span>{where.join(', ')}
+			</p>
 		{/if}
 	</div>
 
 	{#if marks.length > 0}
-		<span class="card__src" title={marksTitle}>
+		<span class="card__src card-shell__src" title={marksTitle}>
 			{#each shown as mark (mark.name)}
 				<SourceIcon src={mark.iconUrl} name={mark.name} size="1.1rem" />
 			{/each}
@@ -70,35 +74,7 @@
 </article>
 
 <style>
-	.card {
-		position: relative;
-		display: grid;
-		grid-template-rows: auto 1fr;
-		block-size: 100%;
-		min-inline-size: 0;
-		container-type: inline-size;
-		background: var(--navy-900);
-		overflow: hidden;
-		transition:
-			transform var(--dur-base) var(--ease-out),
-			border-color var(--dur-base) ease,
-			box-shadow var(--dur-base) ease;
-	}
-	.card:hover {
-		transform: translateY(-3px);
-		border-color: var(--peach);
-		box-shadow: 0 10px 24px -12px rgb(0 0 0 / 0.75);
-	}
-	.card:hover .card__link {
-		color: var(--peach-hi);
-	}
-	.card:hover :global(.thumb) {
-		transform: scale(1.03);
-	}
-	:global(.card .thumb) {
-		transition: transform var(--dur-base) var(--ease-out);
-	}
-
+	/* The shell is `.card-shell` in brand.css, shared with EventTile. */
 	.card__body {
 		padding: 0.85rem 0.9rem 1rem;
 		display: grid;
@@ -121,39 +97,6 @@
 		font-size: clamp(0.95rem, 7cqw, 1.2rem);
 		margin: 0;
 		hyphens: auto;
-	}
-	.card__link {
-		color: inherit;
-		text-decoration: none;
-	}
-	.card__link::after {
-		content: '';
-		position: absolute;
-		inset: 0;
-	}
-	.card__meta {
-		margin: 0;
-		overflow-wrap: anywhere;
-		font-size: var(--step-micro);
-		letter-spacing: 0.16em;
-		text-transform: uppercase;
-		color: var(--peach-dim);
-	}
-
-	.card__src {
-		position: absolute;
-		inset-block-end: 0.55rem;
-		inset-inline-end: 0.55rem;
-		z-index: 1;
-		display: inline-flex;
-		align-items: center;
-		gap: 0.25rem;
-		pointer-events: none;
-		opacity: 0.55;
-		transition: opacity var(--dur-fast) ease;
-	}
-	.card:hover .card__src {
-		opacity: 1;
 	}
 
 	/*
@@ -206,28 +149,6 @@
 			padding: 0.15rem;
 			background: color-mix(in srgb, var(--navy-900) 78%, transparent);
 			opacity: 0.9;
-		}
-	}
-
-	.card:has(.card__link:focus-visible) {
-		outline: 2px solid var(--peach);
-		outline-offset: 2px;
-	}
-	.card__link:focus-visible {
-		outline: none;
-	}
-
-	@media (prefers-reduced-motion: reduce) {
-		.card,
-		.card__src,
-		:global(.card .thumb) {
-			transition: none;
-		}
-		.card:hover {
-			transform: none;
-		}
-		.card:hover :global(.thumb) {
-			transform: none;
 		}
 	}
 </style>
