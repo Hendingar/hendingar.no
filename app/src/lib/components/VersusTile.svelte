@@ -155,7 +155,7 @@
 	it whole on a phone and pays the height for it — see the rule at the end of EventTile.
 -->
 <div
-	class={['thumb thumb--whole vs', kit]}
+	class={['thumb thumb--whole thumb-box vs', kit]}
 	class:vs--feature={feature}
 	class:vs--armed={stage === 'armed'}
 	class:vs--live={stage === 'live'}
@@ -322,29 +322,6 @@
 </div>
 
 <style>
-	/*
-	 * The box, copied rather than shared.
-	 *
-	 * `.thumb` is declared in EventThumb's scoped stylesheet, which does not reach an element in
-	 * this component — scoping is per component, and the class on the root is only there for the
-	 * parents' `:global` rules. These four declarations are the ones a thumbnail needs to be the
-	 * same shape as the posters it sits beside.
-	 */
-	.vs {
-		display: block;
-		inline-size: 100%;
-		block-size: auto;
-		aspect-ratio: 16 / 9;
-		overflow: hidden;
-		background: var(--navy-900);
-		border-block-end: var(--rule) solid var(--peach-line);
-	}
-	.vs svg {
-		display: block;
-		inline-size: 100%;
-		block-size: 100%;
-	}
-
 	/*
 	 * Classes, never the bare `text` element: a component rule on an element type outranks a shared
 	 * utility in brand.css for every such element inside it, which is how two visually-hidden

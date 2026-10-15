@@ -157,7 +157,7 @@
 		carry across.
 	-->
 	<img
-		class="thumb vt-morph vt-morph--poster"
+		class="thumb thumb-box vt-morph vt-morph--poster"
 		style:--vt-name="event-poster-{id}"
 		src={posterUrl}
 		srcset={posterSrcset}
@@ -184,7 +184,7 @@
 		artist, the year and the link; here the picture at least says what it is.
 	-->
 	<img
-		class="thumb"
+		class="thumb thumb-box"
 		src={artwork.src}
 		srcset={artwork.srcset}
 		sizes={artwork.srcset ? (sizes ?? SIZES) : undefined}
@@ -196,7 +196,7 @@
 		referrerpolicy="no-referrer"
 	/>
 {:else}
-	<div class="thumb thumb--generated" role="img" aria-label={`Illustrasjon for ${title}`}>
+	<div class="thumb thumb-box thumb--generated" role="img" aria-label={`Illustrasjon for ${title}`}>
 		<svg viewBox="0 0 400 225" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
 			<defs>
 				<pattern id={`t-dots-${id}`} width="9" height="9" patternUnits="userSpaceOnUse">
@@ -240,23 +240,11 @@
 {/if}
 
 <style>
+	/* The box is `.thumb-box` in brand.css: 16:9, not 4:3 — a scannable strip, not a gallery. */
 	.thumb {
-		display: block;
-		inline-size: 100%;
-		block-size: auto;
-		/* 16:9, not 4:3 — this is a scannable strip at the top of the page, not a gallery. */
-		aspect-ratio: 16 / 9;
 		object-fit: cover;
-		background: var(--navy-900);
-		border-block-end: var(--rule) solid var(--peach-line);
 	}
 	.thumb--generated {
 		position: relative;
-		overflow: hidden;
-	}
-	.thumb--generated svg {
-		display: block;
-		inline-size: 100%;
-		block-size: 100%;
 	}
 </style>

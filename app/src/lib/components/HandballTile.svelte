@@ -99,7 +99,7 @@
      hover scale and the phone-width square, and `thumb--whole` to be let out of that square again.
      See VersusTile for the whole reason. -->
 <div
-	class={['thumb thumb--whole hb', kit]}
+	class={['thumb thumb--whole thumb-box hb', kit]}
 	class:hb--feature={feature}
 	class:hb--armed={stage === 'armed'}
 	class:hb--live={stage === 'live'}
@@ -337,22 +337,6 @@
 </div>
 
 <style>
-	/* The box, as VersusTile has it: the same shape as the posters beside it. */
-	.hb {
-		display: block;
-		inline-size: 100%;
-		block-size: auto;
-		aspect-ratio: 16 / 9;
-		overflow: hidden;
-		background: var(--navy-900);
-		border-block-end: var(--rule) solid var(--peach-line);
-	}
-	.hb svg {
-		display: block;
-		inline-size: 100%;
-		block-size: 100%;
-	}
-
 	/* Classes, never a bare element type — see "A component rule on a bare element" in CLAUDE.md. */
 	.hb__name {
 		font-family: var(--font-display);
