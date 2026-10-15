@@ -1,5 +1,6 @@
 import { DEFAULT_TIME_ZONE, instantToZonedWallClock } from '@hendingar/core/datetime';
 import { isEventNode, jsonLdNodes } from '@hendingar/core/schemaorg';
+import { decodeEntities } from '@hendingar/core/text';
 import type { ExtractedEvent } from '@hendingar/core/validation';
 
 /**
@@ -66,29 +67,6 @@ export function readSchemaDateTime(value: unknown): { date: string; time: string
 	if (Number.isNaN(instant.getTime())) return null;
 	const wall = instantToZonedWallClock(instant, DEFAULT_TIME_ZONE);
 	return { date: wall.date, time: wall.time };
-}
-
-function decodeEntities(value: string): string {
-	const named: Record<string, string> = {
-		amp: '&',
-		lt: '<',
-		gt: '>',
-		quot: '"',
-		apos: "'",
-		nbsp: ' '
-	};
-	return value.replace(/&(#x?[0-9a-fA-F]+|[a-zA-Z]+);/g, (match, body: string) => {
-		if (body.startsWith('#')) {
-			const code =
-				body[1] === 'x' || body[1] === 'X'
-					? Number.parseInt(body.slice(2), 16)
-					: Number.parseInt(body.slice(1), 10);
-			return Number.isFinite(code) && code > 0 && code <= 0x10ffff
-				? String.fromCodePoint(code)
-				: match;
-		}
-		return named[body.toLowerCase()] ?? match;
-	});
 }
 
 function stripTags(value: string): string {

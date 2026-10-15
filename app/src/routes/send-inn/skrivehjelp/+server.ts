@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { categorySchema } from '@hendingar/core/validation';
 import { enforce } from '../../../lib/server/limits';
 import { improveDescriptionStreaming, verifierEnabled } from '../../../lib/server/verifier';
+import { eventStream } from '../../../lib/server/sse.ts';
 import type { RequestHandler } from './$types';
 
 /**
@@ -38,10 +39,6 @@ const askSchema = z.object({
 	sourceUrl: z.string().max(2000).nullish()
 });
 
-function sse(event: string, data: unknown): Uint8Array {
-	return new TextEncoder().encode(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
-}
-
 export const POST: RequestHandler = async (event) => {
 	const { request } = event;
 	// Hidden rather than shown as a button that cannot work (CLAUDE.md rule 8) — but the route has
@@ -54,43 +51,29 @@ export const POST: RequestHandler = async (event) => {
 
 	const { date, startTime, ...rest } = parsed.data;
 
-	const stream = new ReadableStream<Uint8Array>({
-		async start(controller) {
-			try {
-				for await (const event of improveDescriptionStreaming({
-					...rest,
-					/*
-					 * The sender's own wall clock, exactly as the two boxes hold it — not an instant.
-					 * Nothing is stored from this call, and the time is in the record for one reason:
-					 * so the fact-checker can tell a time the sender gave from one a draft invented.
-					 */
-					startsAt: `${date}T${startTime}`
-				})) {
-					if (event.kind === 'draft') controller.enqueue(sse('draft', event.draft));
-					else if (event.kind === 'review') controller.enqueue(sse('review', event.review));
-					else controller.enqueue(sse('suggestion', event.suggestion));
-				}
-			} catch {
+	return eventStream(async (send) => {
+		try {
+			for await (const event of improveDescriptionStreaming({
+				...rest,
 				/*
-				 * The headers left long ago, so there is no status to fail with — and there should
-				 * not be one anyway. The person is looking at a form they filled in themselves, and
-				 * the worst outcome this feature is allowed to have is that they keep their own
-				 * words. The client turns this frame into exactly that sentence.
+				 * The sender's own wall clock, exactly as the two boxes hold it — not an instant.
+				 * Nothing is stored from this call, and the time is in the record for one reason:
+				 * so the fact-checker can tell a time the sender gave from one a draft invented.
 				 */
-				controller.enqueue(sse('error', {}));
+				startsAt: `${date}T${startTime}`
+			})) {
+				if (event.kind === 'draft') send('draft', event.draft);
+				else if (event.kind === 'review') send('review', event.review);
+				else send('suggestion', event.suggestion);
 			}
-			controller.close();
-		}
-	});
-
-	return new Response(stream, {
-		headers: {
-			'content-type': 'text/event-stream',
-			'cache-control': 'no-store',
-			// Proxies that buffer will hold the whole stream and deliver it at once, which is
-			// exactly the experience this endpoint exists to avoid.
-			'x-accel-buffering': 'no',
-			connection: 'keep-alive'
+		} catch {
+			/*
+			 * The headers left long ago, so there is no status to fail with — and there should
+			 * not be one anyway. The person is looking at a form they filled in themselves, and
+			 * the worst outcome this feature is allowed to have is that they keep their own
+			 * words. The client turns this frame into exactly that sentence.
+			 */
+			send('error', {});
 		}
 	});
 };

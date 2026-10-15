@@ -11,7 +11,7 @@ import {
 	venues,
 	verifications
 } from '@hendingar/core/schema';
-import { eventFormSchema } from '@hendingar/core/validation';
+import { clientIdSchema, eventFormSchema } from '@hendingar/core/validation';
 import { instantToZonedWallClock, zonedWallClockToInstant } from '@hendingar/core/datetime';
 import { DUPLICATE_WINDOW_MS, comparePair } from '@hendingar/core/consolidate';
 import {
@@ -267,12 +267,7 @@ export type ContributionTarget = NonNullable<Awaited<ReturnType<typeof contribut
 export const contributionCandidates = query(
 	z.object({
 		id: z.number().int().positive(),
-		clientId: z
-			.string()
-			.trim()
-			.min(8)
-			.max(64)
-			.regex(/^[A-Za-z0-9-]+$/, 'client id must be opaque')
+		clientId: clientIdSchema
 	}),
 	async ({ id, clientId }) => {
 		const database = db();
@@ -380,12 +375,7 @@ export type ContributionCandidate = Awaited<ReturnType<typeof contributionCandid
  */
 export const mySubmissions = query(
 	z.object({
-		clientId: z
-			.string()
-			.trim()
-			.min(8)
-			.max(64)
-			.regex(/^[A-Za-z0-9-]+$/, 'client id must be opaque')
+		clientId: clientIdSchema
 	}),
 	async ({ clientId }) => {
 		const database = db();
@@ -514,12 +504,7 @@ export type QueuedSubmission = Awaited<ReturnType<typeof mySubmissions>>[number]
 export const submissionDraft = query(
 	z.object({
 		id: z.number().int().positive(),
-		clientId: z
-			.string()
-			.trim()
-			.min(8)
-			.max(64)
-			.regex(/^[A-Za-z0-9-]+$/, 'client id must be opaque')
+		clientId: clientIdSchema
 	}),
 	async ({ id, clientId }) => {
 		const database = db();
@@ -665,12 +650,7 @@ export type SubmissionDraft = NonNullable<Awaited<ReturnType<typeof submissionDr
 export const submissionVerdict = query(
 	z.object({
 		id: z.number().int().positive(),
-		clientId: z
-			.string()
-			.trim()
-			.min(8)
-			.max(64)
-			.regex(/^[A-Za-z0-9-]+$/, 'client id must be opaque')
+		clientId: clientIdSchema
 	}),
 	async ({ id, clientId }) => {
 		const database = db();

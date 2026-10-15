@@ -2,6 +2,7 @@ import { command, query } from '$app/server';
 import { z } from 'zod';
 import { and, count, eq, inArray } from 'drizzle-orm';
 import { eventHearts, events, venues } from '@hendingar/core/schema';
+import { clientIdSchema } from '@hendingar/core/validation';
 import { db } from './server/db';
 import { enforce } from './server/limits';
 import { withStartsIn } from './starts-in.ts';
@@ -17,17 +18,6 @@ import { tileColumns } from './server/listing.ts';
  * `clientId` is an opaque string the browser generated for itself. It is not an account, carries
  * nothing about the person, and is validated only for shape.
  */
-
-/**
- * Long enough that two browsers will not collide, short enough to reject junk. A UUID is 36
- * characters; the fallback in hearts.svelte.ts is shorter, so the floor is set below both.
- */
-const clientIdSchema = z
-	.string()
-	.trim()
-	.min(8)
-	.max(64)
-	.regex(/^[A-Za-z0-9-]+$/, 'client id must be opaque and alphanumeric');
 
 const toggleSchema = z.object({
 	eventId: z.number().int().positive(),

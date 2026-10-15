@@ -132,6 +132,14 @@ describe('extractEventFromPage', () => {
 		expect(event.unreadable).toContain('dato');
 	});
 
+	it('decodes the Norwegian quotation marks a page writes as entities', () => {
+		// The core table carries them; the local copy this module used to have did not.
+		const html = `<!doctype html><html><head>
+			<meta property="og:title" content="Humor &laquo;Fr&aring; Vestlandet&raquo;" />
+			</head><body>x</body></html>`;
+		expect(extractEventFromPage(html, PAGE_URL).event.title).toBe('Humor «Frå Vestlandet»');
+	});
+
 	it('survives a malformed JSON-LD block and uses the valid one after it', () => {
 		const html = `<html><head>
 			<script type="application/ld+json">{ this is not json </script>

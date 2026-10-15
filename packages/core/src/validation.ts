@@ -6,6 +6,22 @@ import { RECURRENCE_FREQUENCIES, WEEKDAYS } from './recurrence.ts';
 import { searchTermSchema } from './search.ts';
 
 /**
+ * The browser's own opaque id: what lets one browser find its submissions and hearts again.
+ *
+ * One definition because every path that reads it — `/ko`, the appeal, the photo upload, hearts —
+ * must accept exactly what the form stored. The form's copy had no floor, so it could store an id
+ * that every one of those paths then refused, and the sender could never find it again.
+ *
+ * A UUID is 36 characters; the fallback in client-id.ts is shorter, so the floor is below both.
+ */
+export const clientIdSchema = z
+	.string()
+	.trim()
+	.min(8)
+	.max(64)
+	.regex(/^[A-Za-z0-9-]+$/, 'client id must be opaque');
+
+/**
  * Validation lives here so ONE schema serves every boundary: remote-function arguments, importer
  * output, and database writes. A second definition of "what an event is" is how the app and the
  * importers quietly disagree.
@@ -598,13 +614,7 @@ export const eventFormSchema = z
 		 * Optional: a submission without one still goes through, it simply cannot be revised later.
 		 * Never trusted for anything but "show me my own" — see the column comment in schema.ts.
 		 */
-		clientId: z
-			.string()
-			.trim()
-			.max(64)
-			.regex(/^[A-Za-z0-9-]*$/, 'client id må vere ugjennomsiktig')
-			.optional()
-			.or(z.literal('').transform(() => undefined)),
+		clientId: clientIdSchema.optional().or(z.literal('').transform(() => undefined)),
 		/**
 		 * Set when this is a revision of a submission that did not pass.
 		 *
