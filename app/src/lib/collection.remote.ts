@@ -1,5 +1,5 @@
 import { query } from '$app/server';
-import { and, count, desc, eq, gte, or, sql } from 'drizzle-orm';
+import { and, count, desc, eq, sql } from 'drizzle-orm';
 import {
 	curatorPicks,
 	events,
@@ -10,6 +10,7 @@ import {
 } from '@hendingar/core/schema';
 import { publicSubmissionTitle } from '@hendingar/core/verification';
 import { db } from './server/db';
+import { fromSourceGroup, listed, notOver, submittedByHand } from './server/listing.ts';
 
 /**
  * Everything /datasamling shows. Read-only, no arguments — the page is a public list of sources.
@@ -54,18 +55,13 @@ export const listCollection = query(async () => {
 			 * On `startsAt` alone a festival that opened yesterday and runs all week counts as
 			 * past, so a source could report 0 framover while /hendingar?kjelde= still listed it.
 			 * The row now gates its link to that listing on this number, so the two definitions
-			 * have to be the same one — see listEvents in events.remote.ts.
+			 * have to be the same one: the listing's own clauses, matched over the whole duplicate
+			 * group exactly as listEvents matches `?kjelde=`.
 			 */
 			const [upcoming] = await database
 				.select({ total: count() })
 				.from(events)
-				.where(
-					and(
-						eq(events.sourceId, source.id),
-						eq(events.status, 'published'),
-						or(gte(events.startsAt, now), gte(events.endsAt, now))
-					)
-				);
+				.where(and(listed, notOver(now), fromSourceGroup(source.slug)));
 
 			// Enough history to show a strip of recent runs, not so much that the page gets heavy.
 			const runs = await database
@@ -177,22 +173,12 @@ export const listSubmissions = query(async () => {
 	 * validates `kjelde` against the sources it can offer, and an unknown slug is dropped rather
 	 * than refused, so a link to an empty "innsendt" quietly shows the whole listing instead.
 	 *
-	 * The conditions are `listSourceCounts`'s submitted branch, exactly: published, canonical,
-	 * dated, still to come, no source row, and not an import that happens to lack one.
+	 * The conditions are `listSourceCounts`'s submitted branch, from the same clauses.
 	 */
 	const [submittedLive] = await database
 		.select({ total: count() })
 		.from(events)
-		.where(
-			and(
-				eq(events.status, 'published'),
-				sql`${events.duplicateOfId} is null`,
-				eq(events.kind, 'dated'),
-				sql`${events.sourceId} is null`,
-				sql`${events.submissionMethod} <> 'import'`,
-				or(gte(events.startsAt, now), gte(events.endsAt, now))
-			)
-		);
+		.where(and(listed, submittedByHand, notOver(now)));
 
 	/*
 	 * What the checks actually decided, across every submission we have ever had.

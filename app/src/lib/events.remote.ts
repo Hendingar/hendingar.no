@@ -63,7 +63,17 @@ import {
 	shiftMonth
 } from './calendar.ts';
 import { db } from './server/db';
-import { datedOnly, matchesSearch, sourceMarksFor, stillListed } from './server/listing.ts';
+import {
+	datedOnly,
+	fromSourceGroup,
+	listed,
+	matchesSearch,
+	notOver,
+	sourceMarksFor,
+	tileColumns,
+	stillListed,
+	submittedByHand
+} from './server/listing.ts';
 import { withStartsIn } from './starts-in.ts';
 
 /**
@@ -88,38 +98,7 @@ export const listEvents = query(
 		const now = new Date();
 
 		const rows = await db()
-			.select({
-				id: events.id,
-				title: events.title,
-				category: events.category,
-				startsAt: events.startsAt,
-				endsAt: events.endsAt,
-				venueName: venues.name,
-				// The zone is what makes startsAt renderable as a wall clock. Always select it.
-				venueTimeZone: venues.timezone,
-				municipality: venues.municipality,
-				posterUrl: events.posterUrl,
-				posterSrcset: events.posterSrcset,
-				trail: events.trail,
-				/*
-				 * The source, so a tile can show whose calendar an event came from. We are an index, not a
-				 * replacement — a tile that shows no origin quietly claims the event as ours. Null for human
-				 * submissions, which have no source row.
-				 */
-				sourceMarks: sourceMarksFor(events.id).as('source_marks'),
-				// Same day-grouping columns as listUpcoming, so one component renders both listings
-				// instead of /hendingar having a second, plainer list that drifts from the front page.
-				localDate: sql<string>`
-					to_char(
-						greatest(${events.startsAt}, now())
-							at time zone coalesce(${venues.timezone}, 'Europe/Oslo'),
-						'YYYY-MM-DD'
-					)
-				`.as('local_date'),
-				todayLocalDate: sql<string>`
-					to_char(now() at time zone coalesce(${venues.timezone}, 'Europe/Oslo'), 'YYYY-MM-DD')
-				`.as('today_local_date')
-			})
+			.select(tileColumns)
 			.from(events)
 			.leftJoin(venues, eq(events.venueId, venues.id))
 			.leftJoin(sources, eq(events.sourceId, sources.id))
@@ -133,48 +112,24 @@ export const listEvents = query(
 			.leftJoin(organizers, eq(events.organizerId, organizers.id))
 			.where(
 				and(
-					eq(events.status, 'published'),
-					stillListed,
-					/*
-					 * Only canonical rows.
-					 *
-					 * Several sources report the same concert; `pnpm consolidate` picks one row per
-					 * event and points the others at it. Without this the listing shows the same
-					 * evening twice under two spellings.
-					 */
-					isNull(events.duplicateOfId),
-					datedOnly,
+					// Only canonical rows: several sources report the same concert, and without this the
+					// listing shows the same evening twice under two spellings.
+					listed,
 					// An event that has started but not ended is still happening, and must stay
 					// visible. Filtering on startsAt alone hid a three-hour concert for its whole
 					// duration, and a weekend festival for the entire weekend.
-					or(gte(events.startsAt, since), gte(events.endsAt, since)),
+					notOver(since),
 					to ? lte(events.startsAt, new Date(to)) : undefined,
 					category ? eq(events.category, category) : undefined,
 					/*
-					 * Match the whole group, not just the row that won.
-					 *
-					 * Filtering on the canonical's own source alone would hide an event from the
-					 * venue that actually runs it whenever a newspaper's copy happened to have the
-					 * lower id — "Stord kulturhus" would stop listing its own concerts. So a
-					 * canonical matches if IT or any row pointing at it comes from that source.
-					 */
-					/*
-					 * `innsendt` is not a row in `sources`, so it cannot be found by the join.
-					 *
-					 * It selects the events that have no source at all and did not arrive by
-					 * import — which is exactly "somebody sent this in". Checked before the
-					 * general branch because that one would search `sources.slug` for a slug
+					 * Match the whole group, not just the row that won. `innsendt` is checked first
+					 * because it is not a row in `sources`: the group match would search for a slug
 					 * that is deliberately not there and quietly return nothing.
 					 */
 					source === SUBMITTED_SLUG
-						? and(isNull(events.sourceId), ne(events.submissionMethod, 'import'))
+						? submittedByHand
 						: source
-							? sql`exists (
-									select 1 from ${events} as m
-									join ${sources} as ms on ms.id = m.source_id
-									where (m.id = ${events.id} or m.duplicate_of_id = ${events.id})
-										and ms.slug = ${source}
-								)`
+							? fromSourceGroup(source)
 							: undefined,
 					municipality ? eq(venues.municipality, municipality) : undefined,
 					/*
@@ -215,15 +170,7 @@ export const listSourceCounts = query(async () => {
 		})
 		.from(sources)
 		.innerJoin(events, eq(events.sourceId, sources.id))
-		.where(
-			and(
-				eq(events.status, 'published'),
-				stillListed,
-				isNull(events.duplicateOfId),
-				datedOnly,
-				or(gte(events.startsAt, now), gte(events.endsAt, now))
-			)
-		)
+		.where(and(listed, notOver(now)))
 		.groupBy(sources.slug, sources.name, sources.iconUrl);
 
 	/*
@@ -236,17 +183,7 @@ export const listSourceCounts = query(async () => {
 	const [submitted] = await db()
 		.select({ total: count(events.id) })
 		.from(events)
-		.where(
-			and(
-				eq(events.status, 'published'),
-				stillListed,
-				isNull(events.duplicateOfId),
-				datedOnly,
-				isNull(events.sourceId),
-				ne(events.submissionMethod, 'import'),
-				or(gte(events.startsAt, now), gte(events.endsAt, now))
-			)
-		);
+		.where(and(listed, submittedByHand, notOver(now)));
 
 	const sorted = rows.sort((a, b) => b.total - a.total || a.name.localeCompare(b.name, 'nb-NO'));
 
@@ -277,15 +214,7 @@ export const siteStatus = query(async () => {
 	const [upcoming] = await database
 		.select({ total: count() })
 		.from(events)
-		.where(
-			and(
-				eq(events.status, 'published'),
-				stillListed,
-				isNull(events.duplicateOfId),
-				datedOnly,
-				or(gte(events.startsAt, now), gte(events.endsAt, now))
-			)
-		);
+		.where(and(listed, notOver(now)));
 
 	// Only sources we actually collect. A `link` row is a signpost, not a feed, and counting it
 	// would inflate the number that is supposed to mean "places this list comes from".
@@ -366,14 +295,7 @@ export const siteStatus = query(async () => {
 export const searchSuggestions = query(searchTermSchema, async (term) => {
 	const database = db();
 	const now = new Date();
-	const live = () =>
-		and(
-			eq(events.status, 'published'),
-			stillListed,
-			isNull(events.duplicateOfId),
-			datedOnly,
-			or(gte(events.startsAt, now), gte(events.endsAt, now))
-		);
+	const live = () => and(listed, notOver(now));
 
 	const tokens = searchTokens(term);
 	const searching = tokens.length > 0;
@@ -473,15 +395,7 @@ export const listCategoryCounts = query(async () => {
 	const rows = await db()
 		.select({ category: events.category, total: count() })
 		.from(events)
-		.where(
-			and(
-				eq(events.status, 'published'),
-				stillListed,
-				isNull(events.duplicateOfId),
-				datedOnly,
-				or(gte(events.startsAt, now), gte(events.endsAt, now))
-			)
-		)
+		.where(and(listed, notOver(now)))
 		.groupBy(events.category);
 
 	return rows
@@ -529,15 +443,7 @@ export const waysInCounts = query(async () => {
 		.select({ localDate: localDate.as('local_date'), total: count() })
 		.from(events)
 		.leftJoin(venues, eq(events.venueId, venues.id))
-		.where(
-			and(
-				eq(events.status, 'published'),
-				stillListed,
-				isNull(events.duplicateOfId),
-				datedOnly,
-				or(gte(events.startsAt, now), gte(events.endsAt, now))
-			)
-		)
+		.where(and(listed, notOver(now)))
 		.groupBy(localDate);
 
 	const byDate = new Map(rows.map((row) => [row.localDate, row.total]));
@@ -666,53 +572,13 @@ export type WeeklyActivity = Awaited<ReturnType<typeof weeklyActivities>>['activ
 export type EventSummary = Awaited<ReturnType<typeof listEvents>>[number];
 
 /**
- * The columns an `EventTile` draws, in one place.
- *
- * Shared by the front-page listing and `eventTile`, so the card a sender sees on their receipt is
- * the same card the listing shows — not a third shape that drifts from it.
- */
-const upcomingColumns = {
-	id: events.id,
-	title: events.title,
-	category: events.category,
-	startsAt: events.startsAt,
-	endsAt: events.endsAt,
-	venueName: venues.name,
-	venueTimeZone: venues.timezone,
-	municipality: venues.municipality,
-	posterUrl: events.posterUrl,
-	posterSrcset: events.posterSrcset,
-	trail: events.trail,
-	sourceMarks: sourceMarksFor(events.id).as('source_marks'),
-	/*
-	 * The calendar day AT THE VENUE, resolved in SQL. Grouping by day is a calendar
-	 * question, not an instant one — deriving it in JS from the server's clock would put a
-	 * late Helsinki concert in the wrong group for a reader in Norway.
-	 *
-	 * greatest(starts_at, now()) so a multi-day exhibition that opened last week is grouped
-	 * under TODAY, where a visitor can actually go to it, rather than under a heading dated
-	 * before the page they are reading.
-	 */
-	localDate: sql<string>`
-			to_char(
-				greatest(${events.startsAt}, now())
-					at time zone coalesce(${venues.timezone}, 'Europe/Oslo'),
-				'YYYY-MM-DD'
-			)
-		`.as('local_date'),
-	todayLocalDate: sql<string>`
-			to_char(now() at time zone coalesce(${venues.timezone}, 'Europe/Oslo'), 'YYYY-MM-DD')
-		`.as('today_local_date')
-};
-
-/**
  * The front-page listing: the nearest events, in order, each carrying the calendar day it falls on
  * at its own venue so the page can group by date.
  */
 export const listUpcoming = query(z.number().int().min(1).max(60).default(24), async (limit) => {
 	const now = new Date();
 	const rows = await db()
-		.select(upcomingColumns)
+		.select(tileColumns)
 		.from(events)
 		.leftJoin(venues, eq(events.venueId, venues.id))
 		.leftJoin(sources, eq(events.sourceId, sources.id))
@@ -724,7 +590,7 @@ export const listUpcoming = query(z.number().int().min(1).max(60).default(24), a
 				isNull(events.duplicateOfId),
 				datedOnly,
 				// Still-running events belong to today.
-				or(gte(events.startsAt, new Date()), gte(events.endsAt, new Date()))
+				notOver(new Date())
 			)
 		)
 		// Order by the same effective instant the grouping uses, so groups stay contiguous.
@@ -746,7 +612,7 @@ export type UpcomingEvent = Awaited<ReturnType<typeof listUpcoming>>[number];
 export const eventTile = query(z.number().int().positive(), async (id) => {
 	const now = new Date();
 	const rows = await db()
-		.select(upcomingColumns)
+		.select(tileColumns)
 		.from(events)
 		.leftJoin(venues, eq(events.venueId, venues.id))
 		.where(
@@ -826,15 +692,7 @@ export const listPopular = query(
 			})
 			.from(events)
 			.leftJoin(venues, eq(events.venueId, venues.id))
-			.where(
-				and(
-					eq(events.status, 'published'),
-					stillListed,
-					isNull(events.duplicateOfId),
-					datedOnly,
-					or(gte(events.startsAt, now), gte(events.endsAt, now))
-				)
-			)
+			.where(and(listed, notOver(now)))
 			/*
 			 * Soonest first among equals.
 			 *
@@ -902,9 +760,7 @@ export const calendarRange = query(async () => {
 	const [row] = await db()
 		.select({ earliest: min(events.startsAt), latest: max(events.startsAt) })
 		.from(events)
-		.where(
-			and(eq(events.status, 'published'), stillListed, isNull(events.duplicateOfId), datedOnly)
-		);
+		.where(listed);
 
 	const today = localDayKey(new Date(), DEFAULT_TIME_ZONE);
 	const current = monthKeyOf(today);
@@ -943,10 +799,7 @@ export const dayCounts = query(calendarSpanSchema, async ({ from: fromMonth, to:
 		.leftJoin(venues, eq(events.venueId, venues.id))
 		.where(
 			and(
-				eq(events.status, 'published'),
-				stillListed,
-				isNull(events.duplicateOfId),
-				datedOnly,
+				listed,
 				// A window on the indexed instant, deliberately a day wider than the span at each
 				// end; countByDay below decides which of those rows actually belong to it.
 				gte(events.startsAt, from),
@@ -1001,16 +854,7 @@ export const listEventsOnDate = query(calendarDateSchema, async (date) => {
 		})
 		.from(events)
 		.leftJoin(venues, eq(events.venueId, venues.id))
-		.where(
-			and(
-				eq(events.status, 'published'),
-				stillListed,
-				isNull(events.duplicateOfId),
-				datedOnly,
-				gte(events.startsAt, from),
-				lte(events.startsAt, to)
-			)
-		)
+		.where(and(listed, gte(events.startsAt, from), lte(events.startsAt, to)))
 		.orderBy(asc(events.startsAt));
 
 	const now = new Date();
@@ -1077,10 +921,7 @@ export const weekendEvents = query(weekendSchema, async (which) => {
 		.leftJoin(venues, eq(events.venueId, venues.id))
 		.where(
 			and(
-				eq(events.status, 'published'),
-				stillListed,
-				isNull(events.duplicateOfId),
-				datedOnly,
+				listed,
 				gte(events.startsAt, from),
 				lte(events.startsAt, to),
 				/*
@@ -1090,7 +931,7 @@ export const weekendEvents = query(weekendSchema, async (which) => {
 				 * of a date and lists everything on it. A tab called "neste helg" is a plan, and a
 				 * concert that finished an hour ago is not part of one.
 				 */
-				or(gte(events.startsAt, now), gte(events.endsAt, now))
+				notOver(now)
 			)
 		)
 		.orderBy(asc(events.startsAt));
@@ -1136,16 +977,7 @@ export const adjacentEventDays = query(calendarDateSchema, async (date) => {
 		.select({ startsAt: events.startsAt, venueTimeZone: venues.timezone })
 		.from(events)
 		.leftJoin(venues, eq(events.venueId, venues.id))
-		.where(
-			and(
-				eq(events.status, 'published'),
-				stillListed,
-				isNull(events.duplicateOfId),
-				datedOnly,
-				gte(events.startsAt, from),
-				lte(events.startsAt, to)
-			)
-		);
+		.where(and(listed, gte(events.startsAt, from), lte(events.startsAt, to)));
 
 	const days = [...countByDay(rows).keys()].sort();
 	return {
@@ -1185,16 +1017,7 @@ export const horizonWeeks = query(
 			.select({ startsAt: events.startsAt, venueTimeZone: venues.timezone })
 			.from(events)
 			.leftJoin(venues, eq(events.venueId, venues.id))
-			.where(
-				and(
-					eq(events.status, 'published'),
-					stillListed,
-					isNull(events.duplicateOfId),
-					datedOnly,
-					gte(events.startsAt, from),
-					lte(events.startsAt, to)
-				)
-			);
+			.where(and(listed, gte(events.startsAt, from), lte(events.startsAt, to)));
 
 		const byDay = countByDay(rows);
 		const bars = Array.from({ length: weeks }, (_, i) => {
@@ -1275,10 +1098,7 @@ export const weekEvents = query(calendarWeekSchema, async (weekKey) => {
 		.leftJoin(venues, eq(events.venueId, venues.id))
 		.where(
 			and(
-				eq(events.status, 'published'),
-				stillListed,
-				isNull(events.duplicateOfId),
-				datedOnly,
+				listed,
 				/*
 				 * Two index ranges rather than one open-ended scan: things starting inside the week,
 				 * and things that started earlier and have not finished. Written as an `or` of two
@@ -1362,16 +1182,7 @@ export const placeCounts = query(calendarSpanSchema, async ({ from: fromMonth, t
 		})
 		.from(events)
 		.leftJoin(venues, eq(events.venueId, venues.id))
-		.where(
-			and(
-				eq(events.status, 'published'),
-				stillListed,
-				isNull(events.duplicateOfId),
-				datedOnly,
-				gte(events.startsAt, from),
-				lte(events.startsAt, to)
-			)
-		);
+		.where(and(listed, gte(events.startsAt, from), lte(events.startsAt, to)));
 
 	const totals = new Map<string | null, number>();
 	for (const row of rows) {
@@ -1607,49 +1418,32 @@ export const relatedEvents = query(z.number().int().positive(), async (id) => {
 	const day = self.kind === 'dated' ? localDayKey(self.startsAt, self.venueTimeZone) : null;
 	const window = day ? instantWindowForDays(day, day) : null;
 
-	const listed = and(
-		eq(events.status, 'published'),
-		stillListed,
-		isNull(events.duplicateOfId),
-		datedOnly,
+	const others = and(
+		listed,
 		ne(events.id, id),
 		self.duplicateOfId ? ne(events.id, self.duplicateOfId) : undefined,
 		ne(events.title, self.title)
 	);
-	const upcoming = or(gte(events.startsAt, now), gte(events.endsAt, now));
 	// Enough over the shown count that deduplication and stacked repeats still leave a full row.
 	const fetched = RELATED_SHOWN * 3;
 
 	const select = () =>
-		database.select(upcomingColumns).from(events).leftJoin(venues, eq(events.venueId, venues.id));
+		database.select(tileColumns).from(events).leftJoin(venues, eq(events.venueId, venues.id));
 
 	const [dayRows, sourceRows, categoryRows] = await Promise.all([
 		window
 			? select()
-					.where(and(listed, gte(events.startsAt, window.from), lte(events.startsAt, window.to)))
+					.where(and(others, gte(events.startsAt, window.from), lte(events.startsAt, window.to)))
 					.orderBy(asc(events.startsAt))
 			: Promise.resolve([]),
 		source
 			? select()
-					.where(
-						and(
-							listed,
-							upcoming,
-							// The whole group, as `listEvents` matches it — so the preview and the
-							// page it links to agree on what "from this calendar" means.
-							sql`exists (
-								select 1 from ${events} as m
-								join ${sources} as ms on ms.id = m.source_id
-								where (m.id = ${events.id} or m.duplicate_of_id = ${events.id})
-									and ms.slug = ${source.slug}
-							)`
-						)
-					)
+					.where(and(others, notOver(now), fromSourceGroup(source.slug)))
 					.orderBy(sql`greatest(${events.startsAt}, now())`, asc(events.startsAt))
 					.limit(fetched)
 			: Promise.resolve([]),
 		select()
-			.where(and(listed, upcoming, eq(events.category, self.category)))
+			.where(and(others, notOver(now), eq(events.category, self.category)))
 			.orderBy(sql`greatest(${events.startsAt}, now())`, asc(events.startsAt))
 			.limit(fetched)
 	]);

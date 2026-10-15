@@ -1,10 +1,10 @@
-import { and, asc, eq, gte, inArray, isNull, or, sql } from 'drizzle-orm';
+import { and, asc, eq, inArray, sql } from 'drizzle-orm';
 import { events, organizers, venues } from '@hendingar/core/schema';
 import { categoryLabel } from '@hendingar/core/taxonomy';
 import { COMPARE_MAX_EVENTS, type PileScore } from '@hendingar/core/validation';
 import { AnswerCache, Budget, answer, type PileAnswer, type PileCandidate } from './pile-answer.ts';
 import { db } from './db';
-import { datedOnly, matchesSearch, sourceMarksFor, stillListed } from './listing.ts';
+import { listed, matchesSearch, notOver, sourceMarksFor } from './listing.ts';
 import { comparePile, rankForQuery } from './verifier.ts';
 import { whenWords } from '../haugen.ts';
 
@@ -93,14 +93,7 @@ export type PileEvent = Awaited<ReturnType<typeof pileEvents>>[number];
 
 /** The same rows `/hendingar` lists: published, still listed, canonical, dated, not over. */
 function upcoming() {
-	const now = new Date();
-	return and(
-		eq(events.status, 'published'),
-		stillListed,
-		isNull(events.duplicateOfId),
-		datedOnly,
-		or(gte(events.startsAt, now), gte(events.endsAt, now))
-	);
+	return and(listed, notOver(new Date()));
 }
 
 export function candidateOf(event: PileEvent): PileCandidate {
