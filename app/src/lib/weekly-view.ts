@@ -1,4 +1,4 @@
-import { addDays, MONTH_NAMES, WEEKDAY_NAMES, weekdayIndex } from '@hendingar/core/datetime';
+import { addDays, WEEKDAY_ABBR, weekdayIndex } from '@hendingar/core/datetime';
 import {
 	AGE_BANDS,
 	describeWeeklyHours,
@@ -44,7 +44,7 @@ export const DAY_SLUGS = [
 	'laurdag',
 	'sundag'
 ] as const;
-const DAY_SHORT = ['Må', 'Ty', 'On', 'To', 'Fr', 'La', 'Su'] as const;
+const DAY_SHORT = WEEKDAY_ABBR.map((d) => d.charAt(0).toUpperCase() + d.slice(1));
 
 export type WeeklyParams = { day: number | null; band: AgeBand | null };
 
@@ -207,12 +207,6 @@ export function clubsOf(activities: readonly WeeklyActivityRow[]): Club[] {
 		if (x.name === null || y.name === null) return x.name === null ? 1 : -1;
 		return y.activities.length - x.activities.length || readingOrder(x.name, y.name);
 	});
-}
-
-/** "laurdag 3. oktober". The year is never in doubt inside a seven-day window. */
-export function dayLabel(date: string): string {
-	const month = MONTH_NAMES[Number(date.slice(5, 7)) - 1] ?? '';
-	return `${WEEKDAY_NAMES[weekdayIndex(date)] ?? ''} ${Number(date.slice(8, 10))}. ${month}`;
 }
 
 export function bandLabel(band: AgeBand | null): string | null {

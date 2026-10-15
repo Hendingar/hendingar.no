@@ -12,6 +12,7 @@ import {
 	schemaDateTime,
 	formatTimeDigits,
 	formatCalendarDate,
+	formatWeekdayDate,
 	formatDayLabel,
 	formatMonthName,
 	instantToZonedWallClock,
@@ -205,6 +206,7 @@ describe('the calendar vocabulary', () => {
 	it('spells the weekend in Nynorsk', () => {
 		expect(formatCalendarDate('2026-09-12')).toBe('Laurdag 12. september 2026');
 		expect(formatCalendarDate('2026-09-13')).toBe('Sundag 13. september 2026');
+		expect(formatWeekdayDate('2026-10-29')).toBe('torsdag 29. oktober');
 	});
 
 	it('names a month with its year', () => {

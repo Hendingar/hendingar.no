@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
 	clubsOf,
-	dayLabel,
 	dayView,
 	nextDateFor,
 	parseWeeklyParams,
@@ -142,10 +141,6 @@ describe('a day', () => {
 	it('leaves empty parts of the day out rather than showing them bare', () => {
 		const { periods } = dayView(all, TODAY, null);
 		expect(periods.map((p) => [p.name, p.rows.length])).toEqual([['Føremiddag', 2]]);
-	});
-
-	it('names the date the way a reader says it', () => {
-		expect(dayLabel(TODAY)).toBe('laurdag 3. oktober');
 	});
 });
 
