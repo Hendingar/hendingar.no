@@ -131,10 +131,15 @@ function spendModelCall(path: string): void {
 	}
 }
 
-async function post<T>(path: string, body: unknown, timeoutMs: number): Promise<T> {
+function endpoint(path: string): string {
 	if (!VERIFIER_URL) throw new Error('verifier is not configured');
+	return `${VERIFIER_URL.replace(/\/$/, '')}${path}`;
+}
+
+async function post<T>(path: string, body: unknown, timeoutMs: number): Promise<T> {
+	const url = endpoint(path);
 	if (METERED.has(path)) spendModelCall(path);
-	const res = await fetch(`${VERIFIER_URL.replace(/\/$/, '')}${path}`, {
+	const res = await fetch(url, {
 		method: 'POST',
 		headers: { 'content-type': 'application/json' },
 		body: JSON.stringify(body),
@@ -145,6 +150,58 @@ async function post<T>(path: string, body: unknown, timeoutMs: number): Promise<
 		throw new Error(`verifier ${path} responded ${res.status}: ${detail.slice(0, 200)}`);
 	}
 	return (await res.json()) as T;
+}
+
+/**
+ * A streaming POST: the response body, once the service has said yes.
+ *
+ * Always metered — both streams are model calls, and a stream nobody finishes still spent one.
+ */
+async function postStream(
+	path: string,
+	body: unknown,
+	signal: AbortSignal
+): Promise<ReadableStream<Uint8Array>> {
+	const url = endpoint(path);
+	spendModelCall(path);
+	const response = await fetch(url, {
+		method: 'POST',
+		headers: { 'content-type': 'application/json', accept: 'text/event-stream' },
+		body: JSON.stringify(body),
+		signal
+	});
+	if (!response.ok || !response.body) {
+		const detail = await response.text().catch(() => '');
+		throw new Error(`verifier ${path} responded ${response.status}: ${detail.slice(0, 200)}`);
+	}
+	return response.body;
+}
+
+/** The fields every check, draft and juror reads, as the service spells them. */
+export type EventFields = {
+	title: string;
+	description?: string | null;
+	category: CategorySlug;
+	startsAt: string;
+	endsAt?: string | null;
+	venueName?: string | null;
+	municipality?: string | null;
+	organizerName?: string | null;
+	sourceUrl?: string | null;
+};
+
+function wireEvent(event: EventFields) {
+	return {
+		title: event.title,
+		description: event.description ?? null,
+		category: event.category,
+		starts_at: event.startsAt,
+		ends_at: event.endsAt ?? null,
+		venue_name: event.venueName ?? null,
+		municipality: event.municipality ?? null,
+		organizer_name: event.organizerName ?? null,
+		source_url: event.sourceUrl ?? null
+	};
 }
 
 /**
@@ -258,24 +315,13 @@ export async function* extractPosterStreaming(
 	mediaType: 'image/jpeg' | 'image/png' | 'image/webp',
 	today: string
 ): AsyncGenerator<ExtractStreamEvent> {
-	if (!VERIFIER_URL) throw new Error('verifier is not configured');
-	spendModelCall('/extract/stream');
+	const body = await postStream(
+		'/extract/stream',
+		{ image_base64: imageBase64, media_type: mediaType, today },
+		AbortSignal.timeout(EXTRACT_TIMEOUT_MS)
+	);
 
-	const response = await fetch(`${VERIFIER_URL.replace(/\/$/, '')}/extract/stream`, {
-		method: 'POST',
-		headers: { 'content-type': 'application/json', accept: 'text/event-stream' },
-		body: JSON.stringify({ image_base64: imageBase64, media_type: mediaType, today }),
-		signal: AbortSignal.timeout(EXTRACT_TIMEOUT_MS)
-	});
-
-	if (!response.ok || !response.body) {
-		const detail = await response.text().catch(() => '');
-		throw new Error(
-			`verifier /extract/stream responded ${response.status}: ${detail.slice(0, 200)}`
-		);
-	}
-
-	for await (const frame of sseFrames(response.body)) {
+	for await (const frame of sseFrames(body)) {
 		if (frame.event === 'field') {
 			const field = extractedFieldSchema.parse(frame.data);
 			// The service names its fields as its own schema does; everything past this line is
@@ -315,34 +361,13 @@ export async function* improveDescriptionStreaming(
 	input: ImproveInput,
 	signal?: AbortSignal
 ): AsyncGenerator<ImproveStreamEvent> {
-	if (!VERIFIER_URL) throw new Error('verifier is not configured');
-	spendModelCall('/improve/stream');
+	const body = await postStream(
+		'/improve/stream',
+		wireEvent(input),
+		signal ?? AbortSignal.timeout(IMPROVE_TIMEOUT_MS)
+	);
 
-	const response = await fetch(`${VERIFIER_URL.replace(/\/$/, '')}/improve/stream`, {
-		method: 'POST',
-		headers: { 'content-type': 'application/json', accept: 'text/event-stream' },
-		body: JSON.stringify({
-			title: input.title,
-			description: input.description ?? null,
-			category: input.category,
-			starts_at: input.startsAt,
-			ends_at: input.endsAt ?? null,
-			venue_name: input.venueName ?? null,
-			municipality: input.municipality ?? null,
-			organizer_name: input.organizerName ?? null,
-			source_url: input.sourceUrl ?? null
-		}),
-		signal: signal ?? AbortSignal.timeout(IMPROVE_TIMEOUT_MS)
-	});
-
-	if (!response.ok || !response.body) {
-		const detail = await response.text().catch(() => '');
-		throw new Error(
-			`verifier /improve/stream responded ${response.status}: ${detail.slice(0, 200)}`
-		);
-	}
-
-	for await (const frame of sseFrames(response.body)) {
+	for await (const frame of sseFrames(body)) {
 		/*
 		 * Validated frame by frame, for the reason the whole boundary is validated: Zod strips what
 		 * a schema does not name, and a `problems` list that quietly stopped arriving would leave a
@@ -395,17 +420,7 @@ async function* sseFrames(
 	}
 }
 
-export type ImproveInput = {
-	title: string;
-	description?: string | null;
-	category: CategorySlug;
-	startsAt: string;
-	endsAt?: string | null;
-	venueName?: string | null;
-	municipality?: string | null;
-	organizerName?: string | null;
-	sourceUrl?: string | null;
-};
+export type ImproveInput = EventFields;
 
 /**
  * The weekend's picks (ADR 0018). Throws; the caller decides what a failure means.
@@ -589,15 +604,7 @@ export async function verifyEvent(input: VerifyInput): Promise<VerifyResponse> {
 		>(
 			'/verify',
 			{
-				title: input.title,
-				description: input.description ?? null,
-				category: input.category,
-				starts_at: input.startsAt,
-				ends_at: input.endsAt ?? null,
-				venue_name: input.venueName ?? null,
-				municipality: input.municipality ?? null,
-				organizer_name: input.organizerName ?? null,
-				source_url: input.sourceUrl ?? null,
+				...wireEvent(input),
 				candidates: input.candidates.map((c) => ({
 					id: c.id,
 					title: c.title,
@@ -657,8 +664,7 @@ export async function appealPanel(): Promise<{
 	jurors: { id: string; name: string }[];
 	quorum: number;
 }> {
-	if (!VERIFIER_URL) throw new Error('verifier is not configured');
-	const res = await fetch(`${VERIFIER_URL.replace(/\/$/, '')}/appeal/panel`, {
+	const res = await fetch(endpoint('/appeal/panel'), {
 		signal: AbortSignal.timeout(10_000)
 	});
 	if (!res.ok) throw new Error(`verifier /appeal/panel responded ${res.status}`);
@@ -672,14 +678,7 @@ export async function judgeAppeal(input: AppealInput): Promise<JurorVerdict> {
 	return post<JurorVerdict>(
 		'/appeal',
 		{
-			title: input.title,
-			description: input.description,
-			category: input.category,
-			starts_at: input.startsAt,
-			venue_name: input.venueName,
-			municipality: input.municipality,
-			organizer_name: input.organizerName,
-			source_url: input.sourceUrl,
+			...wireEvent(input),
 			rejection_reason: input.rejectionReason,
 			appeal: input.appeal,
 			juror: input.juror
