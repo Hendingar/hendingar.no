@@ -149,9 +149,13 @@
 	with `:global(.thumb)` — the hover scale, and the rule that turns the tile into a 5.5rem square
 	beside the title below 34rem. A card that answered to `.vs` alone would keep its 16:9 box on a
 	phone and push the row off the screen.
+
+	`thumb--whole` says the opposite to EventTile: this picture is a composition, not a photograph,
+	and cropped to that square it was the middle of two names and half a VS. So a listing tile keeps
+	it whole on a phone and pays the height for it — see the rule at the end of EventTile.
 -->
 <div
-	class={['thumb vs', kit]}
+	class={['thumb thumb--whole vs', kit]}
 	class:vs--feature={feature}
 	class:vs--armed={stage === 'armed'}
 	class:vs--live={stage === 'live'}

@@ -784,5 +784,35 @@
 		.tile--featured .tile__t {
 			font-size: 1.05rem;
 		}
+
+		/*
+		 * The exception: a match card stays on top, whole.
+		 *
+		 * A poster survives the 88px square — it is a photograph, and its middle is still a picture.
+		 * VersusTile and HandballTile are compositions laid out edge to edge in a 400×225 box: the
+		 * names at the sides, the crests and the mark between them, the goal in a corner. Cropped to
+		 * a square the football card was "ORD / TBALL" and half a VS, and the entrance played
+		 * almost entirely off the edges. So they carry `thumb--whole`, and a tile holding one goes
+		 * back to the picture-on-top layout it has at every other width.
+		 *
+		 * That costs height — about 200px more per match on a 390px phone — and it is paid only by
+		 * the matches. Everything else in the day stays a row.
+		 */
+		.tile:has(> :global(.thumb--whole)) {
+			grid-template-columns: minmax(0, 1fr);
+			grid-template-rows: auto 1fr;
+		}
+		.tile:has(> :global(.thumb--whole)) .tile__body {
+			grid-row: 2;
+		}
+		.tile > :global(.thumb--whole) {
+			grid-column: 1;
+			grid-row: 1;
+			inline-size: 100%;
+			block-size: auto;
+			aspect-ratio: 16 / 9;
+			border-inline-start: none;
+			border-block-end: var(--rule) solid var(--peach-line);
+		}
 	}
 </style>
