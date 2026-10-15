@@ -16,18 +16,25 @@ converter, nested `$defs` included, so that function is gone rather than duplica
 """
 
 import logging
+import textwrap
 from collections.abc import AsyncIterator
-from typing import Literal
+from typing import Literal, get_args
 
 from agent_framework import Content, Message
 
 from .llm import AgentFactory
-from .models import ExtractedEvent, ExtractedField, ExtractPageRequest, ExtractRequest
+from .models import CategorySlug, ExtractedEvent, ExtractedField, ExtractPageRequest, ExtractRequest
 from .partial import completed_fields
 
 log = logging.getLogger(__name__)
 
-SYSTEM = """Du hentar ut informasjon om lokale arrangement i Noreg frå bilete, og svarar berre med
+# Written from the contract's own list, so a category added there reaches both prompts. Typed out
+# by hand it was a second copy that a new category had to be remembered into (#194). Wrapped at
+# 100 so the prompts stay byte-for-byte what the extraction evals measured.
+CATEGORIES = textwrap.fill("Kategoriar: " + ", ".join(get_args(CategorySlug)) + ".", 100)
+
+SYSTEM = (
+    """Du hentar ut informasjon om lokale arrangement i Noreg frå bilete, og svarar berre med
 strukturerte data.
 
 Biletet kan vere ein plakat på ei oppslagstavle, eit skjermbilete av ei Facebook-hending, ei
@@ -64,11 +71,13 @@ Reglar:
   skal vere breiare enn det er høgt. Er du i tvil, la det stå tomt — eit dårleg utsnitt er verre
   enn ingen.
 
-Kategoriar: musikk, teater, utstilling, sport, mote, kyrkjeliv, festival, litteratur, stand-up,
-show, kino, mat-og-drikke, dans, marknad, konferanse, kurs, anna."""
+"""
+    + CATEGORIES
+)
 
 
-SYSTEM_PAGE = """Du hentar ut informasjon om lokale arrangement i Noreg frå teksten på ei nettside, og
+SYSTEM_PAGE = (
+    """Du hentar ut informasjon om lokale arrangement i Noreg frå teksten på ei nettside, og
 svarar berre med strukturerte data.
 
 Teksten er heile den lesbare sida, med markup fjerna — så han inneheld navigasjon, botntekst,
@@ -91,8 +100,9 @@ Reglar:
 - `note` skal vere éi setning på nynorsk, til personen som limte inn lenkja.
 - `thumbnail` skal alltid stå tomt her. Det finst ikkje noko bilete å skjere ut av ein tekst.
 
-Kategoriar: musikk, teater, utstilling, sport, mote, kyrkjeliv, festival, litteratur, stand-up,
-show, kino, mat-og-drikke, dans, marknad, konferanse, kurs, anna."""
+"""
+    + CATEGORIES
+)
 
 # A page is mostly not the event. Enough for a long listing, capped so one enormous page cannot
 # become one enormous bill — the app truncates too, and this is the backstop.

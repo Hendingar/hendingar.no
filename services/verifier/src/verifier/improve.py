@@ -37,7 +37,7 @@ from typing import Any, Literal
 from agent_framework.orchestrations import GroupChatBuilder
 from pydantic import BaseModel
 
-from .llm import AgentFactory
+from .llm import AgentFactory, parse_answer
 from .models import ImproveDraft, ImproveRequest, ImproveReview, ImproveSuggestion
 
 log = logging.getLogger(__name__)
@@ -233,7 +233,7 @@ class _Panel:
         return _merged(draft.missing for draft in self.drafts)
 
 
-def _parse(message: Any, author: str, model: type[BaseModel]) -> Any:
+def _parse[M: BaseModel](message: Any, author: str, model: type[M]) -> M | None:
     """One message as the object its author was asked for, or nothing.
 
     A turn that does not parse is skipped rather than raised on. The strict schema makes it close
@@ -242,11 +242,7 @@ def _parse(message: Any, author: str, model: type[BaseModel]) -> Any:
     """
     if getattr(message, "author_name", None) != author:
         return None
-    try:
-        return model.model_validate_json(message.text)
-    except ValueError:
-        log.warning("%s said something unparseable", author)
-        return None
+    return parse_answer(message.text, model, who=author)
 
 
 def _nothing(note: str, panel: _Panel | None = None) -> ImproveSuggestion:
