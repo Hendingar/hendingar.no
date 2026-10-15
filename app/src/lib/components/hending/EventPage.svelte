@@ -1,0 +1,921 @@
+<script lang="ts">
+	import SourceIcon from '../SourceIcon.svelte';
+	import { error } from '@sveltejs/kit';
+	import { page } from '$app/state';
+	import { categoryLabel } from '@hendingar/core/taxonomy';
+	import {
+		formatCalendarDate,
+		formatEventTime,
+		formatEventClock,
+		instantToZonedWallClock,
+		machineDateTime
+	} from '@hendingar/core/datetime';
+	import { describeWeeklyHours } from '@hendingar/core/weekly-hours';
+	import { eventIdFromParam, eventPath } from '@hendingar/core/slug';
+	import {
+		VERIFICATION_CHECK_LABELS,
+		VERIFICATION_VERDICT_LABELS
+	} from '@hendingar/core/verification';
+	import { filmScreenings, getEvent } from '../../events.remote';
+	import ScreeningTimes from '../ScreeningTimes.svelte';
+	import { heartCounts } from '../../hearts.remote';
+	import HeartButton from '../HeartButton.svelte';
+	import { recordView, viewCounts } from '../../views.remote';
+	import { markSeen } from '../../seen.ts';
+	import { describeFields } from '@hendingar/core/contribution';
+	import { linkLabel, safeHttpUrl } from '../../source-link.ts';
+	import { hotlinkedShareImage } from '../../share-image.ts';
+	import { canonicalUrl } from '../../origin.ts';
+	import PageMeta from '../PageMeta.svelte';
+	import { breadcrumbJsonLd, eventJsonLd, jsonLdScript } from '../../jsonld.ts';
+	import { plainText } from '@hendingar/core/text';
+	import { track } from '../../analytics.ts';
+	import { parseFixture } from '@hendingar/core/fixture';
+	import { parseHandballMatch } from '@hendingar/core/handball';
+	import VersusTile from '../VersusTile.svelte';
+	import HandballTile from '../HandballTile.svelte';
+	import TrailTile from '../TrailTile.svelte';
+	import { TRAIL_AUDIENCE_LABELS, TRAIL_GRADE_LABELS } from '@hendingar/core/trail';
+	import { artworkFor } from '../../church-art.ts';
+	import { hasGardenSource } from '../../garden-sources.ts';
+	import GardenTile from '../GardenTile.svelte';
+	import RelatedEvents from './RelatedEvents.svelte';
+	import { listingHref } from '../../listing-url.ts';
+	import { localDayKey } from '../../calendar.ts';
+
+	const id = eventIdFromParam(page.params.slug ?? '');
+	if (id === null) error(404, 'Fann ikkje hendinga');
+
+	// Top-level await so the page is real HTML for crawlers and for readers without JavaScript.
+	const event = await getEvent(id);
+	/*
+	 * The public count, server-rendered with the rest of the page. Whether *this* reader hearted it
+	 * is decided in the browser, because that is the only place that fact exists.
+	 */
+	const heartsForThis = (await heartCounts([event.id]))[0]?.hearts ?? 0;
+
+	/*
+	 * Every screening of the film, when this is one — the short list beside the details. The full
+	 * programme, with ticket links, is the page `/tider` below this one. Awaited here so it is in the HTML; for
+	 * anything that is not a film it is one indexed lookup that finds nothing.
+	 */
+	const screenings = await filmScreenings(event.id);
+
+	/*
+	 * How many browsers have opened this, server-rendered with the rest of the page.
+	 *
+	 * The count read here is the one *before* this visit. Rendering the incremented figure would
+	 * mean waiting for a write before showing the page, to move a number by one — and it would make
+	 * every reader's own visit the thing they see, which is the least interesting reading of it.
+	 */
+	const viewsForThis = (await viewCounts([event.id]))[0]?.views ?? 0;
+
+	/**
+	 * Count this visit, once per browser, ever.
+	 *
+	 * In an effect because it must not run during SSR — a crawler is not a reader, and counting
+	 * one would make the number a measure of how often we are indexed. `markSeen` writes to
+	 * localStorage before the request goes out and returns false ever after, so a reload does not
+	 * count again; the id it remembers never leaves the device, and the server is told only "one
+	 * more" (see views.remote.ts).
+	 *
+	 * Deliberately not awaited and deliberately silent. This is the least important thing on the
+	 * page: a blocked request, a browser with storage turned off, or a collector that is down must
+	 * cost the reader nothing at all.
+	 */
+	$effect(() => {
+		if (!markSeen(event.id)) return;
+		void recordView(event.id).catch(() => {});
+	});
+
+	/**
+	 * The same opening, reported to the collector.
+	 *
+	 * Not a duplicate of the view counter next to it: that one is a public number on this page and
+	 * is counted once per browser ever, deliberately. This says which *kinds* of event get opened
+	 * and how far ahead people look — the URL alone carries neither — and it is what tells us
+	 * whether importing a source was worth the trouble.
+	 *
+	 * `days_ahead` rather than the date, because the question is "how far ahead do people plan",
+	 * and a date would be one more thing joinable back to a single reader.
+	 */
+	$effect(() => {
+		track('view_event', {
+			event_id: event.id,
+			category: event.category,
+			source: event.reportedBy[0]?.slug ?? 'innsendt',
+			days_ahead: Math.round((event.startsAt.getTime() - Date.now()) / 86_400_000)
+		});
+	});
+
+	/*
+	 * The URL this page asks to be indexed under.
+	 *
+	 * Absolute and built from `canonicalUrl`, not from `page.url.origin`: three hostnames answer
+	 * for this site, and each self-canonicalising meant the same event competed with itself in
+	 * three places. A duplicate row points at the row it duplicates instead of at itself — the
+	 * page stays readable, because somebody is holding a link to it, but only one of them asks to
+	 * be the search result.
+	 */
+	/**
+	 * The description with any markup taken out.
+	 *
+	 * Sources hand us editor HTML and we store descriptions as text, but only one importer was
+	 * stripping it — so on the live site this page rendered the characters "&lt;strong&gt;" to a
+	 * reader and put the same string in its meta description and its JSON-LD. Stripping here fixes
+	 * every row already written; `plainText` is idempotent, so it costs nothing once the importers
+	 * stop writing markup in the first place.
+	 */
+	const prose = $derived(plainText(event.description));
+	/*
+	 * A match has no poster anywhere in NFF's feed, so this page showed a fixture as a headline and
+	 * one line of competition. The two clubs are in the title; `parseFixture` is the rule for when
+	 * that is a fixture rather than a title with a dash in it.
+	 */
+	const fixture = $derived(parseFixture(event.title));
+	/* A handball match: the same idea, its own card — see HandballTile. */
+	const handball = $derived(parseHandballMatch(event.title));
+	/*
+	 * A painting for a church notice, which is the one place its caption fits.
+	 *
+	 * The listing tile can only show the picture; here there is room to say what it is, who painted
+	 * it and where to read about it — which is the whole reason it is a named public-domain work
+	 * and not a texture.
+	 */
+	const artwork = $derived(artworkFor(event.id, event.category));
+	/* A hagelag's activity has no picture anywhere upstream — see garden-sources.ts. */
+	const garden = $derived(hasGardenSource(event.reportedBy.map((r) => r.slug)));
+
+	/**
+	 * One string for the search snippet and the share card both.
+	 *
+	 * Cut at a word boundary rather than mid-syllable: a snippet ending "…konsert med Sig" reads as
+	 * a broken page. Falls back to naming the kind of thing it is, because an event with no
+	 * description still has to say something to somebody deciding whether to open it.
+	 */
+	const summary = $derived.by(() => {
+		const text = prose;
+		if (!text) {
+			return `${categoryLabel(event.category)}${event.venueName ? ` på ${event.venueName}` : ''}${
+				event.venueMunicipality ? ` i ${event.venueMunicipality}` : ''
+			}.`;
+		}
+		if (text.length <= 160) return text;
+		const cut = text.slice(0, 160);
+		const space = cut.lastIndexOf(' ');
+		return `${(space > 100 ? cut.slice(0, space) : cut).trimEnd()}…`;
+	});
+
+	/**
+	 * A link leaving the site.
+	 *
+	 * The one measurement that answers whether this project works. We are an index, not a
+	 * destination (README.md) — an index nobody clicks through has failed at the only thing it set
+	 * out to do, and until now nothing told us either way.
+	 *
+	 * The host, not the full URL: which sources people actually go to is the useful shape, and the
+	 * path would be one more thing joinable back to a reader. Never blocks the navigation.
+	 */
+	function outbound(url: string | null, kind: 'cta' | 'source'): void {
+		const target = safeHttpUrl(url);
+		if (!target) return;
+		track('click', { link_domain: new URL(target).hostname, link_kind: kind, event_id: event.id });
+	}
+
+	const canonical = $derived(
+		event.duplicateOfId !== null && event.duplicateOfTitle !== null
+			? eventPath(event.duplicateOfId, event.duplicateOfTitle)
+			: eventPath(event.id, event.title)
+	);
+	/*
+	 * The page the sender said this came from — only for events nobody imported.
+	 *
+	 * An imported event already lists its source rows above, each with the importer's own event
+	 * URL; repeating this one there would credit the same link twice under two different headings.
+	 */
+	const submittedSource = $derived(safeHttpUrl(event.sourceUrl));
+	// The ticket button and the source links are importer- and contributor-supplied too. Every
+	// importer validates its own, but a `javascript:` row from before that, or from the next
+	// importer that forgets, must not become a link on our page.
+	const ctaUrl = $derived(safeHttpUrl(event.ctaUrl));
+	const shareImage = $derived(hotlinkedShareImage(event));
+	/**
+	 * A weekly activity's timetable, in place of the start and end it does not really have.
+	 *
+	 * Its `starts_at` is midnight on the first day of the season — "1. januar 00:00" — which is true
+	 * of the row and useless to a reader, who wants to know it is Tuesdays at six. The season's last
+	 * day is still worth saying, because a squad that stops in December should not be turned up to
+	 * in January. See ADR 0021.
+	 */
+	const weekly = $derived(event.weeklyHours ? describeWeeklyHours(event.weeklyHours) : null);
+	const seasonEnds = $derived(
+		event.weeklyHours && event.endsAt
+			? formatCalendarDate(
+					instantToZonedWallClock(event.endsAt, event.venueTimeZone ?? undefined).date
+				).toLowerCase()
+			: null
+	);
+	/*
+	 * The day this starts on at its venue — the day page the date links to. Null for a standing
+	 * activity, whose start is the first day of a season rather than a day anyone means.
+	 */
+	const startDay = $derived(weekly ? null : localDayKey(event.startsAt, event.venueTimeZone));
+	const sameDay = $derived(
+		event.endsAt
+			? formatEventTime(event.startsAt, event.venueTimeZone, 'full').slice(0, 12) ===
+					formatEventTime(event.endsAt, event.venueTimeZone, 'full').slice(0, 12)
+			: true
+	);
+
+	/**
+	 * What we tell machines this page is.
+	 *
+	 * Built by `lib/jsonld.ts` rather than inline, so the claims are unit-tested. Two nodes: the
+	 * event itself (when it is one), and the trail that gets Google to render "hendingar.no › Hendingar › …" under
+	 * the result instead of a bare URL.
+	 */
+	const canonicalHref = $derived(canonicalUrl(page.url, canonical));
+	const eventNode = $derived(eventJsonLd(event, canonicalHref));
+	const jsonLd = $derived([
+		// Null for a standing row — a season is not an event. See eventJsonLd.
+		...(eventNode ? [eventNode] : []),
+		breadcrumbJsonLd([
+			{ name: 'Framsida', url: canonicalUrl(page.url, '/') },
+			{ name: 'Hendingar', url: canonicalUrl(page.url, '/hendingar') },
+			{ name: event.title, url: canonicalHref }
+		])
+	]);
+</script>
+
+<PageMeta
+	title="{event.title} — hendingar.no"
+	description={summary}
+	path={canonical}
+	type="article"
+	image={shareImage ?? canonicalUrl(page.url, `${canonical}/og.png`)}
+	imageSize={shareImage ? null : undefined}
+	imageAlt={shareImage ? `Plakat for ${event.title}` : `Delebilete for ${event.title}`}
+/>
+
+<svelte:head>
+	<!--
+		The calendar file, announced rather than only linked. A reader clicks the link below; a
+		calendar client that is handed this page looks for this.
+	-->
+	<link
+		rel="alternate"
+		type="text/calendar"
+		href="{canonical}/kalender.ics"
+		title="{event.title} som kalenderfil"
+	/>
+	{#each jsonLd as node, i (i)}
+		<!-- eslint-disable-next-line svelte/no-at-html-tags -- JSON.stringify output, escaped in jsonLdScript -->
+		{@html `<script type="application/ld+json">${jsonLdScript(node)}</${'script'}>`}
+	{/each}
+</svelte:head>
+
+<article class="ev">
+	<div class="shell">
+		<p class="ev__back"><a href="/hendingar">← Alle hendingar</a></p>
+
+		{#if event.removedUpstreamAt}
+			<!--
+				Above the title, because it changes what the rest of the page means.
+
+				The page is kept rather than turned into a 404: people have this link, some of them
+				hearted it, and "fann ikkje hendinga" would say we lost it rather than that the
+				organiser took it down. What we can honestly report is the day we noticed, which is
+				not the same as the day it was cancelled — so the wording says "fann ikkje".
+			-->
+			<p class="ev__gone" role="status">
+				<strong>Denne hendinga ligg ikkje lenger hos kjelda.</strong>
+				Vi fann ho ikkje då vi henta frå
+				{event.sourceName ?? 'kjelda'}
+				<time datetime={machineDateTime(event.removedUpstreamAt)}>
+					{formatEventTime(event.removedUpstreamAt, event.venueTimeZone)}</time
+				>. Ho kan vere avlyst eller flytta — sjekk hos arrangøren før du reiser.
+			</p>
+		{/if}
+
+		<div class="ev__head">
+			<!-- The kind of thing is a way in to more of it, not only a caption. -->
+			<p class="label">
+				<a class="ev__cat" href={listingHref({ kategori: event.category })}
+					>{categoryLabel(event.category)}</a
+				>
+				{#if event.venueMunicipality}· {event.venueMunicipality}{/if}
+			</p>
+			<!--
+				The other half of the card morph: this heading and the tapped card's title share a
+				`view-transition-name`, so the small title becomes the big one instead of the two
+				cross-fading past each other. Arrive from anywhere else and the name simply matches
+				nothing, which costs one unmatched snapshot and looks exactly like the plain fade it
+				already was.
+			-->
+			<h1 class="display ev__h vt-morph" style:--vt-name="event-title-{event.id}">{event.title}</h1>
+			<!-- Larger here than on a card: this is the page where hearting is a deliberate act
+			     rather than something you tap in passing. -->
+			<p class="ev__heart">
+				<HeartButton eventId={event.id} hearts={heartsForThis} size="large" />
+			</p>
+			{#if viewsForThis > 0}
+				<!--
+					Only once somebody has been here. "0 har opna denne" on a page somebody is
+					currently reading is both wrong-looking and useless, and it would sit under every
+					newly imported event for days.
+
+					"Opna", not "vist": we know a browser opened the page and nothing about whether
+					anyone read it. See views.remote.ts.
+				-->
+				<p class="ev__views">{viewsForThis} har opna denne</p>
+			{/if}
+		</div>
+
+		<div class="ev__grid">
+			<div class="ev__main">
+				{#if event.posterUrl}
+					<!--
+						Hotlinked, never re-hosted: the poster's rights are the source's, not ours.
+
+						`sizes` measured the same way EventThumb's is, against this page's own layout
+						rather than a card's. `.ev__grid` is one column until its container reaches
+						52rem — which the shell hits at a 904px viewport, since it is
+						`min(88rem, 100vw)` less `clamp(1.25rem, 4vw, 4rem)` of padding on each side
+						— and two columns of `1.6fr 1fr` above it. So the poster is 92vw on a phone,
+						peaks at 831px there, and settles at 758px once the shell stops growing.
+						Widest it is ever painted: 832 CSS pixels, 1664 on a 2× screen.
+					-->
+					<img
+						class="ev__poster vt-morph vt-morph--poster"
+						style:--vt-name="event-poster-{event.id}"
+						src={event.posterUrl}
+						srcset={event.posterSrcset}
+						sizes={event.posterSrcset
+							? '(width < 56.5rem) 92vw, (width < 88rem) 56vw, 760px'
+							: undefined}
+						alt={`Plakat for ${event.title}`}
+						loading="eager"
+						decoding="async"
+						referrerpolicy="no-referrer"
+					/>
+				{:else if handball}
+					<HandballTile id={event.id} match={handball} feature />
+				{:else if fixture}
+					<!-- Drawn from the feed's two club names, with crests where we have them — see
+					     VersusTile. `feature` keeps the mark breathing after its entrance. -->
+					<VersusTile id={event.id} {fixture} feature />
+				{:else if event.trail}
+					<TrailTile id={event.id} trail={event.trail} feature />
+				{:else if garden}
+					<GardenTile id={event.id} feature />
+				{:else if artwork}
+					<!--
+						A picture beside a church notice, and honest about being exactly that.
+
+						The caption names the work rather than the event: nothing here claims the
+						painting depicts this service, and the link is the point — somebody who
+						stops to look can go and read about it.
+					-->
+					<figure class="ev__art">
+						<img
+							class="ev__poster"
+							src={artwork.src}
+							srcset={artwork.srcset}
+							sizes={artwork.srcset
+								? '(width < 56.5rem) 92vw, (width < 88rem) 56vw, 760px'
+								: undefined}
+							alt="{artwork.work} av {artwork.artist}"
+							loading="eager"
+							decoding="async"
+							referrerpolicy="no-referrer"
+						/>
+						<figcaption>
+							<a href={artwork.articleUrl} rel="noopener noreferrer" target="_blank">
+								{artwork.work}
+							</a>
+							<span>
+								{artwork.artist}{artwork.year ? `, ${artwork.year}` : ''} · fellesarv, via Wikimedia Commons
+							</span>
+						</figcaption>
+					</figure>
+				{/if}
+
+				{#if prose}
+					<div class="ev__desc">
+						{#each prose.split(/\n{2,}/) as paragraph (paragraph)}
+							<p>{paragraph}</p>
+						{/each}
+					</div>
+				{/if}
+
+				{#if event.checks.length > 0}
+					<!-- The README promises the verification reasoning is auditable rather than a black
+					     box. The event's own page is the only place a reader would look for it. -->
+					<details class="checks">
+						<summary>Slik vart denne kontrollert</summary>
+						<ol>
+							{#each event.checks as check (check.check)}
+								<li>
+									<span class="checks__name">{VERIFICATION_CHECK_LABELS[check.check]}</span>
+									<span class="checks__verdict">
+										{VERIFICATION_VERDICT_LABELS[check.verdict]}
+									</span>
+									<span class="checks__why">{check.reasoning}</span>
+									<span class="checks__by">
+										{check.deterministic ? 'Regel' : (check.model ?? 'Modell')}
+									</span>
+								</li>
+							{/each}
+						</ol>
+					</details>
+				{/if}
+			</div>
+
+			<aside class="ev__side" aria-label="Praktisk">
+				<dl class="facts">
+					<div>
+						<dt>Når</dt>
+						{#if weekly}
+							<dd class="weekly">
+								{#if weekly.cadence}
+									<span class="weekly__cad">{weekly.cadence}</span>
+								{/if}
+								{#each weekly.lines as line, i (i)}
+									<span>{line}</span>
+								{/each}
+								{#if seasonEnds && event.endsAt}
+									<span class="muted">
+										Til <time datetime={machineDateTime(event.endsAt)}>{seasonEnds}</time>
+									</span>
+								{/if}
+							</dd>
+						{:else}
+							<dd>
+								<!-- The date leads to the day: what else is on while you are out anyway. -->
+								<a class="ev__day" href="/kalender/{startDay}">
+									<time datetime={machineDateTime(event.startsAt)}>
+										{formatEventTime(event.startsAt, event.venueTimeZone, 'full')}
+									</time>
+								</a>
+								{#if event.endsAt}
+									<span class="facts__to">
+										–
+										{#if sameDay}
+											<time datetime={machineDateTime(event.endsAt)}>
+												{formatEventClock(event.endsAt, event.venueTimeZone)}
+											</time>
+										{:else}
+											<time datetime={machineDateTime(event.endsAt)}>
+												{formatEventTime(event.endsAt, event.venueTimeZone, 'full')}
+											</time>
+										{/if}
+									</span>
+								{/if}
+							</dd>
+						{/if}
+					</div>
+
+					{#if event.venueName}
+						<div>
+							<dt>Stad</dt>
+							<dd>
+								{event.venueName}
+								{#if event.venueAddress}<br /><span class="muted">{event.venueAddress}</span>{/if}
+							</dd>
+						</div>
+					{/if}
+
+					<!-- The trip's grade and audiences, in words: the card draws them, this says them. -->
+					{#if event.trail?.grade}
+						<div>
+							<dt>Grad</dt>
+							<dd>{TRAIL_GRADE_LABELS[event.trail.grade]}</dd>
+						</div>
+					{/if}
+					{#if event.trail && event.trail.audiences.length > 0}
+						<div>
+							<dt>Passar for</dt>
+							<dd>{event.trail.audiences.map((a) => TRAIL_AUDIENCE_LABELS[a]).join(', ')}</dd>
+						</div>
+					{/if}
+
+					{#if event.organizerName}
+						<div>
+							<dt>Arrangør</dt>
+							<dd>{event.organizerName}</dd>
+						</div>
+					{/if}
+				</dl>
+
+				{#if screenings.film}
+					<section class="ev__tider" id="tider" aria-labelledby="tider-h">
+						<h2 class="ev__tider-h label" id="tider-h">Alle tider</h2>
+						<ScreeningTimes
+							title={event.title}
+							screenings={screenings.screenings}
+							todayLocalDate={screenings.todayLocalDate}
+							currentId={event.id}
+						/>
+						<!-- The whole programme, a day at a time with ticket links, for planning a visit. -->
+						<p class="ev__tider-more">
+							<a href="{eventPath(event.id, event.title)}/tider">Sjå alle tider →</a>
+						</p>
+					</section>
+				{/if}
+
+				<!--
+					A real link, not a script-driven download.
+
+					`download` plus an href the server already marks as an attachment means this works
+					with JavaScript off, can be opened in a new tab, and can be long-pressed on a
+					phone — none of which a button that builds a blob can do.
+				-->
+				<p class="ev__ics">
+					<a
+						class="btn"
+						href="{eventPath(event.id, event.title)}/kalender.ics"
+						download
+						onclick={() => track('add_to_calendar', { event_id: event.id })}
+					>
+						Legg i kalenderen
+					</a>
+				</p>
+
+				{#if ctaUrl}
+					<!-- Outbound. We never sell tickets — see the README non-goals. -->
+					<a
+						class="btn btn--solid"
+						href={ctaUrl}
+						rel="noopener nofollow"
+						onclick={() => outbound(ctaUrl, 'cta')}>Billettar</a
+					>
+				{/if}
+
+				{#if event.reportedBy.length > 0}
+					<!--
+						Every source that reported this event, not only the row that happened to win.
+
+						Several calendars carry the same concert, and the canonical row is chosen by
+						lowest id — an arbitrary tiebreak. Crediting just that one would name whichever
+						importer ran first and silently drop the rest. Being an index, "three places
+						say this is on" is the useful part.
+					-->
+					<div class="ev__sources">
+						<p class="label">{event.reportedBy.length > 1 ? 'Kjelder' : 'Kjelde'}</p>
+						<ul class="sources">
+							{#each event.reportedBy as src (src.slug)}
+								{@const eventUrl = safeHttpUrl(src.eventUrl)}
+								<li>
+									<SourceIcon src={src.iconUrl} name={src.name} size="1rem" />
+									{#if eventUrl}
+										<a href={eventUrl} rel="noopener" onclick={() => outbound(eventUrl, 'source')}
+											>{src.attribution}</a
+										>
+									{:else}
+										<a
+											href={src.siteUrl}
+											rel="noopener"
+											onclick={() => outbound(src.siteUrl, 'source')}>{src.attribution}</a
+										>
+									{/if}
+									<!-- Out to the source's own page above; in to everything we have from it here. -->
+									<a class="sources__all" href={listingHref({ kjelde: src.slug })}>
+										Alle hendingar frå {src.name}
+									</a>
+								</li>
+							{/each}
+						</ul>
+					</div>
+				{:else}
+					<!--
+						A submitted event credits nobody, so this is the only place a reader can be
+						pointed at something to check it against.
+
+						`sourceUrl` is optional and is not a source row — it is whatever page the
+						sender said they got it from, so it is named as theirs, not as ours. The
+						scheme is re-checked at the href: rows written before the schema restricted
+						it may still hold a `javascript:` URL.
+					-->
+					<p class="ev__source">
+						<span class="muted">
+							Sendt inn av ein person{event.submissionMethod === 'photo' ? ' frå eit bilete' : ''}.
+						</span>
+						{#if submittedSource}
+							<span class="ev__source-link">
+								Oppgjeven kjelde:
+								<a href={submittedSource} rel="noopener nofollow ugc">
+									{linkLabel(submittedSource)}
+								</a>
+							</span>
+						{/if}
+					</p>
+				{/if}
+
+				{#if event.contributions.fields.length > 0}
+					<!--
+						What a reader added to this event, credited beside the calendars that reported it.
+
+						`reportedBy` above cannot carry this: it joins `sources`, and a human
+						submission has no source row — which is why the promise to credit a duplicate
+						"kjelda under" was one this page could not keep for the only contributors who
+						have no calendar behind them. An imported row with no poster and one citation
+						is the common case, and somebody walking past the poster is holding both.
+
+						A count of browsers and a list of fields, never a name. A `client_id` is a
+						random value a browser keeps in localStorage and is deliberately not an
+						identity; turning it into a byline would be inventing one. This is as far as
+						the data honestly goes, and it is enough to say the work was not ours.
+					-->
+					<p class="ev__contrib">
+						<span class="muted">
+							{event.contributions.contributors > 1
+								? `${event.contributions.contributors} lesarar har gjort denne betre:`
+								: 'Ein lesar har gjort denne betre:'}
+						</span>
+						{describeFields(event.contributions.fields)} kom frå
+						<a href="/send-inn">nokon som sende det inn</a>.
+					</p>
+				{/if}
+			</aside>
+		</div>
+
+		<!-- Nice to have, so a failure here costs only this section and never the event itself. -->
+		<svelte:boundary>
+			<RelatedEvents eventId={event.id} />
+			{#snippet failed()}{/snippet}
+		</svelte:boundary>
+	</div>
+</article>
+
+<style>
+	.ev__sources {
+		margin-block-start: 1.1rem;
+	}
+	/*
+	 * Credit for a reader's contribution, set at the same weight as the source list above it.
+	 *
+	 * Not a badge and not a boast: it belongs in the provenance column, because that is what it is
+	 * — one more answer to "where did this page's contents come from".
+	 */
+	.ev__contrib {
+		margin-block-start: 0.9rem;
+		font-size: 0.875rem;
+		max-inline-size: 46ch;
+	}
+	.sources {
+		list-style: none;
+		margin: 0.35rem 0 0;
+		padding: 0;
+		display: grid;
+		gap: 0.35rem;
+	}
+	.sources li {
+		display: grid;
+		grid-template-columns: auto minmax(0, 1fr);
+		align-items: center;
+		column-gap: 0.5rem;
+		row-gap: 0.15rem;
+	}
+	.sources__all {
+		grid-column: 2;
+		font-family: var(--font-mono);
+		font-size: var(--step-micro);
+		letter-spacing: 0.08em;
+		color: var(--peach-dim);
+	}
+	.sources__all:hover {
+		color: var(--peach-hi);
+	}
+	/*
+	 * The category and the date are links, but still the page's label and its first fact. A quiet
+	 * underline rather than none: a phone has no hover, so a link that only shows itself on hover
+	 * is one nobody on a phone finds.
+	 */
+	.ev__cat,
+	.ev__day {
+		text-decoration-thickness: 1px;
+		text-decoration-color: var(--peach-line);
+	}
+	.ev__cat:hover,
+	.ev__day:hover {
+		text-decoration-color: currentColor;
+	}
+
+	.ev {
+		padding-block: clamp(1.5rem, 4vw, 3rem) var(--section-y);
+		container-type: inline-size;
+	}
+	/*
+	 * The withdrawn notice: peach paper and navy ink, the brand's own inversion.
+	 *
+	 * Loud on purpose. Everything else on this page describes an event that is happening, and a
+	 * reader who skims past this line travels to something that is not on.
+	 */
+	.ev__gone {
+		margin: 0 0 1.5rem;
+		padding: 0.85rem 1rem;
+		border-inline-start: var(--rule-fat) solid var(--peach);
+		background: var(--peach-wash-3);
+		font-size: var(--step-body);
+		line-height: 1.45;
+	}
+
+	.ev__back {
+		margin: 0 0 1.5rem;
+		font-family: var(--font-mono);
+		font-size: var(--step-micro);
+		letter-spacing: 0.16em;
+		text-transform: uppercase;
+	}
+	.ev__tider {
+		margin-block: 1.25rem 0;
+	}
+	.ev__tider-h {
+		margin: 0 0 0.6rem;
+		font-size: var(--step-micro);
+	}
+	.ev__tider-more {
+		margin: 0.75rem 0 0;
+		font-family: var(--font-mono);
+		font-size: var(--step-micro);
+		letter-spacing: 0.14em;
+		text-transform: uppercase;
+	}
+	.ev__ics {
+		margin-block: 1.25rem 0.75rem;
+	}
+	.ev__heart {
+		margin-block: 0.8rem 0;
+	}
+	.ev__h {
+		/* cqw, never vw: a long title has to shrink against its own column (docs/brand.md). */
+		font-size: clamp(1.75rem, 8cqw, 4rem);
+		margin-block: 0.2em 0;
+		text-wrap: balance;
+	}
+	.ev__grid {
+		margin-block-start: clamp(1.5rem, 4vw, 2.5rem);
+		display: grid;
+		/*
+		 * `minmax(0, 1fr)`, not the implicit `auto`.
+		 *
+		 * A grid item's min-width is `auto`, so a single long word in a description sizes the whole
+		 * column to fit it and the page scrolls sideways. `min-inline-size: 0` on the child is not
+		 * enough — the COLUMN is what refuses to shrink. Measured: 415px of overflow at 320px on a
+		 * real event, which the seed never showed because its events are short and posterless.
+		 */
+		grid-template-columns: minmax(0, 1fr);
+		gap: clamp(1.5rem, 4vw, 3rem);
+		align-items: start;
+	}
+	@container (width >= 52rem) {
+		.ev__grid {
+			grid-template-columns: minmax(0, 1.6fr) minmax(15rem, 1fr);
+		}
+	}
+	.ev__main {
+		display: grid;
+		gap: clamp(1rem, 3vw, 1.75rem);
+		min-inline-size: 0;
+	}
+	.ev__poster {
+		inline-size: 100%;
+		block-size: auto;
+		max-block-size: 34rem;
+		object-fit: contain;
+		background: var(--navy-900);
+		border: var(--rule) solid var(--peach-line);
+	}
+	/*
+	 * The caption under a borrowed painting.
+	 *
+	 * Small and quiet — it is provenance, not a headline — but it is a link and a link has to be
+	 * reachable, so it keeps the body size rather than dropping to the micro step.
+	 */
+	.ev__art {
+		margin: 0 0 1.5rem;
+	}
+	.ev__art figcaption {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.25rem 0.6rem;
+		margin-block-start: 0.5rem;
+		font-family: var(--font-mono);
+		font-size: var(--step-micro);
+		color: var(--peach-dim);
+	}
+
+	.ev__desc {
+		display: grid;
+		gap: 0.9em;
+		max-inline-size: 68ch;
+		/* Belt and braces with the column fix: source descriptions carry bare URLs and compound
+		   Norwegian words that no soft break exists inside. */
+		overflow-wrap: anywhere;
+	}
+	.ev__desc :global(p) {
+		margin: 0;
+	}
+	.ev__side {
+		display: grid;
+		gap: 1.25rem;
+		justify-items: start;
+		padding: clamp(1rem, 3vw, 1.5rem);
+		border: var(--rule) solid var(--peach-line);
+		background: var(--navy-900);
+	}
+	.facts {
+		margin: 0;
+		display: grid;
+		gap: 0.9rem;
+	}
+	.facts div {
+		display: grid;
+		gap: 0.2rem;
+	}
+	dt {
+		font-family: var(--font-mono);
+		font-size: var(--step-micro);
+		letter-spacing: 0.16em;
+		text-transform: uppercase;
+		color: var(--peach-dim);
+	}
+	dd {
+		margin: 0;
+	}
+	.weekly {
+		display: grid;
+		gap: 0.15rem;
+		font-variant-numeric: tabular-nums;
+	}
+	/* Outlined, not filled: filled peach marks one fixed time, and this qualifies a pattern. */
+	.weekly__cad {
+		justify-self: start;
+		font-family: var(--font-mono);
+		font-size: var(--step-micro);
+		letter-spacing: 0.08em;
+		text-transform: uppercase;
+		border: var(--rule) solid var(--peach-line);
+		padding: 0.05rem 0.4rem;
+	}
+	.muted {
+		color: var(--peach-dim);
+	}
+	.ev__source {
+		margin: 0;
+		font-size: 0.8125rem;
+		display: grid;
+		gap: 0.3rem;
+	}
+	.ev__views {
+		margin: 0.4rem 0 0;
+		font-family: var(--font-mono);
+		font-size: var(--step-micro);
+		/* --peach-dim, not --peach-quiet: brand.css reserves quiet for large display numerals. */
+		color: var(--peach-dim);
+	}
+	.ev__source-link {
+		/* A host can be long and has no spaces, so it breaks the sidebar without this. */
+		overflow-wrap: anywhere;
+	}
+
+	.checks {
+		border-block-start: var(--rule) solid var(--peach-line);
+		padding-block-start: 1rem;
+	}
+	.checks summary {
+		font-family: var(--font-mono);
+		font-size: var(--step-micro);
+		letter-spacing: 0.16em;
+		text-transform: uppercase;
+		cursor: pointer;
+		color: var(--peach-dim);
+	}
+	.checks ol {
+		list-style: none;
+		margin: 1rem 0 0;
+		padding: 0;
+		display: grid;
+		gap: 0.9rem;
+	}
+	.checks li {
+		display: grid;
+		gap: 0.15rem;
+	}
+	.checks__name {
+		font-family: var(--font-mono);
+		font-size: 0.8125rem;
+		font-weight: 700;
+		letter-spacing: 0.12em;
+		text-transform: uppercase;
+	}
+	.checks__verdict,
+	.checks__by {
+		font-family: var(--font-mono);
+		font-size: 0.75rem;
+		color: var(--peach-dim);
+	}
+	.checks__why {
+		font-size: 0.9375rem;
+	}
+</style>

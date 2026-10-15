@@ -312,7 +312,9 @@ test('the event page credits every source that reported it', async ({ page, requ
 	await expect(sources).toBeVisible();
 	expect(await sources.locator('li').count(), 'both sources must be credited').toBe(2);
 	// Each links out, because crediting a source without pointing at it is not credit.
-	expect(await sources.locator('li a').count()).toBe(2);
+	expect(await sources.locator('li a:not(.sources__all)').count()).toBe(2);
+	// And each leads in, to everything else we have from that calendar.
+	expect(await sources.locator('li a.sources__all').count()).toBe(2);
 });
 
 test('repeats of the same event on one day share a card', async ({ page }) => {

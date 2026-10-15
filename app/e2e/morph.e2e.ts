@@ -122,9 +122,14 @@ test('the tapped card and the page it opens carry the same two names', async ({ 
 
 	// Same names, same event: this is what makes the browser morph rather than cross-fade.
 	const onPage = await morphNames(page);
-	expect(onPage).toHaveLength(2);
-	expect([...onPage].sort()).toEqual([...onCard].sort());
-	// And still unique, so the event page cannot cancel its own half of the transition.
+	for (const name of onCard) expect(onPage).toContain(name);
+	/*
+	 * And still unique, so the event page cannot cancel its own half of the transition.
+	 *
+	 * Not "exactly two" any more: the related tiles at the foot of the page are named too, which
+	 * is what lets tapping one of them morph into the next event. What must hold is that none of
+	 * them repeats this event's names — or each other's.
+	 */
 	expect(new Set(onPage).size).toBe(onPage.length);
 });
 
