@@ -83,3 +83,57 @@ test('no horizontal overflow on the event page at 320px', async ({ page, request
 	);
 	expect(overflow, `${worst.href} (${worst.length} chars) must not scroll sideways`).toBe(0);
 });
+
+/** A title as a literal pattern — titles carry `?`, `(` and `+`. */
+const literal = (text: string) => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+/*
+ * The page is a way onward, not a dead end: its category, its date and its source each lead to
+ * more of the same, and the bottom of the page previews them.
+ */
+test('the category, the date and the source each lead somewhere', async ({ page }) => {
+	await page.goto('/hendingar');
+	await page.locator('article.tile a').first().click();
+	await page.locator('h1.ev__h').waitFor();
+
+	await expect(page.locator('a.ev__cat')).toHaveAttribute(
+		'href',
+		/^\/hendingar\?kategori=[a-z-]+$/
+	);
+	await expect(page.locator('a.ev__day')).toHaveAttribute(
+		'href',
+		/^\/kalender\/\d{4}-\d{2}-\d{2}$/
+	);
+	await expect(page.locator('a.sources__all').first()).toHaveAttribute(
+		'href',
+		/^\/hendingar\?kjelde=[a-z0-9-]+$/
+	);
+
+	// The date goes to the day the event is on, which lists it.
+	const title = (await page.locator('h1.ev__h').innerText()).trim();
+	await page.locator('a.ev__day').click();
+	await expect(page).toHaveURL(/\/kalender\/\d{4}-\d{2}-\d{2}$/);
+	await expect(
+		page.locator('article.tile').filter({ hasText: new RegExp(literal(title), 'i') })
+	).toHaveCount(1);
+});
+
+test('related events are server-rendered, and tapping one shows THAT event', async ({ page }) => {
+	await page.goto('/hendingar');
+	await page.locator('article.tile a').first().click();
+	const first = (await page.locator('h1.ev__h').innerText()).trim();
+
+	const related = page.locator('section.related article.tile a.tile__link');
+	await expect(related.first()).toBeVisible();
+	const next = (await related.first().innerText()).trim();
+	expect(next.toLowerCase()).not.toBe(first.toLowerCase());
+
+	/*
+	 * The page reads its event once, with a top-level await, and SvelteKit keeps a page alive
+	 * across a navigation within its own route — so before the page was keyed on its address,
+	 * this changed the URL and left the first event on screen.
+	 */
+	await related.first().click();
+	await expect(page).toHaveURL(/\/hending\/\d+-/);
+	await expect(page.locator('h1.ev__h')).toHaveText(new RegExp(`^${literal(next)}$`, 'i'));
+});

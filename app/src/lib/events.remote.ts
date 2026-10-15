@@ -1542,6 +1542,146 @@ export const getEvent = query(z.number().int().positive(), async (id) => {
 
 export type EventDetail = Awaited<ReturnType<typeof getEvent>>;
 
+/** Tiles per group under an event. A taste with a link onward, not a second listing. */
+const RELATED_SHOWN = 4;
+
+/**
+ * What else is worth a look from an event's page: the same day, the same calendar, the same kind.
+ *
+ * The event page was a dead end — the category, the date and the source were all printed and none
+ * of them led anywhere, so a reader who liked the look of a coffee morning had to go back to the
+ * listing and rebuild that question by hand. Each group here is the first few rows of a page that
+ * already exists (`/kalender/<dato>`, `/hendingar?kjelde=…`, `/hendingar?kategori=…`), and the
+ * page links to it, so these are previews of real answers rather than a recommender.
+ *
+ * Deduplicated in that order, so an event that is both the same day and the same calendar is
+ * shown once, under the more specific heading. Rows sharing this event's title are left out
+ * everywhere: next week's identical coffee morning, or the same film's other screenings, are not
+ * "something else" — and a film's screenings already have their own list beside the details.
+ *
+ * Upcoming only for the calendar and category groups, like every listing. The day group is the
+ * event's own day in full, like the day page it previews.
+ */
+export const relatedEvents = query(z.number().int().positive(), async (id) => {
+	const database = db();
+
+	const [self] = await database
+		.select({
+			title: events.title,
+			category: events.category,
+			kind: events.kind,
+			startsAt: events.startsAt,
+			venueTimeZone: venues.timezone,
+			duplicateOfId: events.duplicateOfId,
+			sourceSlug: sources.slug,
+			sourceName: sources.name
+		})
+		.from(events)
+		.leftJoin(venues, eq(events.venueId, venues.id))
+		.leftJoin(sources, eq(events.sourceId, sources.id))
+		.where(and(eq(events.id, id), eq(events.status, 'published')))
+		.limit(1);
+
+	if (!self) error(404, 'Fann ikkje hendinga');
+
+	/*
+	 * Whose calendar to show more of. The row's own source when it has one; for a canonical whose
+	 * own row was submitted by hand, the first calendar that also reported it — the same list the
+	 * page credits, in the same order.
+	 */
+	const [firstReporter] = self.sourceSlug
+		? []
+		: await database
+				.select({ slug: sources.slug, name: sources.name })
+				.from(events)
+				.innerJoin(sources, eq(events.sourceId, sources.id))
+				.where(eq(events.duplicateOfId, id))
+				.orderBy(asc(sources.name))
+				.limit(1);
+	const source = self.sourceSlug
+		? { slug: self.sourceSlug, name: self.sourceName ?? self.sourceSlug }
+		: (firstReporter ?? null);
+
+	const now = new Date();
+	// A standing activity's start is the first day of its season, which is not a day anyone means.
+	const day = self.kind === 'dated' ? localDayKey(self.startsAt, self.venueTimeZone) : null;
+	const window = day ? instantWindowForDays(day, day) : null;
+
+	const listed = and(
+		eq(events.status, 'published'),
+		stillListed,
+		isNull(events.duplicateOfId),
+		datedOnly,
+		ne(events.id, id),
+		self.duplicateOfId ? ne(events.id, self.duplicateOfId) : undefined,
+		ne(events.title, self.title)
+	);
+	const upcoming = or(gte(events.startsAt, now), gte(events.endsAt, now));
+	// Enough over the shown count that deduplication and stacked repeats still leave a full row.
+	const fetched = RELATED_SHOWN * 3;
+
+	const select = () =>
+		database.select(upcomingColumns).from(events).leftJoin(venues, eq(events.venueId, venues.id));
+
+	const [dayRows, sourceRows, categoryRows] = await Promise.all([
+		window
+			? select()
+					.where(and(listed, gte(events.startsAt, window.from), lte(events.startsAt, window.to)))
+					.orderBy(asc(events.startsAt))
+			: Promise.resolve([]),
+		source
+			? select()
+					.where(
+						and(
+							listed,
+							upcoming,
+							// The whole group, as `listEvents` matches it — so the preview and the
+							// page it links to agree on what "from this calendar" means.
+							sql`exists (
+								select 1 from ${events} as m
+								join ${sources} as ms on ms.id = m.source_id
+								where (m.id = ${events.id} or m.duplicate_of_id = ${events.id})
+									and ms.slug = ${source.slug}
+							)`
+						)
+					)
+					.orderBy(sql`greatest(${events.startsAt}, now())`, asc(events.startsAt))
+					.limit(fetched)
+			: Promise.resolve([]),
+		select()
+			.where(and(listed, upcoming, eq(events.category, self.category)))
+			.orderBy(sql`greatest(${events.startsAt}, now())`, asc(events.startsAt))
+			.limit(fetched)
+	]);
+
+	const seen = new Set<number>();
+	const take = <T extends { id: number }>(rows: T[]): T[] => {
+		const kept = rows.filter((row) => !seen.has(row.id)).slice(0, RELATED_SHOWN);
+		for (const row of kept) seen.add(row.id);
+		return kept;
+	};
+
+	return {
+		day,
+		source,
+		category: self.category,
+		// Pinned to the day itself, as on the day page: the listing's "running, so it is today"
+		// rule would file a past day's events under today.
+		sameDay: withStartsIn(
+			take(
+				dayRows
+					.filter((row) => localDayKey(row.startsAt, row.venueTimeZone) === day)
+					.map((row) => (day ? { ...row, localDate: day } : row))
+			),
+			now
+		),
+		sameSource: withStartsIn(take(sourceRows), now),
+		sameCategory: withStartsIn(take(categoryRows), now)
+	};
+});
+
+export type RelatedEvents = Awaited<ReturnType<typeof relatedEvents>>;
+
 /** Two weeks of a busy cinema is under forty screenings; this is a ceiling, not a page size. */
 const SCREENINGS_CAP = 60;
 
