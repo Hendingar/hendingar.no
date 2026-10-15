@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { listingUrl, type TicketcoShop } from './instances.ts';
+import { isEventNode, jsonLdNodes } from '@hendingar/core/schemaorg';
 
 /**
  * Reading a TicketCo shop's listing.
@@ -22,7 +23,8 @@ import { listingUrl, type TicketcoShop } from './instances.ts';
 
 /** Only the fields we use. Unknown keys are ignored — TicketCo emits `landing_image` and more. */
 const eventSchema = z.object({
-	'@type': z.literal('Event'),
+	// Any Event subtype: `isEventNode` has already decided this is one.
+	'@type': z.union([z.string(), z.array(z.string())]),
 	name: z.string(),
 	startDate: z.string(),
 	endDate: z.string().nullish(),
@@ -56,8 +58,6 @@ export type ParsedListing = {
 	/** Blocks that looked like events but did not validate, kept so a run can report them. */
 	rejected: string[];
 };
-
-const LD_BLOCK = /<script[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi;
 
 /** A card, from its opening tag to the next card's. `--item-logo` and friends are not cards. */
 const CARD_START = /class=['"][^'"]*\btc-events-list--item(?=[\s'"])/g;
@@ -118,18 +118,12 @@ export function parseListing(html: string): ParsedListing {
 	const events: UpstreamEvent[] = [];
 	const rejected: string[] = [];
 
-	for (const match of html.matchAll(LD_BLOCK)) {
-		const body = match[1];
-		if (!body) continue;
-		let parsed: unknown;
-		try {
-			parsed = JSON.parse(body);
-		} catch {
-			// One malformed block must not fail the run; a page can carry non-event blocks too.
-			continue;
-		}
-		if (typeof parsed !== 'object' || parsed === null) continue;
-		if (!('@type' in parsed) || parsed['@type'] !== 'Event') continue;
+	/*
+	 * Core's reader, not a local one: it flattens `@graph` and top-level arrays, and it accepts
+	 * the `Event` subtypes — `MusicEvent`, `TheaterEvent` — that a literal `'Event'` test misses.
+	 */
+	for (const parsed of jsonLdNodes(html)) {
+		if (!isEventNode(parsed)) continue;
 
 		const result = eventSchema.safeParse(parsed);
 		if (result.success) {
