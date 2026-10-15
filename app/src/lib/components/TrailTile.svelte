@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { listSentence } from '@hendingar/core/prose';
 	/**
 	 * A graded trip with no photo, drawn as the mountain it climbs.
 	 *
@@ -41,7 +42,7 @@
 	/** "Tur, middels, for vaksne og seniorar" — every glyph on the card, said once. */
 	const label = $derived.by(() => {
 		const who = trail.audiences.map((a) => TRAIL_AUDIENCE_LABELS[a].toLowerCase());
-		const list = who.length > 1 ? `${who.slice(0, -1).join(', ')} og ${who.at(-1)}` : who[0];
+		const list = listSentence(who);
 		return ['Tur', gradeLabel?.toLowerCase(), list ? `for ${list}` : null]
 			.filter(Boolean)
 			.join(', ');

@@ -14,6 +14,8 @@
  *    `Intl` default to the runtime zone.
  */
 
+import { capitalise } from './prose.ts';
+
 /** Browsers don't ship `nn`; `nb` renders identically for dates and is universally available. */
 export const DATE_LOCALE = 'nb-NO';
 
@@ -251,10 +253,6 @@ export function formatMonthName(monthKey: string): string {
 	const [y, m] = monthKey.split('-').map(Number);
 	if (y === undefined || m === undefined) return monthKey;
 	return `${capitalise(MONTH_NAMES[m - 1] ?? '')} ${y}`;
-}
-
-function capitalise(word: string): string {
-	return word.charAt(0).toUpperCase() + word.slice(1);
 }
 
 /**

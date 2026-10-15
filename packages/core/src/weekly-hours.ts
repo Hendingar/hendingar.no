@@ -1,3 +1,4 @@
+import { capitalise, listSentence } from './prose.ts';
 import { z } from 'zod';
 import { addDays, isoWeekKey, weekdayIndex } from './datetime.ts';
 import { WEEKDAY_NAMES, WEEKDAYS, type Weekday } from './recurrence.ts';
@@ -87,20 +88,12 @@ export function sameWeeklyHours(a: WeeklyHours | null, b: WeeklyHours | null): b
 	);
 }
 
-/** "Tysdag 18:00–19:30". Capitalised, because each one starts a line. */
-function capitalise(word: string): string {
-	return word.charAt(0).toUpperCase() + word.slice(1);
-}
-
 function span(slot: WeeklySlot): string {
 	return slot.to ? `${slot.from}–${slot.to}` : `frå ${slot.from}`;
 }
 
 function joinDays(days: Weekday[]): string {
-	const names = days.map((d) => WEEKDAY_NAMES[d]);
-	return names.length <= 1
-		? (names[0] ?? '')
-		: `${names.slice(0, -1).join(', ')} og ${names[names.length - 1]}`;
+	return listSentence(days.map((d) => WEEKDAY_NAMES[d]));
 }
 
 export type WeeklyHoursText = {

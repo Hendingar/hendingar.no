@@ -42,6 +42,8 @@
  * write then declines to make.
  */
 
+import { listSentence } from './prose.ts';
+
 /**
  * The fields a contribution may fill.
  *
@@ -233,8 +235,5 @@ export function isWorthContributing(plan: ContributionPlan): boolean {
  * item is wrong in the language this site is written in, and this string is shown, not logged.
  */
 export function describeFields(fields: readonly ContributableField[]): string {
-	const labels = fields.map((field) => CONTRIBUTABLE_FIELD_LABELS[field]);
-	if (labels.length === 0) return '';
-	if (labels.length === 1) return labels[0]!;
-	return `${labels.slice(0, -1).join(', ')} og ${labels[labels.length - 1]!}`;
+	return listSentence(fields.map((field) => CONTRIBUTABLE_FIELD_LABELS[field]));
 }
