@@ -11,10 +11,11 @@ import re
 from pathlib import Path
 from typing import get_args
 
-from verifier.models import CheckName, Verdict
+from verifier.models import CategorySlug, CheckName, Verdict
 
 _CORE = Path(__file__).resolve().parents[3] / "packages" / "core" / "src" / "verification.ts"
 _COVERAGE_TS = Path(__file__).resolve().parents[3] / "packages" / "core" / "src" / "coverage.ts"
+_TAXONOMY_TS = Path(__file__).resolve().parents[3] / "packages" / "core" / "src" / "taxonomy.ts"
 
 
 def _string_array(name: str) -> list[str]:
@@ -30,6 +31,38 @@ def test_check_names_match_core() -> None:
 
 def test_verdicts_match_core() -> None:
     assert _string_array("VERIFICATION_VERDICTS") == list(get_args(Verdict))
+
+
+def test_categories_match_core() -> None:
+    """Every category the app can send, because one the service does not know is a 422.
+
+    Not a wrong answer — no answer. `kino` was added to `packages/core` on 2026-10-13 and not
+    here, and from the next morning every weekend with a film in it failed the kurator's request
+    validation outright: three nightly runs reported "ikkje tilgjengeleg" while a stale selection
+    stayed on the front page. A submitted film, an appeal or a suggested text about one would have
+    failed the same way, since all of them carry a category.
+    """
+    source = _TAXONOMY_TS.read_text(encoding="utf-8")
+    match = re.search(r"export const CATEGORY_SLUGS = \[(.*?)\] as const;", source, re.DOTALL)
+    assert match, f"CATEGORY_SLUGS not found in {_TAXONOMY_TS}"
+    assert re.findall(r"'([^']+)'", match.group(1)) == list(get_args(CategorySlug))
+
+
+def test_the_extraction_prompts_offer_every_category() -> None:
+    """The model picks from the list it is shown, so a category missing from the prompt is one
+    it is never asked to choose — the schema would allow `kino` and the brief would not mention it.
+    """
+    from verifier import extract
+
+    briefs = [
+        value
+        for value in vars(extract).values()
+        if isinstance(value, str) and "Kategoriar:" in value
+    ]
+    assert briefs, "no extraction brief lists the categories"
+    for brief in briefs:
+        listed = brief.split("Kategoriar:", 1)[1].replace("\n", " ").rstrip(".")
+        assert [c.strip() for c in listed.split(",")] == list(get_args(CategorySlug))
 
 
 def test_covered_municipalities_match_core() -> None:
