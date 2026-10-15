@@ -1,6 +1,12 @@
-import { and, eq } from 'drizzle-orm';
 import { createDb, type Db } from '@hendingar/core/db';
-import { events, ingestRuns, sources, venues } from '@hendingar/core/schema';
+import {
+	ingestEach,
+	recordRun,
+	registerSource,
+	type IngestResult,
+	type RunOptions
+} from '@hendingar/core/ingest-run';
+import { venues } from '@hendingar/core/schema';
 import {
 	createPacer,
 	parseDetail,
@@ -24,63 +30,28 @@ import { isFailure, mapEvent, type MappedEvent } from './map.ts';
  * hagelag therefore produce two rows and two lines on the page, not one combined run.
  */
 
-export type IngestResult = {
-	runId: number;
-	slug: string;
-	status: 'success' | 'partial' | 'failed';
-	fetched: number;
-	created: number;
-	updated: number;
-	unchanged: number;
-	rejected: number;
-	durationMs: number;
-	message: string | null;
-};
-
-export type IngestOptions = {
+export type IngestOptions = RunOptions & {
 	readListing?: ReadListing;
 	readDetail?: ReadDetail;
 	/** Injected so tests wait for nothing — see `Wait` in api.ts. */
 	wait?: Wait;
 	pace?: Pace;
-	trigger?: string;
-	revision?: string | null;
-	dryRun?: boolean;
-	now?: () => Date;
 };
 
-async function upsertSource(db: Db, instance: BakhagenInstance) {
-	const shared = {
+function upsertSource(db: Db, instance: BakhagenInstance) {
+	return registerSource(db, {
+		slug: instance.slug,
 		name: instance.name,
 		url: instance.url,
 		endpoint: instance.url,
 		note: 'Aktivitetssida til hagelaget er vanleg HTML med schema.org-mikrodata i kvart kort. Vi les korta direkte og hentar omtalen frå sida til kvar aktivitet, med fem sekund mellom kvart kall slik robots.txt ber om.',
-		kind: 'html' as const,
-		/*
-		 * Explicitly active.
-		 *
-		 * A source can arrive here already existing as a `link` row, which the directory registers
-		 * with `active: false` because nothing was collecting it. Graduating it without flipping
-		 * this back leaves a source that publishes events while being excluded from every count
-		 * that means "places this list comes from" — visible on the page, invisible in the numbers.
-		 */
-		active: true,
+		kind: 'html',
 		scheduleCron: instance.scheduleCron,
 		iconUrl: instance.iconUrl,
-		trusted: instance.trusted
-	};
-	const [row] = await db
-		.insert(sources)
-		.values({
-			slug: instance.slug,
-			region: instance.region,
-			attribution: instance.attribution,
-			...shared
-		})
-		.onConflictDoUpdate({ target: sources.slug, set: shared })
-		.returning();
-	if (!row) throw new Error(`could not register the source ${instance.slug}`);
-	return row;
+		trusted: instance.trusted,
+		region: instance.region,
+		attribution: instance.attribution
+	});
 }
 
 async function venueIdFor(db: Db, mapped: MappedEvent, instance: BakhagenInstance) {
@@ -110,39 +81,13 @@ export async function ingestInstance(
 		readListing: listing = readListing,
 		readDetail: detail = readDetail,
 		wait: waitFor = wait,
-		pace = createPacer(waitFor),
-		trigger = 'manual',
-		revision = null,
-		dryRun = false,
-		now = () => new Date()
+		pace = createPacer(waitFor)
 	} = options;
 
 	const db = createDb(connectionString);
-	const startedAt = now();
 	const source = await upsertSource(db, instance);
 
-	/*
-	 * A dry run opens no run row: the row is inserted as `running` and only closed on the success
-	 * path, so opening one would leave /datasamling showing an import that never finished.
-	 */
-	let runId = -1;
-	if (!dryRun) {
-		const [run] = await db
-			.insert(ingestRuns)
-			.values({ sourceId: source.id, startedAt, status: 'running', trigger, revision })
-			.returning({ id: ingestRuns.id });
-		if (!run) throw new Error('could not open an ingest run');
-		runId = run.id;
-	}
-
-	let fetched = 0;
-	let created = 0;
-	let updated = 0;
-	let unchanged = 0;
-	let rejected = 0;
-	const problems: string[] = [];
-
-	try {
+	const report = await recordRun(db, source.id, options, async (run) => {
 		await pace();
 		const parsed = parseListing(await listing(instance), instance.url);
 
@@ -161,15 +106,12 @@ export async function ingestInstance(
 			);
 		}
 
-		for (const problem of parsed.rejected) {
-			rejected += 1;
-			if (problems.length < 10) problems.push(problem);
-		}
+		for (const problem of parsed.rejected) run.reject(problem);
 
 		const seen = new Set<string>();
 
 		for (const raw of parsed.events) {
-			fetched += 1;
+			run.counts.fetched += 1;
 
 			/*
 			 * The description lives only on the activity's own page. A failure there is not a
@@ -181,33 +123,27 @@ export async function ingestInstance(
 				await pace();
 				detailData = parseDetail(await detail(raw.sourceUrl));
 			} catch (error) {
-				if (problems.length < 10) {
-					problems.push(
-						`detail for ${raw.sourceUrl} failed: ${
-							error instanceof Error ? error.message : String(error)
-						}`
-					);
-				}
+				run.note(
+					`detail for ${raw.sourceUrl} failed: ${
+						error instanceof Error ? error.message : String(error)
+					}`
+				);
 			}
 
 			const mapped = mapEvent(raw, detailData, instance);
 			if (isFailure(mapped)) {
-				rejected += 1;
-				if (problems.length < 10)
-					problems.push(`${mapped.title || mapped.externalId}: ${mapped.problem}`);
+				run.reject(`${mapped.title || mapped.externalId}: ${mapped.problem}`);
 				continue;
 			}
 			if (seen.has(mapped.externalId)) continue;
 			seen.add(mapped.externalId);
 
-			if (dryRun) {
-				created += 1;
+			if (run.dryRun) {
+				run.counts.created += 1;
 				continue;
 			}
 
-			const venueId = await venueIdFor(db, mapped, instance);
-
-			const values = {
+			await run.upsertEvent({
 				sourceId: source.id,
 				externalId: mapped.externalId,
 				sourceUrl: mapped.sourceUrl,
@@ -216,130 +152,24 @@ export async function ingestInstance(
 				category: mapped.category,
 				startsAt: mapped.startsAt,
 				endsAt: mapped.endsAt,
-				venueId,
+				venueId: await venueIdFor(db, mapped, instance),
 				ctaUrl: mapped.ctaUrl,
 				posterUrl: mapped.posterUrl,
 				posterRightsVerified: mapped.posterRightsVerified,
-				status: source.trusted ? ('published' as const) : ('pending' as const)
-			};
-
-			// Read before write, so a run reports what actually changed rather than marking every
-			// event "updated" daily and burying the one day a source really moved.
-			const [existing] = await db
-				.select({
-					id: events.id,
-					title: events.title,
-					description: events.description,
-					category: events.category,
-					startsAt: events.startsAt,
-					endsAt: events.endsAt,
-					venueId: events.venueId,
-					ctaUrl: events.ctaUrl,
-					posterUrl: events.posterUrl,
-					posterRightsVerified: events.posterRightsVerified,
-					status: events.status,
-					sourceUrl: events.sourceUrl
-				})
-				.from(events)
-				.where(and(eq(events.sourceId, source.id), eq(events.externalId, mapped.externalId)))
-				.limit(1);
-
-			if (!existing) {
-				await db.insert(events).values(values);
-				created += 1;
-				continue;
-			}
-
-			const same =
-				existing.title === values.title &&
-				existing.description === values.description &&
-				existing.category === values.category &&
-				+existing.startsAt === +values.startsAt &&
-				(existing.endsAt?.getTime() ?? null) === (values.endsAt?.getTime() ?? null) &&
-				existing.venueId === values.venueId &&
-				existing.ctaUrl === values.ctaUrl &&
-				existing.posterUrl === values.posterUrl &&
-				existing.posterRightsVerified === values.posterRightsVerified &&
-				existing.status === values.status &&
-				existing.sourceUrl === values.sourceUrl;
-
-			if (same) {
-				unchanged += 1;
-				continue;
-			}
-
-			await db
-				.update(events)
-				.set({ ...values, updatedAt: now() })
-				.where(eq(events.id, existing.id));
-			updated += 1;
+				status: source.trusted ? 'published' : 'pending'
+			});
 		}
 
-		const status: IngestResult['status'] = rejected > 0 ? 'partial' : 'success';
-		const finishedAt = now();
-		const durationMs = finishedAt.getTime() - startedAt.getTime();
 		/*
 		 * An empty programme is recorded in words, because the counts alone cannot tell it apart
 		 * from a run that read a page and understood nothing. `recognised` has already proved the
 		 * page is ours, so this is a fact about the hagelag rather than a warning about the code.
+		 * Ahead of the problems and outside their cap, as it always was.
 		 */
-		const notes = [
-			fetched === 0 ? 'the page lists no upcoming activities' : null,
-			...problems
-		].filter(Boolean);
-		const message = notes.length ? notes.join('; ').slice(0, 2000) : null;
+		if (run.counts.fetched === 0) run.problems.unshift('the page lists no upcoming activities');
+	});
 
-		if (!dryRun) {
-			await db
-				.update(ingestRuns)
-				.set({
-					finishedAt,
-					status,
-					fetched,
-					created,
-					updated,
-					unchanged,
-					rejected,
-					durationMs,
-					message
-				})
-				.where(eq(ingestRuns.id, runId));
-			await db.update(sources).set({ lastRunAt: finishedAt }).where(eq(sources.id, source.id));
-		}
-
-		return {
-			runId,
-			slug: instance.slug,
-			status,
-			fetched,
-			created,
-			updated,
-			unchanged,
-			rejected,
-			durationMs,
-			message
-		};
-	} catch (error) {
-		const finishedAt = now();
-		const message = error instanceof Error ? error.message : String(error);
-		// Nothing to close if the run was never opened.
-		if (dryRun) throw error;
-		await db
-			.update(ingestRuns)
-			.set({
-				finishedAt,
-				status: 'failed',
-				fetched,
-				created,
-				updated,
-				unchanged,
-				rejected,
-				durationMs: finishedAt.getTime() - startedAt.getTime(),
-				message: message.slice(0, 2000)
-			})
-			.where(eq(ingestRuns.id, runId));
-		throw error;
-	}
+	return { slug: instance.slug, ...report };
 }
 
 /**
@@ -349,29 +179,12 @@ export async function ingestInstance(
  * The pacer is created once and shared, so the crawl delay is honoured across the whole run and
  * not restarted for each hagelag.
  */
-export async function ingestAll(
+export function ingestAll(
 	connectionString: string,
 	options: IngestOptions = {}
 ): Promise<IngestResult[]> {
 	const pace = options.pace ?? createPacer(options.wait ?? wait);
-	const results: IngestResult[] = [];
-	for (const instance of INSTANCES) {
-		try {
-			results.push(await ingestInstance(connectionString, instance, { ...options, pace }));
-		} catch (error) {
-			results.push({
-				runId: -1,
-				slug: instance.slug,
-				status: 'failed',
-				fetched: 0,
-				created: 0,
-				updated: 0,
-				unchanged: 0,
-				rejected: 0,
-				durationMs: 0,
-				message: error instanceof Error ? error.message : String(error)
-			});
-		}
-	}
-	return results;
+	return ingestEach(INSTANCES, (instance) =>
+		ingestInstance(connectionString, instance, { ...options, pace })
+	);
 }

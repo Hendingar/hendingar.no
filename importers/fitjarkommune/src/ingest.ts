@@ -1,6 +1,12 @@
 import { and, eq, sql } from 'drizzle-orm';
 import { createDb, type Db } from '@hendingar/core/db';
-import { events, ingestRuns, sources, venues } from '@hendingar/core/schema';
+import {
+	recordRun,
+	registerSource,
+	type IngestResult,
+	type RunOptions
+} from '@hendingar/core/ingest-run';
+import { events, venues } from '@hendingar/core/schema';
 import { markGoneUpstream } from '@hendingar/core/gone-upstream';
 import {
 	parseEntry,
@@ -21,35 +27,14 @@ import { isFailure, mapEvent, sameDateLine, type MappedEvent } from './map.ts';
  * renders — without it the page could claim a source is collected but never show that it was.
  */
 
-export type IngestResult = {
-	runId: number;
-	status: 'success' | 'partial' | 'failed';
-	fetched: number;
-	created: number;
-	updated: number;
-	unchanged: number;
-	rejected: number;
-	durationMs: number;
-	message: string | null;
-};
-
-export type IngestOptions = {
+export type IngestOptions = RunOptions & {
 	readListing?: ReadListing;
 	readEntry?: ReadEntry;
-	trigger?: string;
-	revision?: string | null;
-	/** Map and count, write nothing. For inspecting a source change safely. */
-	dryRun?: boolean;
-	now?: () => Date;
 };
 
-async function upsertSource(db: Db) {
-	/*
-	 * One object, spread into both halves, so the insert and the update cannot drift. `slug`,
-	 * `region` and `attribution` stay insert-only, as everywhere else: they are the identity and the
-	 * credit, not settings to converge on.
-	 */
-	const shared = {
+function upsertSource(db: Db) {
+	return registerSource(db, {
+		slug: SITE.slug,
 		name: SITE.name,
 		url: listingUrl(),
 		endpoint: listingUrl(),
@@ -57,19 +42,13 @@ async function upsertSource(db: Db) {
 			'Kommunen sin eigen kalender. Vi les lista over oppføringar og så kvar oppføring si eiga ' +
 			'side, der dato, klokkeslett og stad står slik kommunen skreiv dei. Står det ikkje noko ' +
 			'klokkeslett, viser vi heile dagen i staden for å gjette.',
-		kind: 'html' as const,
-		active: true,
+		kind: 'html',
 		scheduleCron: SITE.scheduleCron,
 		iconUrl: SITE.iconUrl,
-		trusted: SITE.trusted
-	};
-	const [row] = await db
-		.insert(sources)
-		.values({ slug: SITE.slug, region: SITE.region, attribution: SITE.attribution, ...shared })
-		.onConflictDoUpdate({ target: sources.slug, set: shared })
-		.returning();
-	if (!row) throw new Error('could not register the source');
-	return row;
+		trusted: SITE.trusted,
+		region: SITE.region,
+		attribution: SITE.attribution
+	});
 }
 
 async function venueIdFor(db: Db, mapped: MappedEvent): Promise<number | null> {
@@ -104,53 +83,27 @@ async function venueIdFor(db: Db, mapped: MappedEvent): Promise<number | null> {
 	return row?.id ?? null;
 }
 
+/** Whether this source already holds a row under `externalId`. */
+async function exists(db: Db, sourceId: number, externalId: string): Promise<boolean> {
+	const [row] = await db
+		.select({ id: events.id })
+		.from(events)
+		.where(and(eq(events.sourceId, sourceId), eq(events.externalId, externalId)))
+		.limit(1);
+	return row !== undefined;
+}
+
 export async function ingest(
 	connectionString: string,
 	options: IngestOptions = {}
 ): Promise<IngestResult> {
-	const {
-		readListing: listing = readListing,
-		readEntry: entry = readEntry,
-		trigger = 'manual',
-		revision = null,
-		dryRun = false,
-		now = () => new Date()
-	} = options;
-
+	const { readListing: listing = readListing, readEntry: entry = readEntry } = options;
 	const db = createDb(connectionString);
-	const startedAt = now();
 	const source = await upsertSource(db);
 
-	/*
-	 * A dry run opens no run row: the row is inserted as `running` and only closed on the success
-	 * path, so opening one would leave /datasamling showing an import that never finished.
-	 */
-	let runId = -1;
-	if (!dryRun) {
-		const [run] = await db
-			.insert(ingestRuns)
-			.values({ sourceId: source.id, startedAt, status: 'running', trigger, revision })
-			.returning({ id: ingestRuns.id });
-		if (!run) throw new Error('could not open an ingest run');
-		runId = run.id;
-	}
-
-	let fetched = 0;
-	let created = 0;
-	let updated = 0;
-	let unchanged = 0;
-	let rejected = 0;
-	const problems: string[] = [];
-	const note = (problem: string) => {
-		if (problems.length < 10) problems.push(problem);
-	};
-
-	try {
+	const report = await recordRun(db, source.id, options, async (run) => {
 		const parsed = parseListing(await listing());
-		for (const problem of parsed.rejected) {
-			rejected += 1;
-			note(`invalid listing row: ${problem}`);
-		}
+		for (const problem of parsed.rejected) run.reject(`invalid listing row: ${problem}`);
 
 		const seen = new Set<string>();
 		/*
@@ -165,7 +118,7 @@ export async function ingest(
 		const refusedPages = new Set<string>();
 
 		for (const item of parsed.rows) {
-			fetched += 1;
+			run.counts.fetched += 1;
 
 			/*
 			 * The date, the place and the poster live on the entry's own page. A failure there is
@@ -176,7 +129,7 @@ export async function ingest(
 			try {
 				page = parseEntry(await entry(entryUrl(item.URI)));
 			} catch (error) {
-				note(
+				run.note(
 					`entry ${entryUrl(item.URI)} unreadable, mapped from the listing alone: ${
 						error instanceof Error ? error.message : String(error)
 					}`
@@ -185,30 +138,39 @@ export async function ingest(
 
 			// The cross-check CLAUDE.md asks for: two renderings of one stored value must agree.
 			if (page?.dateText && item.eventDate && !sameDateLine(page.dateText, item.eventDate)) {
-				note(
+				run.note(
 					`${item.id}: card says "${item.eventDate}", entry says "${page.dateText}" — used the entry`
 				);
 			}
 
 			const mapped = mapEvent(item, page);
 			if (isFailure(mapped)) {
-				rejected += 1;
 				refusedPages.add(item.id);
-				note(`${mapped.title || mapped.externalId}: ${mapped.problem}`);
+				run.reject(`${mapped.title || mapped.externalId}: ${mapped.problem}`);
 				continue;
 			}
 			present.add(mapped.externalId);
 			if (seen.has(mapped.externalId)) continue;
 			seen.add(mapped.externalId);
 
-			if (dryRun) {
-				created += 1;
+			if (run.dryRun) {
+				run.counts.created += 1;
 				continue;
 			}
 
 			const venueId = await venueIdFor(db, mapped);
 
-			const values = {
+			/*
+			 * A reading from the listing alone is a degraded one — no place, a smaller poster — and
+			 * must not overwrite the full reading an earlier run stored. The row stays as it was until
+			 * the entry page answers again; a row we do not have yet is still created from it.
+			 */
+			if (!page && (await exists(db, source.id, mapped.externalId))) {
+				run.counts.unchanged += 1;
+				continue;
+			}
+
+			await run.upsertEvent({
 				sourceId: source.id,
 				externalId: mapped.externalId,
 				sourceUrl: mapped.sourceUrl,
@@ -221,69 +183,8 @@ export async function ingest(
 				posterUrl: mapped.posterUrl,
 				posterSrcset: mapped.posterSrcset,
 				posterRightsVerified: mapped.posterRightsVerified,
-				status: source.trusted ? ('published' as const) : ('pending' as const)
-			};
-
-			// Read before write, so a run reports what actually changed rather than marking every
-			// event "updated" daily and burying the one day the source really moved.
-			const [existing] = await db
-				.select({
-					id: events.id,
-					title: events.title,
-					description: events.description,
-					category: events.category,
-					startsAt: events.startsAt,
-					endsAt: events.endsAt,
-					venueId: events.venueId,
-					posterUrl: events.posterUrl,
-					posterSrcset: events.posterSrcset,
-					posterRightsVerified: events.posterRightsVerified,
-					status: events.status,
-					sourceUrl: events.sourceUrl
-				})
-				.from(events)
-				.where(and(eq(events.sourceId, source.id), eq(events.externalId, mapped.externalId)))
-				.limit(1);
-
-			if (!existing) {
-				await db.insert(events).values(values);
-				created += 1;
-				continue;
-			}
-
-			/*
-			 * A reading from the listing alone is a degraded one — no place, a smaller poster — and
-			 * must not overwrite the full reading an earlier run stored. The row stays as it was until
-			 * the entry page answers again.
-			 */
-			if (!page) {
-				unchanged += 1;
-				continue;
-			}
-
-			const same =
-				existing.title === values.title &&
-				existing.description === values.description &&
-				existing.category === values.category &&
-				+existing.startsAt === +values.startsAt &&
-				(existing.endsAt?.getTime() ?? null) === (values.endsAt?.getTime() ?? null) &&
-				existing.venueId === values.venueId &&
-				existing.posterUrl === values.posterUrl &&
-				existing.posterSrcset === values.posterSrcset &&
-				existing.posterRightsVerified === values.posterRightsVerified &&
-				existing.status === values.status &&
-				existing.sourceUrl === values.sourceUrl;
-
-			if (same) {
-				unchanged += 1;
-				continue;
-			}
-
-			await db
-				.update(events)
-				.set({ ...values, updatedAt: now() })
-				.where(eq(events.id, existing.id));
-			updated += 1;
+				status: source.trusted ? 'published' : 'pending'
+			});
 		}
 
 		/*
@@ -293,7 +194,7 @@ export async function ingest(
 		 * not read its date, so we cannot say which of its rows it no longer means.
 		 */
 		let swept = { marked: 0, restored: 0 };
-		if (SITE.listingIsComplete && !dryRun) {
+		if (SITE.listingIsComplete && !run.dryRun) {
 			if (refusedPages.size > 0) {
 				const ours = await db
 					.select({ externalId: events.externalId })
@@ -304,69 +205,18 @@ export async function ingest(
 					if (row.externalId && page && refusedPages.has(page)) present.add(row.externalId);
 				}
 			}
-			swept = await markGoneUpstream(db, { sourceId: source.id, seen: present, now: now() });
+			swept = await markGoneUpstream(db, { sourceId: source.id, seen: present, now: run.now() });
 		}
 
-		const status: IngestResult['status'] = rejected > 0 ? 'partial' : 'success';
-		const finishedAt = now();
-		const durationMs = finishedAt.getTime() - startedAt.getTime();
-		const notes = [
-			// Said out loud on the run, because a row leaving the site should never be something
-			// only the database knows about.
-			swept.marked > 0 ? `${swept.marked} no longer listed by the source` : null,
-			swept.restored > 0 ? `${swept.restored} listed again` : null,
-			...problems
-		].filter(Boolean);
-		const message = notes.length ? notes.join('; ').slice(0, 2000) : null;
+		/*
+		 * Said out loud on the run, because a row leaving the site should never be something only
+		 * the database knows about. Ahead of the problems, and outside their cap.
+		 */
+		const summary: string[] = [];
+		if (swept.marked > 0) summary.push(`${swept.marked} no longer listed by the source`);
+		if (swept.restored > 0) summary.push(`${swept.restored} listed again`);
+		run.problems.unshift(...summary);
+	});
 
-		if (!dryRun) {
-			await db
-				.update(ingestRuns)
-				.set({
-					finishedAt,
-					status,
-					fetched,
-					created,
-					updated,
-					unchanged,
-					rejected,
-					durationMs,
-					message
-				})
-				.where(eq(ingestRuns.id, runId));
-			await db.update(sources).set({ lastRunAt: finishedAt }).where(eq(sources.id, source.id));
-		}
-
-		return {
-			runId,
-			status,
-			fetched,
-			created,
-			updated,
-			unchanged,
-			rejected,
-			durationMs,
-			message
-		};
-	} catch (error) {
-		const finishedAt = now();
-		const message = error instanceof Error ? error.message : String(error);
-		// Nothing to close if the run was never opened.
-		if (dryRun) throw error;
-		await db
-			.update(ingestRuns)
-			.set({
-				finishedAt,
-				status: 'failed',
-				fetched,
-				created,
-				updated,
-				unchanged,
-				rejected,
-				durationMs: finishedAt.getTime() - startedAt.getTime(),
-				message: message.slice(0, 2000)
-			})
-			.where(eq(ingestRuns.id, runId));
-		throw error;
-	}
+	return { slug: SITE.slug, ...report };
 }

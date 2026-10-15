@@ -1,7 +1,13 @@
-import { and, eq } from 'drizzle-orm';
 import { createDb, type Db } from '@hendingar/core/db';
 import { markGoneUpstream } from '@hendingar/core/gone-upstream';
-import { events, ingestRuns, sources, venues } from '@hendingar/core/schema';
+import {
+	ingestEach,
+	recordRun,
+	registerSource,
+	type IngestResult,
+	type RunOptions
+} from '@hendingar/core/ingest-run';
+import { venues } from '@hendingar/core/schema';
 import { readSchedule, type ReadSchedule } from './api.ts';
 import { TEAMS, teamUrl, type HandballTeam } from './teams.ts';
 import {
@@ -20,46 +26,22 @@ import {
  * table, and a source that stops reporting must become visible rather than quietly stale.
  */
 
-export type IngestResult = {
-	runId: number;
-	slug: string;
-	status: 'success' | 'partial' | 'failed';
-	fetched: number;
-	created: number;
-	updated: number;
-	unchanged: number;
-	rejected: number;
-	durationMs: number;
-	message: string | null;
-};
+export type IngestOptions = RunOptions & { read?: ReadSchedule };
 
-export type IngestOptions = {
-	read?: ReadSchedule;
-	trigger?: string;
-	revision?: string | null;
-	dryRun?: boolean;
-	now?: () => Date;
-};
-
-async function upsertSource(db: Db, team: HandballTeam) {
-	const shared = {
+function upsertSource(db: Db, team: HandballTeam) {
+	return registerSource(db, {
+		slug: team.slug,
 		name: team.name,
 		url: teamUrl(team),
 		endpoint: teamUrl(team),
 		note: 'Terminlista til laget på handball.no, med løyve frå Norges Håndballforbund. Vi les heile sesongen og tek berre heimekampane.',
-		kind: 'json-api' as const,
-		active: true,
+		kind: 'json-api',
 		scheduleCron: team.scheduleCron,
 		iconUrl: team.iconUrl,
-		trusted: team.trusted
-	};
-	const [row] = await db
-		.insert(sources)
-		.values({ slug: team.slug, region: team.region, attribution: team.attribution, ...shared })
-		.onConflictDoUpdate({ target: sources.slug, set: shared })
-		.returning();
-	if (!row) throw new Error(`could not register the source ${team.slug}`);
-	return row;
+		trusted: team.trusted,
+		region: team.region,
+		attribution: team.attribution
+	});
 }
 
 async function venueIdFor(db: Db, mapped: MappedEvent, team: HandballTeam) {
@@ -84,45 +66,17 @@ export async function ingestTeam(
 	team: HandballTeam,
 	options: IngestOptions = {}
 ): Promise<IngestResult> {
-	const {
-		read = readSchedule,
-		trigger = 'manual',
-		revision = null,
-		dryRun = false,
-		now = () => new Date()
-	} = options;
-
+	const { read = readSchedule } = options;
 	const db = createDb(connectionString);
-	const startedAt = now();
 	const source = await upsertSource(db, team);
 
-	// A dry run opens no run row: one opened and never closed shows as an import still running.
-	let runId = -1;
-	if (!dryRun) {
-		const [run] = await db
-			.insert(ingestRuns)
-			.values({ sourceId: source.id, startedAt, status: 'running', trigger, revision })
-			.returning({ id: ingestRuns.id });
-		if (!run) throw new Error('could not open an ingest run');
-		runId = run.id;
-	}
+	const report = await recordRun(db, source.id, options, async (run) => {
+		let away = 0;
+		let unscheduled = 0;
+		let calledOff = 0;
 
-	let fetched = 0;
-	let created = 0;
-	let updated = 0;
-	let unchanged = 0;
-	let rejected = 0;
-	let away = 0;
-	let unscheduled = 0;
-	let calledOff = 0;
-	const problems: string[] = [];
-
-	try {
 		const schedule = await read(team);
-		for (const problem of schedule.rejected) {
-			rejected += 1;
-			if (problems.length < 10) problems.push(`invalid schedule row: ${problem}`);
-		}
+		for (const problem of schedule.rejected) run.reject(`invalid schedule row: ${problem}`);
 
 		const seen = new Set<string>();
 		/*
@@ -149,24 +103,21 @@ export async function ingestTeam(
 				continue;
 			}
 
-			fetched += 1;
+			run.counts.fetched += 1;
 			const mapped = mapEvent(raw, team);
 			if (isFailure(mapped)) {
-				rejected += 1;
-				if (problems.length < 10) problems.push(`${mapped.title}: ${mapped.problem}`);
+				run.reject(`${mapped.title}: ${mapped.problem}`);
 				continue;
 			}
 			if (seen.has(mapped.externalId)) continue;
 			seen.add(mapped.externalId);
 
-			if (dryRun) {
-				created += 1;
+			if (run.dryRun) {
+				run.counts.created += 1;
 				continue;
 			}
 
-			const venueId = await venueIdFor(db, mapped, team);
-
-			const values = {
+			await run.upsertEvent({
 				sourceId: source.id,
 				externalId: mapped.externalId,
 				sourceUrl: mapped.sourceUrl,
@@ -175,63 +126,12 @@ export async function ingestTeam(
 				category: mapped.category,
 				startsAt: mapped.startsAt,
 				endsAt: mapped.endsAt,
-				venueId,
+				venueId: await venueIdFor(db, mapped, team),
 				ctaUrl: mapped.ctaUrl,
 				posterUrl: mapped.posterUrl,
 				posterRightsVerified: mapped.posterRightsVerified,
-				status: source.trusted ? ('published' as const) : ('pending' as const)
-			};
-
-			// Read before write, so a run reports what actually changed rather than marking every
-			// event "updated" daily and burying the one day a match really moved.
-			const [existing] = await db
-				.select({
-					id: events.id,
-					title: events.title,
-					description: events.description,
-					category: events.category,
-					startsAt: events.startsAt,
-					endsAt: events.endsAt,
-					venueId: events.venueId,
-					ctaUrl: events.ctaUrl,
-					posterUrl: events.posterUrl,
-					posterRightsVerified: events.posterRightsVerified,
-					status: events.status,
-					sourceUrl: events.sourceUrl
-				})
-				.from(events)
-				.where(and(eq(events.sourceId, source.id), eq(events.externalId, mapped.externalId)))
-				.limit(1);
-
-			if (!existing) {
-				await db.insert(events).values(values);
-				created += 1;
-				continue;
-			}
-
-			const same =
-				existing.title === values.title &&
-				existing.description === values.description &&
-				existing.category === values.category &&
-				+existing.startsAt === +values.startsAt &&
-				(existing.endsAt?.getTime() ?? null) === (values.endsAt?.getTime() ?? null) &&
-				existing.venueId === values.venueId &&
-				existing.ctaUrl === values.ctaUrl &&
-				existing.posterUrl === values.posterUrl &&
-				existing.posterRightsVerified === values.posterRightsVerified &&
-				existing.status === values.status &&
-				existing.sourceUrl === values.sourceUrl;
-
-			if (same) {
-				unchanged += 1;
-				continue;
-			}
-
-			await db
-				.update(events)
-				.set({ ...values, updatedAt: now() })
-				.where(eq(events.id, existing.id));
-			updated += 1;
+				status: source.trusted ? 'published' : 'pending'
+			});
 		}
 
 		/*
@@ -248,101 +148,30 @@ export async function ingestTeam(
 		 * team's whole season — nothing is read through a window — and nothing is deleted.
 		 */
 		let swept = { marked: 0, restored: 0 };
-		if (!dryRun) {
-			swept = await markGoneUpstream(db, { sourceId: source.id, seen: present, now: now() });
+		if (!run.dryRun) {
+			swept = await markGoneUpstream(db, { sourceId: source.id, seen: present, now: run.now() });
 		}
 
-		const status: IngestResult['status'] = rejected > 0 ? 'partial' : 'success';
-		const finishedAt = now();
-		const durationMs = finishedAt.getTime() - startedAt.getTime();
-		const notes = [
-			away > 0 ? `${away} away matches skipped` : null,
-			unscheduled > 0 ? `${unscheduled} without a time yet` : null,
-			calledOff > 0 ? `${calledOff} cancelled or postponed` : null,
-			swept.marked > 0 ? `${swept.marked} no longer listed by the source` : null,
-			swept.restored > 0 ? `${swept.restored} listed again` : null,
-			...problems
-		].filter(Boolean);
-		const message = notes.length ? notes.join('; ').slice(0, 2000) : null;
+		// The run's own summary, ahead of the problems and outside their cap.
+		const summary: string[] = [];
+		if (away > 0) summary.push(`${away} away matches skipped`);
+		if (unscheduled > 0) summary.push(`${unscheduled} without a time yet`);
+		if (calledOff > 0) summary.push(`${calledOff} cancelled or postponed`);
+		if (swept.marked > 0) summary.push(`${swept.marked} no longer listed by the source`);
+		if (swept.restored > 0) summary.push(`${swept.restored} listed again`);
+		run.problems.unshift(...summary);
+	});
 
-		if (!dryRun) {
-			await db
-				.update(ingestRuns)
-				.set({
-					finishedAt,
-					status,
-					fetched,
-					created,
-					updated,
-					unchanged,
-					rejected,
-					durationMs,
-					message
-				})
-				.where(eq(ingestRuns.id, runId));
-			await db.update(sources).set({ lastRunAt: finishedAt }).where(eq(sources.id, source.id));
-		}
-
-		return {
-			runId,
-			slug: team.slug,
-			status,
-			fetched,
-			created,
-			updated,
-			unchanged,
-			rejected,
-			durationMs,
-			message
-		};
-	} catch (error) {
-		const finishedAt = now();
-		const message = error instanceof Error ? error.message : String(error);
-		if (dryRun) throw error;
-		await db
-			.update(ingestRuns)
-			.set({
-				finishedAt,
-				status: 'failed',
-				fetched,
-				created,
-				updated,
-				unchanged,
-				rejected,
-				durationMs: finishedAt.getTime() - startedAt.getTime(),
-				message: message.slice(0, 2000)
-			})
-			.where(eq(ingestRuns.id, runId));
-		throw error;
-	}
+	return { slug: team.slug, ...report };
 }
 
 /**
  * Every configured team. One failing team must not stop the others — they are independent sources
  * that happen to share a parser, so a failure is recorded against that source alone.
  */
-export async function ingestAll(
+export function ingestAll(
 	connectionString: string,
 	options: IngestOptions = {}
 ): Promise<IngestResult[]> {
-	const results: IngestResult[] = [];
-	for (const team of TEAMS) {
-		try {
-			results.push(await ingestTeam(connectionString, team, options));
-		} catch (error) {
-			results.push({
-				runId: -1,
-				slug: team.slug,
-				status: 'failed',
-				fetched: 0,
-				created: 0,
-				updated: 0,
-				unchanged: 0,
-				rejected: 0,
-				durationMs: 0,
-				message: error instanceof Error ? error.message : String(error)
-			});
-		}
-	}
-	return results;
+	return ingestEach(TEAMS, (team) => ingestTeam(connectionString, team, options));
 }

@@ -1,6 +1,13 @@
-import { and, eq, inArray } from 'drizzle-orm';
+import { eq, inArray } from 'drizzle-orm';
 import { createDb, type Db } from '@hendingar/core/db';
-import { events, ingestRuns, sources, venues } from '@hendingar/core/schema';
+import {
+	ingestEach,
+	recordRun,
+	registerSource,
+	type IngestResult,
+	type RunOptions
+} from '@hendingar/core/ingest-run';
+import { events, venues } from '@hendingar/core/schema';
 import { fetchListing, parseListing, type FetchListing } from './api.ts';
 import { INSTANCES, type MecInstance } from './instances.ts';
 import { isFailure, isSupersededOccurrenceId, mapEvent, type MappedEvent } from './map.ts';
@@ -13,59 +20,22 @@ import { isFailure, isSupersededOccurrenceId, mapEvent, type MappedEvent } from 
  * instances therefore produce two rows and two lines on the page, not one combined run.
  */
 
-export type IngestResult = {
-	runId: number;
-	slug: string;
-	status: 'success' | 'partial' | 'failed';
-	fetched: number;
-	created: number;
-	updated: number;
-	unchanged: number;
-	rejected: number;
-	durationMs: number;
-	message: string | null;
-};
+export type IngestOptions = RunOptions & { read?: FetchListing };
 
-export type IngestOptions = {
-	read?: FetchListing;
-	trigger?: string;
-	revision?: string | null;
-	dryRun?: boolean;
-	now?: () => Date;
-};
-
-async function upsertSource(db: Db, instance: MecInstance) {
-	const shared = {
+function upsertSource(db: Db, instance: MecInstance) {
+	return registerSource(db, {
+		slug: instance.slug,
 		name: instance.name,
 		url: instance.url,
 		endpoint: instance.endpoint,
-		kind: 'html' as const,
+		kind: 'html',
 		note: 'Modern Events Calendar på WordPress. Klokka blir lesen av korta sida viser folk, ikkje av JSON-LD-en — den legg til tidssona to gonger.',
-		/*
-		 * Explicitly active.
-		 *
-		 * A source can arrive here already existing as a `link` row, which the directory registers
-		 * with `active: false` because nothing was collecting it. Graduating it without flipping
-		 * this back leaves a source that publishes events while being excluded from every count
-		 * that means "places this list comes from" — visible on the page, invisible in the numbers.
-		 */
-		active: true,
 		scheduleCron: instance.scheduleCron,
 		iconUrl: instance.iconUrl,
-		trusted: instance.trusted
-	};
-	const [row] = await db
-		.insert(sources)
-		.values({
-			slug: instance.slug,
-			region: instance.region,
-			attribution: instance.attribution,
-			...shared
-		})
-		.onConflictDoUpdate({ target: sources.slug, set: shared })
-		.returning();
-	if (!row) throw new Error(`could not register the source ${instance.slug}`);
-	return row;
+		trusted: instance.trusted,
+		region: instance.region,
+		attribution: instance.attribution
+	});
 }
 
 async function venueIdFor(db: Db, mapped: MappedEvent, instance: MecInstance) {
@@ -121,59 +91,23 @@ export async function ingestInstance(
 	instance: MecInstance,
 	options: IngestOptions = {}
 ): Promise<IngestResult> {
-	const {
-		read = fetchListing,
-		trigger = 'manual',
-		revision = null,
-		dryRun = false,
-		now = () => new Date()
-	} = options;
-
+	const { read = fetchListing } = options;
 	const db = createDb(connectionString);
-	const startedAt = now();
 	const source = await upsertSource(db, instance);
 
-	/*
-	 * A dry run opens no run row.
-	 *
-	 * The row is inserted as `running` and only closed on the success path, so a dry run used to
-	 * leave one permanently `running` — /datasamling then showed an import that never finished and
-	 * never happened. A flag that promises to write nothing must not write the one row the status
-	 * board is built from.
-	 */
-	let runId = -1;
-	if (!dryRun) {
-		const [run] = await db
-			.insert(ingestRuns)
-			.values({ sourceId: source.id, startedAt, status: 'running', trigger, revision })
-			.returning({ id: ingestRuns.id });
-		if (!run) throw new Error('could not open an ingest run');
-		runId = run.id;
-	}
-
-	let fetched = 0;
-	let created = 0;
-	let updated = 0;
-	let unchanged = 0;
-	let rejected = 0;
-	const problems: string[] = [];
-
-	try {
+	const report = await recordRun(db, source.id, options, async (run) => {
 		/*
 		 * Before anything is written, and not on a dry run, which promises to write nothing.
 		 * Reported in the run message rather than counted as an import: /datasamling's columns are
 		 * about what a source published, and this is about what we had wrong.
 		 */
-		if (!dryRun) {
+		if (!run.dryRun) {
 			const dropped = await dropSupersededOccurrences(db, source.id);
-			if (dropped > 0) problems.push(`dropped ${dropped} occurrence(s) under the superseded id`);
+			if (dropped > 0) run.note(`dropped ${dropped} occurrence(s) under the superseded id`);
 		}
 
 		const listing = parseListing(await read(instance));
-		for (const problem of listing.rejected) {
-			rejected += 1;
-			if (problems.length < 10) problems.push(`invalid ld+json: ${problem}`);
-		}
+		for (const problem of listing.rejected) run.reject(`invalid ld+json: ${problem}`);
 
 		/*
 		 * MEC prints the same occurrence more than once on a page — the listing this was built
@@ -183,25 +117,21 @@ export async function ingestInstance(
 		const seen = new Set<string>();
 
 		for (const occurrence of listing.occurrences) {
-			fetched += 1;
+			run.counts.fetched += 1;
 			const mapped = mapEvent(occurrence.event, occurrence.postId, occurrence.card, instance);
 			if (isFailure(mapped)) {
-				rejected += 1;
-				if (problems.length < 10)
-					problems.push(`${mapped.title || mapped.externalId}: ${mapped.problem}`);
+				run.reject(`${mapped.title || mapped.externalId}: ${mapped.problem}`);
 				continue;
 			}
 			if (seen.has(mapped.externalId)) continue;
 			seen.add(mapped.externalId);
 
-			if (dryRun) {
-				created += 1;
+			if (run.dryRun) {
+				run.counts.created += 1;
 				continue;
 			}
 
-			const venueId = await venueIdFor(db, mapped, instance);
-
-			const values = {
+			await run.upsertEvent({
 				sourceId: source.id,
 				externalId: mapped.externalId,
 				sourceUrl: mapped.sourceUrl,
@@ -210,149 +140,25 @@ export async function ingestInstance(
 				category: mapped.category,
 				startsAt: mapped.startsAt,
 				endsAt: mapped.endsAt,
-				venueId,
+				venueId: await venueIdFor(db, mapped, instance),
 				ctaUrl: mapped.ctaUrl,
 				posterUrl: mapped.posterUrl,
 				posterRightsVerified: mapped.posterRightsVerified,
-				status: source.trusted ? ('published' as const) : ('pending' as const)
-			};
-
-			// Read before write, so a run reports what actually changed rather than marking every
-			// event "updated" daily and burying the one day a source really moved.
-			const [existing] = await db
-				.select({
-					id: events.id,
-					title: events.title,
-					description: events.description,
-					category: events.category,
-					startsAt: events.startsAt,
-					endsAt: events.endsAt,
-					venueId: events.venueId,
-					ctaUrl: events.ctaUrl,
-					posterUrl: events.posterUrl,
-					posterRightsVerified: events.posterRightsVerified,
-					status: events.status,
-					sourceUrl: events.sourceUrl
-				})
-				.from(events)
-				.where(and(eq(events.sourceId, source.id), eq(events.externalId, mapped.externalId)))
-				.limit(1);
-
-			if (!existing) {
-				await db.insert(events).values(values);
-				created += 1;
-				continue;
-			}
-
-			const same =
-				existing.title === values.title &&
-				existing.description === values.description &&
-				existing.category === values.category &&
-				+existing.startsAt === +values.startsAt &&
-				(existing.endsAt?.getTime() ?? null) === (values.endsAt?.getTime() ?? null) &&
-				existing.venueId === values.venueId &&
-				existing.ctaUrl === values.ctaUrl &&
-				existing.posterUrl === values.posterUrl &&
-				existing.posterRightsVerified === values.posterRightsVerified &&
-				existing.status === values.status &&
-				existing.sourceUrl === values.sourceUrl;
-
-			if (same) {
-				unchanged += 1;
-				continue;
-			}
-
-			await db
-				.update(events)
-				.set({ ...values, updatedAt: now() })
-				.where(eq(events.id, existing.id));
-			updated += 1;
+				status: source.trusted ? 'published' : 'pending'
+			});
 		}
+	});
 
-		const status: IngestResult['status'] = rejected > 0 ? 'partial' : 'success';
-		const finishedAt = now();
-		const durationMs = finishedAt.getTime() - startedAt.getTime();
-		const message = problems.length ? problems.join('; ').slice(0, 2000) : null;
-
-		if (!dryRun) {
-			await db
-				.update(ingestRuns)
-				.set({
-					finishedAt,
-					status,
-					fetched,
-					created,
-					updated,
-					unchanged,
-					rejected,
-					durationMs,
-					message
-				})
-				.where(eq(ingestRuns.id, runId));
-			await db.update(sources).set({ lastRunAt: finishedAt }).where(eq(sources.id, source.id));
-		}
-
-		return {
-			runId,
-			slug: instance.slug,
-			status,
-			fetched,
-			created,
-			updated,
-			unchanged,
-			rejected,
-			durationMs,
-			message
-		};
-	} catch (error) {
-		const finishedAt = now();
-		const message = error instanceof Error ? error.message : String(error);
-		// Nothing to close if the run was never opened.
-		if (dryRun) throw error;
-		await db
-			.update(ingestRuns)
-			.set({
-				finishedAt,
-				status: 'failed',
-				fetched,
-				created,
-				updated,
-				unchanged,
-				rejected,
-				durationMs: finishedAt.getTime() - startedAt.getTime(),
-				message: message.slice(0, 2000)
-			})
-			.where(eq(ingestRuns.id, runId));
-		throw error;
-	}
+	return { slug: instance.slug, ...report };
 }
 
 /**
  * Every configured instance. One failing site must not stop the others — they are independent
  * sources that happen to share a parser, so a failure is recorded against that source alone.
  */
-export async function ingestAll(
+export function ingestAll(
 	connectionString: string,
 	options: IngestOptions = {}
 ): Promise<IngestResult[]> {
-	const results: IngestResult[] = [];
-	for (const instance of INSTANCES) {
-		try {
-			results.push(await ingestInstance(connectionString, instance, options));
-		} catch (error) {
-			results.push({
-				runId: -1,
-				slug: instance.slug,
-				status: 'failed',
-				fetched: 0,
-				created: 0,
-				updated: 0,
-				unchanged: 0,
-				rejected: 0,
-				durationMs: 0,
-				message: error instanceof Error ? error.message : String(error)
-			});
-		}
-	}
-	return results;
+	return ingestEach(INSTANCES, (instance) => ingestInstance(connectionString, instance, options));
 }

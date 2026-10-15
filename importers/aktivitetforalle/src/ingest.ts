@@ -1,9 +1,13 @@
-import { and, eq } from 'drizzle-orm';
 import { createDb, type Db } from '@hendingar/core/db';
-import { events, ingestRuns, organizers, sources, venues } from '@hendingar/core/schema';
+import {
+	ingestEach,
+	recordRun,
+	registerSource,
+	type IngestResult,
+	type RunOptions
+} from '@hendingar/core/ingest-run';
+import { organizers, venues } from '@hendingar/core/schema';
 import { markGoneUpstream } from '@hendingar/core/gone-upstream';
-import { sameWeeklyHours } from '@hendingar/core/weekly-hours';
-import { keepKnownCategory } from '@hendingar/core/consolidate';
 import {
 	orNull,
 	parseEvents,
@@ -30,33 +34,15 @@ import { slugifyVenue } from '@hendingar/core/slug';
  * table, and a source that stops reporting must become visible rather than quietly stale.
  */
 
-export type IngestResult = {
-	runId: number;
-	slug: string;
-	status: 'success' | 'partial' | 'failed';
-	fetched: number;
-	created: number;
-	updated: number;
-	unchanged: number;
-	rejected: number;
-	durationMs: number;
-	message: string | null;
-};
+export type IngestOptions = RunOptions & { fetcher?: Read };
 
-export type IngestOptions = {
-	fetcher?: Read;
-	trigger?: string;
-	revision?: string | null;
-	dryRun?: boolean;
-	now?: () => Date;
-};
-
-async function upsertSource(db: Db, site: AfaSite) {
-	const shared = {
+function upsertSource(db: Db, site: AfaSite) {
+	return registerSource(db, {
+		slug: site.slug,
 		name: site.name,
 		url: listingUrl(site),
 		endpoint: eventsUrl(site),
-		kind: 'json-api' as const,
+		kind: 'json-api',
 		/*
 		 * Written on every run, not left to whatever was there before.
 		 *
@@ -70,18 +56,12 @@ async function upsertSource(db: Db, site: AfaSite) {
 			'Portalen listar både enkelthendingar og faste, vekevise tilbod. Enkelthendingane står i ' +
 			'kalenderen; dei faste tilboda står under «Alltid ope», samla etter kven som driv dei, ' +
 			'med dagane og tidene kjelda oppgjev.',
-		active: true,
 		scheduleCron: site.scheduleCron,
 		iconUrl: site.iconUrl,
-		trusted: site.trusted
-	};
-	const [row] = await db
-		.insert(sources)
-		.values({ slug: site.slug, region: site.region, attribution: site.attribution, ...shared })
-		.onConflictDoUpdate({ target: sources.slug, set: shared })
-		.returning();
-	if (!row) throw new Error(`could not register the source ${site.slug}`);
-	return row;
+		trusted: site.trusted,
+		region: site.region,
+		attribution: site.attribution
+	});
 }
 
 async function venueIdFor(db: Db, mapped: MappedEvent, site: AfaSite) {
@@ -149,51 +129,20 @@ export async function ingestSite(
 	site: AfaSite,
 	options: IngestOptions = {}
 ): Promise<IngestResult> {
-	const {
-		fetcher = read,
-		trigger = 'manual',
-		revision = null,
-		dryRun = false,
-		now = () => new Date()
-	} = options;
-
+	const { fetcher = read } = options;
 	const db = createDb(connectionString);
-	const startedAt = now();
 	const source = await upsertSource(db, site);
 
-	/*
-	 * A dry run opens no run row: the row is inserted as `running` and only closed on the success
-	 * path, so opening one would leave /datasamling showing an import that never finished.
-	 */
-	let runId = -1;
-	if (!dryRun) {
-		const [run] = await db
-			.insert(ingestRuns)
-			.values({ sourceId: source.id, startedAt, status: 'running', trigger, revision })
-			.returning({ id: ingestRuns.id });
-		if (!run) throw new Error('could not open an ingest run');
-		runId = run.id;
-	}
+	const report = await recordRun(db, source.id, options, async (run) => {
+		let skipped = 0;
 
-	let fetched = 0;
-	let created = 0;
-	let updated = 0;
-	let unchanged = 0;
-	let rejected = 0;
-	let skipped = 0;
-	const problems: string[] = [];
-
-	try {
 		const payload = await fetcher(site);
 		const vocabulary = parseFilters(payload.filters);
 		const locations = parseLocations(payload.locations);
 		const organizerNames = parseOrganizers(payload.organizers);
 		const parsed = parseEvents(payload.events);
 
-		for (const problem of parsed.rejected) {
-			rejected += 1;
-			if (problems.length < 10) problems.push(`invalid event row: ${problem}`);
-		}
+		for (const problem of parsed.rejected) run.reject(`invalid event row: ${problem}`);
 
 		const seen = new Set<string>();
 		/*
@@ -222,26 +171,29 @@ export async function ingestSite(
 				continue;
 			}
 
-			fetched += 1;
+			run.counts.fetched += 1;
 			const mapped = mapEvent(raw, site, vocabulary, locations, organizerNames);
 			if (isFailure(mapped)) {
-				rejected += 1;
-				if (problems.length < 10)
-					problems.push(`${mapped.title || mapped.externalId}: ${mapped.problem}`);
+				run.reject(`${mapped.title || mapped.externalId}: ${mapped.problem}`);
 				continue;
 			}
 			if (seen.has(mapped.externalId)) continue;
 			seen.add(mapped.externalId);
 
-			if (dryRun) {
-				created += 1;
+			if (run.dryRun) {
+				run.counts.created += 1;
 				continue;
 			}
 
 			const venueId = await venueIdFor(db, mapped, site);
 			const organizerId = await organizerIdFor(db, mapped.organizerName);
 
-			const values = {
+			/*
+			 * An untagged row maps to `anna`, and the portal leaves eBillett's mirrored films
+			 * untagged. `upsertEvent` keeps a category consolidation has since filled in from
+			 * another source rather than writing `anna` back over it. See `keepKnownCategory`.
+			 */
+			await run.upsertEvent({
 				sourceId: source.id,
 				externalId: mapped.externalId,
 				sourceUrl: mapped.sourceUrl,
@@ -259,78 +211,8 @@ export async function ingestSite(
 				posterUrl: mapped.posterUrl,
 				posterSrcset: mapped.posterSrcset,
 				posterRightsVerified: mapped.posterRightsVerified,
-				status: source.trusted ? ('published' as const) : ('pending' as const)
-			};
-
-			// Read before write, so a run reports what actually changed rather than marking every
-			// event "updated" daily and burying the one day a source really moved.
-			const [existing] = await db
-				.select({
-					id: events.id,
-					title: events.title,
-					description: events.description,
-					category: events.category,
-					startsAt: events.startsAt,
-					endsAt: events.endsAt,
-					venueId: events.venueId,
-					organizerId: events.organizerId,
-					weeklyHours: events.weeklyHours,
-					ageFrom: events.ageFrom,
-					ageTo: events.ageTo,
-					ctaUrl: events.ctaUrl,
-					posterUrl: events.posterUrl,
-					posterSrcset: events.posterSrcset,
-					posterRightsVerified: events.posterRightsVerified,
-					status: events.status,
-					sourceUrl: events.sourceUrl
-				})
-				.from(events)
-				.where(and(eq(events.sourceId, source.id), eq(events.externalId, mapped.externalId)))
-				.limit(1);
-
-			if (!existing) {
-				await db.insert(events).values(values);
-				created += 1;
-				continue;
-			}
-
-			/*
-			 * An untagged row maps to `anna`, and the portal leaves eBillett's mirrored films
-			 * untagged. When consolidation has since filled the category in from another source,
-			 * writing `anna` back would undo it every night. See `keepKnownCategory`.
-			 */
-			values.category = keepKnownCategory(existing.category, values.category);
-
-			const same =
-				existing.title === values.title &&
-				existing.description === values.description &&
-				existing.category === values.category &&
-				+existing.startsAt === +values.startsAt &&
-				(existing.endsAt?.getTime() ?? null) === (values.endsAt?.getTime() ?? null) &&
-				existing.venueId === values.venueId &&
-				existing.organizerId === values.organizerId &&
-				// Built by `mapWeeklyHours` in a fixed key order, and jsonb hands it back sorted
-				// by key length — so compare the content, not the spelling.
-				sameWeeklyHours(existing.weeklyHours, values.weeklyHours) &&
-				existing.ageFrom === values.ageFrom &&
-				existing.ageTo === values.ageTo &&
-				existing.ctaUrl === values.ctaUrl &&
-				existing.posterUrl === values.posterUrl &&
-				existing.posterSrcset === values.posterSrcset &&
-				existing.posterRightsVerified === values.posterRightsVerified &&
-				existing.status === values.status &&
-				existing.sourceUrl === values.sourceUrl;
-
-			if (same) {
-				unchanged += 1;
-				continue;
-			}
-
-			await db
-				.update(events)
-				.set({ ...values, updatedAt: now() })
-				.where(eq(events.id, existing.id));
-			updated += 1;
+				status: source.trusted ? 'published' : 'pending'
+			});
 		}
 
 		/*
@@ -341,108 +223,37 @@ export async function ingestSite(
 		 * and its views, and only drops out of the listings. See `markGoneUpstream`.
 		 */
 		let swept = { marked: 0, restored: 0 };
-		if (site.listingIsComplete && !dryRun) {
-			swept = await markGoneUpstream(db, { sourceId: source.id, seen: present, now: now() });
+		if (site.listingIsComplete && !run.dryRun) {
+			swept = await markGoneUpstream(db, { sourceId: source.id, seen: present, now: run.now() });
 		}
 
-		const status: IngestResult['status'] = rejected > 0 ? 'partial' : 'success';
-		const finishedAt = now();
-		const durationMs = finishedAt.getTime() - startedAt.getTime();
 		/*
 		 * The skipped count is recorded even on a clean run: it is the only place the rows we
 		 * decline are visible, and the number that moves if the portal changes how it files things.
+		 * Ahead of the problems and outside their cap, as they always were.
 		 */
-		const notes = [
+		const summary = [
 			skipped > 0
 				? `${skipped} rows skipped (archived, draft, undated, or an activity with no timetable or season)`
 				: null,
 			// Said out loud on the run, because a row leaving the site should never be something
 			// only the database knows about.
 			swept.marked > 0 ? `${swept.marked} no longer listed by the source` : null,
-			swept.restored > 0 ? `${swept.restored} listed again` : null,
-			...problems
-		].filter(Boolean);
-		const message = notes.length ? notes.join('; ').slice(0, 2000) : null;
+			swept.restored > 0 ? `${swept.restored} listed again` : null
+		].filter((line) => line !== null);
+		run.problems.unshift(...summary);
+	});
 
-		if (!dryRun) {
-			await db
-				.update(ingestRuns)
-				.set({
-					finishedAt,
-					status,
-					fetched,
-					created,
-					updated,
-					unchanged,
-					rejected,
-					durationMs,
-					message
-				})
-				.where(eq(ingestRuns.id, runId));
-			await db.update(sources).set({ lastRunAt: finishedAt }).where(eq(sources.id, source.id));
-		}
-
-		return {
-			runId,
-			slug: site.slug,
-			status,
-			fetched,
-			created,
-			updated,
-			unchanged,
-			rejected,
-			durationMs,
-			message
-		};
-	} catch (error) {
-		const finishedAt = now();
-		const message = error instanceof Error ? error.message : String(error);
-		// Nothing to close if the run was never opened.
-		if (dryRun) throw error;
-		await db
-			.update(ingestRuns)
-			.set({
-				finishedAt,
-				status: 'failed',
-				fetched,
-				created,
-				updated,
-				unchanged,
-				rejected,
-				durationMs: finishedAt.getTime() - startedAt.getTime(),
-				message: message.slice(0, 2000)
-			})
-			.where(eq(ingestRuns.id, runId));
-		throw error;
-	}
+	return { slug: site.slug, ...report };
 }
 
 /**
  * Every configured site. One failing portal must not stop the others — they are independent
  * sources that happen to share a parser, so a failure is recorded against that source alone.
  */
-export async function ingestAll(
+export function ingestAll(
 	connectionString: string,
 	options: IngestOptions = {}
 ): Promise<IngestResult[]> {
-	const results: IngestResult[] = [];
-	for (const site of SITES) {
-		try {
-			results.push(await ingestSite(connectionString, site, options));
-		} catch (error) {
-			results.push({
-				runId: -1,
-				slug: site.slug,
-				status: 'failed',
-				fetched: 0,
-				created: 0,
-				updated: 0,
-				unchanged: 0,
-				rejected: 0,
-				durationMs: 0,
-				message: error instanceof Error ? error.message : String(error)
-			});
-		}
-	}
-	return results;
+	return ingestEach(SITES, (site) => ingestSite(connectionString, site, options));
 }
