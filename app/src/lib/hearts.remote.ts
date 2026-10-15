@@ -1,11 +1,11 @@
 import { command, query } from '$app/server';
 import { z } from 'zod';
-import { and, count, eq, inArray, sql } from 'drizzle-orm';
-import { eventHearts, events, sources, venues } from '@hendingar/core/schema';
+import { and, count, eq, inArray } from 'drizzle-orm';
+import { eventHearts, events, venues } from '@hendingar/core/schema';
 import { db } from './server/db';
 import { enforce } from './server/limits';
 import { withStartsIn } from './starts-in.ts';
-import type { SourceMark } from './server/listing.ts';
+import { tileColumns } from './server/listing.ts';
 
 /**
  * Hearts: the count, and the toggle.
@@ -110,41 +110,7 @@ export const listHearted = query(
 		if (eventIds.length === 0) return [];
 		const now = new Date();
 		const rows = await db()
-			.select({
-				id: events.id,
-				title: events.title,
-				category: events.category,
-				startsAt: events.startsAt,
-				endsAt: events.endsAt,
-				venueName: venues.name,
-				// The zone is what makes startsAt renderable as a wall clock. Always select it.
-				venueTimeZone: venues.timezone,
-				municipality: venues.municipality,
-				posterUrl: events.posterUrl,
-				posterSrcset: events.posterSrcset,
-				trail: events.trail,
-				sourceMarks: sql<SourceMark[]>`
-					coalesce((
-						select json_agg(m order by m.name)
-						from (
-							select distinct ${sources.slug} as slug, ${sources.name} as name, ${sources.iconUrl} as "iconUrl"
-							from ${events} dup
-							join ${sources} on ${sources.id} = dup.source_id
-							where dup.id = ${events.id} or dup.duplicate_of_id = ${events.id}
-						) m
-					), '[]'::json)
-				`.as('source_marks'),
-				localDate: sql<string>`
-					to_char(
-						greatest(${events.startsAt}, now())
-							at time zone coalesce(${venues.timezone}, 'Europe/Oslo'),
-						'YYYY-MM-DD'
-					)
-				`.as('local_date'),
-				todayLocalDate: sql<string>`
-					to_char(now() at time zone coalesce(${venues.timezone}, 'Europe/Oslo'), 'YYYY-MM-DD')
-				`.as('today_local_date')
-			})
+			.select(tileColumns)
 			.from(events)
 			.leftJoin(venues, eq(events.venueId, venues.id))
 			/*

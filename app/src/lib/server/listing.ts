@@ -1,4 +1,4 @@
-import { eq, ilike, or, and, sql } from 'drizzle-orm';
+import { eq, gte, ilike, isNull, ne, or, and, sql } from 'drizzle-orm';
 import type { AnyColumn, SQL } from 'drizzle-orm';
 import { events, organizers, sources, venues } from '@hendingar/core/schema';
 import { stillListedUpstream } from '@hendingar/core/gone-upstream';
@@ -38,6 +38,51 @@ export const datedOnly = eq(events.kind, 'dated');
  * with a line saying so — because people have the link, and some of them hearted it.
  */
 export const stillListed = stillListedUpstream();
+
+/**
+ * What a visitor may see under a date: published, still listed upstream, the canonical row of its
+ * duplicate group, and dated.
+ *
+ * Four clauses that every listing, count and suggestion needs together and that were written out
+ * together in twenty places. A count that drops one of them disagrees with the listing it links to
+ * — which is exactly what `/datasamling` and the sitemap had done.
+ */
+export const listed = and(
+	eq(events.status, 'published'),
+	stillListed,
+	// Only canonical rows: `pnpm consolidate` points the other sources' copies at the winner.
+	isNull(events.duplicateOfId),
+	datedOnly
+);
+
+/** Not already over. A concert that started an hour ago and is still running belongs to today. */
+export function notOver(now: Date | SQL) {
+	return or(gte(events.startsAt, now), gte(events.endsAt, now));
+}
+
+/**
+ * Reported by this source — the canonical row itself, or any row pointing at it.
+ *
+ * Filtering on the canonical's own source alone would hide an event from the venue that actually
+ * runs it whenever a newspaper's copy happened to have the lower id: "Stord kulturhus" would stop
+ * listing its own concerts. Every "from this calendar" — the listing filter, the related row and
+ * the count `/datasamling` gates its link on — has to mean the same thing, so it is said once.
+ */
+export function fromSourceGroup(slug: string) {
+	return sql`exists (
+		select 1 from ${events} as m
+		join ${sources} as ms on ms.id = m.source_id
+		where (m.id = ${events.id} or m.duplicate_of_id = ${events.id})
+			and ms.slug = ${slug}
+	)`;
+}
+
+/**
+ * Somebody sent this in: no source row, and not an import that happens to lack one.
+ *
+ * `innsendt` is not a row in `sources`, so `fromSourceGroup` cannot find it.
+ */
+export const submittedByHand = and(isNull(events.sourceId), ne(events.submissionMethod, 'import'));
 
 /** One source's mark on a tile. Its name is the tooltip; the icon is what a reader recognises. */
 export type SourceMark = {
@@ -102,3 +147,46 @@ export function matchesSearch(term: string | undefined): SQL | undefined {
 		})
 	);
 }
+
+/**
+ * The columns an `EventTile` draws, in one place.
+ *
+ * Shared by every listing that draws tiles — the front page, `/hendingar`, `eventTile`, `/hjarta` —
+ * so the card a sender sees on their receipt is the same card the listing shows, not a third shape
+ * that drifts from it.
+ */
+export const tileColumns = {
+	id: events.id,
+	title: events.title,
+	category: events.category,
+	startsAt: events.startsAt,
+	endsAt: events.endsAt,
+	venueName: venues.name,
+	venueTimeZone: venues.timezone,
+	municipality: venues.municipality,
+	posterUrl: events.posterUrl,
+	posterSrcset: events.posterSrcset,
+	trail: events.trail,
+	// Whose calendar this came from. We are an index, not a replacement: a tile that shows no origin
+	// quietly claims the event as ours.
+	sourceMarks: sourceMarksFor(events.id).as('source_marks'),
+	/*
+	 * The calendar day AT THE VENUE, resolved in SQL. Grouping by day is a calendar
+	 * question, not an instant one — deriving it in JS from the server's clock would put a
+	 * late Helsinki concert in the wrong group for a reader in Norway.
+	 *
+	 * greatest(starts_at, now()) so a multi-day exhibition that opened last week is grouped
+	 * under TODAY, where a visitor can actually go to it, rather than under a heading dated
+	 * before the page they are reading.
+	 */
+	localDate: sql<string>`
+			to_char(
+				greatest(${events.startsAt}, now())
+					at time zone coalesce(${venues.timezone}, 'Europe/Oslo'),
+				'YYYY-MM-DD'
+			)
+		`.as('local_date'),
+	todayLocalDate: sql<string>`
+			to_char(now() at time zone coalesce(${venues.timezone}, 'Europe/Oslo'), 'YYYY-MM-DD')
+		`.as('today_local_date')
+};

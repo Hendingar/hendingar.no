@@ -1,9 +1,10 @@
-import { and, asc, eq, gte, isNull, or, sql } from 'drizzle-orm';
+import { and, asc, eq, isNull, sql } from 'drizzle-orm';
 import { events, venues } from '@hendingar/core/schema';
 import { eventPath } from '@hendingar/core/slug';
 import { CATEGORY_SLUGS } from '@hendingar/core/taxonomy';
 import { canonicalUrl } from '../../lib/origin.ts';
 import { db } from '../../lib/server/db';
+import { listed, notOver } from '../../lib/server/listing.ts';
 import type { RequestHandler } from './$types';
 
 /**
@@ -19,9 +20,6 @@ import type { RequestHandler } from './$types';
  * is three orders of magnitude short of both. Note that a recurring series materialises one row
  * per occurrence (ADR 0009), so a weekly series legitimately contributes ~27 URLs.
  */
-
-/** The listing window every other page uses: not yet started, or started and not yet finished. */
-const notOver = (now: Date) => or(gte(events.startsAt, now), gte(events.endsAt, now));
 
 function xml(value: string): string {
 	return value
@@ -51,6 +49,9 @@ export const GET: RequestHandler = async ({ url }) => {
 	/*
 	 * The days that actually have something on. Computed in the venue's timezone for the same
 	 * reason every listing does it there: a 00:30 event in Oslo is not the day before.
+	 *
+	 * `listed`, not just canonical: a day page lists only dated rows, so a standing offer's start
+	 * in 2023 would otherwise advertise a `/kalender/2023-…` that shows nothing.
 	 */
 	const days = await database
 		.selectDistinct({
@@ -60,7 +61,7 @@ export const GET: RequestHandler = async ({ url }) => {
 		})
 		.from(events)
 		.leftJoin(venues, eq(events.venueId, venues.id))
-		.where(and(eq(events.status, 'published'), isNull(events.duplicateOfId), notOver(now)));
+		.where(and(listed, notOver(now)));
 
 	const paths = [
 		'/',
