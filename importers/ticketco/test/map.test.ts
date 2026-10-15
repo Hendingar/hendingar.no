@@ -243,3 +243,12 @@ describe('SHOPS', () => {
 		}
 	});
 });
+
+describe('an Event subtype', () => {
+	it('is read like a bare Event — schema.org themes write MusicEvent as often as Event', () => {
+		const html = fixture('frugard-shop.html');
+		const subtyped = parseListing(html.replaceAll('"@type" : "Event"', '"@type" : "MusicEvent"'));
+		expect(subtyped.listings.length).toBe(listing.listings.length);
+		expect(subtyped.listings.length).toBeGreaterThan(0);
+	});
+});

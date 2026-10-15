@@ -473,3 +473,12 @@ describe('instances', () => {
 		expect(INSTANCES.map((i) => i.slug)).toContain('sunnhordland-museum');
 	});
 });
+
+describe('an Event subtype', () => {
+	it('is read like a bare Event — schema.org themes write MusicEvent as often as Event', () => {
+		const html = fixture('bomlobibliotek-kva-skjer.html');
+		const subtyped = parseListing(html.replaceAll('"@type": "Event"', '"@type": "MusicEvent"'));
+		expect(subtyped.occurrences.length).toBe(parseListing(html).occurrences.length);
+		expect(subtyped.occurrences.length).toBeGreaterThan(0);
+	});
+});

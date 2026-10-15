@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import type { MecInstance } from './instances.ts';
+import { isEventNode, jsonLdNodes } from '@hendingar/core/schemaorg';
 
 /**
  * Reading a Modern Events Calendar page.
@@ -24,7 +25,8 @@ import type { MecInstance } from './instances.ts';
 const placeSchema = z.object({ name: z.string().nullish() }).nullish();
 
 const eventSchema = z.object({
-	'@type': z.literal('Event'),
+	// Any Event subtype: `isEventNode` has already decided this is one.
+	'@type': z.union([z.string(), z.array(z.string())]),
 	name: z.string(),
 	startDate: z.string(),
 	endDate: z.string().nullish(),
@@ -70,7 +72,6 @@ export type ParsedListing = {
 	rejected: string[];
 };
 
-const LD_BLOCK = /<script[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi;
 const EVENT_ID_LINK = /data-event-id="(\d+)"\s+href="([^"]+)"/g;
 
 const ARTICLE = /<article[^>]*class="[^"]*mec-event-article[^"]*"[\s\S]*?<\/article>/g;
@@ -106,19 +107,12 @@ export function parseListing(html: string): ParsedListing {
 	const events: UpstreamEvent[] = [];
 	const rejected: string[] = [];
 
-	for (const match of html.matchAll(LD_BLOCK)) {
-		const body = match[1];
-		if (!body) continue;
-		let parsed: unknown;
-		try {
-			parsed = JSON.parse(body);
-		} catch {
-			// A malformed block is not automatically a problem: pages carry WebSite and
-			// Organization blocks too, and one bad one must not fail the run.
-			continue;
-		}
-		if (typeof parsed !== 'object' || parsed === null) continue;
-		if (!('@type' in parsed) || parsed['@type'] !== 'Event') continue;
+	/*
+	 * Core's reader, not a local one: it flattens `@graph` and top-level arrays, and it accepts
+	 * the `Event` subtypes — `MusicEvent`, `TheaterEvent` — that a literal `'Event'` test misses.
+	 */
+	for (const parsed of jsonLdNodes(html)) {
+		if (!isEventNode(parsed)) continue;
 
 		const result = eventSchema.safeParse(parsed);
 		if (result.success) {
