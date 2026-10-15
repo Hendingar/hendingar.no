@@ -30,6 +30,8 @@
 		"./fixture": "./src/fixture.ts",
 		"./handball": "./src/handball.ts",
 		"./gone-upstream": "./src/gone-upstream.ts",
+		"./ingest-run": "./src/ingest-run.ts",
+		"./ingest-cli": "./src/ingest-cli.ts",
 		"./weekly-hours": "./src/weekly-hours.ts",
 		"./trail": "./src/trail.ts",
 		"./public-event": "./src/public-event.ts"
