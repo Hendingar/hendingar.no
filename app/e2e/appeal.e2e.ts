@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { submitDeclined } from './declined-submission.ts';
+import { submitDeclined } from './sending.ts';
 
 /**
  * The appeal.

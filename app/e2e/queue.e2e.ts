@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { submitDeclined } from './declined-submission.ts';
+import { submitDeclined } from './sending.ts';
 
 /**
  * The queue, and the loop it exists to close.
