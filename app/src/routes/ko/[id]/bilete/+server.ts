@@ -28,8 +28,10 @@ import type { RequestHandler } from './$types';
  *   This is the whole reason the outcome exists: an importer copies what a calendar publishes, and
  *   half those rows have no image, while the person who walked past the poster does.
  *
- * The browser sends a cropped, re-encoded JPEG. The crop box comes from the model that read the
- * poster; cropping there rather than here keeps image processing out of the server entirely.
+ * The browser sends two re-encoded JPEGs: the card's crop, and the whole picture it was cut from,
+ * because the event page has to show all of a poster — its small print is the event's details.
+ * The crop box comes from the model that read the poster; cropping there rather than here keeps
+ * image processing out of the server entirely.
  */
 export const POST: RequestHandler = async (event) => {
 	const { params, request } = event;
@@ -44,19 +46,7 @@ export const POST: RequestHandler = async (event) => {
 		error(403, 'Denne hendinga er ikkje di.');
 	}
 
-	const body = new Uint8Array(await request.arrayBuffer());
-	if (body.byteLength === 0) error(400, 'Tomt bilete.');
-	if (body.byteLength > MAX_POSTER_BYTES) error(413, 'Biletet er for stort.');
-	/*
-	 * A JPEG, checked by its own first bytes rather than by what the request claims.
-	 *
-	 * `content-type` is whatever the caller typed. This is the only thing standing between the
-	 * container and somebody storing an arbitrary file at a public URL on our domain.
-	 */
-	if (!(body[0] === 0xff && body[1] === 0xd8 && body[2] === 0xff)) {
-		error(415, 'Biletet må vere ein JPEG.');
-	}
-
+	const { thumb, whole } = await readImages(request);
 	const database = db();
 	const [submission] = await database
 		.select({
@@ -125,7 +115,8 @@ export const POST: RequestHandler = async (event) => {
 	 * URL. Named this way a blob is unique, is traceable to the row that owns it without a lookup
 	 * table, and matches `event_contributions.submission_id`.
 	 */
-	const url = await storePoster(submission.id, body);
+	const url = await storePoster(submission.id, thumb);
+	const wholeUrl = whole ? await storePoster(submission.id, whole, 'whole') : null;
 
 	/*
 	 * The claim is taken in the WHERE clause, not in the check above.
@@ -138,6 +129,7 @@ export const POST: RequestHandler = async (event) => {
 		.update(events)
 		.set({
 			posterUrl: url,
+			posterWholeUrl: wholeUrl,
 			/*
 			 * Rights are verified in the only sense that matters here: the person who took the
 			 * photograph chose to send it to us for this purpose. That is a stronger claim than we
@@ -181,3 +173,42 @@ export const POST: RequestHandler = async (event) => {
 
 	return json({ posterUrl: url });
 };
+
+/**
+ * The two pictures, from either shape of request.
+ *
+ * `multipart/form-data` with `thumb` and `whole` is what the form sends. A bare JPEG body is the
+ * crop alone — what every browser sent before the whole picture was kept, and what a page loaded
+ * before a deploy still sends after it. That one gets a card and no whole poster, as before.
+ */
+async function readImages(
+	request: Request
+): Promise<{ thumb: Uint8Array; whole: Uint8Array | null }> {
+	if (!request.headers.get('content-type')?.startsWith('multipart/form-data')) {
+		return { thumb: checkedJpeg(new Uint8Array(await request.arrayBuffer())), whole: null };
+	}
+
+	const form = await request.formData().catch(() => error(400, 'Kunne ikkje lese biletet.'));
+	const thumb = form.get('thumb');
+	const whole = form.get('whole');
+	if (!(thumb instanceof File)) error(400, 'Tomt bilete.');
+	return {
+		thumb: checkedJpeg(new Uint8Array(await thumb.arrayBuffer())),
+		whole: whole instanceof File ? checkedJpeg(new Uint8Array(await whole.arrayBuffer())) : null
+	};
+}
+
+function checkedJpeg(body: Uint8Array): Uint8Array {
+	if (body.byteLength === 0) error(400, 'Tomt bilete.');
+	if (body.byteLength > MAX_POSTER_BYTES) error(413, 'Biletet er for stort.');
+	/*
+	 * A JPEG, checked by its own first bytes rather than by what the request claims.
+	 *
+	 * `content-type` is whatever the caller typed. This is the only thing standing between the
+	 * container and somebody storing an arbitrary file at a public URL on our domain.
+	 */
+	if (!(body[0] === 0xff && body[1] === 0xd8 && body[2] === 0xff)) {
+		error(415, 'Biletet må vere ein JPEG.');
+	}
+	return body;
+}

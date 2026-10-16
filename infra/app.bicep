@@ -140,6 +140,17 @@ resource app 'Microsoft.App/containerApps@2024-03-01' = {
               value: '1'
             }
             {
+              /*
+               * adapter-node refuses any request body over 512 KB unless told otherwise, and two
+               * things here send a whole photographed poster: the photo read (as base64) and the
+               * poster upload, which carries the 1600px original beside the card's crop so the
+               * event page can show all of it. Each image is capped at 2 MB by the code that
+               * receives it; this only has to let a request carrying them arrive.
+               */
+              name: 'BODY_SIZE_LIMIT'
+              value: '5M'
+            }
+            {
               // Empty is a supported state, not a misconfiguration — src/env.ts treats '' as
               // unset and the UI hides the photo shortcut rather than offering a dead button.
               name: 'VERIFIER_URL'

@@ -137,3 +137,30 @@ test('related events are server-rendered, and tapping one shows THAT event', asy
 	await expect(page).toHaveURL(/\/hending\/\d+-/);
 	await expect(page.locator('h1.ev__h')).toHaveText(new RegExp(`^${literal(next)}$`, 'i'));
 });
+
+test('a submitted poster is shown whole on its page, not as the card crop', async ({ page }) => {
+	/*
+	 * A photographed poster is the event's details — the date, the venue, the line-up — and a
+	 * card's 16:10 band of it cuts most of them away. That band was all we ever stored, so the
+	 * page could only show it. The seed's approved photo submission carries both files.
+	 */
+	await page.goto('/hendingar?kjelde=innsendt');
+	await page
+		.getByRole('link', { name: /Bygdekino/i })
+		.first()
+		.click();
+	await expect(page).toHaveURL(/\/hending\/\d+/);
+
+	const poster = page.locator('img.ev__poster');
+	await expect(poster).toHaveAttribute('src', '/seed-poster-heile.svg');
+	// One file, not a ladder: a srcset here would let the browser pick the crop back up.
+	await expect(poster).not.toHaveAttribute('srcset');
+
+	// And drawn whole — portrait in, portrait out, nothing cut by the box it sits in.
+	const fits = await poster.evaluate((img: HTMLImageElement) => {
+		const style = getComputedStyle(img);
+		return { fit: style.objectFit, ratio: img.naturalHeight / img.naturalWidth };
+	});
+	expect(fits.fit).toBe('contain');
+	expect(fits.ratio).toBeGreaterThan(1);
+});

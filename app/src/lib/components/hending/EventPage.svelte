@@ -344,13 +344,18 @@
 						— and two columns of `1.6fr 1fr` above it. So the poster is 92vw on a phone,
 						peaks at 831px there, and settles at 758px once the shell stops growing.
 						Widest it is ever painted: 832 CSS pixels, 1664 on a 2× screen.
+
+						A submitted poster shows its whole picture, not the card's crop of it: the
+						crop is a 16:10 band, and the rest of a photographed poster is where the date,
+						the venue and the line-up are. `object-fit: contain` below then shows all of
+						it, letterboxed, however tall it is.
 					-->
 					<img
 						class="ev__poster vt-morph vt-morph--poster"
 						style:--vt-name="event-poster-{event.id}"
-						src={event.posterUrl}
-						srcset={event.posterSrcset}
-						sizes={event.posterSrcset
+						src={event.posterWholeUrl ?? event.posterUrl}
+						srcset={event.posterWholeUrl ? undefined : event.posterSrcset}
+						sizes={!event.posterWholeUrl && event.posterSrcset
 							? '(width < 56.5rem) 92vw, (width < 88rem) 56vw, 760px'
 							: undefined}
 						alt={`Plakat for ${event.title}`}

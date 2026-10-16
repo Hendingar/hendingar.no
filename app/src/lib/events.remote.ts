@@ -1231,6 +1231,8 @@ export const getEvent = query(z.number().int().positive(), async (id) => {
 			endsAt: events.endsAt,
 			posterUrl: events.posterUrl,
 			posterSrcset: events.posterSrcset,
+			// The whole of a submitted poster, where `posterUrl` is only the card's crop of it.
+			posterWholeUrl: events.posterWholeUrl,
 			trail: events.trail,
 			// Decides what a shared link shows: a poster we may redraw goes into our own card, any
 			// other is pointed at where it already lives. See `shareImage` on the event page.

@@ -38,7 +38,7 @@
 	import { describeFields } from '@hendingar/core/contribution';
 	import { ensureClientId, existingClientId } from '../../client-id.ts';
 	import { claimTypedBeforeHydration } from '../../typed-before-hydration.ts';
-	import { cropToThumbnail, type CapturedImage } from '../../poster.ts';
+	import { cropToThumbnail, wholeImageBlob, type CapturedImage } from '../../poster.ts';
 	import { SvelteSet } from 'svelte/reactivity';
 	import { photoFilledFields } from '../../provenance.ts';
 	import PhotoCapture from './PhotoCapture.svelte';
@@ -359,10 +359,17 @@
 					posterState = 'skipped';
 					return;
 				}
+				/*
+				 * The crop for cards, and the whole picture for the event page — a poster's small
+				 * print is the event's details, and the crop is exactly what cuts it off.
+				 */
+				const body = new FormData();
+				body.set('thumb', blob, 'thumb.jpg');
+				if (posterBase64) body.set('whole', wholeImageBlob(posterBase64), 'whole.jpg');
 				const response = await fetch(`/ko/${result.eventId}/bilete`, {
 					method: 'POST',
-					headers: { 'content-type': 'image/jpeg', 'x-client-id': ensureClientId() },
-					body: blob
+					headers: { 'x-client-id': ensureClientId() },
+					body
 				});
 				posterState = response.ok ? 'saved' : 'skipped';
 				// The card on the verdict was drawn before the picture landed; draw it again with it.

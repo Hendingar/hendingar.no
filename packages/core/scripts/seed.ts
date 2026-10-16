@@ -546,6 +546,13 @@ const submissionSeeds = [
 		status: 'published' as const,
 		submissionOutcome: 'approved' as const,
 		submissionMethod: 'photo' as const,
+		/*
+		 * A kept photograph, in both of the shapes one is stored in: the card's 16:10 crop, and
+		 * the whole picture the event page shows instead. Without the second, nothing in the seed
+		 * could tell an event page drawing the crop from one drawing the poster.
+		 */
+		posterUrl: POSTER,
+		posterWholeUrl: '/seed-poster-heile.svg',
 		verificationNotes:
 			'Alle avgjerande sjekkar gjekk gjennom. Ingen kjelde-URL oppgitt, så vi kunne ikkje stadfeste hendinga andre stader. Det åleine stoppar henne ikkje.'
 	},

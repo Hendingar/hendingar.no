@@ -2,7 +2,8 @@
  * The image somebody sends in, on its way to becoming a card thumbnail — all of it in the browser.
  *
  * Two steps live here. `downscaleForUpload` shrinks and re-encodes what came off the phone;
- * `cropToThumbnail` cuts the part worth keeping once the event has been approved.
+ * `cropToThumbnail` cuts the card's band out of it once the event has been approved. Both are
+ * uploaded: the crop for cards, the whole picture for the event page.
  *
  * The crop box comes from the model that looked at the image — it knows where the picture is and
  * where the small print is. Applying it here rather than on the server means no image library in
@@ -56,6 +57,22 @@ export async function downscaleForUpload(file: File): Promise<CapturedImage> {
 
 	const dataUrl = canvas.toDataURL('image/jpeg', CAPTURE_QUALITY);
 	return { base64: dataUrl.split(',')[1] ?? '', mediaType: 'image/jpeg', dataUrl };
+}
+
+/**
+ * The captured picture itself, as a file to upload beside its crop.
+ *
+ * The crop is what a card shows; this is what the event page shows, because a photographed
+ * poster's small print — the date, the venue, who is playing — is the part a crop cuts away.
+ * Decoded from the base64 we already hold rather than fetched from the data URL: it is the same
+ * bytes `downscaleForUpload` produced, metadata already stripped, and `fetch('data:…')` is one
+ * Content-Security-Policy change away from failing silently.
+ */
+export function wholeImageBlob(base64: string): Blob {
+	const binary = atob(base64);
+	const bytes = new Uint8Array(binary.length);
+	for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+	return new Blob([bytes], { type: 'image/jpeg' });
 }
 
 /** Wider than tall, because an event card is. Matches the aspect the tiles reserve. */
