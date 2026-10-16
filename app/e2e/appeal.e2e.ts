@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { submitDeclined } from './declined-submission.ts';
 
 /**
  * The appeal.
@@ -13,14 +14,7 @@ import { expect, test } from '@playwright/test';
  */
 
 async function declinedSubmission(page: import('@playwright/test').Page) {
-	await page.goto('/send-inn');
-	await page.locator('#title').fill('Fiskefestival i Vinsen');
-	await page.locator('#category').selectOption('festival');
-	await page.locator('#date').fill('2027-05-19');
-	await page.locator('#startTime').fill('11:00');
-	await page.locator('#venueName').fill('Vinsen59');
-	await page.getByRole('button', { name: /Send inn hendinga/ }).click();
-	await page.waitForSelector('.verdict', { timeout: 20_000 });
+	await submitDeclined(page, 'Fiskefestival i Vinsen');
 	await page.goto('/ko');
 	await page.waitForSelector('.card', { timeout: 8000 });
 }

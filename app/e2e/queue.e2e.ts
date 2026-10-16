@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { submitDeclined } from './declined-submission.ts';
 
 /**
  * The queue, and the loop it exists to close.
@@ -9,22 +10,6 @@ import { expect, test } from '@playwright/test';
  *
  * Per-browser, so each test's context is its own account without anyone logging in.
  */
-
-async function submit(
-	page: import('@playwright/test').Page,
-	title: string,
-	extra?: () => Promise<void>
-) {
-	await page.goto('/send-inn');
-	await page.locator('#title').fill(title);
-	await page.locator('#category').selectOption('festival');
-	await page.locator('#date').fill('2027-05-19');
-	await page.locator('#startTime').fill('11:00');
-	await page.locator('#venueName').fill('Vinsen59');
-	await extra?.();
-	await page.getByRole('button', { name: /Send inn hendinga/ }).click();
-	await page.waitForSelector('.verdict', { timeout: 20_000 });
-}
 
 test('an empty queue says so rather than showing an empty list', async ({ page }) => {
 	await page.goto('/ko');
@@ -38,7 +23,7 @@ test('a submission that did not pass appears in the queue, with the reason', asy
 	await page.goto('/send-inn');
 	await expect(page.locator('nav a[href="/ko"]')).toHaveCount(0);
 
-	await submit(page, 'Fiskefestival i Vinsen');
+	await submitDeclined(page, 'Fiskefestival i Vinsen');
 	await expect(page.locator('.verdict__head')).toHaveAttribute('data-outcome', 'declined');
 
 	await page.goto('/ko');
@@ -53,7 +38,7 @@ test('a submission that did not pass appears in the queue, with the reason', asy
 });
 
 test('the revise link opens the form as a revision of that submission', async ({ page }) => {
-	await submit(page, 'Fiskefestival i Vinsen');
+	await submitDeclined(page, 'Fiskefestival i Vinsen');
 	await page.goto('/ko');
 
 	const href = await page.locator('.card__actions a').first().getAttribute('href');
@@ -76,7 +61,7 @@ test('the revise link opens the form as a revision of that submission', async ({
  * rejection they had just read, with no form anywhere on the page.
  */
 test('following the revise link lands on a form, not on the verdict again', async ({ page }) => {
-	await submit(page, 'Fiskefestival i Vinsen');
+	await submitDeclined(page, 'Fiskefestival i Vinsen');
 
 	// Client-side all the way: the nav link to the queue, then the queue's own revise link.
 	await page.locator('nav a[href="/ko"]').first().click();
@@ -91,7 +76,7 @@ test('following the revise link lands on a form, not on the verdict again', asyn
 test('the form is usable again after a submission, without a reload', async ({ page }) => {
 	// The same bug through its other door, and the worse one: the nav's own "Send inn" link left
 	// the verdict on screen and no form at all, so a second event could not be sent.
-	await submit(page, 'Fiskefestival i Vinsen');
+	await submitDeclined(page, 'Fiskefestival i Vinsen');
 	await page.locator('nav a[href="/send-inn"]').first().click();
 
 	await expect(page.locator('.verdict')).toHaveCount(0);
@@ -116,7 +101,7 @@ test('a revision says what stopped it, at the top and at the field', async ({ pa
 	 * — and `VERIFICATION_CHECK_FIELDS` in core says that check reads `sourceUrl`. The assertion
 	 * is that the reason turns up beside *that* field, not merely somewhere on the page.
 	 */
-	await submit(page, 'Fiskefestival i Vinsen');
+	await submitDeclined(page, 'Fiskefestival i Vinsen');
 	await page.goto('/ko');
 	const href = await page.locator('.card__actions a').first().getAttribute('href');
 	await page.goto(href!);
@@ -152,7 +137,7 @@ test('a revision opens filled in, so nothing has to be retyped', async ({ page }
 	 * and the fields knew nothing, so correcting one wrong date meant retyping the other ten. That
 	 * is the kind of friction that makes people abandon the loop rather than use it.
 	 */
-	await submit(page, 'Fiskefestival i Vinsen');
+	await submitDeclined(page, 'Fiskefestival i Vinsen');
 	await page.goto('/ko');
 	const href = await page.locator('.card__actions a').first().getAttribute('href');
 
@@ -167,7 +152,7 @@ test('a revision opens filled in, so nothing has to be retyped', async ({ page }
 });
 
 test('one browser cannot read back another’s draft', async ({ page, context }) => {
-	await submit(page, 'Fiskefestival i Vinsen');
+	await submitDeclined(page, 'Fiskefestival i Vinsen');
 	await page.goto('/ko');
 	const href = await page.locator('.card__actions a').first().getAttribute('href');
 
@@ -186,7 +171,7 @@ test('revising replaces the submission instead of stacking another draft', async
 	 * and the second attempt is flagged as a duplicate of the first — so the queue fills up with
 	 * drafts of one event that can never get out.
 	 */
-	await submit(page, 'Fiskefestival i Vinsen');
+	await submitDeclined(page, 'Fiskefestival i Vinsen');
 	await page.goto('/ko');
 	await expect(page.locator('.card')).toHaveCount(1);
 
@@ -206,7 +191,7 @@ test('revising replaces the submission instead of stacking another draft', async
 });
 
 test('one browser never sees another browser’s submissions', async ({ page, context }) => {
-	await submit(page, 'Fiskefestival i Vinsen');
+	await submitDeclined(page, 'Fiskefestival i Vinsen');
 	await page.goto('/ko');
 	await expect(page.locator('.card')).toHaveCount(1);
 
