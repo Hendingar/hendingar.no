@@ -1,6 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 import { VERIFICATION_CHECK_LABELS, VERIFICATION_CHECKS } from '@hendingar/core/verification';
 import { CHECK_COUNT_WORD_LEADING, PIPELINE } from '../src/lib/checks.ts';
+import { sendOnceIdentified } from './sending.ts';
 
 /**
  * The submission page. Two things are load-bearing and both are easy to break silently:
@@ -485,7 +486,8 @@ test('a verdict gets an address, and reloading it still shows the verdict', asyn
 	await page.locator('#date').fill('2027-05-19');
 	await page.locator('#startTime').fill('11:00');
 	await page.locator('#venueName').fill('Vinsen');
-	await page.getByRole('button', { name: /Send inn hendinga/ }).click();
+	// The reload below finds the verdict by this browser's id, so the form must be carrying it.
+	await sendOnceIdentified(page);
 
 	await expect(page.locator('.verdict')).toBeVisible();
 	await expect(page).toHaveURL(/\/send-inn\/kvittering\/\d+$/);
@@ -494,10 +496,10 @@ test('a verdict gets an address, and reloading it still shows the verdict', asyn
 	 * The whole point: this is a real route, not only a decorated address bar.
 	 *
 	 * Given its own timeout because the assertion after a reload is not the same kind of wait as
-	 * the one before it. Everything above is already in the document; this one has to mount a
-	 * client-rendered page, read the browser id, and complete a round trip to the database before
-	 * anything appears. Playwright's five-second default was enough locally and on the PR, and not
-	 * enough on a loaded runner — it flaked once on main against a tree that had just passed.
+	 * the one before it: this one has to mount a client-rendered page, read the browser id, and
+	 * complete a round trip to the database before anything appears. The flake it was added for
+	 * was not that wait, though — it was a send before hydration, stored with no sender, which no
+	 * timeout can find. `sendOnceIdentified` above is what closed it.
 	 */
 	await page.reload();
 	await expect(page.locator('.verdict')).toBeVisible({ timeout: 20_000 });
