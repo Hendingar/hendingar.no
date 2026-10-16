@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { CAPTURE_MAX_EDGE, THUMB_ASPECT, cropToThumbnail, downscaleForUpload } from './poster.ts';
+import {
+	CAPTURE_MAX_EDGE,
+	THUMB_ASPECT,
+	cropToThumbnail,
+	downscaleForUpload,
+	wholeImageBlob
+} from './poster.ts';
 
 /**
  * The canvas path, in a real browser.
@@ -126,5 +132,22 @@ describe('downscaleForUpload', () => {
 		const bitmap = await createImageBitmap(await (await fetch(image.dataUrl)).blob());
 		expect(bitmap.width).toBe(300);
 		expect(bitmap.height).toBe(200);
+	});
+});
+
+describe('wholeImageBlob', () => {
+	it('uploads the whole poster, not the band the card shows', async () => {
+		/*
+		 * The point of the second file: a portrait poster arrives on the event page portrait,
+		 * with its small print. A crop here would reproduce the bug it exists to fix.
+		 */
+		const source = await (await fetch(await tallTestImage())).blob();
+		const image = await downscaleForUpload(new File([source], 'plakat.png', { type: 'image/png' }));
+		const blob = wholeImageBlob(image.base64);
+		expect(blob.type).toBe('image/jpeg');
+
+		const { bitmap } = await decode(blob);
+		expect(bitmap.width).toBe(400);
+		expect(bitmap.height).toBe(1000);
 	});
 });

@@ -204,6 +204,13 @@
       "when": 1791894898671,
       "tag": "0028_medical_vindicator",
       "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "7",
+      "when": 1792128283849,
+      "tag": "0029_serious_carnage",
+      "breakpoints": true
     }
   ]
 }

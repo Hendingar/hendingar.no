@@ -351,6 +351,19 @@ export const events = pgTable(
 		 * candidate every time — see EventThumb, which owns the measured `sizes` for a card.
 		 */
 		posterSrcset: text('poster_srcset'),
+		/**
+		 * The whole picture somebody sent in, when `poster_url` is only the card's crop of it.
+		 *
+		 * Submissions are the one place the two differ. A card wants a 16:10 band chosen by the
+		 * model, and that crop is what `poster_url` holds, because every card reads it. But a
+		 * photographed poster carries the date, the venue and the line-up in its small print, and
+		 * the event page showed the same band — the half of the poster with the details in it was
+		 * simply never stored. The event page prefers this column; nothing else reads it.
+		 *
+		 * Null for every imported row: an importer's `poster_url` is already the source's whole
+		 * image. Additive and nullable, per ADR 0010.
+		 */
+		posterWholeUrl: text('poster_whole_url'),
 		/** Do not re-host a poster whose rights are unverified (issue #3). */
 		posterRightsVerified: boolean('poster_rights_verified').notNull().default(false),
 		/**

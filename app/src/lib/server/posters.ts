@@ -21,8 +21,24 @@ export function posterStorageEnabled(): boolean {
 /** JPEG only. The browser re-encodes before sending, so this is the one type we ever receive. */
 const CONTENT_TYPE = 'image/jpeg';
 
-/** Comfortably above a cropped, downscaled thumbnail and far below anything worth storing. */
+/**
+ * Comfortably above the whole picture the browser sends — 1600px on its longest edge, see
+ * `CAPTURE_MAX_EDGE` — and far below anything worth storing. Applies to each of the two files.
+ */
 export const MAX_POSTER_BYTES = 2 * 1024 * 1024;
+
+/**
+ * The two files one submission can keep: the card's crop, and the picture it was cut from.
+ *
+ * Suffixes on one name rather than two names, so both stay traceable to the submission that sent
+ * them and `removePoster` can clean up both without a lookup.
+ */
+export type PosterVariant = 'thumb' | 'whole';
+const VARIANTS: readonly PosterVariant[] = ['thumb', 'whole'];
+
+function blobName(eventId: number, variant: PosterVariant): string {
+	return variant === 'thumb' ? `${eventId}.jpg` : `${eventId}-heile.jpg`;
+}
 
 let container: ContainerClient | null = null;
 
@@ -51,8 +67,12 @@ function client(): ContainerClient {
  * and so a blob is traceable to the row that owns it without a lookup table. Not a random name:
  * an orphaned blob nobody can attribute is the thing that makes a bucket impossible to clean up.
  */
-export async function storePoster(eventId: number, jpeg: Uint8Array): Promise<string> {
-	const blob = client().getBlockBlobClient(`${eventId}.jpg`);
+export async function storePoster(
+	eventId: number,
+	jpeg: Uint8Array,
+	variant: PosterVariant = 'thumb'
+): Promise<string> {
+	const blob = client().getBlockBlobClient(blobName(eventId, variant));
 	await blob.uploadData(jpeg, {
 		blobHTTPHeaders: {
 			blobContentType: CONTENT_TYPE,
@@ -73,5 +93,9 @@ export async function storePoster(eventId: number, jpeg: Uint8Array): Promise<st
  */
 export async function removePoster(eventId: number): Promise<void> {
 	if (!posterStorageEnabled()) return;
-	await client().getBlockBlobClient(`${eventId}.jpg`).deleteIfExists();
+	await Promise.all(
+		VARIANTS.map((variant) =>
+			client().getBlockBlobClient(blobName(eventId, variant)).deleteIfExists()
+		)
+	);
 }

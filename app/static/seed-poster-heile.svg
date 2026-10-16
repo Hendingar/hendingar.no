@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  The whole of a seeded photographed poster, where seed-poster.svg stands in for the card's crop.
+
+  Portrait, with the details at the bottom, because that is the shape of the bug it guards: a
+  16:10 crop of a real poster keeps the artwork and cuts away the date and the venue. The e2e
+  spec asserts the event page draws THIS file. Same-origin for the same reason as the other one.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 600" width="400" height="600" role="img" aria-label="Plakat">
+  <rect width="400" height="600" fill="#101a3d" />
+  <circle cx="300" cy="140" r="120" fill="#ff8f6b" opacity="0.55" />
+  <circle cx="110" cy="250" r="90" fill="#f5c26b" opacity="0.45" />
+  <text x="28" y="470" font-family="Georgia, serif" font-size="30" fill="#fdf6ec">Bygdekino</text>
+  <text x="28" y="520" font-family="Georgia, serif" font-size="20" fill="#fdf6ec">Laurdag kl. 19 · Grendahuset</text>
+</svg>
