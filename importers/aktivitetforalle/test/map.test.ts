@@ -51,6 +51,7 @@ function row(overrides: Partial<UpstreamEvent> & { event_id: number; event_title
 		event_thumbnail: null,
 		event_week_interval: null,
 		event_age_type: null,
+		event_external_provider: null,
 		...overrides
 	};
 }

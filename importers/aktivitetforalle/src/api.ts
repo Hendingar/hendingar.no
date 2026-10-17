@@ -107,7 +107,16 @@ const eventSchema = z.object({
 	event_age_from: z.union([z.string(), z.number()]).nullish(),
 	event_age_to: z.union([z.string(), z.number()]).nullish(),
 	/** References /api/v1/organizers. `event_organizer_name` is empty on every row that has one. */
-	organizer_id: z.union([z.string(), z.number()]).nullish()
+	organizer_id: z.union([z.string(), z.number()]).nullish(),
+	/**
+	 * Where the portal copied the row from, or null for a row somebody typed in on the portal.
+	 *
+	 * `eBillett` on every mirrored row seen so far — Stord kulturhus' and Bømlo kulturhus' ticket
+	 * accounts, which we also collect directly — with the ticket id in `event_external_id`. The null
+	 * rows are the local clubs and groups, which no other source has; see organisers-report.ts.
+	 */
+	event_external_provider: nullish,
+	event_external_id: z.union([z.string(), z.number()]).nullish()
 });
 
 export type UpstreamEvent = z.infer<typeof eventSchema>;
@@ -197,7 +206,7 @@ const HEADERS = {
 	accept: 'application/json'
 };
 
-async function getJson(url: string): Promise<unknown> {
+export async function getJson(url: string): Promise<unknown> {
 	/*
 	 * Sixty seconds, where every other importer uses thirty.
 	 *
