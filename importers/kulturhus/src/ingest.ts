@@ -6,7 +6,9 @@ import {
 	type IngestResult,
 	type RunOptions
 } from '@hendingar/core/ingest-run';
+import { sql } from 'drizzle-orm';
 import { venues } from '@hendingar/core/schema';
+import { knownVenueMunicipality } from '@hendingar/core/venue-municipalities';
 import {
 	INSTANCES,
 	extractEvents,
@@ -48,18 +50,29 @@ function upsertSource(db: Db, instance: KulturhusInstance) {
 
 async function venueIdFor(db: Db, mapped: MappedEvent, instance: KulturhusInstance) {
 	if (!mapped.venueName || !mapped.venueSlug) return null;
+	// The programme names rooms, never where they are. See venue-municipalities.ts.
+	const municipality = knownVenueMunicipality(instance.slug, mapped.venueName);
 	const [row] = await db
 		.insert(venues)
 		.values({
 			name: mapped.venueName,
 			slug: mapped.venueSlug,
-			municipality: null,
+			municipality,
 			timezone: instance.timezone,
 			// No coordinates anywhere in MEC's output. Flagged rather than dropped, so an
 			// unplaceable venue is visible to the geocoder instead of vanishing.
 			geocodeStatus: 'pending'
 		})
-		.onConflictDoUpdate({ target: venues.slug, set: { name: mapped.venueName } })
+		.onConflictDoUpdate({
+			target: venues.slug,
+			set: {
+				name: mapped.venueName,
+				// Fill-only: a row another source already placed keeps what it has.
+				...(municipality
+					? { municipality: sql`coalesce(${venues.municipality}, ${municipality})` }
+					: {})
+			}
+		})
 		.returning({ id: venues.id });
 	return row?.id ?? null;
 }

@@ -18,6 +18,7 @@
 		"./consolidate": "./src/consolidate.ts",
 		"./similarity": "./src/similarity.ts",
 		"./venue-aliases": "./src/venue-aliases.ts",
+		"./venue-municipalities": "./src/venue-municipalities.ts",
 		"./submissions": "./src/submissions.ts",
 		"./directory": "./src/directory.ts",
 		"./text": "./src/text.ts",
