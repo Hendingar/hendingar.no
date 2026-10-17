@@ -1,3 +1,4 @@
+import { sql } from 'drizzle-orm';
 import { createDb, type Db } from '@hendingar/core/db';
 import {
 	ingestEach,
@@ -26,6 +27,7 @@ import {
 	type MappedEvent
 } from './map.ts';
 import { slugifyVenue } from '@hendingar/core/slug';
+import { knownVenueMunicipality } from '@hendingar/core/venue-municipalities';
 
 /**
  * Deterministic: fetch → parse → validate → upsert. No language model touches this path.
@@ -66,20 +68,22 @@ function upsertSource(db: Db, site: AfaSite) {
 
 async function venueIdFor(db: Db, mapped: MappedEvent, site: AfaSite) {
 	if (!mapped.venueName || !mapped.venueSlug) return null;
+	const municipality = knownVenueMunicipality(site.slug, mapped.venueName);
 	const [row] = await db
 		.insert(venues)
 		.values({
 			name: mapped.venueName,
 			slug: mapped.venueSlug,
 			/*
-			 * Still null, and the address does not change that.
+			 * Not read from the address.
 			 *
 			 * `location_city` is a post town — "Bremnes", "Finnås" — and a post town is not a
 			 * municipality: both of those are in Bømlo. It belongs to the postal address, which is
 			 * where it now goes, and writing it here would be wrong in a way nothing downstream
 			 * could detect. The same reasoning the TEC and allevents importers already record.
+			 * What is known instead is written down per venue, in venue-municipalities.ts.
 			 */
-			municipality: null,
+			municipality,
 			address: mapped.venueAddress.street,
 			postalCode: mapped.venueAddress.postalCode,
 			timezone: site.timezone,
@@ -91,6 +95,10 @@ async function venueIdFor(db: Db, mapped: MappedEvent, site: AfaSite) {
 			target: venues.slug,
 			set: {
 				name: mapped.venueName,
+				// Fill-only: a row another source already placed keeps what it has.
+				...(municipality
+					? { municipality: sql`coalesce(${venues.municipality}, ${municipality})` }
+					: {}),
 				/*
 				 * Only ever filled in, never blanked.
 				 *
