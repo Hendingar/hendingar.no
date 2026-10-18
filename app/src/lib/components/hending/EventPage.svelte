@@ -176,11 +176,31 @@
 	 * The host, not the full URL: which sources people actually go to is the useful shape, and the
 	 * path would be one more thing joinable back to a reader. Never blocks the navigation.
 	 */
-	function outbound(url: string | null, kind: 'cta' | 'source'): void {
+	function outbound(url: string | null, kind: 'cta' | 'source' | 'poster'): void {
 		const target = safeHttpUrl(url);
 		if (!target) return;
 		track('click', { link_domain: new URL(target).hostname, link_kind: kind, event_id: event.id });
 	}
+
+	/**
+	 * The poster at the largest size we know of, for a reader who wants to read it.
+	 *
+	 * A photographed poster carries the event's details in small print, and the page draws it
+	 * at most 34rem tall — legible on a laptop, not always on a phone. A submitted event keeps
+	 * the whole downscaled picture beside the card's crop, and an importer's `posterUrl` is the
+	 * source's original ahead of any resized rendition (see detskjer's `posterFrom`). Either way
+	 * this is the file worth opening, and it is a plain link: pinch-zoom on a phone, a new tab on
+	 * a laptop, and no JavaScript for a page that is read before it is hydrated.
+	 *
+	 * The scheme is checked because this is an href, not an `<img src>`: a `javascript:` URL in a
+	 * row written before the schema restricted it would run on tap. A site-relative path is ours
+	 * — the seed's posters are served from `static/` — and passes as it is.
+	 */
+	const posterOriginal = $derived.by(() => {
+		const url = event.posterWholeUrl ?? event.posterUrl;
+		if (!url) return null;
+		return url.startsWith('/') ? url : safeHttpUrl(url);
+	});
 
 	const canonical = $derived(
 		event.duplicateOfId !== null && event.duplicateOfTitle !== null
@@ -347,22 +367,41 @@
 
 						A submitted poster shows its whole picture, not the card's crop of it: the
 						crop is a 16:10 band, and the rest of a photographed poster is where the date,
-						the venue and the line-up are. `object-fit: contain` below then shows all of
-						it, letterboxed, however tall it is.
+						the venue and the line-up are. The image is drawn at its own shape — never
+						letterboxed into a full-width box, which read as the poster being masked —
+						and the whole thing is a link to the file itself, because the small print on
+						a poster is what a reader came for and a page-width rendering cannot always
+						show it. Opened in a new tab so the event page is still there to come back to.
 					-->
-					<img
-						class="ev__poster vt-morph vt-morph--poster"
-						style:--vt-name="event-poster-{event.id}"
-						src={event.posterWholeUrl ?? event.posterUrl}
-						srcset={event.posterWholeUrl ? undefined : event.posterSrcset}
-						sizes={!event.posterWholeUrl && event.posterSrcset
-							? '(width < 56.5rem) 92vw, (width < 88rem) 56vw, 760px'
-							: undefined}
-						alt={`Plakat for ${event.title}`}
-						loading="eager"
-						decoding="async"
-						referrerpolicy="no-referrer"
-					/>
+					{#snippet posterImage()}
+						<img
+							class="ev__poster vt-morph vt-morph--poster"
+							style:--vt-name="event-poster-{event.id}"
+							src={event.posterWholeUrl ?? event.posterUrl}
+							srcset={event.posterWholeUrl ? undefined : event.posterSrcset}
+							sizes={!event.posterWholeUrl && event.posterSrcset
+								? '(width < 56.5rem) 92vw, (width < 88rem) 56vw, 760px'
+								: undefined}
+							alt={`Plakat for ${event.title}`}
+							loading="eager"
+							decoding="async"
+							referrerpolicy="no-referrer"
+						/>
+					{/snippet}
+					{#if posterOriginal}
+						<a
+							class="ev__poster-link"
+							href={posterOriginal}
+							target="_blank"
+							rel="noopener noreferrer"
+							onclick={() => outbound(posterOriginal, 'poster')}
+						>
+							{@render posterImage()}
+							<span class="ev__poster-hint">Trykk for å sjå plakaten i full storleik</span>
+						</a>
+					{:else}
+						{@render posterImage()}
+					{/if}
 				{:else if handball}
 					<HandballTile id={event.id} match={handball} feature />
 				{:else if fixture}
@@ -783,13 +822,44 @@
 		gap: clamp(1rem, 3vw, 1.75rem);
 		min-inline-size: 0;
 	}
+	/*
+	 * Sized by the picture, not by the column.
+	 *
+	 * `inline-size: 100%` with a height cap put every poster in a column-wide box, and a portrait
+	 * poster — which a photographed one nearly always is — sat in the middle of it between two
+	 * navy bars, looking cropped when it was only letterboxed. With the width left `auto` the
+	 * box is the image's own shape: a replaced element whose height is capped scales its width
+	 * to match, so nothing is cut and nothing is padded. The cap itself follows the viewport,
+	 * so the whole poster is on screen at once and one tap away from full size.
+	 */
 	.ev__poster {
-		inline-size: 100%;
+		display: block;
+		inline-size: auto;
+		max-inline-size: 100%;
 		block-size: auto;
 		max-block-size: 34rem;
+		max-block-size: min(85svh, 48rem);
 		object-fit: contain;
 		background: var(--navy-900);
 		border: var(--rule) solid var(--peach-line);
+	}
+	.ev__poster-link {
+		display: grid;
+		justify-items: start;
+		gap: 0.4rem;
+		color: inherit;
+		text-decoration: none;
+	}
+	.ev__poster-hint {
+		font-family: var(--font-mono);
+		font-size: var(--step-micro);
+		letter-spacing: 0.16em;
+		text-transform: uppercase;
+		color: var(--peach-dim);
+	}
+	.ev__poster-link:hover .ev__poster-hint,
+	.ev__poster-link:focus-visible .ev__poster-hint {
+		text-decoration: underline;
 	}
 	/*
 	 * The caption under a borrowed painting.
