@@ -85,6 +85,11 @@
 			{:else}
 				<span class="row__n">{source.eventsUpcoming}</span>
 				<span class="row__unit">framover</span>
+				{#if source.activitiesWeekly > 0}
+					<!-- Not added to the number above: these have no date to be ahead of. -->
+					<span class="row__n row__n--weekly">{source.activitiesWeekly}</span>
+					<span class="row__unit">faste</span>
+				{/if}
 				<!-- Decorative: the number beside it says the same thing in words. -->
 				<span class="row__bar" aria-hidden="true">
 					<span class="row__fill" style:inline-size="{Math.max(share * 100, share ? 3 : 0)}%"
@@ -121,6 +126,13 @@
 							href="/hendingar?kjelde={encodeURIComponent(source.slug)}"
 						>
 							Sjå hendingane frå {source.name}
+						</a>
+					</span>
+				{:else if source.activitiesWeekly > 0}
+					<!-- Nothing dated, but a timetable: the activities live on /alltid-ope. -->
+					<span class="see">
+						<a class="btn btn--sm btn--solid" href="/alltid-ope">
+							Sjå dei faste aktivitetane frå {source.name}
 						</a>
 					</span>
 				{:else}
@@ -254,6 +266,10 @@
 	}
 	.row__n--none {
 		color: var(--peach-dim);
+	}
+	/* Second line, smaller: the dated count above stays the row's headline number. */
+	.row__n--weekly {
+		font-size: 0.9375rem;
 	}
 	.row__unit {
 		font-family: var(--font-mono);

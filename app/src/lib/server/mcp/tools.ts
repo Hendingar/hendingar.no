@@ -107,6 +107,7 @@ export type Catalogue = {
 			region: string | null;
 			kind: string;
 			eventsUpcoming: number;
+			activitiesWeekly: number;
 			runs: Array<{ startedAt: Date; status: string }>;
 		}>
 	>;
@@ -631,7 +632,7 @@ export function registerTools(server: McpServer, catalogue: Catalogue, origin: s
 		{
 			title: 'Where the events come from',
 			description:
-				'Every calendar hendingar.no collects from, with its own site, how many upcoming events it gives, and how its most recent collection went — the same record as hendingar.no/datasamling. Use it to credit a source, or to tell whether a calendar has gone quiet.',
+				'Every calendar hendingar.no collects from, with its own site, how many upcoming events and weekly activities it gives, and how its most recent collection went — the same record as hendingar.no/datasamling. Use it to credit a source, or to tell whether a calendar has gone quiet.',
 			inputSchema: z.object({}),
 			outputSchema: z.object({
 				sources: z.array(
@@ -642,6 +643,8 @@ export function registerTools(server: McpServer, catalogue: Catalogue, origin: s
 						region: z.string().nullable(),
 						kind: z.string(),
 						upcoming: z.number().int(),
+						/** Groups meeting on a timetable — `weekly_activities`. Not counted in `upcoming`. */
+						weeklyActivities: z.number().int(),
 						lastRun: z.object({ at: z.string(), status: z.string() }).nullable()
 					})
 				)
@@ -660,6 +663,7 @@ export function registerTools(server: McpServer, catalogue: Catalogue, origin: s
 						region: s.region,
 						kind: s.kind,
 						upcoming: s.eventsUpcoming,
+						weeklyActivities: s.activitiesWeekly,
 						lastRun: last ? { at: last.startedAt.toISOString(), status: last.status } : null
 					};
 				})

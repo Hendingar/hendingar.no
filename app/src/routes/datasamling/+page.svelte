@@ -54,6 +54,7 @@
 
 	const collected = data.sources.filter((s) => s.active && s.kind !== 'link');
 	const upcoming = data.sources.reduce((n, s) => n + s.eventsUpcoming, 0);
+	const weekly = data.sources.reduce((n, s) => n + s.activitiesWeekly, 0);
 	const latestRun = collected
 		.map((s) => s.lastRunAt)
 		.filter((d) => d !== null)
@@ -98,6 +99,10 @@
 		{/if}
 		<span class="status__sep" aria-hidden="true">·</span>
 		{upcoming} hendingar framover
+		{#if weekly > 0}
+			<span class="status__sep" aria-hidden="true">·</span>
+			<a href="/alltid-ope">{weekly} faste aktivitetar</a>
+		{/if}
 		{#if latestRun}
 			<span class="status__sep" aria-hidden="true">·</span>
 			sist henta

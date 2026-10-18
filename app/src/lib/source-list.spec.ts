@@ -20,6 +20,7 @@ function source(overrides: Partial<ListableSource> & { name: string }): Listable
 		scheduleCron: '0 5 * * *',
 		lastRunAt: today,
 		eventsUpcoming: 0,
+		activitiesWeekly: 0,
 		runs: [{ status: 'success' }],
 		...overrides
 	};
@@ -31,7 +32,9 @@ const yoga = source({ name: 'Flow Yoga Bømlo', slug: 'allevents-flow-yoga', eve
 const teater = source({ name: 'Bømlo Teater', kind: 'link', lastRunAt: null, runs: [] });
 const stopped = source({ name: 'Moster Amfi', lastRunAt: lastWeek, eventsUpcoming: 1 });
 const failed = source({ name: 'Gruo Pub', runs: [{ status: 'failed' }], eventsUpcoming: 2 });
-const all = [bibliotek, teater, yoga, kulturhus, stopped, failed];
+// Nothing dated, four weekly activities on /alltid-ope — the shape of a frivilligsentral.
+const sentral = source({ name: 'Stord Frivilligsentral', activitiesWeekly: 4 });
+const all = [bibliotek, teater, yoga, kulturhus, stopped, failed, sentral];
 
 const names = (rows: ListableSource[]) => rows.map((r) => r.name);
 
@@ -61,6 +64,7 @@ describe('listSources', () => {
 			'Bømlo folkebibliotek',
 			'Gruo Pub',
 			'Moster Amfi',
+			'Stord Frivilligsentral',
 			'Flow Yoga Bømlo',
 			'Bømlo Teater'
 		]);
@@ -89,6 +93,16 @@ describe('listSources', () => {
 		expect(names(listSources(all, { ...plain, vis: 'tomme' }, now))).toEqual(['Flow Yoga Bømlo']);
 		expect(names(listSources(all, { ...plain, vis: 'lenkje' }, now))).toEqual(['Bømlo Teater']);
 		expect(viewCounts(all, now)).toEqual({ tilsyn: 2, tomme: 1, lenkje: 1 });
+	});
+
+	it('does not call a calendar of weekly activities empty', () => {
+		/*
+		 * Stord Frivilligsentral showed "0 framover" and sat under "Ingenting framover" while its
+		 * four activities were live on /alltid-ope. Nothing dated is not the same as nothing.
+		 */
+		expect(names(listSources(all, { ...plain, vis: 'tomme' }, now))).not.toContain(
+			'Stord Frivilligsentral'
+		);
 	});
 });
 

@@ -1,4 +1,4 @@
-import { eq, gte, ilike, isNull, ne, or, and, sql } from 'drizzle-orm';
+import { eq, gte, ilike, isNotNull, isNull, ne, or, and, sql } from 'drizzle-orm';
 import type { AnyColumn, SQL } from 'drizzle-orm';
 import { events, organizers, sources, venues } from '@hendingar/core/schema';
 import { stillListedUpstream } from '@hendingar/core/gone-upstream';
@@ -54,6 +54,26 @@ export const listed = and(
 	isNull(events.duplicateOfId),
 	datedOnly
 );
+
+/**
+ * What `/alltid-ope` lists under "Faste aktivitetar": a group that meets on a weekly timetable and
+ * whose season has not ended.
+ *
+ * Said once because two pages count it: `/alltid-ope` lists these rows, and `/datasamling` tells a
+ * reader how many each source gives. A source whose calendar is nothing but weekly activities — a
+ * frivilligsentral — showed "0 framover" there, and sat under "Ingenting framover", while its four
+ * activities were live one page away.
+ */
+export function weeklyListed(now: Date) {
+	return and(
+		eq(events.status, 'published'),
+		stillListed,
+		isNull(events.duplicateOfId),
+		eq(events.kind, 'standing'),
+		isNotNull(events.weeklyHours),
+		gte(events.endsAt, now)
+	);
+}
 
 /** Not already over. A concert that started an hour ago and is still running belongs to today. */
 export function notOver(now: Date | SQL) {
