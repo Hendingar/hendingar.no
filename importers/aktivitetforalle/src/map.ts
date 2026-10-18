@@ -10,7 +10,7 @@ import {
 import { orNull, type FilterVocabulary, type UpstreamEvent, type UpstreamUpload } from './api.ts';
 import { activityUrl, eventUrl, listingUrl, type AfaSite } from './sites.ts';
 import { fromParts, type ParsedAddress } from '@hendingar/core/address';
-import { slugifyVenue } from '@hendingar/core/slug';
+import { venueSlugFor } from '@hendingar/core/venue-aliases';
 
 /**
  * Pure mapping: one portal row → our shape. No I/O, no clock, no randomness.
@@ -403,7 +403,8 @@ export function mapEvent(
 		startsAt,
 		endsAt,
 		venueName,
-		venueSlug: venueName ? slugifyVenue(venueName) : null,
+		// Keyed with the building where the room name is shared — see `venueSlugFor`.
+		venueSlug: venueName ? venueSlugFor(site.slug, venueName) : null,
 		/*
 		 * The portal keeps street, postnummer and town in three fields, and this importer was
 		 * dropping all three. `location.address` is required for Google's Event rich result, and

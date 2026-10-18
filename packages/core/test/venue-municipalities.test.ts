@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { VENUE_ALIASES } from '../src/venue-aliases.ts';
+import { venueSlugFor } from '../src/venue-aliases.ts';
+import { slugifyVenue } from '../src/slug.ts';
 import { VENUE_MUNICIPALITIES, knownVenueMunicipality } from '../src/venue-municipalities.ts';
 import { normaliseTitle } from '../src/similarity.ts';
 
@@ -11,27 +12,31 @@ describe('knownVenueMunicipality', () => {
 		expect(knownVenueMunicipality('stord-kulturhus', 'SMÅSALEN')).toBe('Stord');
 	});
 
-	it('leaves a room name shared with Bømlo unplaced', () => {
-		/*
-		 * `storsalen` and `biblioteket` are each one venue row holding events from both culture
-		 * houses. Placing the row in Stord would drop Bømlo's films and concerts out of the Bømlo
-		 * filter, so neither name may be listed for any source until the rows are split.
-		 */
-		for (const source of ['stord-kulturhus', 'stord-kino', 'stord-aktivitetforalle']) {
-			expect(knownVenueMunicipality(source, 'Storsalen'), source).toBeNull();
-			expect(knownVenueMunicipality(source, 'Biblioteket'), source).toBeNull();
-		}
+	it("places each building's Storsalen and Biblioteket in its own municipality", () => {
+		expect(knownVenueMunicipality('stord-kulturhus', 'Storsalen')).toBe('Stord');
+		expect(knownVenueMunicipality('bomlo-kino', 'Storsalen')).toBe('Bømlo');
+		expect(knownVenueMunicipality('stord-aktivitetforalle', 'Biblioteket')).toBe('Stord');
+		expect(knownVenueMunicipality('bomlo-aktivitetforalle', 'Biblioteket')).toBe('Bømlo');
 	});
 
-	it('never lists a name that a source in another municipality also writes', () => {
-		// The alias list knows which sources write which room names. A listed name that an alias
-		// places in a Bømlo building is the shared-row trap above, arriving by a new entry.
-		const bomloNames = new Set(
-			VENUE_ALIASES.filter((a) => /bømlo/i.test(a.place)).map((a) => normaliseTitle(a.name))
-		);
+	it('places a shared room name only where its source writes a row of its own', () => {
+		/*
+		 * The trap the split exists to remove. A source with no alias for "Storsalen" writes the
+		 * plain `storsalen` row, which both towns' unresolved events can land on. Placing it from
+		 * here would put half of them in the wrong municipality.
+		 */
 		for (const entry of VENUE_MUNICIPALITIES) {
-			if (entry.municipality === 'Bømlo') continue;
-			expect(bomloNames.has(normaliseTitle(entry.name)), entry.name).toBe(false);
+			const others = VENUE_MUNICIPALITIES.filter(
+				(other) =>
+					normaliseTitle(other.name) === normaliseTitle(entry.name) &&
+					other.municipality !== entry.municipality
+			);
+			if (others.length === 0) continue;
+			for (const source of entry.sources) {
+				expect(venueSlugFor(source, entry.name), `${source} ${entry.name}`).not.toBe(
+					slugifyVenue(entry.name)
+				);
+			}
 		}
 	});
 

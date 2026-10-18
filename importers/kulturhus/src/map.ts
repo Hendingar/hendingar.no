@@ -1,7 +1,7 @@
 import { zonedWallClockToInstant } from '@hendingar/core/datetime';
 import type { CategorySlug } from '@hendingar/core/taxonomy';
 import type { KulturhusInstance, UpstreamEvent, UpstreamTicket } from './api.ts';
-import { slugifyVenue } from '@hendingar/core/slug';
+import { venueSlugFor } from '@hendingar/core/venue-aliases';
 
 /**
  * Pure mapping: one showing → our shape. No I/O, no clock, no randomness.
@@ -246,7 +246,8 @@ export function mapTicket(
 		startsAt,
 		endsAt,
 		venueName,
-		venueSlug: slugifyVenue(venueName),
+		// Keyed with the building where the room name is shared — see `venueSlugFor`.
+		venueSlug: venueSlugFor(instance.slug, venueName),
 		description: parent.description?.trim() || null,
 		ctaUrl: safeUrl(ticket.link),
 		posterUrl: poster.url,
