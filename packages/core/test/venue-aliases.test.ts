@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { VENUE_ALIASES, resolveVenueName } from '../src/venue-aliases.ts';
+import { VENUE_ALIASES, resolveVenueName, venueSlugFor } from '../src/venue-aliases.ts';
 import { normaliseTitle } from '../src/similarity.ts';
 
 describe('resolveVenueName', () => {
@@ -87,5 +87,36 @@ describe('VENUE_ALIASES', () => {
 			expect(normaliseTitle(alias.name)).not.toBe('');
 			expect(normaliseTitle(alias.place)).not.toBe('');
 		}
+	});
+});
+
+describe('venueSlugFor', () => {
+	it('gives each building its own row for a room name two buildings share', () => {
+		/*
+		 * `storsalen` was one row holding both culture houses' main halls, so its municipality
+		 * could only ever be wrong for half its events. Keyed with the building, it is two rows.
+		 */
+		expect(venueSlugFor('stord-kulturhus', 'Storsalen')).toBe('storsalen-stord-kulturhus');
+		expect(venueSlugFor('stord-kino', 'Storsalen')).toBe('storsalen-stord-kulturhus');
+		expect(venueSlugFor('bomlo-aktivitetforalle', 'Storsalen')).toBe('storsalen-boemlo-kulturhus');
+		expect(venueSlugFor('stord-aktivitetforalle', 'Biblioteket')).toBe(
+			'biblioteket-stord-bibliotek'
+		);
+		expect(venueSlugFor('bomlo-kulturhus', 'Biblioteket')).toBe(
+			'biblioteket-boemlo-folkebibliotek'
+		);
+	});
+
+	it('re-keys nothing that only one building writes', () => {
+		// A changed slug is a new row, and the old one keeps its address and municipality. Only a
+		// shared name is worth that.
+		expect(venueSlugFor('stord-kulturhus', 'Småsalen')).toBe('smaasalen');
+		expect(venueSlugFor('bomlo-kino', 'Litlesalen')).toBe('litlesalen');
+		expect(venueSlugFor('stord-kulturhus', 'Osvald Pub')).toBe('osvald-pub');
+	});
+
+	it('leaves a shared name on the plain row when the source has not said which building', () => {
+		expect(venueSlugFor(null, 'Storsalen')).toBe('storsalen');
+		expect(venueSlugFor('detskjer-sunnhordland', 'Storsalen')).toBe('storsalen');
 	});
 });

@@ -13,13 +13,16 @@ import { normaliseTitle } from './similarity.ts';
  * This writes that down, the same way `venue-aliases.ts` writes down which building a room is in:
  * as a list, scoped to the source that writes the name, each entry with the reason we believe it.
  *
- * ## What is deliberately NOT here
+ * ## Room names two buildings share
  *
- * **`Storsalen` and `Biblioteket`.** A venue row is keyed on its slug, and both of those slugs are
- * one row shared by Stord kulturhus *and* Bømlo kulturhus — "Songlaget Stordabuen" and "Sauen
- * Shaun" on the same row, two buildings 40 km and a ferry apart. Any municipality written there is
- * wrong for half its events, and wrong in the direction that hides them from the filter a reader
- * uses. Null is the honest value until those rows are split per building.
+ * `Storsalen` and `Biblioteket` are written by both culture houses. They were once a single venue
+ * row each — "Songlaget Stordabuen" and "Sauen Shaun" on one row, two buildings 40 km and a ferry
+ * apart — and no municipality could be right for it. `venueSlugFor` in venue-aliases.ts now keys
+ * each with the building its source means, so each building's row can be placed. An entry for a
+ * shared name may only list sources that have an alias for it: a source without one writes the
+ * plain, still-shared row, and placing that would be the old mistake again. A test enforces it.
+ *
+ * ## What is deliberately NOT here
  *
  * **Anything we could not place.** `Hagerupshuset` and `Ungdomshallen` are on the Stord kulturhus
  * programme, and the programme is not evidence of where a room is — the house programmes Stord
@@ -40,8 +43,51 @@ export type VenueMunicipality = {
 };
 
 const STORD_HOUSE = ['stord-kulturhus', 'stord-aktivitetforalle'] as const;
+const BOMLO_HOUSE = ['bomlo-kulturhus', 'bomlo-aktivitetforalle'] as const;
 
 export const VENUE_MUNICIPALITIES: readonly VenueMunicipality[] = [
+	{
+		name: 'Storsalen',
+		municipality: 'Stord',
+		sources: [...STORD_HOUSE, 'stord-kino'],
+		evidence: 'The main hall of Stord kulturhus, as venue-aliases.ts resolves it for these sources.'
+	},
+	{
+		name: 'Storsalen',
+		municipality: 'Bømlo',
+		sources: [...BOMLO_HOUSE, 'bomlo-kino'],
+		evidence: 'The main hall of Bømlo kulturhus, as venue-aliases.ts resolves it for these sources.'
+	},
+	{
+		name: 'Biblioteket',
+		municipality: 'Stord',
+		sources: STORD_HOUSE,
+		evidence: 'Stord bibliotek, inside Stord kulturhus — see venue-aliases.ts.'
+	},
+	{
+		name: 'Biblioteket',
+		municipality: 'Bømlo',
+		sources: BOMLO_HOUSE,
+		evidence: 'Bømlo folkebibliotek, inside Bømlo kulturhus — see venue-aliases.ts.'
+	},
+	{
+		name: 'Litlesalen',
+		municipality: 'Bømlo',
+		sources: [...BOMLO_HOUSE, 'bomlo-kino'],
+		evidence: "Bømlo kulturhus' second hall. No Stord source writes this name."
+	},
+	{
+		name: 'Kulturhuskafeen',
+		municipality: 'Bømlo',
+		sources: BOMLO_HOUSE,
+		evidence: 'The café of Bømlo kulturhus — its own events say so (venue-aliases.ts).'
+	},
+	{
+		name: 'Foajéen',
+		municipality: 'Bømlo',
+		sources: BOMLO_HOUSE,
+		evidence: 'The foyer of Bømlo kulturhus — its own events say so (venue-aliases.ts).'
+	},
 	{
 		name: 'Stord kulturhus',
 		municipality: 'Stord',

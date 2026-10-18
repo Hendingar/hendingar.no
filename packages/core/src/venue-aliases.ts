@@ -1,4 +1,5 @@
 import { normaliseTitle } from './similarity.ts';
+import { slugifyVenue } from './slug.ts';
 
 /**
  * What a source calls a place, and what the place is.
@@ -281,6 +282,24 @@ export const VENUE_ALIASES: readonly VenueAlias[] = [
 		evidence:
 			'"Ulven (og geitekillingane)" ×4 is at Stord VGS konsertsal in both calendars at the same minutes.'
 	},
+	/*
+	 * Bømlo's library is in Bømlo kulturhus, and both of the house's calendars write it as
+	 * "Biblioteket" — the word Stord's calendars use for Stord bibliotek. Listed for both sources
+	 * at once, for the asymmetry reason in the Bømlo block above.
+	 */
+	{
+		source: 'bomlo-aktivitetforalle',
+		name: 'Biblioteket',
+		place: 'Bømlo folkebibliotek',
+		evidence:
+			'"Oddgeir Bruaset - Vegen som vart min" 29 Oct 19:00 at Biblioteket is the author visit bomlobibliotek lists at "Bømlo folkebibliotek" at the same minute.'
+	},
+	{
+		source: 'bomlo-kulturhus',
+		name: 'Biblioteket',
+		place: 'Bømlo folkebibliotek',
+		evidence: 'The same "Oddgeir Bruaset" row as bomlo-aktivitetforalle, in the same room.'
+	},
 	{
 		source: 'stord-aktivitetforalle',
 		name: 'Biblioteket',
@@ -332,4 +351,40 @@ function key(source: string, name: string): string {
 export function resolveVenueName(sourceSlug: string | null, venueName: string): string {
 	if (!sourceSlug) return venueName;
 	return bySourceAndName.get(key(sourceSlug, venueName)) ?? venueName;
+}
+
+/**
+ * Room names this list resolves to more than one building — `Storsalen`, `Biblioteket`.
+ *
+ * Derived, not maintained: the moment an entry sends a name to a second place, that name is shared.
+ */
+const SHARED_ROOM_NAMES: ReadonlySet<string> = (() => {
+	const places = new Map<string, Set<string>>();
+	for (const alias of VENUE_ALIASES) {
+		const name = normaliseTitle(alias.name);
+		places.set(name, (places.get(name) ?? new Set()).add(normaliseTitle(alias.place)));
+	}
+	return new Set([...places].filter(([, seen]) => seen.size > 1).map(([name]) => name));
+})();
+
+/**
+ * The `venues.slug` this source's venue name is stored under.
+ *
+ * `slugifyVenue(name)`, except for a room name shared between buildings. `venues.slug` is unique
+ * across every source, so "Storsalen" used to be ONE row holding Stord kulturhus' main hall and
+ * Bømlo kulturhus' — and anything said about that row (its municipality, its address) was wrong for
+ * half its events. A shared name is keyed with the building this source means instead:
+ * `storsalen-stord-kulturhus`, `storsalen-boemlo-kulturhus`. The name shown stays "Storsalen".
+ *
+ * A source with no entry for a shared name — a submission, a calendar nobody has listed — keeps the
+ * plain slug, because which building it means is exactly what we do not know.
+ *
+ * Every other name keys exactly as before, so no unshared venue is re-keyed by this.
+ */
+export function venueSlugFor(sourceSlug: string | null, venueName: string): string {
+	if (!sourceSlug || !SHARED_ROOM_NAMES.has(normaliseTitle(venueName))) {
+		return slugifyVenue(venueName);
+	}
+	const place = bySourceAndName.get(key(sourceSlug, venueName));
+	return place ? slugifyVenue(`${venueName} ${place}`) : slugifyVenue(venueName);
 }
