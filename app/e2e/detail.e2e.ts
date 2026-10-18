@@ -164,3 +164,43 @@ test('a submitted poster is shown whole on its page, not as the card crop', asyn
 	expect(fits.fit).toBe('contain');
 	expect(fits.ratio).toBeGreaterThan(1);
 });
+
+test('the poster is a link to the full-size picture, drawn at its own shape', async ({ page }) => {
+	/*
+	 * The small print on a poster — the date line, the price, who to call — is what a reader came
+	 * for, and a page-width rendering capped at 34rem cannot always show it. So the picture is a
+	 * link to the file itself, in a new tab, and the picture is sized by its own proportions: the
+	 * old full-width box letterboxed a portrait poster between two navy bars, which read as the
+	 * poster being cropped.
+	 */
+	await page.goto('/hendingar?kjelde=innsendt');
+	await page
+		.getByRole('link', { name: /Bygdekino/i })
+		.first()
+		.click();
+	await expect(page).toHaveURL(/\/hending\/\d+/);
+
+	const link = page.locator('a.ev__poster-link');
+	// The whole picture, never the card's crop, and a new tab so the event page stays put.
+	await expect(link).toHaveAttribute('href', '/seed-poster-heile.svg');
+	await expect(link).toHaveAttribute('target', '_blank');
+	await expect(link.locator('img.ev__poster')).toBeVisible();
+
+	// The box the image is painted in has the image's own proportions — no bars either side.
+	const shape = await link.locator('img.ev__poster').evaluate((img: HTMLImageElement) => ({
+		box: img.clientWidth / img.clientHeight,
+		picture: img.naturalWidth / img.naturalHeight
+	}));
+	expect(Math.abs(shape.box - shape.picture)).toBeLessThan(0.02);
+});
+
+test('an imported poster links to the source file it was hotlinked from', async ({ page }) => {
+	await page.goto('/hendingar');
+	// A card with a real poster, so the page it opens has one to link.
+	await page.locator('article.tile:has(img.thumb) a.tile__link').first().click();
+	await page.waitForURL(/\/hending\//);
+
+	const link = page.locator('a.ev__poster-link');
+	await expect(link).toHaveAttribute('href', /seed-poster/);
+	await expect(link).toHaveAttribute('rel', /noopener/);
+});
