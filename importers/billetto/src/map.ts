@@ -2,6 +2,7 @@ import type { CategorySlug } from '@hendingar/core/taxonomy';
 import type { UpstreamEvent } from './api.ts';
 import { organiserUrl, type BillettoOrganiser } from './organisers.ts';
 import { slugifyVenue } from '@hendingar/core/slug';
+import { coveredMunicipalitiesIn, type CoveredMunicipality } from '@hendingar/core/coverage';
 
 /**
  * Pure mapping: one Billetto hit → our shape. No I/O, no clock, no randomness.
@@ -61,7 +62,8 @@ export type MappedEvent = {
 	endsAt: Date | null;
 	venueName: string | null;
 	venueSlug: string | null;
-	municipality: string | null;
+	/** One of ours, or null — never Billetto's `city`, which is a post town. See `municipalityOf`. */
+	municipality: CoveredMunicipality | null;
 	description: string | null;
 	ctaUrl: string | null;
 	posterUrl: string | null;
@@ -144,7 +146,7 @@ export function mapEvent(
 		endsAt,
 		venueName,
 		venueSlug: venueName ? slugifyVenue(venueName) : null,
-		municipality: input.city?.trim() || null,
+		municipality: municipalityOf(input.city),
 		description: trimDescription(input.description ?? input.short_description),
 		/*
 		 * The ticket page, which is also the source page — Billetto is where you buy, and we never
@@ -172,4 +174,18 @@ export function mapEvent(
 		posterRightsVerified: false,
 		sourceUrl: safeUrl(input.url) ?? organiserUrl(organiser)
 	};
+}
+
+/**
+ * Billetto's `city` → the municipality it is in, when it names exactly one of ours.
+ *
+ * `city` is the post town on the organiser's address — "Bremnes", "Urangsvåg" — and both are in
+ * Bømlo. It used to be written into `venues.municipality` as it came, so Bømlohallen was filed under
+ * a municipality called Bremnes and fell out of the Bømlo filter. The same place list the coverage
+ * check reads turns a post town into its municipality; anything it cannot place, or places twice,
+ * is null rather than a guess.
+ */
+export function municipalityOf(city: string | null | undefined): CoveredMunicipality | null {
+	const named = coveredMunicipalitiesIn(city);
+	return named.length === 1 ? named[0]! : null;
 }
