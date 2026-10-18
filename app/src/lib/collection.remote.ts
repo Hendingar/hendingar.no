@@ -10,7 +10,13 @@ import {
 } from '@hendingar/core/schema';
 import { publicSubmissionTitle } from '@hendingar/core/verification';
 import { db } from './server/db';
-import { fromSourceGroup, listed, notOver, submittedByHand } from './server/listing.ts';
+import {
+	fromSourceGroup,
+	listed,
+	notOver,
+	submittedByHand,
+	weeklyListed
+} from './server/listing.ts';
 
 /**
  * Everything /datasamling shows. Read-only, no arguments — the page is a public list of sources.
@@ -63,6 +69,16 @@ export const listCollection = query(async () => {
 				.from(events)
 				.where(and(listed, notOver(now), fromSourceGroup(source.slug)));
 
+			/*
+			 * Weekly activities, counted apart. They are not "hendingar framover" — they have no
+			 * date to be ahead of — but a source whose whole calendar is a timetable is not empty
+			 * either, and the row said it was. Same clauses as `/alltid-ope`, same source grouping.
+			 */
+			const [weekly] = await database
+				.select({ total: count() })
+				.from(events)
+				.where(and(weeklyListed(now), fromSourceGroup(source.slug)));
+
 			// Enough history to show a strip of recent runs, not so much that the page gets heavy.
 			const runs = await database
 				.select({
@@ -88,6 +104,7 @@ export const listCollection = query(async () => {
 				...source,
 				eventsTotal: totals?.total ?? 0,
 				eventsUpcoming: upcoming?.total ?? 0,
+				activitiesWeekly: weekly?.total ?? 0,
 				runs
 			};
 		})

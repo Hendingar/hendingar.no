@@ -18,6 +18,8 @@ export type ListableSource = {
 	scheduleCron: string | null;
 	lastRunAt: Date | null;
 	eventsUpcoming: number;
+	/** Weekly activities on `/alltid-ope`. Not events, and not nothing. */
+	activitiesWeekly: number;
 	runs: readonly { status: string }[];
 };
 
@@ -90,7 +92,8 @@ function inView(source: ListableSource, vis: SourceView | null, now: Date): bool
 		case 'tilsyn':
 			return needsAttention(source, now);
 		case 'tomme':
-			return source.kind !== 'link' && source.eventsUpcoming === 0;
+			// Empty means nothing on either page: a timetable-only calendar is not an empty one.
+			return source.kind !== 'link' && source.eventsUpcoming === 0 && source.activitiesWeekly === 0;
 		case 'lenkje':
 			return source.kind === 'link';
 	}
@@ -114,7 +117,12 @@ export function listSources<T extends ListableSource>(
 	if (params.sorter === 'namn') return shown.sort(byName);
 	return shown.sort((a, b) => {
 		const linked = Number(a.kind === 'link') - Number(b.kind === 'link');
-		return linked || b.eventsUpcoming - a.eventsUpcoming || byName(a, b);
+		return (
+			linked ||
+			b.eventsUpcoming - a.eventsUpcoming ||
+			b.activitiesWeekly - a.activitiesWeekly ||
+			byName(a, b)
+		);
 	});
 }
 

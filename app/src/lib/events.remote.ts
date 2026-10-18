@@ -10,7 +10,6 @@ import {
 	gte,
 	ilike,
 	inArray,
-	isNotNull,
 	isNull,
 	lte,
 	max,
@@ -72,7 +71,8 @@ import {
 	sourceMarksFor,
 	tileColumns,
 	stillListed,
-	submittedByHand
+	submittedByHand,
+	weeklyListed
 } from './server/listing.ts';
 import { withStartsIn } from './starts-in.ts';
 
@@ -553,16 +553,7 @@ export const weeklyActivities = query(async () => {
 		.from(events)
 		.leftJoin(venues, eq(events.venueId, venues.id))
 		.leftJoin(organizers, eq(events.organizerId, organizers.id))
-		.where(
-			and(
-				eq(events.status, 'published'),
-				stillListed,
-				isNull(events.duplicateOfId),
-				eq(events.kind, 'standing'),
-				isNotNull(events.weeklyHours),
-				gte(events.endsAt, new Date())
-			)
-		);
+		.where(weeklyListed(new Date()));
 	return { today: localDayKey(new Date(), DEFAULT_TIME_ZONE), activities };
 });
 
