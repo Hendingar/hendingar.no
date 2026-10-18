@@ -11,7 +11,14 @@ import {
 	organiserUrl,
 	searchUrl
 } from '../src/organisers.ts';
-import { MAX_DESCRIPTION, isFailure, mapCategory, mapEvent, trimDescription } from '../src/map.ts';
+import {
+	MAX_DESCRIPTION,
+	isFailure,
+	mapCategory,
+	mapEvent,
+	municipalityOf,
+	trimDescription
+} from '../src/map.ts';
 import { slugifyVenue } from '@hendingar/core/slug';
 
 /**
@@ -205,5 +212,22 @@ describe('organisers', () => {
 describe('slugifyVenue', () => {
 	it('folds Norwegian letters before stripping accents', () => {
 		expect(slugifyVenue('Bømlohallen')).toBe('boemlohallen');
+	});
+});
+
+describe('municipalityOf', () => {
+	it('turns a post town into the municipality it is in', () => {
+		// The fixture's own `city`. Bremnes is a place on Bømlo, not a municipality, and was stored
+		// as one — which took Bømlohallen out of the Bømlo filter.
+		expect(municipalityOf('Bremnes')).toBe('Bømlo');
+		expect(municipalityOf('Urangsvåg')).toBe('Bømlo');
+		expect(municipalityOf('LEIRVIK')).toBe('Stord');
+		expect(municipalityOf('Fitjar')).toBe('Fitjar');
+	});
+
+	it('writes nothing it cannot place', () => {
+		expect(municipalityOf('Bergen')).toBeNull();
+		expect(municipalityOf(null)).toBeNull();
+		expect(municipalityOf('')).toBeNull();
 	});
 });

@@ -70,17 +70,12 @@
 			"alternative_banner": null,
 			"age_rating": null,
 			"billetto_weighting": 100.0,
-			"local_dates": [
-				20261226,
-				20261227
-			],
+			"local_dates": [20261226, 20261227],
 			"event_availability": "high",
 			"schema": "{\"@context\":\"http://schema.org\",\"@type\":\"Event\",\"eventAttendanceMode\":\"https://schema.org/OfflineEventAttendanceMode\",\"endDate\":\"2026-12-27T02:30:00+01:00\",\"eventStatus\":\"https://schema.org/EventScheduled\",\"organizer\":{\"@type\":\"Organization\",\"name\":\"Bremnes Idrettslag\",\"url\":\"https://billetto.no/users/bremnes-idrettslag\"},\"location\":{\"@type\":\"Place\",\"address\":{\"@type\":\"PostalAddress\",\"addressCountry\":\"Norge\",\"addressLocality\":\"Bremnes\",\"addressRegion\":\"Vestlandet\",\"postalCode\":\"5430\",\"streetAddress\":\"Idrettsvegen 87\"},\"name\":\"Bømlohallen\",\"geo\":{\"@type\":\"GeoCoordinates\",\"latitude\":59.7916,\"longitude\":5.1873}},\"identifier\":\"1986138\",\"offers\":[{\"@type\":\"Offer\",\"availability\":\"http://schema.org/InStock\",\"price\":\"430.0\",\"name\":\"Inngangsbillett Romjulsdans 2026\",\"priceCurrency\":\"NOK\",\"validFrom\":\"2026-08-27T10:51:27+02:00\",\"url\":\"https://billetto.no/e/romjulsdans-2026-billetter-1986138\"}],\"description\":\"Gjer deg klar til ein skinnande kveld med musikk og moro under Romjulsdans 2026! Arrangert av Bremnes Idrettslag, er dette den perfekte måten å lyse opp romjulen på. Den 26. desember klokken 20:00 vert Bømlohallen gjort om til ein...\",\"startDate\":\"2026-12-26T20:00:00+01:00\",\"image\":[\"https://billetto.imgix.net/tz120zgbeqp4u3fj2vflkj9jcpm3?w=640\\u0026h=360\\u0026fit=crop\\u0026auto=compress%2Cformat\\u0026rect=0%2C0%2C1920%2C1080\\u0026ar=1%3A1\\u0026crop=faces\\u0026s=7954300aa199d95a0be0eb728e490a98\",\"https://billetto.imgix.net/tz120zgbeqp4u3fj2vflkj9jcpm3?w=640\\u0026h=360\\u0026fit=crop\\u0026auto=compress%2Cformat\\u0026rect=0%2C0%2C1920%2C1080\\u0026ar=4%3A3\\u0026crop=faces\\u0026s=e2e5b9a6f890e3e09a5e2e341d3b6f68\",\"https://billetto.imgix.net/tz120zgbeqp4u3fj2vflkj9jcpm3?w=640\\u0026h=360\\u0026fit=crop\\u0026auto=compress%2Cformat\\u0026rect=0%2C0%2C1920%2C1080\\u0026ar=16%3A9\\u0026crop=faces\\u0026s=3d713cb1f519121ef906c2850b17f6d4\"],\"name\":\"Romjulsdans 2026\",\"url\":\"https://billetto.no/e/romjulsdans-2026-billetter-1986138\"}",
 			"total_organizer_revenue": "0.0",
 			"premium": false,
-			"host_ids": [
-				7369531
-			],
+			"host_ids": [7369531],
 			"_tags": [],
 			"culture_pass_enabled": false,
 			"_geoloc": {
