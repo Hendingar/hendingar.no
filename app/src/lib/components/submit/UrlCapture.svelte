@@ -71,7 +71,10 @@
 
 		if (!result) {
 			phase = 'error';
-			message = 'Klarte ikkje lese sida. Fyll inn skjemaet under.';
+			// "Fyll inn skjemaet under" pointed at a form the mode switch had hidden. The button
+			// the address keeps alive is the way there, so the link is kept on this path too.
+			message = 'Klarte ikkje lese sida.';
+			keepUrl = value;
 			return;
 		}
 		if (!result.ok) {

@@ -8,7 +8,8 @@
 	let {
 		enabled = true,
 		onextract,
-		onimage
+		onimage,
+		onfallback
 	}: {
 		enabled?: boolean;
 		/**
@@ -29,6 +30,14 @@
 		 * that goes nowhere costs the draft and not the picture.
 		 */
 		onimage: (image: CapturedImage) => void;
+		/**
+		 * Where a failed read goes: the parent opens the form.
+		 *
+		 * This panel used to end with "fyll inn skjemaet under", and the form was not under — the
+		 * mode switch had hidden it a tab away, so the page simply stopped there (2026-10-20).
+		 * The picture is already with the parent through `onimage`; this is only the way on.
+		 */
+		onfallback: () => void;
 	} = $props();
 
 	/**
@@ -277,7 +286,7 @@
 
 			if (!response.ok || !response.body) {
 				phase = 'error';
-				message = 'Kunne ikkje lese plakaten. Fyll inn skjemaet under.';
+				message = 'Kunne ikkje lese plakaten.';
 				return;
 			}
 
@@ -316,7 +325,9 @@
 
 			if (!draft) {
 				phase = 'error';
-				message = 'Kunne ikkje lese plakaten. Fyll inn skjemaet under.';
+				// "Ferdig", because the fields above this sentence may well have been read — the
+				// whole is what did not arrive. Never "under": the form is a tab away, not below.
+				message = 'Kunne ikkje lese plakaten ferdig.';
 				return;
 			}
 
@@ -449,9 +460,23 @@
 					is where the person decides what to do next.
 				-->
 				<p class="capture__kept">
-					Biletet er teke vare på. Fyll inn skjemaet sjølv — blir hendinga publisert, brukar vi
-					biletet som miniatyrbilete på kortet.
+					Biletet er teke vare på — blir hendinga publisert, brukar vi det som miniatyrbilete på
+					kortet.
 				</p>
+			{/if}
+
+			{#if phase === 'error'}
+				<!--
+					The way on, on the panel itself.
+
+					The sentence above used to end "fyll inn skjemaet under", and nothing was under
+					it: the form is the third panel of the mode switch and hidden while this one
+					shows. Somebody whose poster did not read was left with an instruction and no
+					form, which is where the page stopped for them.
+				-->
+				<button class="btn btn--sm capture__fallback" type="button" onclick={onfallback}>
+					Fyll inn skjemaet sjølv
+				</button>
 			{/if}
 
 			<ul class="capture__works">
@@ -629,6 +654,9 @@
 		max-inline-size: 52ch;
 		font-size: 0.875rem;
 		color: var(--peach-hi);
+	}
+	.capture__fallback {
+		margin-block-start: 0.75rem;
 	}
 	.prog {
 		display: grid;
