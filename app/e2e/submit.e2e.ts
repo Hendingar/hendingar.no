@@ -663,6 +663,11 @@ test('a read that dies mid-stream leaves the form and the picture alone', async 
 	await expect(page.locator('#title')).toHaveValue('');
 	// The promise that outlives a failed read: the picture they chose is still ours to use.
 	await expect(page.getByText(/Biletet er teke vare på/)).toBeVisible();
+	// And the way on is on the panel. It used to say "skjemaet under" with the form hidden behind
+	// the mode switch, so the page simply stopped here.
+	await page.getByRole('button', { name: 'Fyll inn skjemaet sjølv' }).click();
+	await expect(page.locator('#mode-skjema')).toBeChecked();
+	await expect(page.locator('#title')).toBeVisible();
 });
 
 /**

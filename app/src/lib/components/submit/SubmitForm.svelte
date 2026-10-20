@@ -531,6 +531,19 @@
 	let intro: HTMLElement | undefined = $state();
 
 	/**
+	 * Where a failed read goes.
+	 *
+	 * The photo panel used to end with "fyll inn skjemaet under" while the form was a tab away and
+	 * hidden by the mode switch — the page simply stopped there (reported 2026-10-20). The
+	 * photograph is already attached by `attachImage`; this only brings the form into view, the
+	 * same way a successful read does.
+	 */
+	function openForm() {
+		mode = 'form';
+		intro?.focus();
+	}
+
+	/**
 	 * Keep the time fields in 24-hour form.
 	 *
 	 * A text input rather than `type="time"`: the native control renders in the *browser's* locale,
@@ -927,7 +940,12 @@
 				`onimage` fires before the model is called, `onextract` only if it answers. The split
 				is the point: a read that fails must cost the draft and not the photograph.
 			-->
-			<PhotoCapture enabled={photoEnabled} onextract={prefill} onimage={attachImage} />
+			<PhotoCapture
+				enabled={photoEnabled}
+				onextract={prefill}
+				onimage={attachImage}
+				onfallback={openForm}
+			/>
 		</div>
 		<div class="panel panel--link">
 			<UrlCapture onextract={prefillFromUrl} />

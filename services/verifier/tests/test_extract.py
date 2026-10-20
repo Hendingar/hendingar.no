@@ -135,6 +135,34 @@ class TestWhenThereIsNothingToRead:
         assert events[0][1].confidence == 0
         assert events[0][1].unreadable == ["heile biletet"]
 
+    async def test_a_blank_string_is_an_absent_field_not_a_value(self):
+        """The prompt says "la sluttid stå tom", and the model sometimes writes `""` for tom.
+
+        That is what `/send-inn` met on 2026-10-20: every field read and shown, then the finished
+        object refused by the app — whose schema wants `HH:MM` or null — and the person told the
+        poster could not be read. Blank is absent, and it leaves this service as absent, so the
+        two schemas agree on the one thing the model is loosest about.
+        """
+        answer = {
+            **POSTER,
+            "end_time": "",
+            "ticket_url": "",
+            "venue_name": " ",
+            "dates": ["2026-09-28", ""],
+            "recurrence": {"freq": "weekly", "weekdays": [1], "until": ""},
+        }
+        events = await _collect(FakeOpenAI(json.dumps(answer, ensure_ascii=False)))
+
+        kind, event = events[-1]
+        assert kind == "event"
+        assert event.end_time is None
+        assert event.ticket_url is None
+        assert event.venue_name is None
+        assert event.dates == ["2026-09-28"]
+        assert event.recurrence is not None and event.recurrence.until is None
+        # And nothing was announced mid-read for a field that turned out to be blank.
+        assert "end_time" not in [field.name for k, field in events if k == "field"]
+
     async def test_a_truncated_answer_raises_rather_than_half_filling_a_form(self):
         """A cut-off read is not a draft. Better a failure the caller degrades from.
 

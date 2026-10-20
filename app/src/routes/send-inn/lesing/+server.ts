@@ -54,12 +54,19 @@ export const POST: RequestHandler = async (event) => {
 				if (event.kind === 'field') send('field', event.field);
 				else send('event', event.event);
 			}
-		} catch {
+		} catch (cause) {
 			/*
 			 * The headers left long ago, so there is no status to fail with — and a failed read
 			 * was never a failed submission anyway. The browser turns this into the sentence it
 			 * already had: fill in the form yourself, and the picture you chose is still held.
+			 *
+			 * Logged, because that sentence cannot say why. A read that died here on 2026-10-20 —
+			 * every field shown, then the finished object refused by the schema — left no trace
+			 * anywhere: the verifier had answered 200 and this swallowed the Zod issue.
 			 */
+			console.warn(
+				`[verifier] poster read failed: ${cause instanceof Error ? cause.message : cause}`
+			);
 			send('error', {});
 		}
 	});

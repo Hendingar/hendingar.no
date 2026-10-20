@@ -6,7 +6,21 @@ field sets still agree — see app/src/lib/server/verifier.spec.ts.
 
 from typing import Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
+
+
+def _none_if_blank(value: object) -> object:
+    """The model's "tom" is sometimes `""`, and `""` is not a time.
+
+    Both extraction prompts say "la det stå tomt" for anything the image does not state, and the
+    model takes that literally now and then: `"end_time": ""` rather than null. This schema let it
+    through, the app's Zod schema — `HH:MM` or null — refused it, and a poster that had been read
+    perfectly was thrown away as unreadable after every field had been shown (2026-10-20). Blank
+    means absent, so it leaves here as absent. A `before` validator, so the JSON schema the model
+    is asked to fill is unchanged and the extraction evals still measure the same request.
+    """
+    return None if isinstance(value, str) and value.strip() == "" else value
+
 
 CategorySlug = Literal[
     "musikk",
@@ -97,6 +111,11 @@ class ExtractedRecurrence(BaseModel):
     )
     until: str | None = Field(default=None, description="YYYY-MM-DD, last date, if stated")
 
+    @field_validator("until", mode="before")
+    @classmethod
+    def _blank_is_absent(cls, value: object) -> object:
+        return _none_if_blank(value)
+
 
 class ThumbnailCrop(BaseModel):
     """Where the interesting part of the poster is, as fractions of the image.
@@ -169,6 +188,30 @@ class ExtractedEvent(BaseModel):
         default=None,
         description="The part of the image worth keeping as a card thumbnail. Best effort.",
     )
+
+    @field_validator(
+        "title",
+        "description",
+        "category",
+        "date",
+        "start_time",
+        "end_time",
+        "venue_name",
+        "municipality",
+        "organizer_name",
+        "ticket_url",
+        mode="before",
+    )
+    @classmethod
+    def _blank_is_absent(cls, value: object) -> object:
+        return _none_if_blank(value)
+
+    @field_validator("dates", mode="before")
+    @classmethod
+    def _blank_dates_are_not_dates(cls, value: object) -> object:
+        if not isinstance(value, list):
+            return value
+        return [date for date in value if _none_if_blank(date) is not None]
 
 
 class ExtractedField(BaseModel):
