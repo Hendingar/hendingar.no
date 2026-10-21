@@ -1,16 +1,15 @@
-name: Ingest (dev)
+name: Ingest now (dev)
 
+# The nightly collection runs on Azure, not here: a Container Apps job on its own schedule
+# (infra/ingest.bicep, ADR 0025). This workflow is the button for a run *now* — after merging an
+# importer, say, rather than waiting for 05:00 UTC. It starts the same job the schedule starts and
+# follows it to the end, so the run is red here when the night is.
+#
+# There is no dry run any more. A dry run against production was only ever a check that an
+# importer maps cleanly, and `pnpm db:pull && pnpm ingest --dry-run` does that against a copy,
+# without starting a container that holds the live database's password.
 on:
-  schedule:
-    # 05:00 UTC daily — 07:00 in Norway during summer time, 06:00 in winter. Chosen so a run has
-    # finished well before anyone is looking for what's on today.
-    - cron: '0 5 * * *'
   workflow_dispatch:
-    inputs:
-      dry_run:
-        description: Map and count without writing
-        type: boolean
-        default: false
 
 concurrency:
   group: ingest-dev
@@ -22,32 +21,22 @@ permissions:
 
 env:
   RG: rg-hendingar-swc-dev
+  JOB: caj-hendingar-ingest-dev
 
 jobs:
-  ingest:
+  start:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-      # Same guard as the deploy, and this one matters more.
-      #
-      # `schedule` always runs the default branch, but `workflow_dispatch` accepts any ref — so
-      # without this, a branch's half-written mapper could be run against the PRODUCTION database
-      # from a dropdown, writing real rows. The deploy at least passes through CI first; an ingest
-      # writes immediately, and a bad upsert is not undone by redeploying.
-      - name: Refuse to ingest from anything but main
+      # `workflow_dispatch` accepts any ref, but the job runs the image the last deploy of main
+      # built — a branch cannot reach it from here. Refused anyway, so nobody believes otherwise.
+      - name: Refuse to run from anything but main
         run: |
           if [ "$GITHUB_REF" != "refs/heads/main" ]; then
-            echo "::error::Ingest runs from main only — this ref is $GITHUB_REF."
+            echo "::error::The ingest job runs main's last deploy — this ref is $GITHUB_REF."
             echo "To try importer changes, run them locally against your own database:"
-            echo "  pnpm db:bootstrap && pnpm ingest --dry-run"
+            echo "  pnpm db:pull && pnpm ingest --dry-run"
             exit 1
           fi
-      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
-      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
-        with:
-          node-version: 22
-          cache: pnpm
-      - run: pnpm install --frozen-lockfile
 
       - uses: azure/login@a641126d1b8aa4d1fa005f4f92df94a3a4c4c906 # v3.1.0
         with:
@@ -55,95 +44,42 @@ jobs:
           tenant-id: ${{ vars.AZURE_TENANT_ID }}
           subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
 
-      - name: Resolve the database
-        id: pg
+      # Recorded as `schedule` on the job row: overriding INGEST_TRIGGER for one start replaces
+      # the container's whole definition, secrets included. The page does not show the trigger.
+      - name: Start the ingest job
+        id: start
         run: |
-          FQDN=$(az postgres flexible-server list --resource-group "$RG" \
-            --query "[0].fullyQualifiedDomainName" -o tsv)
-          test -n "$FQDN" || { echo "::error::no Postgres server in $RG"; exit 1; }
-          echo "fqdn=$FQDN" >> "$GITHUB_OUTPUT"
-          echo "server=${FQDN%%.*}" >> "$GITHUB_OUTPUT"
+          EXECUTION=$(az containerapp job start --name "$JOB" --resource-group "$RG" \
+            --query name -o tsv)
+          test -n "$EXECUTION" || { echo "::error::the job did not start"; exit 1; }
+          echo "execution=$EXECUTION" >> "$GITHUB_OUTPUT"
+          echo "started $EXECUTION"
 
-      # The firewall allows Azure services only, and a GitHub runner is not one.
-      - name: Open firewall for this runner
-        id: fw
+      # The job's own timeout is an hour (infra/ingest.bicep); this waits a little longer.
+      - name: Follow it to the end
         run: |
-          RUNNER_IP=$(curl -fsS https://api.ipify.org)
-          az postgres flexible-server firewall-rule create \
-            --resource-group "$RG" --server-name "${{ steps.pg.outputs.server }}" \
-            --name "gh-ingest-${{ github.run_id }}" \
-            --start-ip-address "$RUNNER_IP" --end-ip-address "$RUNNER_IP" >/dev/null
-          echo "opened=true" >> "$GITHUB_OUTPUT"
-
-      # The app's ingress, for the kurator call at the end. The verifier is internal-only, so the
-      # app makes the model call and the job asks the app (ADR 0018).
-      - name: Resolve the app
-        id: app
-        run: |
-          APP=$(az containerapp show --resource-group "$RG" --name ca-hendingar-dev \
-            --query "properties.configuration.ingress.fqdn" -o tsv || true)
-          if [ -n "$APP" ]; then
-            echo "kurator=https://$APP/api/kurator" >> "$GITHUB_OUTPUT"
-          else
-            echo "::warning::no app ingress found; the job will skip curation"
-          fi
-
-      # The whole night is one command: await migrations, every importer, expire, consolidate,
-      # the kurator — packages/core/scripts/ingest-job.ts holds the order and the "keep going
-      # after a failure" rules that used to be five steps of `if: always()` here. It writes an
-      # `ingest_jobs` row, which is how /datasamling can say a night failed — or never ran.
-      #
-      # It still waits for the deploy's migrations rather than applying them: GitHub fires the
-      # 05:00 cron hours late, into the window when merges deploy (see scripts/await-migrations.ts).
-      # And it still exits non-zero when any source failed, so a bad night stays a red job.
-      - name: Collect every source
-        if: steps.fw.outputs.opened == 'true'
-        env:
-          PGHOST: ${{ steps.pg.outputs.fqdn }}
-          # As environment, never pasted into the script: a quote in the value would be shell.
-          PW: ${{ secrets.POSTGRES_ADMIN_PASSWORD }}
-          INGEST_TRIGGER: ${{ github.event_name == 'schedule' && 'schedule' || 'manual' }}
-          INGEST_REVISION: ${{ github.sha }}
-          KURATOR_URL: ${{ steps.app.outputs.kurator }}
-          DRY_RUN: ${{ inputs.dry_run }}
-        run: |
-          DATABASE_URL=$(python3 -c \
-            'import os,urllib.parse as u; print("postgres://hendingar:%s@%s:5432/hendingar?sslmode=require" % (u.quote(os.environ["PW"], safe=""), os.environ["PGHOST"]))')
-          export DATABASE_URL
-          # Without pipefail the step takes `tee`'s exit code: on 2026-10-13 both DNT sources
-          # failed and the run was green.
-          set -o pipefail
-          if [ "$DRY_RUN" = "true" ]; then
-            pnpm ingest:job --dry-run | tee -a result.txt
-          else
-            pnpm ingest:job | tee -a result.txt
-          fi
-
-      # A separate always() step: a bash EXIT trap does not survive SIGKILL, and a leaked rule
-      # leaves a recycled public runner IP allowed against the database.
-      - name: Close firewall
-        if: always() && steps.fw.outputs.opened == 'true'
-        run: |
-          az postgres flexible-server firewall-rule delete \
-            --resource-group "$RG" --server-name "${{ steps.pg.outputs.server }}" \
-            --name "gh-ingest-${{ github.run_id }}" --yes >/dev/null 2>&1 || true
-          for stale in $(az postgres flexible-server firewall-rule list \
-                --resource-group "$RG" --server-name "${{ steps.pg.outputs.server }}" \
-                --query "[?starts_with(name,'gh-ingest-')].name" -o tsv); do
-            az postgres flexible-server firewall-rule delete \
-              --resource-group "$RG" --server-name "${{ steps.pg.outputs.server }}" \
-              --name "$stale" --yes >/dev/null 2>&1 || true
+          for i in $(seq 1 130); do
+            STATUS=$(az containerapp job execution show --name "$JOB" --resource-group "$RG" \
+              --job-execution-name "${{ steps.start.outputs.execution }}" \
+              --query properties.status -o tsv)
+            case "$STATUS" in
+              Succeeded) echo "succeeded"; exit 0 ;;
+              Failed|Stopped|Degraded)
+                echo "::error::the night ended $STATUS — /datasamling names what failed"
+                exit 1 ;;
+            esac
+            sleep 30
           done
+          echo "::error::still $STATUS after 65 minutes"
+          exit 1
 
       - name: Summary
         if: always()
         run: |
           {
-            echo "### Ingest (dev)"
+            echo "### Ingest now (dev)"
             echo ""
-            echo '```'
-            cat result.txt 2>/dev/null || echo "no result — the run did not reach the importer"
-            echo '```'
-            echo ""
-            echo "Status board: https://ca-hendingar-dev.whitewave-5f5b53f5.swedencentral.azurecontainerapps.io/datasamling"
+            echo "- Execution: \`${{ steps.start.outputs.execution }}\`"
+            echo "- Logs: \`az containerapp job logs show -n $JOB -g $RG --execution ${{ steps.start.outputs.execution }} --container ingest\`"
+            echo "- Status board: https://hendingar.no/datasamling"
           } >> "$GITHUB_STEP_SUMMARY"

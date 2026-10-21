@@ -34,7 +34,7 @@ function upsertSource(db: Db) {
 			'Sida renderer frå eit JSON-API, og det er det vi les — sideveksling går per veke, ikkje per rad.',
 		kind: 'json-api',
 		// A literal rather than config: this importer reads one source, so there is no instance to
-		// carry it. It matches the cron in .github/workflows/ingest.yml.
+		// carry it. It matches the cron in infra/ingest.bicep.
 		scheduleCron: '0 5 * * *',
 		iconUrl: SOURCE.iconUrl,
 		// Editorially moderated upstream — see the column comment in schema.ts.

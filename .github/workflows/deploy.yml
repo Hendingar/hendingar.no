@@ -110,6 +110,16 @@ jobs:
             --image "hendingar-verifier:latest" \
             --file services/verifier/Dockerfile services/verifier
 
+      # The nightly collection's image (Dockerfile.ingest). Built on every deploy, so the job and
+      # the app it shares a schema with are always the same commit.
+      - name: Build ingest image in ACR
+        run: |
+          az acr build \
+            --registry "${{ steps.infra.outputs.acrName }}" \
+            --image "hendingar-ingest:${{ env.DEPLOY_SHA }}" \
+            --image "hendingar-ingest:latest" \
+            --file Dockerfile.ingest .
+
       # The Postgres firewall allows Azure services only, and a GitHub runner is not one.
       - name: Open firewall for this runner
         id: fw
@@ -236,6 +246,31 @@ jobs:
           echo "url=$(jq -r .appUrl.value app-outputs.json)" >> "$GITHUB_OUTPUT"
           echo "name=$(jq -r .containerAppName.value app-outputs.json)" >> "$GITHUB_OUTPUT"
 
+      # After the app: the job is handed the app's URL for the kurator call (ADR 0018), and after
+      # the migrations above, so the job's image can never be newer than the schema it writes to.
+      #
+      # It replaced the GitHub Actions cron (ADR 0025). Nothing here starts a run — the schedule in
+      # infra/ingest.bicep does, and `.github/workflows/ingest.yml` starts one by hand.
+      - name: Deploy ingest job
+        env:
+          POSTGRES_ADMIN_PASSWORD: ${{ secrets.POSTGRES_ADMIN_PASSWORD }}
+        run: |
+          az deployment group create \
+            --resource-group "$RG" \
+            --name "ingest-${{ github.run_id }}" \
+            --template-file infra/ingest.bicep \
+            --parameters appName="$APP" env="$ENV_NAME" \
+              containerImage="${{ steps.infra.outputs.acrLoginServer }}/hendingar-ingest:${{ env.DEPLOY_SHA }}" \
+              revision="${{ env.DEPLOY_SHA }}" \
+              acrLoginServer="${{ steps.infra.outputs.acrLoginServer }}" \
+              managedEnvironmentId="${{ steps.infra.outputs.managedEnvironmentId }}" \
+              runtimeIdentityId="${{ steps.infra.outputs.runtimeIdentityId }}" \
+              postgresFqdn="${{ steps.infra.outputs.postgresFqdn }}" \
+              postgresAdminUser="${{ steps.infra.outputs.postgresAdminUserOut }}" \
+              postgresAdminPassword="$POSTGRES_ADMIN_PASSWORD" \
+              appUrl="${{ steps.app.outputs.url }}" \
+            --query properties.outputs.jobName.value -o tsv
+
       # Asserts real behaviour, not just a 200. /health touches the database, and the page must
       # actually contain rendered content — the app serves 200 with the database unreachable, so a
       # status-code check reported success for a broken deployment.
@@ -297,5 +332,6 @@ jobs:
             echo "- App: ${{ steps.app.outputs.url }}"
             echo "- Image: \`hendingar:${{ env.DEPLOY_SHA }}\`"
             echo "- Verifier (internal): \`${{ steps.verifier.outputs.url }}\`"
+            echo "- Ingest job: \`caj-$APP-ingest-$ENV_NAME\` (\`hendingar-ingest:${{ env.DEPLOY_SHA }}\`)"
             echo "- Postgres: \`${{ steps.infra.outputs.postgresFqdn }}\`"
           } >> "$GITHUB_STEP_SUMMARY"
