@@ -22,6 +22,7 @@ import { alias } from 'drizzle-orm/pg-core';
 import {
 	eventContributions,
 	eventHearts,
+	eventViewDays,
 	eventViews,
 	events,
 	organizers,
@@ -653,6 +654,12 @@ export const listPopular = query(
 			coalesce((select ${eventViews.views} from ${eventViews} where ${eventViews.eventId} = ${events.id}), 0)
 		`;
 		const score = by === 'hearts' ? hearts : views;
+		// Today's opens in Oslo, for the "moved since yesterday" on /poppis/vist.
+		const viewsToday = sql<number>`
+			coalesce((select ${eventViewDays.views} from ${eventViewDays}
+				where ${eventViewDays.eventId} = ${events.id}
+				and ${eventViewDays.day} = (now() at time zone 'Europe/Oslo')::date), 0)
+		`;
 
 		const rows = await db()
 			.select({
@@ -670,6 +677,7 @@ export const listPopular = query(
 				sourceMarks: sourceMarksFor(events.id).as('source_marks'),
 				hearts: hearts.mapWith(Number).as('hearts'),
 				views: views.mapWith(Number).as('views'),
+				viewsToday: viewsToday.mapWith(Number).as('views_today'),
 				localDate: sql<string>`
 					to_char(
 						greatest(${events.startsAt}, now())

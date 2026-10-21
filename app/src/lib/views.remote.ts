@@ -1,9 +1,10 @@
 import { command, query } from '$app/server';
 import { z } from 'zod';
-import { and, eq, inArray, sql } from 'drizzle-orm';
-import { eventViews, events } from '@hendingar/core/schema';
+import { and, eq, gte, inArray, sql } from 'drizzle-orm';
+import { eventViewDays, eventViews, events } from '@hendingar/core/schema';
 import { db } from './server/db';
 import { enforce } from './server/limits';
+import { TREND_DAYS } from './trend.ts';
 
 /**
  * The view counter: one number per event, and the way it goes up.
@@ -54,6 +55,19 @@ export const recordView = command(z.number().int().positive(), async (eventId) =
 		})
 		.returning({ views: eventViews.views });
 
+	/*
+	 * The same "one more", filed under today in Oslo, so /poppis/vist can draw a trend. The day is
+	 * the database's clock rather than this server's, for the same reason the increment is in SQL:
+	 * one authority for the number.
+	 */
+	await database
+		.insert(eventViewDays)
+		.values({ eventId, day: sql`(now() at time zone 'Europe/Oslo')::date`, views: 1 })
+		.onConflictDoUpdate({
+			target: [eventViewDays.eventId, eventViewDays.day],
+			set: { views: sql`${eventViewDays.views} + 1` }
+		});
+
 	return { eventId, views: row?.views ?? 0 };
 });
 
@@ -70,3 +84,31 @@ export const viewCounts = query(z.array(z.number().int().positive()).max(200), a
 		.from(eventViews)
 		.where(inArray(eventViews.eventId, eventIds));
 });
+
+/**
+ * The last fortnight of daily opens for a set of events, and what "today" is in Oslo.
+ *
+ * Today comes from the database, the same clock `recordView` files opens under, so a sparkline's
+ * last bar and the count that fills it cannot disagree about which day it is.
+ */
+export const viewHistory = query(
+	z.array(z.number().int().positive()).max(200),
+	async (eventIds) => {
+		const database = db();
+		const [clock] = await database.execute<{ today: string; since: string }>(
+			sql`select to_char((now() at time zone 'Europe/Oslo')::date, 'YYYY-MM-DD') as today,
+			to_char((now() at time zone 'Europe/Oslo')::date - ${TREND_DAYS - 1}::int, 'YYYY-MM-DD') as since`
+		);
+		if (!clock) throw new Error('the database did not say what day it is');
+		if (eventIds.length === 0) return { today: clock.today, days: [] };
+		const days = await database
+			.select({
+				eventId: eventViewDays.eventId,
+				day: eventViewDays.day,
+				views: eventViewDays.views
+			})
+			.from(eventViewDays)
+			.where(and(inArray(eventViewDays.eventId, eventIds), gte(eventViewDays.day, clock.since)));
+		return { today: clock.today, days };
+	}
+);

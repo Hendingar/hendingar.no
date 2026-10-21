@@ -2,6 +2,7 @@
 	import EventTile from './EventTile.svelte';
 	import { stackOccurrences } from '../occurrences.ts';
 	import type { UpcomingEvent } from '../events.remote';
+	import type { Trend } from '../trend.ts';
 
 	/**
 	 * One day's events as a responsive grid of tiles.
@@ -18,6 +19,7 @@
 		events,
 		hearts = {},
 		views = null,
+		trends = null,
 		featured = false
 	}: {
 		events: UpcomingEvent[];
@@ -31,6 +33,11 @@
 		 * head, and push every quiet event down for no reason.
 		 */
 		views?: Record<number, number> | null;
+		/**
+		 * Trends by event id, for /poppis/vist alone, as `views` is. A card's place is its position
+		 * in this grid, so the grid is what numbers them.
+		 */
+		trends?: Record<number, Trend> | null;
 		/**
 		 * Render this day's tiles as the leading ones: wider cells, a larger title cap, and the
 		 * calendar link.
@@ -56,6 +63,8 @@
 				occurrences={stack.occurrences}
 				hearts={hearts[stack.lead.id] ?? 0}
 				views={views ? (views[stack.lead.id] ?? 0) : null}
+				trend={trends?.[stack.lead.id] ?? null}
+				place={trends ? i + 1 : null}
 				{featured}
 			/>
 		</li>
