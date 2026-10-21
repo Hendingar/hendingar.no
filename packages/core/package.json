@@ -33,6 +33,7 @@
 		"./gone-upstream": "./src/gone-upstream.ts",
 		"./ingest-run": "./src/ingest-run.ts",
 		"./ingest-cli": "./src/ingest-cli.ts",
+		"./ingest-job": "./src/ingest-job.ts",
 		"./weekly-hours": "./src/weekly-hours.ts",
 		"./trail": "./src/trail.ts",
 		"./public-event": "./src/public-event.ts"
@@ -46,6 +47,7 @@
 		"db:sources": "node --env-file-if-exists=../../.env --experimental-strip-types scripts/sources.ts",
 		"consolidate": "node --env-file-if-exists=../../.env --experimental-strip-types scripts/consolidate.ts",
 		"expire": "node --env-file-if-exists=../../.env --experimental-strip-types scripts/expire-submissions.ts",
+		"ingest-job": "node --env-file-if-exists=../../.env --experimental-strip-types scripts/ingest-job.ts",
 		"await-migrations": "node --env-file-if-exists=../../.env --experimental-strip-types scripts/await-migrations.ts",
 		"db:seed": "node --env-file-if-exists=../../.env --experimental-strip-types scripts/seed.ts"
 	},

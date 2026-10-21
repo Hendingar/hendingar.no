@@ -75,129 +75,49 @@ jobs:
             --start-ip-address "$RUNNER_IP" --end-ip-address "$RUNNER_IP" >/dev/null
           echo "opened=true" >> "$GITHUB_OUTPUT"
 
-      # The deploy owns the schema, and this run must not start before the schema matches the code
-      # it checked out. GitHub fires the 05:00 cron hours late — every day between 11:00 and 12:50
-      # UTC in October — which is exactly when merges deploy, and on 2026-10-13 the DNT importer
-      # ran two minutes before the deploy added the column it reads. Both DNT sources failed.
-      # Waits for the deploy's migration rather than applying it: see the script for why.
-      - name: Wait for the database to have this checkout's migrations
-        id: migrated
+      # The app's ingress, for the kurator call at the end. The verifier is internal-only, so the
+      # app makes the model call and the job asks the app (ADR 0018).
+      - name: Resolve the app
+        id: app
+        run: |
+          APP=$(az containerapp show --resource-group "$RG" --name ca-hendingar-dev \
+            --query "properties.configuration.ingress.fqdn" -o tsv || true)
+          if [ -n "$APP" ]; then
+            echo "kurator=https://$APP/api/kurator" >> "$GITHUB_OUTPUT"
+          else
+            echo "::warning::no app ingress found; the job will skip curation"
+          fi
+
+      # The whole night is one command: await migrations, every importer, expire, consolidate,
+      # the kurator — packages/core/scripts/ingest-job.ts holds the order and the "keep going
+      # after a failure" rules that used to be five steps of `if: always()` here. It writes an
+      # `ingest_jobs` row, which is how /datasamling can say a night failed — or never ran.
+      #
+      # It still waits for the deploy's migrations rather than applying them: GitHub fires the
+      # 05:00 cron hours late, into the window when merges deploy (see scripts/await-migrations.ts).
+      # And it still exits non-zero when any source failed, so a bad night stays a red job.
+      - name: Collect every source
         if: steps.fw.outputs.opened == 'true'
         env:
           PGHOST: ${{ steps.pg.outputs.fqdn }}
           # As environment, never pasted into the script: a quote in the value would be shell.
           PW: ${{ secrets.POSTGRES_ADMIN_PASSWORD }}
-        run: |
-          DATABASE_URL=$(python3 -c \
-            'import os,urllib.parse as u; print("postgres://hendingar:%s@%s:5432/hendingar?sslmode=require" % (u.quote(os.environ["PW"], safe=""), os.environ["PGHOST"]))')
-          export DATABASE_URL
-          # Without pipefail the step takes `tee`'s exit code, and a database still behind would
-          # read as success and let every importer run into it.
-          set -o pipefail
-          pnpm await-migrations | tee -a result.txt
-
-      # Every importer, in one step, discovered rather than listed.
-      #
-      # This was fifteen near-identical steps, each naming one package. Adding a source meant
-      # copying fifteen lines here and two more into package.json, and getting that wrong was easy
-      # and quiet — deriving a step with a regex has twice produced two interleaved broken steps in
-      # this repo. Now a package under importers/ IS the registration, and there is nothing here to
-      # keep in step with it.
-      #
-      # --workspace-concurrency=4 runs four importers at once. Politeness is per host, and no two
-      # packages share one — checked 2026-10-03: each talks to its own upstream, and `mec`, which
-      # reads several sites, reads them one after another inside its own process. So no upstream
-      # ever sees two of our requests at once, and allevents keeps its 10s crawl delay. It was 1,
-      # which made the run the SUM of every importer; now it is about the slowest one, allevents,
-      # at ~100s by design. Measured locally on 2026-10-03, same data: 156s sequential, 105s at 4.
-      # --stream prefixes every line with its package, so the log still reads per source.
-      #
-      # --no-bail is the flag that matters. The chain was `a && b && c`, so the first failure
-      # stopped every importer after it: on 2026-09-06 allevents.in rate-limited us and six
-      # perfectly healthy sources simply did not run, with nothing on /kjelder to say why. Now each
-      # reports its own ingest_runs row and a failure costs only itself. pnpm still exits non-zero
-      # if any of them failed, so the job still goes red.
-      - name: Ingest every source
-        if: always() && steps.migrated.outcome == 'success'
-        env:
-          PGHOST: ${{ steps.pg.outputs.fqdn }}
-          # As environment, never pasted into the script: a quote in the value would be shell.
-          PW: ${{ secrets.POSTGRES_ADMIN_PASSWORD }}
           INGEST_TRIGGER: ${{ github.event_name == 'schedule' && 'schedule' || 'manual' }}
+          INGEST_REVISION: ${{ github.sha }}
+          KURATOR_URL: ${{ steps.app.outputs.kurator }}
           DRY_RUN: ${{ inputs.dry_run }}
         run: |
           DATABASE_URL=$(python3 -c \
             'import os,urllib.parse as u; print("postgres://hendingar:%s@%s:5432/hendingar?sslmode=require" % (u.quote(os.environ["PW"], safe=""), os.environ["PGHOST"]))')
           export DATABASE_URL
-          # The comment above promises a red job when an importer fails, and without pipefail it
-          # was not one: the step took `tee`'s exit code. On 2026-10-13 both DNT sources failed and
-          # the run was green.
+          # Without pipefail the step takes `tee`'s exit code: on 2026-10-13 both DNT sources
+          # failed and the run was green.
           set -o pipefail
           if [ "$DRY_RUN" = "true" ]; then
-            pnpm run ingest -- --dry-run | tee -a result.txt
+            pnpm ingest:job --dry-run | tee -a result.txt
           else
-            pnpm run ingest | tee -a result.txt
+            pnpm ingest:job | tee -a result.txt
           fi
-
-      # Submissions nobody came back to fix. Runs on the same schedule because it needs a database
-      # and nothing else, and a retention policy that runs when somebody remembers is not one.
-      - name: Expire abandoned submissions
-        if: always() && steps.migrated.outcome == 'success' && inputs.dry_run != true
-        env:
-          PGHOST: ${{ steps.pg.outputs.fqdn }}
-          # As environment, never pasted into the script: a quote in the value would be shell.
-          PW: ${{ secrets.POSTGRES_ADMIN_PASSWORD }}
-        run: |
-          DATABASE_URL=$(python3 -c \
-            'import os,urllib.parse as u; print("postgres://hendingar:%s@%s:5432/hendingar?sslmode=require" % (u.quote(os.environ["PW"], safe=""), os.environ["PGHOST"]))')
-          export DATABASE_URL
-          set -o pipefail
-          pnpm expire | tee -a result.txt
-
-      # After every importer, never inside one: an importer sees a single source and cannot know
-      # what the others said. Skipped on a dry run, which must write nothing.
-      - name: Consolidate duplicates across sources
-        if: always() && steps.migrated.outcome == 'success' && inputs.dry_run != true
-        env:
-          PGHOST: ${{ steps.pg.outputs.fqdn }}
-          # As environment, never pasted into the script: a quote in the value would be shell.
-          PW: ${{ secrets.POSTGRES_ADMIN_PASSWORD }}
-        run: |
-          DATABASE_URL=$(python3 -c \
-            'import os,urllib.parse as u; print("postgres://hendingar:%s@%s:5432/hendingar?sslmode=require" % (u.quote(os.environ["PW"], safe=""), os.environ["PGHOST"]))')
-          export DATABASE_URL
-          set -o pipefail
-          pnpm consolidate | tee -a result.txt
-
-      # The weekend's picks, chosen after the rows they are chosen from exist.
-      #
-      # Last, and deliberately: it must run after `consolidate`, or the kurator can pick two rows
-      # that are the same event reported by two sources and offer them as two of its three.
-      #
-      # A curl rather than a script, because the model lives somewhere this runner cannot reach.
-      # The verifier's ingress is internal (infra/verifier.bicep, `external: false`) so that an
-      # unauthenticated /extract cannot become a public vision-model proxy, and this runner is
-      # outside the Container Apps environment entirely — it gets to Postgres only through the
-      # firewall rule above. The app is inside, so the app makes the call and we ask the app.
-      #
-      # `continue-on-error`: a weekend without picks is a page that renders exactly as it did
-      # before the kurator existed. Failing the ingest over it would turn an optional section into
-      # a red build about fifteen sources that imported perfectly.
-      - name: Curate the weekend
-        if: always() && inputs.dry_run != true
-        continue-on-error: true
-        run: |
-          APP=$(az containerapp show --resource-group "$RG" --name ca-hendingar-dev \
-            --query "properties.configuration.ingress.fqdn" -o tsv)
-          test -n "$APP" || { echo "::warning::no app ingress found; skipping curation"; exit 0; }
-          # Idempotent per day: a second POST returns the stored picks without calling a model, so
-          # a re-run costs nothing and cannot produce a second, different selection.
-          #
-          # The Origin header is not decoration. SvelteKit refuses a cross-origin POST, and a curl
-          # sends no Origin at all — without this the nightly call is a 403 that nobody reads,
-          # because this step is continue-on-error. `app/e2e/kurator.e2e.ts` asserts both halves.
-          curl -fsS -X POST -H "Origin: https://$APP" "https://$APP/api/kurator" | tee -a result.txt
-          echo >> result.txt
 
       # A separate always() step: a bash EXIT trap does not survive SIGKILL, and a leaked rule
       # leaves a recycled public runner IP allowed against the database.

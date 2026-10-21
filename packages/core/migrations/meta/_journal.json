@@ -211,6 +211,13 @@
       "when": 1792128283849,
       "tag": "0029_serious_carnage",
       "breakpoints": true
+    },
+    {
+      "idx": 30,
+      "version": "7",
+      "when": 1792580387201,
+      "tag": "0030_brief_captain_universe",
+      "breakpoints": true
     }
   ]
 }

@@ -3,6 +3,7 @@
 	import { page } from '$app/state';
 	import { afterNavigate, goto } from '$app/navigation';
 	import { formatEventTime } from '@hendingar/core/datetime';
+	import { jobHealth } from '@hendingar/core/ingest-job';
 	import SourceRow from '../../lib/components/collection/SourceRow.svelte';
 	import PageMeta from '../../lib/components/PageMeta.svelte';
 	import { listCollection } from '../../lib/collection.remote';
@@ -55,6 +56,15 @@
 	const collected = data.sources.filter((s) => s.active && s.kind !== 'link');
 	const upcoming = data.sources.reduce((n, s) => n + s.eventsUpcoming, 0);
 	const weekly = data.sources.reduce((n, s) => n + s.activitiesWeekly, 0);
+	const job = data.latestJob;
+	const health = jobHealth(job, now);
+	const jobOk =
+		health.state === 'running' ||
+		(health.state === 'done' && health.status === 'success' && !health.overdue);
+	const minutes = (ms: number | null) =>
+		ms === null ? null : Math.max(1, Math.round(ms / 60_000));
+	const at = (d: Date) => formatEventTime(d, 'Europe/Oslo', 'card');
+
 	const latestRun = collected
 		.map((s) => s.lastRunAt)
 		.filter((d) => d !== null)
@@ -111,6 +121,51 @@
 			>
 		{/if}
 	</p>
+
+	<!--
+		The night as a whole, from `ingest_jobs`. The line above is about sources; this one is about
+		whether the collection happened — and a night that never ran is only visible here.
+	-->
+	{#if job && health.state !== 'none'}
+		<p class="status job" data-ok={jobOk} data-testid="job-status">
+			<span class="status__dot" aria-hidden="true"></span>
+			{#if health.state === 'running'}
+				Innsamling pågår, starta
+				<time datetime={health.since.toISOString()}>{at(health.since)}</time>
+			{:else if health.state === 'interrupted'}
+				Innsamlinga som starta
+				<time datetime={health.since.toISOString()}>{at(health.since)}</time>
+				vart avbroten
+			{:else}
+				Siste innsamling
+				<time datetime={health.at.toISOString()}>{at(health.at)}</time>
+				{#if minutes(job.durationMs) !== null}
+					<span class="status__sep" aria-hidden="true">·</span>
+					{minutes(job.durationMs)} min
+				{/if}
+				<span class="status__sep" aria-hidden="true">·</span>
+				{#if health.status === 'failed' && job.sourcesFailed < job.sourcesRun}
+					feila
+				{:else}
+					{job.sourcesRun - job.sourcesFailed} av {job.sourcesRun} kjelder i orden
+				{/if}
+			{/if}
+			{#if job.failed.length > 0 && health.state !== 'running'}
+				<span class="status__sep" aria-hidden="true">·</span>
+				<!-- One inline run of text: the line is a flex row, and a bare comma would be its own item. -->
+				<span
+					>feila: {#each job.failed as source, i (source.slug)}{i > 0 ? ', ' : ''}<a
+							href={sourceListHref({ q: source.name, vis: null, sorter: null })}
+							data-sveltekit-reset="false">{source.name}</a
+						>{/each}</span
+				>
+			{/if}
+			{#if health.state !== 'running' && health.overdue}
+				<span class="status__sep" aria-hidden="true">·</span>
+				<strong>neste innsamling er forseinka</strong>
+			{/if}
+		</p>
+	{/if}
 </div>
 
 <section class="shell list" aria-labelledby="h-sources">
@@ -288,6 +343,13 @@
 		border: 2px solid var(--peach-hi);
 	}
 	.status[data-ok='false'] a {
+		color: var(--peach-hi);
+	}
+	.job {
+		margin-block-start: 0.4rem;
+	}
+	.job strong {
+		font-weight: inherit;
 		color: var(--peach-hi);
 	}
 

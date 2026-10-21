@@ -201,6 +201,13 @@ importers/<source>/      one deterministic importer per source, or per *platform
 `/datasamling` renders — the page can only say a source is collected because a run says so. If you
 add an importer, record its runs the same way or it will be invisible when it silently stops.
 
+**The night as a whole is an `ingest_jobs` row**, written by `pnpm ingest:job` and nothing else:
+await migrations, every importer, expire, consolidate, the kurator — in that order, each a child
+process, with the "keep going after a failure" rules in `packages/core/scripts/ingest-job.ts`.
+The scheduler runs that one command. `/datasamling` reads the latest row, which is the only place a
+night that never ran shows up at all; `jobHealth` in `packages/core/src/ingest-job.ts` is the rule
+for "interrupted" and "late".
+
 **A package under `importers/` IS the registration.** `pnpm ingest` is
 `pnpm -r --filter "./importers/*" --no-bail ingest`, and the workflow runs that one command — so a
 new importer needs no entry in `package.json` and no step in `.github/workflows/ingest.yml`. It
