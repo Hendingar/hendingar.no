@@ -3,6 +3,7 @@ import { and, count, desc, eq, sql } from 'drizzle-orm';
 import {
 	curatorPicks,
 	events,
+	ingestJobs,
 	ingestRuns,
 	sources,
 	venues,
@@ -122,9 +123,43 @@ export const listCollection = query(async () => {
 		.from(events)
 		.where(and(sql`${events.sourceId} is null`, eq(events.status, 'pending')));
 
+	/*
+	 * The night as a whole: did the collection happen, and how did it go. The per-source rows
+	 * above cannot say that a night never ran, and that is the failure that matters most.
+	 */
+	const [latestJob] = await database
+		.select({
+			id: ingestJobs.id,
+			startedAt: ingestJobs.startedAt,
+			finishedAt: ingestJobs.finishedAt,
+			status: ingestJobs.status,
+			sourcesRun: ingestJobs.sourcesRun,
+			sourcesFailed: ingestJobs.sourcesFailed,
+			durationMs: ingestJobs.durationMs
+		})
+		.from(ingestJobs)
+		.orderBy(desc(ingestJobs.startedAt))
+		.limit(1);
+
+	// Named from the runs rather than parsed out of the message, so each can link to its row.
+	const failedInJob = latestJob
+		? await database
+				.select({ slug: sources.slug, name: sources.name })
+				.from(ingestRuns)
+				.innerJoin(sources, eq(ingestRuns.sourceId, sources.id))
+				.where(
+					and(
+						eq(ingestRuns.jobId, latestJob.id),
+						sql`${ingestRuns.status} in ('failed', 'running')`
+					)
+				)
+				.orderBy(sources.name)
+		: [];
+
 	return {
 		generatedAt: now,
 		sources: collected,
+		latestJob: latestJob ? { ...latestJob, failed: failedInJob } : null,
 		submittedCount: submitted?.total ?? 0,
 		pendingCount: pending?.total ?? 0
 	};

@@ -4,7 +4,7 @@
  *   pnpm --filter @hendingar/importer-<x> ingest [--dry-run] [--only <slug>]
  *
  * Twenty-five `cli.ts` files said this, differing in the import names and whether the log line
- * named its source. Exit status is the contract with `.github/workflows/ingest.yml`: a partial run
+ * named its source. Exit status is the contract with `pnpm ingest:job` and the scheduler behind it: a partial run
  * is not a failure — some records changed shape and the rest imported fine — but it must be
  * visible in the job output. Any outright failure fails the job.
  */
@@ -33,7 +33,9 @@ export async function runIngestCli<R extends IngestResult>(cli: IngestCli<R>): P
 	const options: RunOptions = {
 		dryRun,
 		trigger: process.env.INGEST_TRIGGER ?? (process.env.CI ? 'schedule' : 'manual'),
-		revision: process.env.GITHUB_SHA ?? null
+		revision: process.env.INGEST_REVISION ?? process.env.GITHUB_SHA ?? null,
+		// Set by `pnpm ingest:job` for the importers it starts; absent when one is run by hand.
+		jobId: jobIdFrom(process.env.INGEST_JOB_ID)
 	};
 
 	try {
@@ -71,4 +73,10 @@ export async function runIngestCli<R extends IngestResult>(cli: IngestCli<R>): P
 		console.error('ingest failed:', error instanceof Error ? error.message : error);
 		process.exit(1);
 	}
+}
+
+/** `INGEST_JOB_ID` as a row id, or null. A value that is not one is ignored rather than trusted. */
+export function jobIdFrom(value: string | undefined): number | null {
+	if (!value || !/^[1-9]\d*$/.test(value)) return null;
+	return Number(value);
 }

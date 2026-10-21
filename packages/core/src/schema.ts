@@ -159,6 +159,38 @@ export const sources = pgTable('sources', {
  * could only claim a source is being collected, never show that it actually was, when, or what
  * came back. Also the only way a silently-failing importer becomes visible.
  */
+/**
+ * One collection: every importer, then expiry, consolidation and the kurator, as one scheduled job.
+ *
+ * `ingest_runs` says how each source went; this says how the night went. Without it the only
+ * place a failed night was visible was a GitHub email, and the only place a night that never
+ * happened was visible was nowhere. `/datasamling` reads the latest row and says both in words.
+ *
+ * Written by `pnpm ingest:job` (packages/core/scripts/ingest-job.ts) and nothing else. A job
+ * killed by its timeout keeps `running` forever; `jobHealth` reads a row that has been running
+ * longer than any job may as interrupted rather than trusting the status.
+ */
+export const ingestJobs = pgTable(
+	'ingest_jobs',
+	{
+		id: serial('id').primaryKey(),
+		startedAt: timestamp('started_at', { withTimezone: true }).notNull().defaultNow(),
+		finishedAt: timestamp('finished_at', { withTimezone: true }),
+		/** `partial` means some sources failed and the rest ran; `failed` that a step did. */
+		status: ingestRunStatusEnum('status').notNull().default('running'),
+		/** 'schedule' | 'manual' — how the job was kicked off. */
+		trigger: text('trigger').notNull().default('schedule'),
+		/** The commit that ran, so a behaviour change is traceable. */
+		revision: text('revision'),
+		sourcesRun: integer('sources_run').notNull().default(0),
+		sourcesFailed: integer('sources_failed').notNull().default(0),
+		durationMs: integer('duration_ms'),
+		/** Which steps failed, in words. Null on a clean night. */
+		message: text('message')
+	},
+	(t) => [index('ingest_jobs_started_idx').on(t.startedAt)]
+);
+
 export const ingestRuns = pgTable(
 	'ingest_runs',
 	{
@@ -166,6 +198,8 @@ export const ingestRuns = pgTable(
 		sourceId: integer('source_id')
 			.notNull()
 			.references(() => sources.id),
+		/** The collection this run was part of. Null for an importer run by hand, outside a job. */
+		jobId: integer('job_id').references(() => ingestJobs.id),
 		startedAt: timestamp('started_at', { withTimezone: true }).notNull().defaultNow(),
 		finishedAt: timestamp('finished_at', { withTimezone: true }),
 		status: ingestRunStatusEnum('status').notNull().default('running'),
@@ -757,6 +791,7 @@ export type CuratorPick = typeof curatorPicks.$inferSelect;
 export type NewCuratorPick = typeof curatorPicks.$inferInsert;
 
 export type IngestRun = typeof ingestRuns.$inferSelect;
+export type IngestJob = typeof ingestJobs.$inferSelect;
 export type Verification = typeof verifications.$inferSelect;
 export type NewVerification = typeof verifications.$inferInsert;
 export type NewIngestRun = typeof ingestRuns.$inferInsert;

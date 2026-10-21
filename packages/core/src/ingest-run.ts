@@ -44,6 +44,8 @@ export type RunOptions = {
 	trigger?: string;
 	/** The commit that produced this run, so a behaviour change is traceable. */
 	revision?: string | null;
+	/** The `ingest_jobs` row this run belongs to, when `pnpm ingest:job` started it. */
+	jobId?: number | null;
 	dryRun?: boolean;
 	now?: () => Date;
 };
@@ -232,14 +234,20 @@ export async function recordRun(
 	options: RunOptions,
 	work: (run: IngestRun) => Promise<void>
 ): Promise<RunReport> {
-	const { trigger = 'manual', revision = null, dryRun = false, now = () => new Date() } = options;
+	const {
+		trigger = 'manual',
+		revision = null,
+		jobId = null,
+		dryRun = false,
+		now = () => new Date()
+	} = options;
 	const startedAt = now();
 
 	let runId = -1;
 	if (!dryRun) {
 		const [row] = await db
 			.insert(ingestRuns)
-			.values({ sourceId, startedAt, status: 'running', trigger, revision })
+			.values({ sourceId, jobId, startedAt, status: 'running', trigger, revision })
 			.returning({ id: ingestRuns.id });
 		if (!row) throw new Error('could not open an ingest run');
 		runId = row.id;

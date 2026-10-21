@@ -39,11 +39,11 @@ test('curating is a POST, because it writes', async ({ request }) => {
 
 test('the trigger needs a matching origin, and the workflow sends one', async ({ request }) => {
 	/*
-	 * SvelteKit's CSRF check refuses a cross-origin POST, and a `curl -X POST` sends no `Origin`
-	 * at all — so the nightly step has to set one, and this is why. Asserted rather than
-	 * remembered: the header in `.github/workflows/ingest.yml` looks like clutter somebody would
-	 * tidy away, and the symptom would be a nightly 403 nobody reads because the step is
-	 * `continue-on-error`.
+	 * SvelteKit's CSRF check refuses a cross-origin POST, and a server-side `fetch` sends no
+	 * `Origin` at all — so the nightly job has to set one, and this is why. Asserted rather than
+	 * remembered: the header in `packages/core/scripts/ingest-job.ts` looks like clutter somebody
+	 * would tidy away, and the symptom would be a nightly 403 nobody reads because the kurator
+	 * never fails the night.
 	 *
 	 * Found by running the specs, not by reading the docs.
 	 */
