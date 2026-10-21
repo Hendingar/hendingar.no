@@ -111,8 +111,9 @@ written down, including the two things that have actually gone wrong: branching 
 branch, which conflicts against everything the parent touched once it squash-merges, and running
 the e2e specs against a database CI does not use.
 
-Deploy and ingest are not yours to trigger. Deploy runs on merge to `main`; ingest runs on a daily
-cron against the live database. **A deploy ships code, not data** — a newly merged importer imports
+Deploy and ingest are not yours to trigger. Deploy runs on merge to `main`; ingest runs at 05:00
+UTC as an Azure Container Apps job (`infra/ingest.bicep`, ADR 0025) against the live database, and
+`.github/workflows/ingest.yml` is only the button that starts that job early. **A deploy ships code, not data** — a newly merged importer imports
 nothing until the next scheduled run.
 
 ## Layout
@@ -204,13 +205,13 @@ add an importer, record its runs the same way or it will be invisible when it si
 **The night as a whole is an `ingest_jobs` row**, written by `pnpm ingest:job` and nothing else:
 await migrations, every importer, expire, consolidate, the kurator — in that order, each a child
 process, with the "keep going after a failure" rules in `packages/core/scripts/ingest-job.ts`.
-The scheduler runs that one command. `/datasamling` reads the latest row, which is the only place a
+The scheduler runs that one command — a Container Apps job built from `Dockerfile.ingest`. `/datasamling` reads the latest row, which is the only place a
 night that never ran shows up at all; `jobHealth` in `packages/core/src/ingest-job.ts` is the rule
 for "interrupted" and "late".
 
 **A package under `importers/` IS the registration.** `pnpm ingest` is
-`pnpm -r --filter "./importers/*" --no-bail ingest`, and the workflow runs that one command — so a
-new importer needs no entry in `package.json` and no step in `.github/workflows/ingest.yml`. It
+`pnpm -r --filter "./importers/*" --no-bail ingest`, and the nightly job runs that one command — so
+a new importer needs no entry in `package.json` and nothing in `infra/` or the workflows. It
 needs an `ingest` script, and `/kjelder` groups it automatically if its source slug carries a
 platform prefix (`platformOf` in `packages/core/src/directory.ts`).
 

@@ -1,0 +1,34 @@
+# The nightly collection: every importer, then expire, consolidate and the kurator.
+#
+#   CMD pnpm ingest:job
+#
+# Run by the Container Apps job in infra/ingest.bicep (ADR 0025). Separate from the app's image on
+# purpose: that one is a pruned SvelteKit build with no importers in it, and growing it by every
+# upstream parser would ship them to every visitor-facing replica. This one has no server at all.
+#
+# Plain Dockerfile, nothing Azure-specific: it runs anywhere with a DATABASE_URL, which is also how
+# it was tested before it shipped.
+FROM node:22-alpine
+WORKDIR /repo
+
+# pnpm comes from corepack at the version package.json pins. COREPACK_HOME is outside root's home
+# so the unprivileged user below can run the copy fetched at build time, instead of fetching one
+# again on every night's start.
+ENV COREPACK_HOME=/usr/local/share/corepack
+RUN corepack enable
+
+COPY . .
+
+# Only what the night runs: the importers and the core they import. Not the app — the kurator is
+# reached over HTTP, which is the point of ADR 0018.
+RUN corepack install \
+	&& CI=true pnpm install --frozen-lockfile --filter "./importers/*..." --filter "@hendingar/core" \
+	&& chmod -R a+rX "$COREPACK_HOME"
+
+# The image is immutable, so "are the dependencies current" was settled at build time. Left on,
+# pnpm's pre-run check reads the filtered install above as incomplete and tries to reinstall —
+# as the user below, into a tree it cannot write, so the night died before its first importer.
+ENV pnpm_config_verify_deps_before_run=false npm_config_verify_deps_before_run=false
+
+USER node
+CMD ["pnpm", "ingest:job"]

@@ -32,7 +32,7 @@ function upsertSource(db: Db) {
 			'svaret — så datoen er noko kjelda seier, ikkje noko vi reknar oss fram til.',
 		kind: 'html',
 		// A literal rather than config: this importer reads one source, so there is no instance to
-		// carry it. It matches the cron in .github/workflows/ingest.yml.
+		// carry it. It matches the cron in infra/ingest.bicep.
 		scheduleCron: SITE.scheduleCron,
 		iconUrl: SITE.iconUrl,
 		// Editorially moderated upstream — see the column comment in schema.ts.

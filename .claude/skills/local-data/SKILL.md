@@ -106,6 +106,6 @@ To inspect mapping with no writes at all, call the importer's `map.ts` directly.
 
 ## Do not reach for the deployed ingest
 
-`gh workflow run ingest.yml` writes to the live database and is not a way to get local data. It is
-for making the deployment collect something now — a newly merged importer, or a source whose last
+`gh workflow run ingest.yml` starts the deployed Container Apps ingest job, which writes to the
+live database, and is not a way to get local data. It is for making the deployment collect something now — a newly merged importer, or a source whose last
 run failed. Deploy and ingest are not ours to trigger on a whim (CLAUDE.md, Shipping).

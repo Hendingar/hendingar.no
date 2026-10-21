@@ -150,8 +150,8 @@ git branch -vv | grep ': gone]' | awk '{print $1}' | xargs -r git branch -D
 
 ## When two PRs collide
 
-They will, whenever both add an importer: both edit the same line of `package.json` and insert a
-step at the same anchor in `.github/workflows/ingest.yml`. After the first merges:
+They will, whenever two branches touch the same list — two importers registering platform
+prefixes, two migrations generated from the same snapshot. After the first merges:
 
 ```bash
 git checkout <branch> && git rebase origin/main
@@ -180,7 +180,7 @@ git push --force-with-lease
 - [ ] any new guard proven to fail when the thing it guards is broken
 - [ ] PR actually merged — confirmed with `gh pr list --state open`, not assumed
 - [ ] branch gone from the remote, local branches pruned
-- [ ] for a new importer: it appears in `pnpm ingest`, in `.github/workflows/ingest.yml`, and a
+- [ ] for a new importer: it appears in `pnpm ingest` (nothing to add to a workflow), and a
       second run reports every row `unchanged`
 
 ## What this does NOT cover
@@ -188,8 +188,8 @@ git push --force-with-lease
 Deploying and ingesting are automatic and are not yours to trigger:
 
 - **Deploy** runs on merge to `main`.
-- **Ingest** runs on a daily `cron` and writes to the live database.
+- **Ingest** runs at 05:00 UTC as a Container Apps job and writes to the live database.
 
 A deploy ships *code*, not data — so a newly merged importer imports nothing until the next
-scheduled ingest, or a manual `gh workflow run ingest.yml`. Say that plainly rather than implying
+scheduled ingest, or a manual `gh workflow run ingest.yml`, which starts that job early. Say that plainly rather than implying
 the events are already live.

@@ -85,7 +85,9 @@ async function curate(target: string): Promise<boolean> {
 
 // The schema must match this checkout before anything writes, the job row included.
 if (!(await run('migreringar', ['run', 'await-migrations']))) {
-	console.error('ingest:job: the database is behind this checkout; nothing ran');
+	console.error(
+		"ingest:job: could not confirm the database has this checkout's migrations (see above); nothing ran"
+	);
 	process.exit(1);
 }
 
