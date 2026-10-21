@@ -14,6 +14,8 @@
 	import { parseFixture } from '@hendingar/core/fixture';
 	import { parseHandballMatch } from '@hendingar/core/handball';
 	import { kitClass } from '../club-kits.ts';
+	import TrendLine from './poppis/TrendLine.svelte';
+	import type { Trend } from '../trend.ts';
 
 	/**
 	 * `occurrences` is every time this event runs today, the lead included.
@@ -27,6 +29,8 @@
 		occurrences = [],
 		hearts = 0,
 		views = null,
+		trend = null,
+		place = null,
 		featured = false
 	}: {
 		event: UpcomingEvent;
@@ -41,6 +45,9 @@
 		 * /poppis/vist is explicitly about the number, so there it earns its place.
 		 */
 		views?: number | null;
+		/** Which way the count is going, and where the card stands. /poppis/vist only, like `views`. */
+		trend?: Trend | null;
+		place?: number | null;
 		/**
 		 * The tile is one of the leading day's, so it gets the room to carry an extra action.
 		 *
@@ -291,6 +298,9 @@
 				No singular form: "har opna denne" is the same for one as for many in nynorsk.
 			-->
 			<p class="tile__views">{views} har opna denne</p>
+		{/if}
+		{#if trend && place !== null}
+			<TrendLine {trend} {place} />
 		{/if}
 	</div>
 

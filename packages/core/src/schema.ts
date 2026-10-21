@@ -7,6 +7,7 @@ import {
 	jsonb,
 	pgEnum,
 	pgTable,
+	primaryKey,
 	serial,
 	text,
 	timestamp,
@@ -687,6 +688,28 @@ export const eventViews = pgTable(
 );
 
 export type EventView = typeof eventViews.$inferSelect;
+
+/**
+ * The same counter, split by day: how many browsers opened an event on each Oslo calendar day.
+ *
+ * `/poppis/vist` draws a trend from it — a sparkline, today's opens, a move in the ranking since
+ * yesterday — which one running total cannot give. It keeps the promise `event_views` makes: a
+ * count per event per day, never a row per reader, so it is no more a reading history than the
+ * total is. Written in the same command as the total (`recordView`), and starts empty: history
+ * before it existed is not recoverable, and is not invented.
+ */
+export const eventViewDays = pgTable(
+	'event_view_days',
+	{
+		eventId: integer('event_id')
+			.notNull()
+			.references(() => events.id, { onDelete: 'cascade' }),
+		/** The calendar day in Europe/Oslo, where the readers are. */
+		day: date('day').notNull(),
+		views: integer('views').notNull().default(0)
+	},
+	(t) => [primaryKey({ columns: [t.eventId, t.day] })]
+);
 
 export type EventHeart = typeof eventHearts.$inferSelect;
 

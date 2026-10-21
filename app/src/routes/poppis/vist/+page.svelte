@@ -2,6 +2,8 @@
 	import EventGrid from '../../../lib/components/EventGrid.svelte';
 	import PageMeta from '../../../lib/components/PageMeta.svelte';
 	import { listPopular } from '../../../lib/events.remote';
+	import { viewHistory } from '../../../lib/views.remote';
+	import { trends as trendsOf } from '../../../lib/trend.ts';
 
 	/**
 	 * Upcoming events, most opened first.
@@ -10,10 +12,20 @@
 	 * be in the server-rendered HTML.
 	 */
 	const events = await listPopular({ by: 'views' });
+	// The fortnight behind each card, in the same server render: a sparkline that arrived after
+	// hydration would be a page that shifts under the reader's thumb.
+	const history = await viewHistory(events.map((e) => e.id));
 
 	const hearts = $derived(Object.fromEntries(events.map((e) => [e.id, e.hearts])));
 	const views = $derived(Object.fromEntries(events.map((e) => [e.id, e.views])));
 	const anyViews = $derived(events.some((e) => e.views > 0));
+	const trends = $derived(
+		trendsOf(
+			events.map((e) => ({ id: e.id, total: e.views, today: e.viewsToday, startsAt: e.startsAt })),
+			history.days,
+			history.today
+		)
+	);
 </script>
 
 <PageMeta
@@ -41,7 +53,15 @@
 			Talet er kor mange nettlesarar som har opna hendinga. Vi tel éin gong per nettlesar, og vi
 			lagrar ikkje kven som opna kva.
 		</p>
-		<EventGrid {events} {hearts} {views} />
+		<!--
+			How to read the line under each card, once, rather than a legend on every one. The bars
+			are a count per day, which is all we keep — no more a history of who than the total is.
+		-->
+		<p class="list__key">
+			Under kvart kort: plassen på lista, opningar per dag dei siste to vekene, og kor mykje ho har
+			flytta seg sidan i går.
+		</p>
+		<EventGrid {events} {hearts} {views} {trends} />
 	{/if}
 </section>
 
@@ -53,7 +73,8 @@
 	}
 	.list__empty,
 	.list__note,
-	.list__what {
+	.list__what,
+	.list__key {
 		margin: 0;
 		max-inline-size: 60ch;
 		color: var(--peach-dim);

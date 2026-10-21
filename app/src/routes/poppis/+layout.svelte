@@ -12,8 +12,8 @@
 	 * the colour alone says it to sighted readers only.
 	 */
 	const TABS = [
-		{ href: '/poppis/hjarta', label: 'Flest hjarte' },
-		{ href: '/poppis/vist', label: 'Mest opna' }
+		{ href: '/poppis/vist', label: 'Mest opna' },
+		{ href: '/poppis/hjarta', label: 'Flest hjarte' }
 	] as const;
 </script>
 

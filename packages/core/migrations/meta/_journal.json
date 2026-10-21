@@ -218,6 +218,13 @@
       "when": 1792580387201,
       "tag": "0030_brief_captain_universe",
       "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "7",
+      "when": 1792582187537,
+      "tag": "0031_dizzy_may_parker",
+      "breakpoints": true
     }
   ]
 }

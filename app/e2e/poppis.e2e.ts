@@ -8,10 +8,59 @@ import { expect, test } from '@playwright/test';
  * throw — the number simply becomes a page-load counter and nobody notices.
  */
 
-test('/poppis leads to an ordering rather than being a third listing', async ({ page }) => {
+test('/poppis leads to the opens ordering, first in the tabs', async ({ page }) => {
+	// Opens lead because almost nobody hearts: the hearts page was a list ordered by nothing.
 	await page.goto('/poppis');
-	await expect(page).toHaveURL(/\/poppis\/hjarta$/);
-	await expect(page.locator('.tab--on')).toHaveText(/Flest hjarte/);
+	await expect(page).toHaveURL(/\/poppis\/vist$/);
+	await expect(page.locator('.tab--on')).toHaveText(/Mest opna/);
+	await expect(page.locator('.tab').first()).toHaveText(/Mest opna/);
+});
+
+test('every card on the opens ordering carries its place and a trend, in the HTML', async ({
+	page
+}) => {
+	/*
+	 * Server-rendered, not drawn after load: a line that arrived after hydration would push the
+	 * page down under a reader's thumb, and a crawler would never see it.
+	 */
+	const html = await (await page.request.get('/poppis/vist')).text();
+	const places = [...html.matchAll(/<span class="trend__place[^"]*"[^>]*>(\d+)<\/span>/g)].map(
+		(m) => Number(m[1])
+	);
+	expect(places.length).toBeGreaterThan(0);
+	expect(places).toEqual(places.map((_, i) => i + 1));
+	expect(html).toContain('class="trend__bars');
+	expect(html).toMatch(/opningar dei siste 14 dagane/);
+});
+
+test('only the opens ordering draws trends', async ({ page }) => {
+	// A ranking on the front page or /hendingar would make "what is on" a popularity contest.
+	for (const path of ['/poppis/hjarta', '/hendingar', '/']) {
+		await page.goto(path);
+		await expect(page.locator('.trend'), path).toHaveCount(0);
+	}
+});
+
+test("an open moves today's count by one", async ({ page }) => {
+	/*
+	 * Before and after, not "is there a count": earlier specs open the same events, so a count
+	 * already present proves nothing. This one only passes if the open was filed under today.
+	 */
+	await page.goto('/hendingar');
+	const href = await page.locator('.tile a').first().getAttribute('href');
+	expect(href).toBeTruthy();
+	const card = page.locator('.tile', { has: page.locator(`a[href="${href}"]`) });
+	const today = async () => {
+		await page.goto('/poppis/vist');
+		const el = card.locator('.trend__today');
+		return (await el.count()) === 0 ? 0 : Number((await el.innerText()).replace(/\D/g, ''));
+	};
+
+	const before = await today();
+	await page.goto(href!);
+	await page.waitForTimeout(1500);
+	expect(await today()).toBe(before + 1);
+	await expect(card.locator('.trend__bar--today')).toHaveCount(1);
 });
 
 test('both orderings are server-rendered, not fetched after load', async ({ page }) => {
