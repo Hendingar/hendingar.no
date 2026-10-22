@@ -231,3 +231,51 @@ describe('municipalityOf', () => {
 		expect(municipalityOf('')).toBeNull();
 	});
 });
+
+describe('every organiser with a fixture', () => {
+	const fixtures: Record<string, string> = {
+		'billetto-bremnes-idrettslag': 'bremnes-idrettslag.json',
+		'billetto-siggjo-bolse-basarlaug': 'siggjo-bolse-basarlaug.json'
+	};
+
+	for (const [slug, file] of Object.entries(fixtures)) {
+		it(`${slug}: the configured id is the one on its own events`, () => {
+			/*
+			 * The id is read by hand off the page's search request and typed into organisers.ts,
+			 * and nothing else checks it: a wrong id filters to nobody, and the run reports success
+			 * with zero rows. The fixture is what the real filter returned, so every hit in it must
+			 * carry the id we filtered on.
+			 */
+			const organiser = organiserBySlug(slug)!;
+			const parsed = parseSearch(fixture(file));
+			expect(parsed.events.length).toBeGreaterThan(0);
+			expect(parsed.rejected).toEqual([]);
+			for (const hit of parsed.events) {
+				expect([hit.organizer_id, ...(hit.host_ids ?? [])]).toContain(organiser.organizerId);
+			}
+		});
+	}
+});
+
+describe('Siggjo Bolse & Basarlaug', () => {
+	const siggjo = organiserBySlug('billetto-siggjo-bolse-basarlaug')!;
+	const parsed = parseSearch(fixture('siggjo-bolse-basarlaug.json'));
+
+	it('files the romjulsdans at Langevåg Bygdatun, on Bømlo, at half past seven', () => {
+		const mapped = mapEvent(parsed.events[0]!, siggjo);
+		if (isFailure(mapped)) throw new Error(mapped.problem);
+		// The card on billetto.no reads "26. Desember 2026, 19:30", and the epoch agrees.
+		expect(mapped.startsAt.toISOString()).toBe('2026-12-26T18:30:00.000Z');
+		expect(mapped.venueName).toBe('Langevåg Bygdatun');
+		// Billetto's `city` is "Bømlo" here — the municipality itself, not a post town.
+		expect(mapped.municipality).toBe('Bømlo');
+		expect(mapped.category).toBe('musikk');
+		expect(mapped.sourceUrl).toBe(
+			'https://billetto.no/e/romjulsdans-langevag-bygdatun-billetter-2024471'
+		);
+	});
+
+	it('links the organiser page the source was added from', () => {
+		expect(organiserUrl(siggjo)).toBe('https://billetto.no/users/siggjo-bolse-basarlaug');
+	});
+});

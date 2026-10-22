@@ -73,6 +73,23 @@ export const ORGANISERS: readonly BillettoOrganiser[] = [
 		scheduleCron: '0 5 * * *',
 		iconUrl: 'https://billetto.no/favicon.ico',
 		trusted: true
+	},
+	{
+		/*
+		 * The basarlaug in Langevåg, at the southern tip of Bømlo, which runs the village's
+		 * romjulsdans at Langevåg Bygdatun. The id was read off the search index on 2026-10-22,
+		 * by querying it for the name: the profile page itself carries no id anywhere in its HTML,
+		 * only in the Algolia request its script makes after load.
+		 */
+		slug: 'billetto-siggjo-bolse-basarlaug',
+		name: 'Siggjo Bolse & Basarlaug',
+		handle: 'siggjo-bolse-basarlaug',
+		organizerId: 4064544,
+		region: 'Sunnhordland',
+		timezone: 'Europe/Oslo',
+		scheduleCron: '0 5 * * *',
+		iconUrl: 'https://billetto.no/favicon.ico',
+		trusted: true
 	}
 ];
 
