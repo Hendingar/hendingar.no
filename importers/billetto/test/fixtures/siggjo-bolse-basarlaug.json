@@ -1,0 +1,159 @@
+{
+	"hits": [
+		{
+			"id": 2024471,
+			"kind": "regular",
+			"category": "business",
+			"subcategory": "nonprofit",
+			"type": "concert",
+			"currency": "NOK",
+			"state": "published",
+			"venue_type": null,
+			"organization_id": 37,
+			"billetto_score": null,
+			"name": "Romjulsdans Langevåg Bygdatun",
+			"name_truncated": "Romjulsdans Langevåg Bygdatun",
+			"description": "🎄 ROMJULSDANSEN ER ENDELEG TILBAKE! 🎶 Romjulsdansen har lange tradisjonar i Langevåg. Etter eit lite opphald er han endeleg tilbake – med sjølvaste Øyvind Halleraker & Trekantsambandet! 🤩🎸 Laurdag 26. desember inviterer me til romjulsdans på Langevåg Bygdatun. Finn fram danseskoa og ta med vennegjengen! 💃🕺 Bandet byr på eigne låtar og kjende klassikarar frå 60-, 70- og 80-talet, spelt på sin rocka og dansevennlege måte. Her får du høyra musikk frå mellom andre Tom Petty, Eagles, Creedence, Rolling Stones og Neil Young. Me gler oss til å ta opp att tradisjonen og samla både gamle kjende og nye fjes til ein romjulskveld med levande musikk og god stemning på dansegolvet! 📍 Langevåg Bygdatun 📅 Laurdag 26. desember 2026 – 2. juledag Da er berre te å kvessa hentesveisen og lakka lakkskonå! 😄 Set av datoen – me sjåast på romjulsdansen!",
+			"price": 375.0,
+			"price_range": "375 NOK",
+			"image": "https://billetto.imgix.net/eqaim46x1indufu39yt8ltd4u79h?w=640&h=360&fit=crop&auto=compress%2Cformat&rect=0%2C0%2C1536%2C864&s=9e1e9cfd4a35962ce76d37945acaa024",
+			"uses_generic_billetto_image": false,
+			"keywords": [],
+			"organizer_id": 4064544,
+			"organizer_image": "https://billetto.imgix.net/9lz6kefi0kcyob2j26loob1mcier?s=28a8e8e9efc7b947b37a16fa44450fae",
+			"url": "https://billetto.no/e/romjulsdans-langevag-bygdatun-billetter-2024471",
+			"brand": "Siggjo Bolse & Basarlaug",
+			"stock": 400,
+			"on_sale": true,
+			"total_clicks": 8,
+			"starts_at": "26. Desember 2026, 19:30",
+			"ends_at": "27. Desember 2026, 01:30",
+			"hide_end_date": true,
+			"country": "Norge",
+			"macroregion": "Norge",
+			"region": "Vestlandet",
+			"subregion": "Vestland",
+			"neighborhood": null,
+			"city": "Bømlo",
+			"postal_code": 5443,
+			"location": "Langevåg Bygdatun, Bømlo",
+			"location_slug": null,
+			"venue_name": "Langevåg Bygdatun",
+			"published_time": 1791226155,
+			"created_at": 1791226155,
+			"start_time": 1798309800,
+			"end_time": 1798331400,
+			"unique": false,
+			"quick_buy": false,
+			"major_purchase": false,
+			"experience_more_enabled": false,
+			"experience_more_code": null,
+			"experience_more_limit": null,
+			"promoted": false,
+			"billetto_advertising_percentage": 33.0,
+			"bucket": "No Advertising",
+			"average_advertised_ticket_price": 375.0,
+			"time_zone": "Europe/Paris",
+			"year": 2026,
+			"week_number": 52,
+			"weekend_event": true,
+			"org_channel_discovery": false,
+			"org_channel_email": false,
+			"ba_tickets_sold": 0,
+			"ba_tickets_remaining": 400,
+			"ba_tickets_limit_reached": false,
+			"short_header": "Romjulsdans Langevåg Bygdatun",
+			"short_description": "🎄 ROMJULSDANSEN ER ENDELEG TILBAKE! 🎶 Romjulsdansen har lange tradisjo",
+			"video_url": null,
+			"square_banner": null,
+			"portrait_banner": null,
+			"alternative_banner": null,
+			"age_rating": null,
+			"billetto_weighting": 100.0,
+			"local_dates": [
+				20261226,
+				20261227
+			],
+			"event_availability": "high",
+			"schema": "{\"@context\":\"http://schema.org\",\"@type\":\"Event\",\"eventAttendanceMode\":\"https://schema.org/OfflineEventAttendanceMode\",\"endDate\":\"2026-12-27T01:30:00+01:00\",\"eventStatus\":\"https://schema.org/EventScheduled\",\"organizer\":{\"@type\":\"Organization\",\"name\":\"Siggjo Bolse \\u0026 Basarlaug\",\"url\":\"https://billetto.no/users/siggjo-bolse-basarlaug\"},\"location\":{\"@type\":\"Place\",\"address\":{\"@type\":\"PostalAddress\",\"addressCountry\":\"Norge\",\"addressLocality\":\"Bømlo\",\"addressRegion\":\"Vestlandet\",\"postalCode\":\"5443\",\"streetAddress\":\"Hovlandsvegen 3\"},\"name\":\"Langevåg Bygdatun\",\"geo\":{\"@type\":\"GeoCoordinates\",\"latitude\":59.6019,\"longitude\":5.2098}},\"identifier\":\"2024471\",\"offers\":[{\"@type\":\"Offer\",\"availability\":\"http://schema.org/InStock\",\"price\":\"404.0\",\"name\":\"Romjulsdans 2026 Bygdatunet\",\"priceCurrency\":\"NOK\",\"validFrom\":\"2026-10-05T19:53:17+02:00\",\"url\":\"https://billetto.no/e/romjulsdans-langevag-bygdatun-billetter-2024471\"}],\"description\":\"🎄 ROMJULSDANSEN ER ENDELEG TILBAKE! 🎶 Romjulsdansen har lange tradisjonar i Langevåg. Etter eit lite opphald er han endeleg tilbake – med sjølvaste Øyvind Halleraker \\u0026 Trekantsambandet! 🤩🎸 Laurdag 26. desember inviterer me til rom...\",\"startDate\":\"2026-12-26T19:30:00+01:00\",\"image\":[\"https://billetto.imgix.net/eqaim46x1indufu39yt8ltd4u79h?w=640\\u0026h=360\\u0026fit=crop\\u0026auto=compress%2Cformat\\u0026rect=0%2C0%2C1536%2C864\\u0026ar=1%3A1\\u0026crop=faces\\u0026s=af10d5376cb10d2e999d9618bb1db392\",\"https://billetto.imgix.net/eqaim46x1indufu39yt8ltd4u79h?w=640\\u0026h=360\\u0026fit=crop\\u0026auto=compress%2Cformat\\u0026rect=0%2C0%2C1536%2C864\\u0026ar=4%3A3\\u0026crop=faces\\u0026s=59738a2f67d9a6e64ce349001e7b67ca\",\"https://billetto.imgix.net/eqaim46x1indufu39yt8ltd4u79h?w=640\\u0026h=360\\u0026fit=crop\\u0026auto=compress%2Cformat\\u0026rect=0%2C0%2C1536%2C864\\u0026ar=16%3A9\\u0026crop=faces\\u0026s=36674e39bcc8a64166202e5ea5082ed6\"],\"name\":\"Romjulsdans Langevåg Bygdatun\",\"url\":\"https://billetto.no/e/romjulsdans-langevag-bygdatun-billetter-2024471\"}",
+			"total_organizer_revenue": "395250.0",
+			"premium": false,
+			"eqs_score": 38.24,
+			"host_ids": [
+				4064544
+			],
+			"_tags": [],
+			"culture_pass_enabled": false,
+			"_geoloc": {
+				"lng": 5.2098,
+				"lat": 59.6019
+			},
+			"objectID": "2024471",
+			"_highlightResult": {
+				"category": {
+					"value": "business",
+					"matchLevel": "none",
+					"matchedWords": []
+				},
+				"subcategory": {
+					"value": "nonprofit",
+					"matchLevel": "none",
+					"matchedWords": []
+				},
+				"type": {
+					"value": "concert",
+					"matchLevel": "none",
+					"matchedWords": []
+				},
+				"name": {
+					"value": "Romjulsdans Langevåg Bygdatun",
+					"matchLevel": "none",
+					"matchedWords": []
+				},
+				"description": {
+					"value": "🎄 ROMJULSDANSEN ER ENDELEG TILBAKE! 🎶 Romjulsdansen har lange tradisjonar i Langevåg. Etter eit lite opphald er han endeleg tilbake – med sjølvaste Øyvind Halleraker & Trekantsambandet! 🤩🎸 Laurdag 26. desember inviterer me til romjulsdans på Langevåg Bygdatun. Finn fram danseskoa og ta med vennegjengen! 💃🕺 Bandet byr på eigne låtar og kjende klassikarar frå 60-, 70- og 80-talet, spelt på sin rocka og dansevennlege måte. Her får du høyra musikk frå mellom andre Tom Petty, Eagles, Creedence, Rolling Stones og Neil Young. Me gler oss til å ta opp att tradisjonen og samla både gamle kjende og nye fjes til ein romjulskveld med levande musikk og god stemning på dansegolvet! 📍 Langevåg Bygdatun 📅 Laurdag 26. desember 2026 – 2. juledag Da er berre te å kvessa hentesveisen og lakka lakkskonå! 😄 Set av datoen – me sjåast på romjulsdansen!",
+					"matchLevel": "none",
+					"matchedWords": []
+				},
+				"brand": {
+					"value": "Siggjo Bolse & Basarlaug",
+					"matchLevel": "none",
+					"matchedWords": []
+				},
+				"city": {
+					"value": "Bømlo",
+					"matchLevel": "none",
+					"matchedWords": []
+				},
+				"venue_name": {
+					"value": "Langevåg Bygdatun",
+					"matchLevel": "none",
+					"matchedWords": []
+				}
+			}
+		}
+	],
+	"nbHits": 1,
+	"page": 0,
+	"nbPages": 1,
+	"hitsPerPage": 50,
+	"exhaustiveNbHits": true,
+	"exhaustive": {
+		"nbHits": true
+	},
+	"query": "",
+	"params": "hitsPerPage=50&page=0&filters=organization_id%3A37+AND+%28organizer_id%3A4064544+OR+host_ids%3A4064544%29+AND+%28NOT+kind%3Asubscription%29",
+	"queryID": "058cece4d88c0063b30510e6b493baff",
+	"_automaticInsights": true,
+	"processingTimeMS": 1,
+	"processingTimingsMS": {
+		"_request": {
+			"roundTrip": 32
+		},
+		"getIdx": {
+			"total": 1
+		},
+		"total": 1
+	},
+	"serverTimeMS": 2
+}
