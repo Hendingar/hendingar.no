@@ -2,7 +2,7 @@ import { command, query } from '$app/server';
 import { z } from 'zod';
 import { and, count, eq, inArray } from 'drizzle-orm';
 import { eventHearts, events, venues } from '@hendingar/core/schema';
-import { clientIdSchema } from '@hendingar/core/validation';
+import { clientIdSchema, eventIdSchema } from '@hendingar/core/validation';
 import { db } from './server/db';
 import { enforce } from './server/limits';
 import { withStartsIn } from './starts-in.ts';
@@ -20,7 +20,7 @@ import { tileColumns } from './server/listing.ts';
  */
 
 const toggleSchema = z.object({
-	eventId: z.number().int().positive(),
+	eventId: eventIdSchema,
 	clientId: clientIdSchema,
 	hearted: z.boolean()
 });
@@ -75,17 +75,14 @@ export const toggleHeart = command(toggleSchema, async ({ eventId, clientId, hea
  * A listing shows two dozen cards, and asking per card would be two dozen requests. Events with no
  * hearts are simply absent from the result rather than returned as zero — the caller defaults.
  */
-export const heartCounts = query(
-	z.array(z.number().int().positive()).max(200),
-	async (eventIds) => {
-		if (eventIds.length === 0) return [];
-		return db()
-			.select({ eventId: eventHearts.eventId, hearts: count() })
-			.from(eventHearts)
-			.where(inArray(eventHearts.eventId, eventIds))
-			.groupBy(eventHearts.eventId);
-	}
-);
+export const heartCounts = query(z.array(eventIdSchema).max(200), async (eventIds) => {
+	if (eventIds.length === 0) return [];
+	return db()
+		.select({ eventId: eventHearts.eventId, hearts: count() })
+		.from(eventHearts)
+		.where(inArray(eventHearts.eventId, eventIds))
+		.groupBy(eventHearts.eventId);
+});
 
 /**
  * The reader's own hearted events, resolved from ids their browser supplies.
@@ -94,36 +91,33 @@ export const heartCounts = query(
  * Ids for events that have since been unpublished or deleted simply do not come back, which is why
  * `/hjarta` can show fewer events than the browser remembers and should say so.
  */
-export const listHearted = query(
-	z.array(z.number().int().positive()).max(200),
-	async (eventIds) => {
-		if (eventIds.length === 0) return [];
-		const now = new Date();
-		const rows = await db()
-			.select(tileColumns)
-			.from(events)
-			.leftJoin(venues, eq(events.venueId, venues.id))
-			/*
-			 * Two filters this listing deliberately does NOT have.
-			 *
-			 * No date filter: every other listing hides what has already happened, but this is the
-			 * reader's own list, and an event vanishing from it the morning after would look like
-			 * data loss rather than housekeeping. The page groups them instead.
-			 *
-			 * No `duplicateOfId` filter either: they hearted this row, from whichever source they
-			 * were reading. Silently swapping it for the canonical one, or dropping it because
-			 * consolidation later picked a different winner, would take away the thing they saved.
-			 */
-			.where(and(inArray(events.id, eventIds), eq(events.status, 'published')))
-			.orderBy(events.startsAt);
-
+export const listHearted = query(z.array(eventIdSchema).max(200), async (eventIds) => {
+	if (eventIds.length === 0) return [];
+	const now = new Date();
+	const rows = await db()
+		.select(tileColumns)
+		.from(events)
+		.leftJoin(venues, eq(events.venueId, venues.id))
 		/*
-		 * This listing keeps events that have already happened, so many rows here are far in the
-		 * past. `formatStartsIn` answers null for anything beyond the horizon and "Pågår no" only
-		 * while an event is genuinely still running, so a saved concert from March stays silent.
+		 * Two filters this listing deliberately does NOT have.
+		 *
+		 * No date filter: every other listing hides what has already happened, but this is the
+		 * reader's own list, and an event vanishing from it the morning after would look like
+		 * data loss rather than housekeeping. The page groups them instead.
+		 *
+		 * No `duplicateOfId` filter either: they hearted this row, from whichever source they
+		 * were reading. Silently swapping it for the canonical one, or dropping it because
+		 * consolidation later picked a different winner, would take away the thing they saved.
 		 */
-		return withStartsIn(rows, now);
-	}
-);
+		.where(and(inArray(events.id, eventIds), eq(events.status, 'published')))
+		.orderBy(events.startsAt);
+
+	/*
+	 * This listing keeps events that have already happened, so many rows here are far in the
+	 * past. `formatStartsIn` answers null for anything beyond the horizon and "Pågår no" only
+	 * while an event is genuinely still running, so a saved concert from March stays silent.
+	 */
+	return withStartsIn(rows, now);
+});
 
 export type HeartedEvent = Awaited<ReturnType<typeof listHearted>>[number];

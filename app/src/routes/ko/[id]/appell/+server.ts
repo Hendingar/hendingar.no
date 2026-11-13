@@ -12,7 +12,7 @@ import {
 	verifierEnabled,
 	type JurorVerdict
 } from '../../../../lib/server/verifier';
-import { clientIdSchema } from '@hendingar/core/validation';
+import { clientIdSchema, eventIdSchema } from '@hendingar/core/validation';
 import { eventStream } from '../../../../lib/server/sse.ts';
 import type { RequestHandler } from './$types';
 
@@ -41,7 +41,7 @@ export const POST: RequestHandler = async (event) => {
 	enforce('appeal', event);
 
 	const id = Number(params.id);
-	if (!Number.isSafeInteger(id) || id <= 0) error(404, 'Fann ikkje innsendinga');
+	if (!eventIdSchema.safeParse(id).success) error(404, 'Fann ikkje innsendinga');
 
 	const body = appealSchema.safeParse(await request.json().catch(() => null));
 	const clientId = body.success ? clientIdSchema.safeParse(body.data.clientId).data : undefined;
@@ -142,7 +142,21 @@ export const POST: RequestHandler = async (event) => {
 		.returning({ id: events.id });
 	if (claimed.length === 0) error(404, 'Fann ikkje ei innsending du kan appellere.');
 
-	return eventStream(async (send) => {
+	return eventStream(async (sendToClient) => {
+		/*
+		 * The client may leave while the jurors deliberate — a phone locking is enough. After that
+		 * every send throws, and a throw here would skip the vote count and the write below: the
+		 * one appeal spent, the outcome lost, and the retry refused because it is already claimed.
+		 * The verdict is the sender's whether or not they are still watching.
+		 */
+		const send = (event: string, data: unknown) => {
+			try {
+				sendToClient(event, data);
+			} catch {
+				// Nobody is listening any more; the database write below is what counts.
+			}
+		};
+
 		send('panel', { jurors, quorum });
 
 		const input = {

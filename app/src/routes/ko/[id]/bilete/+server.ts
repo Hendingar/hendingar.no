@@ -9,7 +9,7 @@ import {
 	removePoster,
 	storePoster
 } from '../../../../lib/server/posters';
-import { clientIdSchema } from '@hendingar/core/validation';
+import { clientIdSchema, eventIdSchema } from '@hendingar/core/validation';
 import type { RequestHandler } from './$types';
 
 /**
@@ -39,7 +39,7 @@ export const POST: RequestHandler = async (event) => {
 	enforce('upload', event);
 
 	const id = Number(params.id);
-	if (!Number.isSafeInteger(id) || id <= 0) error(404, 'Fann ikkje hendinga');
+	if (!eventIdSchema.safeParse(id).success) error(404, 'Fann ikkje hendinga');
 
 	const clientId = clientIdSchema.safeParse(request.headers.get('x-client-id')).data;
 	if (!clientId) {
@@ -147,7 +147,16 @@ export const POST: RequestHandler = async (event) => {
 		 * and ours is not needed, so it does not stay in the container — an unreferenced blob
 		 * nobody can attribute is the thing that makes a bucket impossible to clean up.
 		 */
-		await removePoster(submission.id);
+		/*
+		 * Unless the winner was this same submission — a double tap or a retry while the first
+		 * request was still in flight. Blobs are named after the submission, so both requests wrote
+		 * the same files, and removing them here would delete the picture the row now points at.
+		 */
+		const [current] = await database
+			.select({ posterUrl: events.posterUrl })
+			.from(events)
+			.where(eq(events.id, targetId));
+		if (current?.posterUrl !== url) await removePoster(submission.id);
 		return json({ posterUrl: null, reason: 'already-illustrated' }, { status: 409 });
 	}
 

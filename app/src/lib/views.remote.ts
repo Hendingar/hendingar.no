@@ -2,6 +2,7 @@ import { command, query } from '$app/server';
 import { z } from 'zod';
 import { and, eq, gte, inArray, sql } from 'drizzle-orm';
 import { eventViewDays, eventViews, events } from '@hendingar/core/schema';
+import { eventIdSchema } from '@hendingar/core/validation';
 import { db } from './server/db';
 import { enforce } from './server/limits';
 import { TREND_DAYS } from './trend.ts';
@@ -21,7 +22,7 @@ import { TREND_DAYS } from './trend.ts';
  * Takes no client id — not because it is optional, but because there is nothing here to identify.
  * That is the whole design, and passing one would quietly undo it.
  */
-export const recordView = command(z.number().int().positive(), async (eventId) => {
+export const recordView = command(eventIdSchema, async (eventId) => {
 	enforce('view');
 	const database = db();
 
@@ -77,7 +78,7 @@ export const recordView = command(z.number().int().positive(), async (eventId) =
  * Events nobody has opened are absent rather than returned as zero; the caller defaults. Same
  * shape as `heartCounts`, so a listing can ask for both the same way.
  */
-export const viewCounts = query(z.array(z.number().int().positive()).max(200), async (eventIds) => {
+export const viewCounts = query(z.array(eventIdSchema).max(200), async (eventIds) => {
 	if (eventIds.length === 0) return [];
 	return db()
 		.select({ eventId: eventViews.eventId, views: eventViews.views })
@@ -91,24 +92,21 @@ export const viewCounts = query(z.array(z.number().int().positive()).max(200), a
  * Today comes from the database, the same clock `recordView` files opens under, so a sparkline's
  * last bar and the count that fills it cannot disagree about which day it is.
  */
-export const viewHistory = query(
-	z.array(z.number().int().positive()).max(200),
-	async (eventIds) => {
-		const database = db();
-		const [clock] = await database.execute<{ today: string; since: string }>(
-			sql`select to_char((now() at time zone 'Europe/Oslo')::date, 'YYYY-MM-DD') as today,
+export const viewHistory = query(z.array(eventIdSchema).max(200), async (eventIds) => {
+	const database = db();
+	const [clock] = await database.execute<{ today: string; since: string }>(
+		sql`select to_char((now() at time zone 'Europe/Oslo')::date, 'YYYY-MM-DD') as today,
 			to_char((now() at time zone 'Europe/Oslo')::date - ${TREND_DAYS - 1}::int, 'YYYY-MM-DD') as since`
-		);
-		if (!clock) throw new Error('the database did not say what day it is');
-		if (eventIds.length === 0) return { today: clock.today, days: [] };
-		const days = await database
-			.select({
-				eventId: eventViewDays.eventId,
-				day: eventViewDays.day,
-				views: eventViewDays.views
-			})
-			.from(eventViewDays)
-			.where(and(inArray(eventViewDays.eventId, eventIds), gte(eventViewDays.day, clock.since)));
-		return { today: clock.today, days };
-	}
-);
+	);
+	if (!clock) throw new Error('the database did not say what day it is');
+	if (eventIds.length === 0) return { today: clock.today, days: [] };
+	const days = await database
+		.select({
+			eventId: eventViewDays.eventId,
+			day: eventViewDays.day,
+			views: eventViewDays.views
+		})
+		.from(eventViewDays)
+		.where(and(inArray(eventViewDays.eventId, eventIds), gte(eventViewDays.day, clock.since)));
+	return { today: clock.today, days };
+});
