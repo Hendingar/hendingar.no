@@ -197,10 +197,10 @@ export const VIEW_LIST_HINT =
 /** Enough for a weekend; more than that is a listing, and the site is better at those. */
 const SHOW_MAX = 12;
 
-export const SHOW_HINT =
+const SHOW_HINT =
 	'These events are now shown to the user as cards (in clients that draw them). Do not repeat each one in full: add a sentence or two on why you picked them, and mention anything in `missing`.';
 
-export const PICKS_HINT =
+const PICKS_HINT =
 	"Presentation: if there are picks, show them in `rank` order, each as the title linked to `url`, its `when` and venue, and the kurator's `reason` quoted as written (translate it if the user writes another language). Say they are hendingar.no's own weekend picks. If there are none, say so plainly and use `weekend_events` instead.";
 
 export const DETAIL_HINT =

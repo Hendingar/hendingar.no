@@ -103,7 +103,7 @@ export async function ingestCampus(
 
 				run.counts.fetched += 1;
 
-				const first = mapEvent(raw, campus, null);
+				const first = mapEvent(raw, null);
 				if (isFailure(first)) {
 					run.reject(`${first.title || first.externalId}: ${first.problem}`);
 					continue;

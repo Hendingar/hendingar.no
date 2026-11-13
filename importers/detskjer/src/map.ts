@@ -1,5 +1,4 @@
 import type { CategorySlug } from '@hendingar/core/taxonomy';
-import { CATEGORY_SLUGS } from '@hendingar/core/taxonomy';
 import { SOURCE, type UpstreamEvent } from './api.ts';
 import { slugifyVenue } from '@hendingar/core/slug';
 
@@ -222,6 +221,3 @@ export function mapEvent(input: UpstreamEvent): MappedEvent | MapFailure {
 export function isFailure(v: MappedEvent | MapFailure): v is MapFailure {
 	return 'problem' in v;
 }
-
-/** Guard for the taxonomy assertion in tests. */
-export const TAXONOMY = CATEGORY_SLUGS;

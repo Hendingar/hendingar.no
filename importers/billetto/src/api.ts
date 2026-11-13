@@ -88,7 +88,7 @@ const HEADERS = {
 
 export type ReadSearch = (organiser: BillettoOrganiser, page: number) => Promise<unknown>;
 
-export const HITS_PER_PAGE = 50;
+const HITS_PER_PAGE = 50;
 
 /** How many pages to walk. An organiser with more than 500 upcoming events is not a local club. */
 export const MAX_PAGES = 10;

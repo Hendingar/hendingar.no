@@ -26,10 +26,10 @@ import { isIP } from 'node:net';
 const ALLOWED_PROTOCOLS = new Set(['http:', 'https:']);
 
 /** Redirect hops. Enough for the http→https→www chain every site has, and no more. */
-export const MAX_REDIRECTS = 5;
+const MAX_REDIRECTS = 5;
 
 /** A page, not a download. Anything bigger is not an event listing. */
-export const MAX_BYTES = 2 * 1024 * 1024;
+const MAX_BYTES = 2 * 1024 * 1024;
 
 /** Total budget, so a server that accepts and then stalls cannot hold a worker open. */
 export const TIMEOUT_MS = 10_000;
@@ -233,7 +233,7 @@ export async function fetchPublicPage(rawUrl: string): Promise<SafeFetchResult> 
 }
 
 /** A picture for a card, not a download. Anything past this is somebody's RAW file. */
-export const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
+const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
 
 /**
  * Is this URL really a public image?

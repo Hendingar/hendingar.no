@@ -20,7 +20,7 @@ export type Crop = { x: number; y: number; width: number; height: number };
 /** Longest edge of the image we send. A poster is legible well below phone-camera resolution. */
 export const CAPTURE_MAX_EDGE = 1600;
 
-export const CAPTURE_QUALITY = 0.82;
+const CAPTURE_QUALITY = 0.82;
 
 /** What the browser holds after `downscaleForUpload`: the bytes to send, and something to show. */
 export type CapturedImage = {
@@ -91,9 +91,9 @@ export const THUMB_ASPECT = 16 / 10;
  * These are OUR files, in our own blob container, and this constant only affects thumbnails
  * generated after it changes. Nothing regenerates what is already stored.
  */
-export const THUMB_WIDTH = 960;
+const THUMB_WIDTH = 960;
 
-export const THUMB_QUALITY = 0.82;
+const THUMB_QUALITY = 0.82;
 
 /**
  * Is this a box we can actually use?

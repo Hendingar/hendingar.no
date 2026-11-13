@@ -146,7 +146,7 @@ export function parseCollection(body: unknown): ParsedCollection {
 }
 
 /** The plugin's own ceiling. Asking for more silently gives 50. */
-export const PER_PAGE = 50;
+const PER_PAGE = 50;
 
 /**
  * How many pages to walk. A thousand upcoming events is not a local venue's programme, it is a

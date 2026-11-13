@@ -36,15 +36,7 @@ export type WeeklyActivityRow = {
 };
 
 /** URL words for the weekdays, måndag first. ASCII, because they are typed and shared. */
-export const DAY_SLUGS = [
-	'mandag',
-	'tysdag',
-	'onsdag',
-	'torsdag',
-	'fredag',
-	'laurdag',
-	'sundag'
-] as const;
+const DAY_SLUGS = ['mandag', 'tysdag', 'onsdag', 'torsdag', 'fredag', 'laurdag', 'sundag'] as const;
 const DAY_SHORT = WEEKDAY_ABBR.map(capitalise);
 
 export type WeeklyParams = { day: number | null; band: AgeBand | null };
