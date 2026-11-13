@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
 	comparePileSchema,
 	eventFormSchema,
+	eventIdSchema,
 	eventSubmissionSchema,
 	importedEventSchema,
 	pileComparisonWireSchema,
@@ -93,6 +94,18 @@ describe('eventFormSchema', () => {
 		expect(eventFormSchema.safeParse({ ...form, sourceUrl: '', ctaUrl: '' }).success).toBe(true);
 	});
 
+	/**
+	 * `events.id` is a 32-bit `serial`. A larger id cannot name a row, and passed on it made
+	 * Postgres throw "out of range for type integer" — a 500 where a refusal belongs.
+	 */
+	it('refuses an event id larger than the id column can hold', () => {
+		for (const key of ['contributeTo', 'revisionOf']) {
+			expect(eventFormSchema.safeParse({ ...form, [key]: '2147483647' }).success).toBe(true);
+			expect(eventFormSchema.safeParse({ ...form, [key]: '2147483648' }).success).toBe(false);
+			expect(eventFormSchema.safeParse({ ...form, [key]: 'abc' }).success).toBe(false);
+		}
+	});
+
 	it('rejects rather than throws on a URL it cannot parse at all', () => {
 		const r = eventFormSchema.safeParse({ ...form, sourceUrl: 'ikkje ei lenkje' });
 		expect(r.success).toBe(false);
@@ -164,5 +177,15 @@ describe('the haugen wire formats', () => {
 		expect(comparePileSchema.safeParse({ q: 'konsertar', ids: ids(61) }).success).toBe(false);
 		expect(comparePileSchema.safeParse({ q: 'konsertar', ids: ids(60) }).success).toBe(true);
 		expect(comparePileSchema.safeParse({ q: 'konsertar', ids: ids(3) }).success).toBe(true);
+	});
+});
+
+describe('eventIdSchema', () => {
+	it('accepts exactly the ids a serial column can hold', () => {
+		expect(eventIdSchema.safeParse(1).success).toBe(true);
+		expect(eventIdSchema.safeParse(2_147_483_647).success).toBe(true);
+		expect(eventIdSchema.safeParse(2_147_483_648).success).toBe(false);
+		expect(eventIdSchema.safeParse(0).success).toBe(false);
+		expect(eventIdSchema.safeParse(1.5).success).toBe(false);
 	});
 });
