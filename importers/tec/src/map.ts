@@ -225,7 +225,7 @@ function safeUrl(value: string | null | undefined): string | null {
 }
 
 /** `false` is how the API spells "no featured image"; an object is the image. */
-export function imageOf(input: UpstreamEvent): UpstreamImage | null {
+function imageOf(input: UpstreamEvent): UpstreamImage | null {
 	return input.image && typeof input.image === 'object' ? input.image : null;
 }
 

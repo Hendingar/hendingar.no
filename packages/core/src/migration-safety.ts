@@ -133,5 +133,3 @@ export function findContractingStatements(sql: string): MigrationFinding[] {
 	}
 	return findings;
 }
-
-export const CONTRACTING_RULE_NAMES: readonly string[] = CONTRACTING_RULES.map((r) => r.name);

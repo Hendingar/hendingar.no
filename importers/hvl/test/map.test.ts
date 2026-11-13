@@ -104,7 +104,7 @@ describe('mapEvent', () => {
 		 */
 		const raw = september.events.find((e) => e.title.includes('Innføring i KI'))!;
 		expect(raw.startDateTime).toBe('2026-09-03T11:15:00+00:00');
-		const mapped = mapEvent(raw, stord, null);
+		const mapped = mapEvent(raw, null);
 		if (isFailure(mapped)) throw new Error(mapped.problem);
 		expect(mapped.startsAt.toISOString()).toBe('2026-09-03T11:15:00.000Z');
 	});
@@ -112,31 +112,26 @@ describe('mapEvent', () => {
 	it('maps every Stord event without a rejection', () => {
 		expect(here.length).toBeGreaterThan(0);
 		for (const raw of [...here, ...october.events.filter((e) => isAtCampus(e, stord))]) {
-			const mapped = mapEvent(raw, stord, null);
+			const mapped = mapEvent(raw, null);
 			expect(isFailure(mapped) ? mapped.problem : null).toBeNull();
 		}
 	});
 
 	it('links to the event’s own page, which HVL actually serves', () => {
-		const mapped = mapEvent(here[0]!, stord, null);
+		const mapped = mapEvent(here[0]!, null);
 		if (isFailure(mapped)) throw new Error(mapped.problem);
 		expect(mapped.sourceUrl).toMatch(/^https:\/\/www\.hvl\.no\/kalender\/.+/);
 		expect(mapped.externalId).toMatch(/^\/kalender\//);
 	});
 
 	it('rejects a row with no page, rather than inventing an identity from the title', () => {
-		const mapped = mapEvent(
-			{ title: 'x', startDateTime: '2026-09-03T11:15:00+00:00' },
-			stord,
-			null
-		);
+		const mapped = mapEvent({ title: 'x', startDateTime: '2026-09-03T11:15:00+00:00' }, null);
 		expect(isFailure(mapped)).toBe(true);
 	});
 
 	it('rejects an unparseable start', () => {
 		const mapped = mapEvent(
 			{ title: 'x', startDateTime: 'til hausten', url: '/kalender/x/' },
-			stord,
 			null
 		);
 		expect(isFailure(mapped)).toBe(true);
@@ -150,7 +145,6 @@ describe('mapEvent', () => {
 				startDateTime: '2026-09-03T11:15:00+00:00',
 				endDateTime: '2026-09-03T11:15:00+00:00'
 			},
-			stord,
 			null
 		);
 		if (isFailure(mapped)) throw new Error(mapped.problem);
@@ -158,7 +152,7 @@ describe('mapEvent', () => {
 	});
 
 	it('never claims rights to a banner HVL says nothing about', () => {
-		const mapped = mapEvent(here[0]!, stord, 'https://www.hvl.no/contentassets/x.png');
+		const mapped = mapEvent(here[0]!, 'https://www.hvl.no/contentassets/x.png');
 		if (isFailure(mapped)) throw new Error(mapped.problem);
 		expect(mapped.posterRightsVerified).toBe(false);
 	});

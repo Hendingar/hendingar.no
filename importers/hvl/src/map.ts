@@ -91,11 +91,7 @@ function safeUrl(value: string | null | undefined, base = 'https://www.hvl.no'):
 	}
 }
 
-export function mapEvent(
-	input: UpstreamEvent,
-	campus: HvlCampus,
-	poster: string | null
-): MappedEvent | MapFailure {
+export function mapEvent(input: UpstreamEvent, poster: string | null): MappedEvent | MapFailure {
 	const title = input.title.trim().replace(/\s+/g, ' ');
 	const path = input.url?.trim() || null;
 

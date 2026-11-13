@@ -93,7 +93,7 @@ export function parseMonth(body: unknown): ParsedMonth {
 }
 
 /** HVL's event-type tags, as distinct from its campus tags — both arrive in one flat list. */
-export const CAMPUS_FILTER_IDS = new Set(['Bergen', 'Førde', 'Haugesund', 'Sogndal', 'Stord']);
+const CAMPUS_FILTER_IDS = new Set(['Bergen', 'Førde', 'Haugesund', 'Sogndal', 'Stord']);
 
 export function eventTypes(input: UpstreamEvent): string[] {
 	return (input.filters ?? []).map((f) => f.id).filter((id) => !CAMPUS_FILTER_IDS.has(id));

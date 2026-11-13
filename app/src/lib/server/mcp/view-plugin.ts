@@ -18,7 +18,7 @@ import { build, type Plugin } from 'vite';
  * its routes — leaks into a page that is not part of the site.
  */
 
-export const VIEW_MODULE_ID = 'virtual:hendingar-mcp-view';
+const VIEW_MODULE_ID = 'virtual:hendingar-mcp-view';
 const RESOLVED_ID = `\0${VIEW_MODULE_ID}`;
 
 export function mcpView({ root, viewDir }: { root: string; viewDir: string }): Plugin {

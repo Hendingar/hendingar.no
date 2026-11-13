@@ -23,10 +23,10 @@ export type ListableSource = {
 	runs: readonly { status: string }[];
 };
 
-export const SOURCE_VIEWS = ['tilsyn', 'tomme', 'lenkje'] as const;
+const SOURCE_VIEWS = ['tilsyn', 'tomme', 'lenkje'] as const;
 export type SourceView = (typeof SOURCE_VIEWS)[number];
 
-export const SOURCE_SORTS = ['namn'] as const;
+const SOURCE_SORTS = ['namn'] as const;
 export type SourceSort = (typeof SOURCE_SORTS)[number];
 
 export type SourceListParams = { q: string; vis: SourceView | null; sorter: SourceSort | null };

@@ -241,7 +241,7 @@ const blocksSchema = z.array(
  * A union rather than two functions, so `extractEvents` stays one code path and neither site can
  * quietly grow its own mapping.
  */
-export const pageDataSchema = z.union([
+const pageDataSchema = z.union([
 	z.object({ result: z.object({ pageContext: z.object({ blocks: blocksSchema }) }) }),
 	z.object({ pathContext: z.object({ blocks: blocksSchema }) })
 ]);

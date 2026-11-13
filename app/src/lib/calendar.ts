@@ -190,7 +190,7 @@ export function pipCount(total: number): number {
  * hotspot and saying so would drain the word. Returns `Infinity` for a month that never reaches
  * the floor, so no square is marked rather than the least-quiet one being promoted.
  */
-export const HOTSPOT_FLOOR = 5;
+const HOTSPOT_FLOOR = 5;
 
 export function hotspotFloor(totals: readonly number[]): number {
 	const peak = totals.reduce((n, t) => Math.max(n, t), 0);
@@ -243,7 +243,7 @@ export const DEFAULT_SPAN_END = 23 * 60;
  * grid with its clock time. An event we cannot place is still an event we have to show.
  */
 export const SPAN_FLOOR = 7 * 60;
-export const SPAN_CEIL = 24 * 60;
+const SPAN_CEIL = 24 * 60;
 
 /** A shortest drawable block. A zero-length event still has to be clickable. */
 export const MIN_BLOCK_MINUTES = 30;
@@ -394,7 +394,7 @@ export function layOutDay<T extends { start: number; end: number }>(
  * three-lane run shows two events and an exact count of the rest. Nothing is hidden without being
  * counted, and the page behind the count already renders every event as a full tile.
  */
-export const MAX_LANES = 3;
+const MAX_LANES = 3;
 
 /** A run's hidden blocks, collapsed into one marker occupying the final lane. */
 export type LaneOverflow = {

@@ -11,9 +11,9 @@
  */
 
 /** Billetto's Algolia search index, and the public search credentials its own pages use. */
-export const ALGOLIA_APP_ID = 'YNEUY03Z8Q';
-export const ALGOLIA_API_KEY = '8de1d74c7c7de20e35c1f7215e7c699a';
-export const ALGOLIA_INDEX = 'events_by_date';
+const ALGOLIA_APP_ID = 'YNEUY03Z8Q';
+const ALGOLIA_API_KEY = '8de1d74c7c7de20e35c1f7215e7c699a';
+const ALGOLIA_INDEX = 'events_by_date';
 
 /**
  * Billetto Norway.

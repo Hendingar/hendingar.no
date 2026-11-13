@@ -33,7 +33,7 @@ export type ListingFilters = {
 };
 
 /** Stable order, so the same filters always produce the same URL — and the same cache entry. */
-export const FILTER_KEYS = ['q', 'kategori', 'kjelde', 'stad'] as const;
+const FILTER_KEYS = ['q', 'kategori', 'kjelde', 'stad'] as const;
 
 export type FilterKey = (typeof FILTER_KEYS)[number];
 

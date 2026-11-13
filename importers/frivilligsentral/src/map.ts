@@ -88,7 +88,7 @@ export const MAX_BREAK_DAYS = 56;
  * weeks in forty. Fortnightly is 0%, and "roughly every other week" lands around half. Both are
  * rejected rather than called weekly.
  */
-export const MIN_WEEKLY_SHARE = 0.75;
+const MIN_WEEKLY_SHARE = 0.75;
 
 export type MappedEvent = {
 	externalId: string;
@@ -184,10 +184,7 @@ export function resolveDate(
 	return { date, weekday: stated };
 }
 
-export function toOccurrence(
-	item: UpstreamItem,
-	pageYear: number
-): Occurrence | { problem: string } {
+function toOccurrence(item: UpstreamItem, pageYear: number): Occurrence | { problem: string } {
 	const heading = parseHeading(item.heading);
 	if ('problem' in heading) return heading;
 	const day = resolveDate(item, pageYear);

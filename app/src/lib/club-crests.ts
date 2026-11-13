@@ -72,6 +72,3 @@ export function crestUrl(club: string): string | null {
 	const id = CREST_IDS[club.toLowerCase().replace(/\s+/g, ' ').trim()];
 	return id ? `https://images.fotball.no/clublogos/${id}.png` : null;
 }
-
-/** Only for the test that asserts the table still covers the fixtures we actually hold. */
-export const KNOWN_CLUBS: readonly string[] = Object.keys(CREST_IDS);
