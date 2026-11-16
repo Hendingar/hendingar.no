@@ -1,7 +1,16 @@
 // `Handle` moved to this subpath in SvelteKit 3 — it is not on the root export any more.
-import type { Handle } from '@sveltejs/kit/hooks';
+import type { Handle, ServerInit } from '@sveltejs/kit/hooks';
 import { CANONICAL_HOST, SITE_ORIGIN } from './lib/origin.ts';
+import { startChurchArtWarmer } from './lib/server/church-art-service.ts';
 import { allow, TOO_MANY } from './lib/server/limits.ts';
+
+/**
+ * Once per process: start encoding the church paintings in the background, so that no visitor
+ * waits for one (lib/server/church-art-service.ts).
+ */
+export const init: ServerInit = () => {
+	startChurchArtWarmer();
+};
 
 /**
  * One indexable origin, enforced at the edge of the app.

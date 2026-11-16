@@ -163,6 +163,9 @@ app/src/lib/church-art.ts          the images for church events with no picture 
 app/src/lib/server/church-art-cache.ts  fetches a painting from Wikimedia ONCE, keeps source and
                                    renditions (AVIF + WebP) in the poster container. Served by
                                    /church-art/v1/…; never hotlink Wikimedia — it 429s phones
+app/src/lib/server/church-art-service.ts  the one cache per process (route, share card, warmer).
+                                   Encodes run one at a time, visitors first — the app has 0.25
+                                   vCPU — and `init` in hooks.server.ts warms every rendition
 
 app/src/lib/components/haugen/     the pile on `/haugen`. Pile.svelte is the DOM; the motion is
                                    pile-physics.ts (matter-js, client only, loaded on mount)

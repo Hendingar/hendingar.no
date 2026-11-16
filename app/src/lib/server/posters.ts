@@ -118,6 +118,10 @@ export async function readStoredFile(name: string): Promise<Uint8Array<ArrayBuff
 	}
 }
 
+export async function storedFileExists(name: string): Promise<boolean> {
+	return client().getBlockBlobClient(name).exists();
+}
+
 export async function storeFile(
 	name: string,
 	bytes: Uint8Array,
