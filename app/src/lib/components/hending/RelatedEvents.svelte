@@ -2,7 +2,7 @@
 	import { formatCalendarDate } from '@hendingar/core/datetime';
 	import { categoryLabel } from '@hendingar/core/taxonomy';
 	import EventGrid from '../EventGrid.svelte';
-	import { relatedEvents } from '../../events.remote';
+	import { relatedEvents } from '../../event.remote';
 	import { heartCounts } from '../../hearts.remote';
 	import { listingHref } from '../../listing-url.ts';
 

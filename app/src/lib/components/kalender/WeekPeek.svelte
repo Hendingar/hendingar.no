@@ -2,7 +2,7 @@
 	import { formatEventClock } from '@hendingar/core/datetime';
 	import { categoryLabel } from '@hendingar/core/taxonomy';
 	import EventThumb from '../EventThumb.svelte';
-	import type { WeekTimedEvent } from '../../events.remote';
+	import type { WeekTimedEvent } from '../../calendar.remote';
 
 	/**
 	 * The card that appears when you hover a block in the week grid.

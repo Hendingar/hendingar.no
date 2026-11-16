@@ -16,7 +16,7 @@
 	import { localDayKey } from '../calendar.ts';
 	import { canonicalUrl } from '../origin.ts';
 	import { breadcrumbJsonLd, itemListJsonLd, jsonLdScript } from '../jsonld.ts';
-	import { weekendEvents } from '../events.remote';
+	import { weekendEvents } from '../calendar.remote';
 	import { weekendPicks } from '../kurator.remote';
 	import { heartCounts } from '../hearts.remote';
 

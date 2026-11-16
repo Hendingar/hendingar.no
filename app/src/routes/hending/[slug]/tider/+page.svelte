@@ -8,7 +8,7 @@
 		formatEventClock,
 		machineDateTime
 	} from '@hendingar/core/datetime';
-	import { filmScreenings, getEvent } from '../../../../lib/events.remote';
+	import { filmScreenings, getEvent } from '../../../../lib/event.remote';
 	import { screeningDays, showsInSeveralRooms } from '../../../../lib/screenings.ts';
 	import { safeHttpUrl } from '../../../../lib/source-link.ts';
 	import PageMeta from '../../../../lib/components/PageMeta.svelte';
