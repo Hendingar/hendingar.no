@@ -329,9 +329,12 @@ describe('the MCP contract', () => {
 		expect(view?.text).toContain('<div id="app"></div>');
 		// Nothing loaded from elsewhere: the script and the style are inline.
 		expect(view?.text).not.toMatch(/<script[^>]+src=|<link[^>]+stylesheet/);
+		// Our own origin carries the church paintings as well as the seed's posters; nothing else is
+		// trusted that the listed posters do not need.
 		expect(view?._meta.ui.csp.resourceDomains).toEqual(
-			expect.arrayContaining([ORIGIN, 'https://cdn.example', 'https://upload.wikimedia.org'])
+			expect.arrayContaining([ORIGIN, 'https://cdn.example'])
 		);
+		expect(view?._meta.ui.csp.resourceDomains).not.toContain('https://upload.wikimedia.org');
 	});
 
 	it('shows the events asked for, and says which were not found', async () => {

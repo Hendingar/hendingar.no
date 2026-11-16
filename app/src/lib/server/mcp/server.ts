@@ -7,9 +7,6 @@ import { toPublicEventDetail } from '@hendingar/core/public-event';
 import { CATEGORIES } from '@hendingar/core/taxonomy';
 import { ABOUT_NOTES, registerTools, resolveEventRef, VIEW_URI, type Catalogue } from './tools.ts';
 
-/** Where images in the view may come from besides the posters: the church paintings (church-art.ts). */
-const VIEW_IMAGE_ORIGINS = ['https://upload.wikimedia.org'];
-
 /**
  * The MCP server: what an assistant sees when somebody connects hendingar.no to it. ADR 0024.
  *
@@ -77,10 +74,9 @@ export function buildMcpServer(catalogue: Catalogue, origin: string): McpServer 
 		},
 		async (uri) => {
 			// Posters are hot-linked from each source's CDN, so the frame's image policy is built
-			// from where the listed ones actually live — and our own origin, for the seed's.
-			const resourceDomains = [
-				...new Set([origin, ...VIEW_IMAGE_ORIGINS, ...(await catalogue.posterOrigins())])
-			];
+			// from where the listed ones actually live — and our own origin, for the seed's posters and
+			// the church paintings (church-art.ts).
+			const resourceDomains = [...new Set([origin, ...(await catalogue.posterOrigins())])];
 			return {
 				contents: [
 					{

@@ -419,26 +419,35 @@
 						The caption names the work rather than the event: nothing here claims the
 						painting depicts this service, and the link is the point — somebody who
 						stops to look can go and read about it.
+
+						The note under the credit says the same thing out loud, for the reader
+						who would otherwise take a Crucifixion beside a babysong as a statement
+						about the babysong.
 					-->
 					<figure class="ev__art">
 						<img
 							class="ev__poster"
 							src={artwork.src}
 							srcset={artwork.srcset}
-							sizes={artwork.srcset
-								? '(width < 56.5rem) 92vw, (width < 88rem) 56vw, 760px'
-								: undefined}
+							sizes="(width < 56.5rem) 92vw, (width < 88rem) 56vw, 760px"
 							alt="{artwork.work} av {artwork.artist}"
 							loading="eager"
 							decoding="async"
-							referrerpolicy="no-referrer"
 						/>
 						<figcaption>
-							<a href={artwork.articleUrl} rel="noopener noreferrer" target="_blank">
-								{artwork.work}
-							</a>
-							<span>
-								{artwork.artist}{artwork.year ? `, ${artwork.year}` : ''} · fellesarv, via Wikimedia Commons
+							<span class="ev__art-credit">
+								<a href={artwork.articleUrl} rel="noopener noreferrer" target="_blank">
+									{artwork.work}
+								</a>
+								<span>
+									{artwork.artist}{artwork.year ? `, ${artwork.year}` : ''} · fellesarv, via Wikimedia
+									Commons
+								</span>
+							</span>
+							<span class="ev__art-note">
+								Måleriet viser ikkje innhaldet i denne hendinga. Det er eit illustrasjonsbilete,
+								sett inn fordi hendinga ikkje har noko bilete sjølv — og for å spreie kjennskap til
+								stor religiøs kunst og den rike historia til kristen kunst og ikonografi.
 							</span>
 						</figcaption>
 					</figure>
@@ -871,13 +880,27 @@
 		margin: 0 0 1.5rem;
 	}
 	.ev__art figcaption {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 0.25rem 0.6rem;
+		display: grid;
+		gap: 0.6rem;
 		margin-block-start: 0.5rem;
 		font-family: var(--font-mono);
 		font-size: var(--step-micro);
 		color: var(--peach-dim);
+	}
+	.ev__art-credit {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.25rem 0.6rem;
+	}
+	/*
+	 * The disclaimer. Same quiet step as the credit above it — it qualifies the picture, it is not
+	 * news — but with prose line-height, and a rule on its left that sets it apart from the credit.
+	 */
+	.ev__art-note {
+		max-inline-size: 60ch;
+		padding-inline-start: 0.75rem;
+		border-inline-start: var(--rule) solid var(--peach-line);
+		line-height: 1.55;
 	}
 
 	.ev__desc {

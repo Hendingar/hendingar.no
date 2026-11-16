@@ -49,6 +49,7 @@
 			title={event.title}
 			category={event.category}
 			sourceSlugs={event.sources.map((s) => s.slug)}
+			origin={new URL(event.url).origin}
 		/>
 	</a>
 	<div class="vcard__body">

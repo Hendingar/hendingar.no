@@ -29,7 +29,8 @@
 		category = '',
 		sourceSlugs,
 		sizes,
-		trail = null
+		trail = null,
+		origin = ''
 	}: {
 		id: number;
 		posterUrl?: string | null;
@@ -70,6 +71,13 @@
 		 * Null by default: a caller that does not know gets what it got before.
 		 */
 		trail?: Trail | null;
+		/**
+		 * Where our own static files live, for a caller drawn on somebody else's origin.
+		 *
+		 * Empty on the site, where `/church-art/…` resolves against us. The MCP App view runs in a
+		 * chat client's frame, where a root-relative path would ask the client for the painting.
+		 */
+		origin?: string;
 	} = $props();
 
 	// Deterministic per event: no Math.random, so a tile never changes between server and client
@@ -106,7 +114,7 @@
 	 * event's own page, and chosen by the event id alone — see church-art.ts, which is also where
 	 * it says out loud that the painting is not a claim about the service.
 	 */
-	const artwork = $derived(artworkFor(id, category));
+	const artwork = $derived(artworkFor(id, category, origin));
 	const garden = $derived(hasGardenSource(sourceSlugs));
 
 	/**
@@ -187,13 +195,12 @@
 		class="thumb thumb-box"
 		src={artwork.src}
 		srcset={artwork.srcset}
-		sizes={artwork.srcset ? (sizes ?? SIZES) : undefined}
+		sizes={sizes ?? SIZES}
 		alt="{artwork.work} av {artwork.artist}"
 		loading="lazy"
 		decoding="async"
 		width="400"
 		height="225"
-		referrerpolicy="no-referrer"
 	/>
 {:else}
 	<div class="thumb thumb-box thumb--generated" role="img" aria-label={`Illustrasjon for ${title}`}>
