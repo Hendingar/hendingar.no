@@ -3169,10 +3169,15 @@ const ARTWORKS: readonly ChurchImage[] = [
  * is rare and harmless.
  */
 export function artworkFor(id: number, category: string, origin = ''): Artwork | null {
+	const painting = churchImageFor(id, category);
+	return painting ? resolve(painting, origin) : null;
+}
+
+/** The table row behind `artworkFor`, for the server code that needs the picture itself. */
+export function churchImageFor(id: number, category: string): ChurchImage | null {
 	if (category !== 'kyrkjeliv') return null;
 	if (!Number.isInteger(id) || id < 0) return null;
-	const painting = ARTWORKS[id % ARTWORKS.length];
-	return painting ? resolve(painting, origin) : null;
+	return ARTWORKS[id % ARTWORKS.length] ?? null;
 }
 
 /** The tile sizes, and the box the event page's picture is bounded by. */
@@ -3248,5 +3253,5 @@ export function artworkCredit(art: Pick<Artwork, 'licence'>): string | undefined
 	return art.licence ? `Foto: ${art.licence.author} · ${art.licence.name}` : undefined;
 }
 
-/** Only for the tests that check the table itself. */
+/** Every row: for the tests that check the table, and for the warmer that encodes them all. */
 export const ALL_IMAGES: readonly ChurchImage[] = ARTWORKS;

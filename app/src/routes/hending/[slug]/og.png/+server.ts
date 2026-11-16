@@ -4,7 +4,9 @@ import { formatEventTime } from '@hendingar/core/datetime';
 import { events, venues } from '@hendingar/core/schema';
 import { eventIdFromParam } from '@hendingar/core/slug';
 import { categoryLabel } from '@hendingar/core/taxonomy';
-import { renderOgImage } from '../../../../lib/server/og-image.ts';
+import { artworkCredit, artworkMaker, churchImageFor } from '../../../../lib/church-art.ts';
+import { churchArtForCard } from '../../../../lib/server/church-art-service.ts';
+import { OG_SIZE, renderOgImage } from '../../../../lib/server/og-image.ts';
 import { db } from '../../../../lib/server/db';
 import type { RequestHandler } from './$types';
 
@@ -39,6 +41,23 @@ export const GET: RequestHandler = async ({ params }) => {
 
 	if (!row) error(404, 'Fann ikkje hendinga');
 
+	/*
+	 * The church painting the page shows in place of a poster, so a shared link carries the same
+	 * picture the page does. Only where the page shows it: an event with a poster of its own.
+	 */
+	const painting = row.posterUrl ? null : churchImageFor(id, row.category);
+	const artworkImage = painting ? await churchArtForCard(painting, OG_SIZE) : null;
+	const artwork =
+		painting && artworkImage
+			? {
+					image: artworkImage,
+					credit: [
+						[painting.work, artworkMaker(painting)].filter(Boolean).join(' — '),
+						artworkCredit(painting) ?? 'Fellesarv, via Wikimedia Commons'
+					]
+				}
+			: null;
+
 	const png = await renderOgImage({
 		label: [categoryLabel(row.category), row.venueMunicipality].filter(Boolean).join(' · '),
 		title: row.title,
@@ -48,7 +67,8 @@ export const GET: RequestHandler = async ({ params }) => {
 		secondary: [row.venueName, row.venueMunicipality].filter(Boolean).join(', ') || null,
 		// Only a poster we are allowed to redraw. Everything else gets the generated card, which is
 		// the common case and is why this route exists.
-		posterUrl: row.posterRightsVerified ? row.posterUrl : null
+		posterUrl: row.posterRightsVerified ? row.posterUrl : null,
+		artwork
 	});
 
 	return new Response(png, {

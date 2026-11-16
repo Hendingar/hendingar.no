@@ -28,6 +28,8 @@ import resvgWasm from '@resvg/resvg-wasm/index_bg.wasm?url';
 
 const WIDTH = 1200;
 const HEIGHT = 630;
+/** The card's size, for whoever prepares a picture to go on it. */
+export const OG_SIZE = { width: WIDTH, height: HEIGHT } as const;
 
 /** Brand tokens, copied deliberately: satori has no cascade to read `brand.css` through. */
 const NAVY = '#1e2c4a';
@@ -139,11 +141,19 @@ export type OgCard = {
 	secondary: string | null;
 	/** Drawn behind a scrim when it can be fetched. Only ever a poster we may redraw. */
 	posterUrl: string | null;
+	/**
+	 * A church painting, for an event with no poster: a data URL, and the credit that goes with it
+	 * (the photographer and licence where the picture needs one, the work and its maker always).
+	 * Drawn with a lighter scrim than a poster, because here the picture is the point.
+	 */
+	artwork?: { image: string; credit: string[] } | null;
 };
 
 export async function renderOgImage(card: OgCard): Promise<Uint8Array<ArrayBuffer>> {
 	const loaded = await ready();
-	const poster = card.posterUrl ? await fetchPoster(card.posterUrl) : null;
+	const fetched = card.posterUrl ? await fetchPoster(card.posterUrl) : null;
+	const poster = fetched ?? card.artwork?.image ?? null;
+	const credit = fetched ? null : (card.artwork?.credit ?? null);
 
 	const label = card.label.toUpperCase();
 
@@ -180,9 +190,39 @@ export async function renderOgImage(card: OgCard): Promise<Uint8Array<ArrayBuffe
 									left: 0,
 									width: WIDTH,
 									height: HEIGHT,
-									backgroundColor: 'rgba(30, 44, 74, 0.82)'
+									...(credit
+										? {
+												// Dark where the words are, so the painting shows on the right.
+												backgroundImage:
+													'linear-gradient(90deg, rgba(30, 44, 74, 0.94) 0%, rgba(30, 44, 74, 0.8) 45%, rgba(30, 44, 74, 0.25) 100%)'
+											}
+										: { backgroundColor: 'rgba(30, 44, 74, 0.82)' })
 								}
 							})
+						]
+					: []),
+				...(credit
+					? [
+							h(
+								'div',
+								{
+									style: {
+										position: 'absolute',
+										top: 30,
+										right: 32,
+										display: 'flex',
+										flexDirection: 'column',
+										alignItems: 'flex-end',
+										maxWidth: 620,
+										padding: '6px 10px',
+										backgroundColor: 'rgba(30, 44, 74, 0.85)',
+										fontFamily: 'Space Mono',
+										fontSize: 16,
+										color: PEACH_DIM
+									}
+								},
+								credit.map((line) => h('div', { style: { display: 'flex' } }, line))
+							)
 						]
 					: []),
 				// The peach edge every page on the site has at the top.

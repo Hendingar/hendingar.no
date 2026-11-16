@@ -7,8 +7,10 @@ import {
 	encode,
 	formatFor,
 	memoryStore,
+	oneAtATime,
 	sourceName,
 	storeName,
+	warmChurchArt,
 	wikimediaFetcher
 } from './church-art-cache.ts';
 
@@ -130,10 +132,108 @@ describe('churchArtCache', () => {
 			get: async () => {
 				throw new Error('storage unavailable');
 			},
+			has: async () => false,
 			put: async () => undefined
 		};
 		const result = await churchArtCache(broken, countingSource().fetch)(PAINTING, 320, 'webp');
 		expect(result).toEqual({ kind: 'fallback', url: PAINTING.sourceUrl });
+	});
+});
+
+describe('oneAtATime', () => {
+	it('runs one job at a time, and a waiting visitor goes before waiting background work', async () => {
+		const queue = oneAtATime();
+		const order: string[] = [];
+		let running = 0;
+		let most = 0;
+		const job = (name: string) => async () => {
+			running++;
+			most = Math.max(most, running);
+			await new Promise((r) => setTimeout(r, 1));
+			order.push(name);
+			running--;
+		};
+		await Promise.all([
+			queue('background', job('b1')),
+			queue('background', job('b2')),
+			queue('visitor', job('v1')),
+			queue('background', job('b3')),
+			queue('visitor', job('v2'))
+		]);
+		// b1 had already started; the visitors jump everything that had not.
+		expect(order).toEqual(['b1', 'v1', 'v2', 'b2', 'b3']);
+		expect(most).toBe(1);
+	});
+
+	it('keeps going after a job fails', async () => {
+		const queue = oneAtATime();
+		const failed = queue('visitor', async () => {
+			throw new Error('no');
+		});
+		await expect(failed).rejects.toThrow('no');
+		await expect(queue('visitor', async () => 'next')).resolves.toBe('next');
+	});
+});
+
+describe('warmChurchArt', () => {
+	const OTHER: ChurchImage = {
+		...PAINTING,
+		file: 'other-painting',
+		sourceUrl: 'https://upload.wikimedia.org/other.jpg',
+		width: 500,
+		height: 400
+	};
+
+	it('makes every rendition of every painting, fetching each source once', async () => {
+		const store = memoryStore();
+		const wikimedia = countingSource();
+		const serve = churchArtCache(store, wikimedia.fetch);
+		const pauses: number[] = [];
+		const result = await warmChurchArt(serve, store, [PAINTING, OTHER], artworkWidths, async () => {
+			pauses.push(1);
+		});
+
+		const expected = [PAINTING, OTHER].flatMap((p) =>
+			artworkWidths(p).flatMap((w) => [storeName(p.file, w, 'avif'), storeName(p.file, w, 'webp')])
+		);
+		for (const name of expected) expect(await store.has(name), name).toBe(true);
+		expect(result).toEqual({ made: expected.length, failed: 0 });
+		expect(pauses).toHaveLength(expected.length);
+		expect(wikimedia.calls).toHaveLength(2);
+	});
+
+	it('does nothing but look when everything is already there', async () => {
+		const store = memoryStore();
+		const serve = churchArtCache(store, countingSource().fetch);
+		await warmChurchArt(serve, store, [PAINTING], artworkWidths, async () => undefined);
+
+		const again = countingSource();
+		const result = await warmChurchArt(
+			churchArtCache(store, again.fetch),
+			store,
+			[PAINTING],
+			artworkWidths,
+			async () => undefined
+		);
+		expect(result).toEqual({ made: 0, failed: 0 });
+		expect(again.calls).toHaveLength(0);
+	});
+
+	it('counts a painting it cannot get as failed and carries on', async () => {
+		const store = memoryStore();
+		const serve = churchArtCache(store, async (url) => {
+			if (url === PAINTING.sourceUrl) throw new Error('429');
+			return source();
+		});
+		const result = await warmChurchArt(
+			serve,
+			store,
+			[PAINTING, OTHER],
+			artworkWidths,
+			async () => undefined
+		);
+		expect(result.failed).toBe(artworkWidths(PAINTING).length * 2);
+		expect(result.made).toBe(artworkWidths(OTHER).length * 2);
 	});
 });
 

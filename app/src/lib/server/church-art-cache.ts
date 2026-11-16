@@ -16,8 +16,13 @@ import { CHURCH_ART_VERSION, type ChurchImage } from '../church-art.ts';
  * - **One Wikimedia request at a time.** A cold cache after a deploy meets a listing of a dozen
  *   paintings at once — the exact burst that got 429s when browsers sent it. Queued, with the
  *   wait Wikimedia asks for when it does say 429.
- * - **Only what is asked for.** A request encodes its own rendition and no other, so the first
- *   visitor waits for one encode (about a second at the largest size), not six.
+ * - **One encode at a time, visitors first.** The app runs on a quarter of a CPU. Three AVIF
+ *   encodes at once took 7–15 seconds each on it and slowed every other response with them, cached
+ *   pictures included — the page the first visitor saw after a deploy had a blank where the
+ *   painting goes. Encodes queue, and a visitor's goes ahead of the warmer's.
+ * - **Nobody should wait for an encode at all.** After a start, `warmChurchArt` walks every
+ *   rendition of every painting, one at a time, and makes the ones the store does not have yet.
+ *   On a warm store that is only existence checks; adding paintings costs one slow pass, once.
  * - **A failure costs one picture, briefly.** If Wikimedia or the store cannot be reached, the
  *   browser is sent to the Commons file directly, with nothing cached, so the next visit tries
  *   again. Never a broken image, and never a bad file kept forever.
@@ -28,6 +33,7 @@ type Bytes = Uint8Array<ArrayBuffer>;
 
 export type Format = 'avif' | 'webp';
 export const CONTENT_TYPES: Record<Format, string> = { avif: 'image/avif', webp: 'image/webp' };
+const FORMATS: readonly Format[] = ['avif', 'webp'];
 
 /**
  * Settings chosen by measurement, on five of the paintings at 320, 640 and 1100 wide. Against a
@@ -43,6 +49,7 @@ const ENCODE: Record<Format, (image: Sharp) => Sharp> = {
 
 export type ArtStore = {
 	get(name: string): Promise<Bytes | null>;
+	has(name: string): Promise<boolean>;
 	put(name: string, bytes: Bytes, contentType: string): Promise<void>;
 };
 
@@ -74,6 +81,8 @@ export function sourceName(file: string): string {
  */
 export async function encode(source: Bytes, width: number, format: Format): Promise<Bytes> {
 	const { default: sharp } = await import('sharp');
+	// One libvips thread: the container has a quarter of a CPU, and more threads only contend.
+	sharp.concurrency(1);
 	const image = sharp(source).resize({ width, withoutEnlargement: true });
 	return new Uint8Array(await ENCODE[format](image).toBuffer());
 }
@@ -124,10 +133,29 @@ function onceAtATime<T>() {
 	};
 }
 
+export type Priority = 'visitor' | 'background';
+
+/** One job at a time, a visitor's before any background job that has not started yet. */
+export function oneAtATime() {
+	const queues: Record<Priority, (() => void)[]> = { visitor: [], background: [] };
+	let busy = false;
+	const next = () => {
+		const start = queues.visitor.shift() ?? queues.background.shift();
+		busy = start !== undefined;
+		start?.();
+	};
+	return <T>(priority: Priority, work: () => Promise<T>): Promise<T> =>
+		new Promise<T>((resolve, reject) => {
+			queues[priority].push(() => void work().then(resolve, reject).finally(next));
+			if (!busy) next();
+		});
+}
+
 /** The cache. One per process: the in-flight maps are what make six requests one fetch. */
 export function churchArtCache(store: ArtStore, fetchSource: FetchSource) {
 	const sources = onceAtATime<Bytes>();
 	const renditions = onceAtATime<Bytes>();
+	const encodes = oneAtATime();
 
 	function source(painting: ChurchImage): Promise<Bytes> {
 		return sources(painting.file, async () => {
@@ -143,7 +171,8 @@ export function churchArtCache(store: ArtStore, fetchSource: FetchSource) {
 	return async function serve(
 		painting: ChurchImage,
 		width: number,
-		format: Format
+		format: Format,
+		priority: Priority = 'visitor'
 	): Promise<ArtResult> {
 		const name = storeName(painting.file, width, format);
 		const contentType = CONTENT_TYPES[format];
@@ -151,7 +180,8 @@ export function churchArtCache(store: ArtStore, fetchSource: FetchSource) {
 			const bytes = await renditions(name, async () => {
 				const stored = await store.get(name);
 				if (stored) return stored;
-				const encoded = await encode(await source(painting), width, format);
+				const original = await source(painting);
+				const encoded = await encodes(priority, () => encode(original, width, format));
 				await store.put(name, encoded, contentType);
 				return encoded;
 			});
@@ -163,11 +193,41 @@ export function churchArtCache(store: ArtStore, fetchSource: FetchSource) {
 	};
 }
 
+export type Serve = ReturnType<typeof churchArtCache>;
+
+/**
+ * Make every rendition the store does not have yet, one at a time, pausing between encodes so the
+ * quarter-CPU it runs on still answers pages. Returns how many it made and how many failed.
+ */
+export async function warmChurchArt(
+	serve: Serve,
+	store: Pick<ArtStore, 'has'>,
+	paintings: readonly ChurchImage[],
+	widthsFor: (painting: ChurchImage) => number[],
+	pause: () => Promise<void>
+): Promise<{ made: number; failed: number }> {
+	let made = 0;
+	let failed = 0;
+	for (const painting of paintings) {
+		for (const width of widthsFor(painting)) {
+			for (const format of FORMATS) {
+				if (await store.has(storeName(painting.file, width, format))) continue;
+				const result = await serve(painting, width, format, 'background');
+				if (result.kind === 'image') made++;
+				else failed++;
+				await pause();
+			}
+		}
+	}
+	return { made, failed };
+}
+
 /** Without blob storage — local development, CI — the process keeps them itself. */
 export function memoryStore(): ArtStore {
 	const files = new Map<string, Bytes>();
 	return {
 		get: async (name) => files.get(name) ?? null,
+		has: async (name) => files.has(name),
 		put: async (name, bytes) => void files.set(name, bytes)
 	};
 }
