@@ -1,6 +1,6 @@
 import sharp from 'sharp';
 import { describe, expect, it } from 'vitest';
-import { artworkWidths, type Painting } from '../church-art.ts';
+import { artworkWidths, type ChurchImage } from '../church-art.ts';
 import {
 	type ArtStore,
 	churchArtCache,
@@ -18,7 +18,7 @@ import {
  * the srcset the page renders.
  */
 
-const PAINTING: Painting = {
+const PAINTING: ChurchImage = {
 	work: 'Test',
 	artist: 'Nobody',
 	year: null,

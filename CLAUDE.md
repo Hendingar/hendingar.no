@@ -158,8 +158,8 @@ app/src/lib/server/kurator.ts     the nightly selection: candidates, the call, t
                                  is idempotent per day — see ADR 0018 for why that is the whole
                                  security argument
 
-app/src/lib/church-art.ts          the paintings for church events with no picture: the table,
-                                   and the widths each is served at
+app/src/lib/church-art.ts          the images for church events with no picture — art and
+                                   churches. A row with `licence` MUST be credited wherever shown
 app/src/lib/server/church-art-cache.ts  fetches a painting from Wikimedia ONCE, keeps source and
                                    renditions (AVIF + WebP) in the poster container. Served by
                                    /church-art/v1/…; never hotlink Wikimedia — it 429s phones
