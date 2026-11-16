@@ -11,21 +11,22 @@ import type { searchTermSchema } from '@hendingar/core/search';
 import {
 	calendarRange,
 	dayCounts,
-	filmScreenings,
-	getEvent,
+	listEventsOnDate,
+	placeCounts,
+	weekendEvents,
+	weekEvents
+} from '../../calendar.remote';
+import { filmScreenings, getEvent } from '../../event.remote';
+import {
 	listCategoryCounts,
 	listEvents,
-	listEventsOnDate,
 	listPopular,
 	listUpcoming,
-	placeCounts,
 	searchSuggestions,
 	siteStatus,
 	standingOffers,
-	weekendEvents,
-	weekEvents,
 	weeklyActivities
-} from '../../events.remote.ts';
+} from '../../events.remote';
 import { listCollection } from '../../collection.remote.ts';
 import { and, eq, gte, isNotNull, isNull, or, sql } from 'drizzle-orm';
 import { events } from '@hendingar/core/schema';

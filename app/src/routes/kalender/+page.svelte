@@ -22,7 +22,7 @@
 		dayCounts,
 		placeCounts,
 		weekEvents
-	} from '../../lib/events.remote';
+	} from '../../lib/calendar.remote';
 
 	/**
 	 * The calendar: the same events as `/hendingar`, asked by date instead of in order.

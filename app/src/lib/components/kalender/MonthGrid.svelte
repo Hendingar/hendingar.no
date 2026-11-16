@@ -6,7 +6,7 @@
 		formatMonthName
 	} from '@hendingar/core/datetime';
 	import { densityStep, hotspotFloor, monthGrid, pipCount } from '../../calendar.ts';
-	import type { DayCount } from '../../events.remote';
+	import type { DayCount } from '../../calendar.remote';
 
 	/**
 	 * One month as a table of dates, each carrying how many events fall on it.

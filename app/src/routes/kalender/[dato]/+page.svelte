@@ -9,7 +9,7 @@
 	import { canonicalUrl } from '../../../lib/origin.ts';
 	import { breadcrumbJsonLd, itemListJsonLd, jsonLdScript } from '../../../lib/jsonld.ts';
 	import { monthKeyOf } from '../../../lib/calendar.ts';
-	import { adjacentEventDays, listEventsOnDate } from '../../../lib/events.remote';
+	import { adjacentEventDays, listEventsOnDate } from '../../../lib/calendar.remote';
 	import { heartCounts } from '../../../lib/hearts.remote';
 
 	/**

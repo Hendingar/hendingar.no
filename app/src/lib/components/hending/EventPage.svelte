@@ -16,7 +16,7 @@
 		VERIFICATION_CHECK_LABELS,
 		VERIFICATION_VERDICT_LABELS
 	} from '@hendingar/core/verification';
-	import { filmScreenings, getEvent } from '../../events.remote';
+	import { filmScreenings, getEvent, type EventDetail } from '../../event.remote';
 	import ScreeningTimes from '../ScreeningTimes.svelte';
 	import { heartCounts } from '../../hearts.remote';
 	import HeartButton from '../HeartButton.svelte';
@@ -47,7 +47,7 @@
 	if (id === null) error(404, 'Fann ikkje hendinga');
 
 	// Top-level await so the page is real HTML for crawlers and for readers without JavaScript.
-	const event = await getEvent(id);
+	const event: EventDetail = await getEvent(id);
 	/*
 	 * The public count, server-rendered with the rest of the page. Whether *this* reader hearted it
 	 * is decided in the browser, because that is the only place that fact exists.

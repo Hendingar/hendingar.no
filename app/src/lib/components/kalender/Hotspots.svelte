@@ -6,7 +6,7 @@
 		weekdayIndex
 	} from '@hendingar/core/datetime';
 	import { busiestDays } from '../../calendar.ts';
-	import type { DayCount, PlaceCount } from '../../events.remote';
+	import type { DayCount, PlaceCount } from '../../calendar.remote';
 
 	/**
 	 * Where a month is busy — in time, and in place.

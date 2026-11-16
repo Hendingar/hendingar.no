@@ -142,7 +142,9 @@ app/src/lib/
   content/               copy as named, typed data — not string arrays inside layout code
   styles/brand.css       tokens AND cross-route primitives (.btn, .display--*, .fineprint)
   server/                server-only. Never importable from the client
-  events.remote.ts       the one client↔server boundary
+  events.remote.ts       the listing, search and the front page — the main client↔server boundary
+  calendar.remote.ts     /kalender, the day pages and the weekend pages
+  event.remote.ts        one event: its page, related events, a film's screenings
 app/e2e/                 Playwright specs
 
 app/src/lib/components/submit/   single-use sections owned by `/send-inn`. DescriptionHelp is

@@ -11,7 +11,7 @@
 		weekSpan
 	} from '../../calendar.ts';
 	import WeekPeek from './WeekPeek.svelte';
-	import type { WeekSpanningEvent, WeekTimedEvent } from '../../events.remote';
+	import type { WeekSpanningEvent, WeekTimedEvent } from '../../calendar.remote';
 
 	/**
 	 * One week against a shared time axis.

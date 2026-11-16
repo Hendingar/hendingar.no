@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { formatCalendarDate, formatWeekName, formatWeekRange } from '@hendingar/core/datetime';
-	import type { HorizonWeek } from '../../events.remote';
+	import type { HorizonWeek } from '../../calendar.remote';
 
 	/**
 	 * The next half-year, one bar per week.
