@@ -99,3 +99,43 @@ export async function removePoster(eventId: number): Promise<void> {
 		)
 	);
 }
+
+/**
+ * Any other public file kept in the same container, by name — the church paintings' renditions
+ * (`church-art-cache.ts`). One container rather than a second one: it is already public-read,
+ * already written by the same identity, and needs nothing new in `infra/`.
+ *
+ * Null for a name that is not there. Every other failure throws, so a caller can tell "not cached
+ * yet" from "storage is down".
+ */
+export async function readStoredFile(name: string): Promise<Uint8Array<ArrayBuffer> | null> {
+	try {
+		// Copied out of Node's Buffer pool onto a buffer of its own, which is what a Response takes.
+		return new Uint8Array(await client().getBlockBlobClient(name).downloadToBuffer());
+	} catch (error) {
+		if (isNotFound(error)) return null;
+		throw error;
+	}
+}
+
+export async function storeFile(
+	name: string,
+	bytes: Uint8Array,
+	contentType: string
+): Promise<void> {
+	await client()
+		.getBlockBlobClient(name)
+		.uploadData(bytes, {
+			blobHTTPHeaders: {
+				blobContentType: contentType,
+				// Names carry a version (see CHURCH_ART_VERSION), so a file never changes in place.
+				blobCacheControl: 'public, max-age=31536000, immutable'
+			}
+		});
+}
+
+function isNotFound(error: unknown): boolean {
+	return (
+		typeof error === 'object' && error !== null && 'statusCode' in error && error.statusCode === 404
+	);
+}
