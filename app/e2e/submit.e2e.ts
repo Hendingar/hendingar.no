@@ -670,6 +670,38 @@ test('a read that dies mid-stream leaves the form and the picture alone', async 
 	await expect(page.locator('#title')).toBeVisible();
 });
 
+test('a picture picked before the page has hydrated is still read', async ({ page }) => {
+	/*
+	 * The file input is real HTML, usable the moment it renders, but its `onchange` only exists
+	 * after hydration. A picture chosen in that gap used to be dropped without a word — and the
+	 * test above flaked on exactly this, because Playwright picks the file the instant the page
+	 * loads. Here the gap is made certain: the app's scripts are held until the file is chosen.
+	 */
+	await page.route('**/send-inn/lesing', async (route) => {
+		await route.fulfill({
+			status: 200,
+			headers: { 'content-type': 'text/event-stream' },
+			body: readStream(POSTER_FRAMES)
+		});
+	});
+	let release: () => void = () => undefined;
+	const picked = new Promise<void>((resolve) => (release = resolve));
+	await page.route('**/_app/immutable/**/*.js', async (route) => {
+		await picked;
+		await route.continue();
+	});
+
+	await page.goto('/send-inn?med=bilete', { waitUntil: 'domcontentloaded' });
+	await page.locator('.capture input[type="file"]').setInputFiles({
+		name: 'plakat.png',
+		mimeType: 'image/png',
+		buffer: Buffer.from(TINY_PNG, 'base64')
+	});
+	release();
+
+	await expect(page.locator('#title')).toHaveValue('Pokémontreff i biblioteket');
+});
+
 /**
  * The third way in: paste a link, we read the page.
  *

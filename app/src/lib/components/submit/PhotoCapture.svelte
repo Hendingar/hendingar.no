@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { untrack } from 'svelte';
 	import { CHECK_COUNT_WORD } from '../../checks.ts';
 	import { downscaleForUpload, type CapturedImage } from '../../poster.ts';
 	import type { ExtractedEvent, ExtractedField } from '@hendingar/core/validation';
@@ -117,6 +118,21 @@
 	// after mount and a non-reactive binding would leave the button clicking nothing.
 	let input = $state<HTMLInputElement | undefined>();
 	let panel: HTMLElement | undefined = $state();
+
+	/*
+	 * A picture chosen before hydration. The input is real HTML and works from the moment it is
+	 * rendered, but `onchange` is only attached by hydration, so a file picked in that gap — a
+	 * slow phone, or Playwright, which acts the instant the page loads — was silently ignored and
+	 * the panel just sat there. Read once, when the input is first bound: after that, `onchange`
+	 * is listening. CLAUDE.md, "A server-rendered form is live before it is hydrated".
+	 */
+	let checkedForEarlyPick = false;
+	$effect(() => {
+		if (!input || checkedForEarlyPick) return;
+		checkedForEarlyPick = true;
+		const file = input.files?.[0];
+		if (file) untrack(() => handle(file));
+	});
 
 	/**
 	 * Paste is bound to the window, because a paste has no target unless something is focused —
