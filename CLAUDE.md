@@ -158,6 +158,12 @@ app/src/lib/server/kurator.ts     the nightly selection: candidates, the call, t
                                  is idempotent per day — see ADR 0018 for why that is the whole
                                  security argument
 
+app/src/lib/church-art.ts          the paintings for church events with no picture: the table,
+                                   and the widths each is served at
+app/src/lib/server/church-art-cache.ts  fetches a painting from Wikimedia ONCE, keeps source and
+                                   renditions (AVIF + WebP) in the poster container. Served by
+                                   /church-art/v1/…; never hotlink Wikimedia — it 429s phones
+
 app/src/lib/components/haugen/     the pile on `/haugen`. Pile.svelte is the DOM; the motion is
                                    pile-physics.ts (matter-js, client only, loaded on mount)
 app/src/lib/haugen.remote.ts       the pile, text answers by GET, and the one `command` that may
