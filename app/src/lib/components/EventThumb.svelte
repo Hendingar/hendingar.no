@@ -15,7 +15,7 @@
 	import { parseHandballMatch } from '@hendingar/core/handball';
 	import VersusTile from './VersusTile.svelte';
 	import HandballTile from './HandballTile.svelte';
-	import { artworkFor } from '../church-art.ts';
+	import { artworkAlt, artworkCredit, artworkFor } from '../church-art.ts';
 	import { hasGardenSource } from '../garden-sources.ts';
 	import GardenTile from './GardenTile.svelte';
 	import TrailTile from './TrailTile.svelte';
@@ -189,14 +189,17 @@
 {:else if artwork}
 	<!--
 		Named in `alt`, never `alt=""`: this one is not decoration. The event's own page carries the
-		artist, the year and the link; here the picture at least says what it is.
+		maker, the year and the link; here the picture at least says what it is. A photograph under
+		an attribution licence also carries its credit in `title`, so the tile is never shown
+		without it — the full credit, with links, is on the event's page.
 	-->
 	<img
 		class="thumb thumb-box"
 		src={artwork.src}
 		srcset={artwork.srcset}
 		sizes={sizes ?? SIZES}
-		alt="{artwork.work} av {artwork.artist}"
+		alt={artworkAlt(artwork)}
+		title={artworkCredit(artwork)}
 		loading="lazy"
 		decoding="async"
 		width="400"

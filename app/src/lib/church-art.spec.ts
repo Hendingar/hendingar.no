@@ -1,8 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import {
-	ALL_PAINTINGS,
+	ALL_IMAGES,
+	artworkAlt,
+	artworkCredit,
 	artworkForFileName,
 	artworkFor,
+	artworkMaker,
 	artworkPath,
 	artworkWidths
 } from './church-art.ts';
@@ -16,38 +19,85 @@ import {
  */
 describe('the artwork table', () => {
 	it('is big enough that a listing does not repeat itself', () => {
-		expect(ALL_PAINTINGS.length).toBeGreaterThanOrEqual(90);
+		expect(ALL_IMAGES.length).toBeGreaterThanOrEqual(200);
 	});
 
 	it('can name and credit every entry, because the caption has to', () => {
-		for (const art of ALL_PAINTINGS) {
+		for (const art of ALL_IMAGES) {
 			expect(art.work.length, art.work).toBeGreaterThan(2);
-			expect(art.artist.length, art.work).toBeGreaterThan(2);
+			// A building is often nobody's in particular; a named maker is never an empty string.
+			expect(art.artist === null || art.artist.length > 2, art.work).toBe(true);
 			// A year is allowed to be missing — Commons does not state one for every work — but it
 			// may never be an empty string, which would render as a stray comma.
-			expect(art.year === null || art.year.length >= 4, art.work).toBe(true);
+			expect(art.year === null || /\d{3,4}/.test(art.year), art.work).toBe(true);
+		}
+	});
+
+	it('carries everything an attribution licence asks to be shown, wherever it applies', () => {
+		/*
+		 * Title, author, source, licence. A row with `licence` is a photograph somebody else holds
+		 * the rights to, and the only thing that lets us show it is crediting them — so a
+		 * half-filled credit is not a cosmetic bug, it is using the picture without permission.
+		 */
+		const licensed = ALL_IMAGES.filter((art) => art.licence);
+		expect(licensed.length).toBeGreaterThan(50);
+		for (const art of licensed) {
+			const licence = art.licence;
+			expect(licence?.name, art.work).toMatch(/^(CC BY(-SA)? \d\.\d|FAL|Attribution)$/);
+			expect(licence?.url, art.work).toMatch(/^https:\/\//);
+			expect(licence?.page, art.work).toMatch(/^https:\/\/commons\.wikimedia\.org\/wiki\/File:/);
+			// The cleaned name, never the raw Commons field.
+			expect(licence?.author, art.work).toMatch(/^[^<>]{2,60}$/);
+			expect(licence?.author, art.work).not.toMatch(/^User:|credit as|uploader/i);
 		}
 	});
 
 	it('links to the article, not to the file page', () => {
 		// The point is reading about the painting. A Commons file page is a licence receipt.
-		for (const art of ALL_PAINTINGS) {
+		for (const art of ALL_IMAGES) {
 			expect(art.articleUrl, art.work).toMatch(/^https:\/\/en\.wikipedia\.org\/wiki\//);
 		}
 	});
 
 	it('names every painting by a file stem that is unique and safe in a path', () => {
-		const stems = ALL_PAINTINGS.map((art) => art.file);
+		const stems = ALL_IMAGES.map((art) => art.file);
 		expect(new Set(stems).size).toBe(stems.length);
 		for (const stem of stems) expect(stem).toMatch(/^[a-z0-9]+(-[a-z0-9]+)*$/);
 	});
 
 	it('knows where on Commons each one came from, and how big that file is', () => {
-		for (const art of ALL_PAINTINGS) {
+		for (const art of ALL_IMAGES) {
 			expect(art.sourceUrl, art.work).toMatch(/^https:\/\/upload\.wikimedia\.org\//);
 			expect(art.width, art.work).toBeGreaterThanOrEqual(320);
 			expect(art.height, art.work).toBeGreaterThanOrEqual(200);
 		}
+	});
+});
+
+describe('the caption helpers', () => {
+	const licence = {
+		name: 'CC BY-SA 4.0',
+		url: 'https://creativecommons.org/licenses/by-sa/4.0',
+		author: 'Some Photographer',
+		page: 'https://commons.wikimedia.org/wiki/File:X.jpg'
+	};
+
+	it('names the maker and the year as one line, and nothing when neither is known', () => {
+		expect(artworkMaker({ artist: 'Michelangelo', year: '1498–1499' })).toBe(
+			'Michelangelo, 1498–1499'
+		);
+		expect(artworkMaker({ artist: null, year: '1165' })).toBe('1165');
+		expect(artworkMaker({ artist: null, year: null })).toBeNull();
+	});
+
+	it('says whose a work is in alt text only when somebody is', () => {
+		expect(artworkAlt({ work: 'Pietà', artist: 'Michelangelo' })).toBe('Pietà av Michelangelo');
+		expect(artworkAlt({ work: 'Borgund Stave Church', artist: null })).toBe('Borgund Stave Church');
+	});
+
+	it('credits a licensed photograph, and leaves public domain alone', () => {
+		expect(artworkCredit({ licence })).toBe('Foto: Some Photographer · CC BY-SA 4.0');
+		expect(artworkCredit({})).toBeUndefined();
 	});
 });
 
@@ -66,10 +116,10 @@ describe('artworkWidths', () => {
 });
 
 describe('artworkForFileName', () => {
-	const [first] = ALL_PAINTINGS;
+	const [first] = ALL_IMAGES;
 
 	it('reads back exactly the names artworkFor hands out', () => {
-		for (const art of ALL_PAINTINGS) {
+		for (const art of ALL_IMAGES) {
 			for (const width of artworkWidths(art)) {
 				const name = artworkPath(art, width).split('/').at(-1) ?? '';
 				expect(artworkForFileName(name), name).toEqual({ painting: art, width });

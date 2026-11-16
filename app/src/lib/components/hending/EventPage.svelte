@@ -36,7 +36,7 @@
 	import HandballTile from '../HandballTile.svelte';
 	import TrailTile from '../TrailTile.svelte';
 	import { TRAIL_AUDIENCE_LABELS, TRAIL_GRADE_LABELS } from '@hendingar/core/trail';
-	import { artworkFor } from '../../church-art.ts';
+	import { artworkAlt, artworkFor, artworkMaker } from '../../church-art.ts';
 	import { hasGardenSource } from '../../garden-sources.ts';
 	import GardenTile from '../GardenTile.svelte';
 	import RelatedEvents from './RelatedEvents.svelte';
@@ -417,7 +417,7 @@
 						A picture beside a church notice, and honest about being exactly that.
 
 						The caption names the work rather than the event: nothing here claims the
-						painting depicts this service, and the link is the point — somebody who
+						image depicts this service, and the link is the point — somebody who
 						stops to look can go and read about it.
 
 						The note under the credit says the same thing out loud, for the reader
@@ -430,24 +430,41 @@
 							src={artwork.src}
 							srcset={artwork.srcset}
 							sizes="(width < 56.5rem) 92vw, (width < 88rem) 56vw, 760px"
-							alt="{artwork.work} av {artwork.artist}"
+							alt={artworkAlt(artwork)}
 							loading="eager"
 							decoding="async"
 						/>
 						<figcaption>
+							<!--
+								A photograph under an attribution licence is credited here in full: who took it,
+								which licence, and the file it came from. That is the licence's condition for
+								showing it at all, so it is never shortened on this page.
+							-->
 							<span class="ev__art-credit">
 								<a href={artwork.articleUrl} rel="noopener noreferrer" target="_blank">
 									{artwork.work}
 								</a>
-								<span>
-									{artwork.artist}{artwork.year ? `, ${artwork.year}` : ''} · fellesarv, via Wikimedia
-									Commons
-								</span>
+								{#if artworkMaker(artwork)}
+									<span>{artworkMaker(artwork)}</span>
+								{/if}
+								{#if artwork.licence}
+									<span>
+										Foto: {artwork.licence.author} ·
+										<a href={artwork.licence.url} rel="license noopener noreferrer" target="_blank"
+											>{artwork.licence.name}</a
+										>, via
+										<a href={artwork.licence.page} rel="noopener noreferrer" target="_blank"
+											>Wikimedia Commons</a
+										>
+									</span>
+								{:else}
+									<span>fellesarv, via Wikimedia Commons</span>
+								{/if}
 							</span>
 							<span class="ev__art-note">
-								Måleriet viser ikkje innhaldet i denne hendinga. Det er eit illustrasjonsbilete,
-								sett inn fordi hendinga ikkje har noko bilete sjølv — og for å spreie kjennskap til
-								stor religiøs kunst og den rike historia til kristen kunst og ikonografi.
+								Biletet viser ikkje innhaldet i denne hendinga. Det er eit illustrasjonsbilete, sett
+								inn fordi hendinga ikkje har noko bilete sjølv — og for å spreie kjennskap til stor
+								religiøs kunst og arkitektur, og den rike historia til kristen kunst og ikonografi.
 							</span>
 						</figcaption>
 					</figure>

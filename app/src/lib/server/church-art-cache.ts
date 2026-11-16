@@ -1,5 +1,5 @@
 import type { Sharp } from 'sharp';
-import { CHURCH_ART_VERSION, type Painting } from '../church-art.ts';
+import { CHURCH_ART_VERSION, type ChurchImage } from '../church-art.ts';
 
 /**
  * The church paintings, fetched from Wikimedia once and kept.
@@ -129,7 +129,7 @@ export function churchArtCache(store: ArtStore, fetchSource: FetchSource) {
 	const sources = onceAtATime<Bytes>();
 	const renditions = onceAtATime<Bytes>();
 
-	function source(painting: Painting): Promise<Bytes> {
+	function source(painting: ChurchImage): Promise<Bytes> {
 		return sources(painting.file, async () => {
 			const name = sourceName(painting.file);
 			const kept = await store.get(name);
@@ -141,7 +141,7 @@ export function churchArtCache(store: ArtStore, fetchSource: FetchSource) {
 	}
 
 	return async function serve(
-		painting: Painting,
+		painting: ChurchImage,
 		width: number,
 		format: Format
 	): Promise<ArtResult> {
