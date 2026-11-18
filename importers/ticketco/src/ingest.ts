@@ -88,6 +88,12 @@ export async function ingestShop(
 	const source = await upsertSource(db, shop);
 
 	const report = await recordRun(db, source.id, options, async (run) => {
+		/*
+		 * No gone-upstream sweep: the shop lists what is on sale, and an event whose sale has closed or not yet opened
+		 * may be alive and absent (see the note at the top of this file). Until that is measured, an event that disappears here
+		 * stays until its date.
+		 */
+		run.sweep = 'off';
 		let skipped = 0;
 
 		const listing = parseListing(await read(shop));

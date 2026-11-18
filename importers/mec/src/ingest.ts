@@ -12,6 +12,7 @@ import { fetchListing, parseListing, type FetchListing } from './api.ts';
 import { INSTANCES, type MecInstance } from './instances.ts';
 import {
 	isFailure,
+	isMecSampleTitle,
 	isSupersededOccurrenceId,
 	MEC_SAMPLE_TITLES,
 	mapEvent,
@@ -142,6 +143,12 @@ export async function ingestInstance(
 			run.counts.fetched += 1;
 			const mapped = mapEvent(occurrence.event, occurrence.postId, occurrence.card, instance);
 			if (isFailure(mapped)) {
+				/*
+				 * A sample event is not something the source published and we failed to read — it
+				 * is something we refuse — so it is no rejection. Counted as one, it would also turn
+				 * off the gone-upstream sweep for this source on every run (`planRunSweep`).
+				 */
+				if (isMecSampleTitle(mapped.title)) continue;
 				run.reject(`${mapped.title || mapped.externalId}: ${mapped.problem}`);
 				continue;
 			}

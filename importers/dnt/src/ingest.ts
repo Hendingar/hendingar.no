@@ -72,6 +72,12 @@ export async function ingestAssociation(
 	const source = await upsertSource(db, association);
 
 	const report = await recordRun(db, source.id, options, async (run) => {
+		/*
+		 * No gone-upstream sweep: the activities endpoint takes no sort, and pages are capped silently at ten, so an
+		 * absent activity may simply be on page eleven. Until that is measured, an event that disappears here
+		 * stays until its date.
+		 */
+		run.sweep = 'off';
 		const parsed = await fetchAllPages(association, listing);
 		for (const problem of parsed.rejected) run.reject(`invalid page hit: ${problem}`);
 

@@ -4,7 +4,7 @@ import { eventPath } from '@hendingar/core/slug';
 import { CATEGORY_SLUGS } from '@hendingar/core/taxonomy';
 import { canonicalUrl } from '../../lib/origin.ts';
 import { db } from '../../lib/server/db';
-import { listed, notOver } from '../../lib/server/listing.ts';
+import { listed, notOver, stillListed } from '../../lib/server/listing.ts';
 import type { RequestHandler } from './$types';
 
 /**
@@ -42,8 +42,11 @@ export const GET: RequestHandler = async ({ url }) => {
 		.from(events)
 		// Canonical rows only, exactly as every listing query does. A duplicate has a page, because
 		// a link somebody is reading must keep working, but it points its canonical elsewhere and
-		// asking Google to crawl it would be asking for the duplicate to be found.
-		.where(and(eq(events.status, 'published'), isNull(events.duplicateOfId), notOver(now)))
+		// asking Google to crawl it would be asking for the duplicate to be found. The same goes for
+		// an event its source has removed: its page stays, saying so, but is no longer advertised.
+		.where(
+			and(eq(events.status, 'published'), stillListed, isNull(events.duplicateOfId), notOver(now))
+		)
 		.orderBy(asc(events.startsAt));
 
 	/*

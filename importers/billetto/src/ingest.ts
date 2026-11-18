@@ -84,6 +84,12 @@ export async function ingestOrganiser(
 	const source = await upsertSource(db, organiser);
 
 	const report = await recordRun(db, source.id, options, async (run) => {
+		/*
+		 * No gone-upstream sweep: the read is an Algolia query ranked by the index, not by date, and its pages are capped
+		 * silently — an absent event may only have ranked lower today. Until that is measured, an event that disappears here
+		 * stays until its date.
+		 */
+		run.sweep = 'off';
 		const parsed = await fetchAll(organiser, search);
 		for (const problem of parsed.rejected) run.reject(`invalid hit: ${problem}`);
 

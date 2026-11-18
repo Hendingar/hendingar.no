@@ -77,6 +77,8 @@ export async function ingest(
 	const source = await upsertSource(db);
 
 	const report = await recordRun(db, source.id, options, async (run) => {
+		// Sweeps with sightings of its own, below (`markGoneUpstream`), over a listing it reads whole.
+		run.sweep = 'self';
 		const { html, items: rawItems } = await read();
 		const program = parseProgram(html);
 		const items = parseItems(rawItems);

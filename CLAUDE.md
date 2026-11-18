@@ -213,6 +213,14 @@ importers/<source>/      one deterministic importer per source, or per *platform
 `/datasamling` renders — the page can only say a source is collected because a run says so. If you
 add an importer, record its runs the same way or it will be invisible when it silently stops.
 
+**An event its source deletes leaves the site with it.** `recordRun` sweeps after every successful
+run: rows the source no longer lists get `removed_upstream_at`, which every listing hides, and the
+mark clears if they come back (`packages/core/src/gone-upstream.ts`). By default a run vouches only
+for the stretch from now to the latest start it saw, which is safe for any read in date order from
+today. If your importer's read is NOT in date order, set `run.sweep = 'off'` and say why; pass the
+external id to `run.reject` whenever you have it, because an anonymous rejection turns the sweep off
+for that run.
+
 **The night as a whole is an `ingest_jobs` row**, written by `pnpm ingest:job` and nothing else:
 await migrations, every importer, expire, consolidate, the kurator — in that order, each a child
 process, with the "keep going after a failure" rules in `packages/core/scripts/ingest-job.ts`.

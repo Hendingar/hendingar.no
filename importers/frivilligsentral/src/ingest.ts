@@ -112,6 +112,8 @@ export async function ingestSite(
 	const preview: string[] = [];
 
 	const report = await recordRun(db, source.id, options, async (run) => {
+		// Sweeps with sightings of its own, below (`markGoneUpstream`), over a listing it reads whole.
+		run.sweep = 'self';
 		const page = parseListing(await fetcher(site));
 		const mapped = mapListing(page, site);
 

@@ -76,6 +76,12 @@ export async function ingestInstance(
 
 	const report = await recordRun(db, source.id, options, async (run) => {
 		/*
+		 * No gone-upstream sweep: `eventsByRegion` may be a curated or capped selection rather than everything the region
+		 * publishes; nothing on the page says which. Until that is measured, an event that disappears here
+		 * stays until its date.
+		 */
+		run.sweep = 'off';
+		/*
 		 * `extractEvents` throws rather than returning an empty list.
 		 *
 		 * A redesign that moves or renames the programme block must fail the run — "the source went

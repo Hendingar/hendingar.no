@@ -16,6 +16,7 @@
 import { and, eq } from 'drizzle-orm';
 import { keepKnownCategory } from './consolidate.ts';
 import type { Db } from './db.ts';
+import { applyGonePlan, goneCandidates, planRunSweep, type SweepMode } from './gone-upstream.ts';
 import { events, ingestRuns, sources } from './schema.ts';
 import { sameTrail } from './trail.ts';
 import { sameWeeklyHours } from './weekly-hours.ts';
@@ -155,6 +156,18 @@ export class IngestRun {
 	readonly now: () => Date;
 	readonly #db: Db;
 
+	/**
+	 * What this run vouches for when it ends — see `SweepMode`. `window` unless the importer says
+	 * otherwise: an event a source deletes must leave the site with it, for every source, without
+	 * each importer having to remember to ask.
+	 */
+	sweep: SweepMode = 'window';
+	/** Every external id this run wrote or named, and the latest start among them. */
+	readonly seen = new Set<string>();
+	latestStart: Date | null = null;
+	/** Rejections that named no id — any of these turns the sweep off for the run. */
+	unidentified = 0;
+
 	// Fields assigned by hand: Node's type stripping, which runs every importer, rejects
 	// constructor parameter properties, and `pnpm verify` would never notice.
 	constructor(db: Db, sourceId: number, dryRun: boolean, now: () => Date) {
@@ -169,10 +182,29 @@ export class IngestRun {
 		if (this.problems.length < MAX_PROBLEMS) this.problems.push(problem);
 	}
 
-	/** Something the source published that we could not take. This is what makes a run partial. */
-	reject(problem: string): void {
+	/**
+	 * Something the source published that we could not take. This is what makes a run partial.
+	 *
+	 * Pass the row's external id where you have it: the source still lists that event, and the id
+	 * is what keeps the sweep from marking it gone because we could not read it today.
+	 */
+	reject(problem: string, externalId?: string): void {
 		this.counts.rejected += 1;
 		this.note(problem);
+		if (externalId) this.seen.add(externalId);
+		else this.unidentified += 1;
+	}
+
+	/** A row the source still lists that we deliberately did not write. Not a rejection. */
+	saw(externalId: string): void {
+		this.seen.add(externalId);
+	}
+
+	#sighted(values: EventValues): void {
+		this.seen.add(values.externalId);
+		if (!this.latestStart || values.startsAt.getTime() > this.latestStart.getTime()) {
+			this.latestStart = values.startsAt;
+		}
 	}
 
 	/**
@@ -184,6 +216,7 @@ export class IngestRun {
 	 */
 	async upsertEvent(values: EventValues): Promise<'created' | 'updated' | 'unchanged'> {
 		if (this.dryRun) throw new Error('upsertEvent on a dry run — count it as created instead');
+		this.#sighted(values);
 
 		const [existing] = await this.#db
 			.select()
@@ -257,6 +290,7 @@ export async function recordRun(
 
 	try {
 		await work(run);
+		if (!dryRun) await sweepGoneUpstream(db, run);
 
 		const status = run.counts.rejected > 0 ? 'partial' : 'success';
 		const finishedAt = now();
@@ -289,6 +323,29 @@ export async function recordRun(
 			.where(eq(ingestRuns.id, runId));
 		throw error;
 	}
+}
+
+/**
+ * After a run that finished: mark this source's events it no longer lists, and clear the mark on
+ * any that came back. Only after success — a run that threw saw an arbitrary part of the source —
+ * and reported as a note, because it is what we changed, not what the source published.
+ */
+async function sweepGoneUpstream(db: Db, run: IngestRun): Promise<void> {
+	if (run.sweep === 'self' || run.sweep === 'off') return;
+	const now = run.now();
+	const { plan, skipped } = planRunSweep({
+		mode: run.sweep,
+		seen: run.seen,
+		latestStart: run.latestStart,
+		unidentified: run.unidentified,
+		candidates: await goneCandidates(db, run.sourceId, now),
+		now
+	});
+	if (skipped) run.note(skipped);
+	if (!plan) return;
+	const { marked, restored } = await applyGonePlan(db, plan, now);
+	if (marked > 0) run.note(`${marked} no longer listed upstream, taken off the site`);
+	if (restored > 0) run.note(`${restored} listed again upstream, put back`);
 }
 
 /** A source's own row, as an importer registers it on every run. */

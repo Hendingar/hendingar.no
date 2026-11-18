@@ -75,6 +75,12 @@ export async function ingestInstance(
 	const source = await upsertSource(db, instance);
 
 	const report = await recordRun(db, source.id, options, async (run) => {
+		/*
+		 * No gone-upstream sweep: the calendar page's range and limit are the module's own and not measured, so an absent
+		 * service may only be outside what it chose to print. Until that is measured, an event that disappears here
+		 * stays until its date.
+		 */
+		run.sweep = 'off';
 		// Private family occasions we deliberately do not republish — see isPrivateOccasion.
 		let withheld = 0;
 
