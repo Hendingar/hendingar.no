@@ -71,6 +71,8 @@ export async function ingestTeam(
 	const source = await upsertSource(db, team);
 
 	const report = await recordRun(db, source.id, options, async (run) => {
+		// Sweeps with sightings of its own, below (`markGoneUpstream`), over a listing it reads whole.
+		run.sweep = 'self';
 		let away = 0;
 		let unscheduled = 0;
 		let calledOff = 0;

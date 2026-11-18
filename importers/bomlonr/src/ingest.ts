@@ -88,6 +88,8 @@ export async function ingest(
 	const source = await upsertSource(db);
 
 	const report = await recordRun(db, source.id, options, async (run) => {
+		// Sweeps with sightings of its own, below (`markGoneUpstream`), over a listing it reads whole.
+		run.sweep = 'self';
 		const parsed = parseListing(await read());
 		for (const problem of parsed.rejected) run.reject(`invalid listing row: ${problem}`);
 

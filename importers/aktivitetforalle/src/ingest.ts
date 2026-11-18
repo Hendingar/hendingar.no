@@ -142,6 +142,8 @@ export async function ingestSite(
 	const source = await upsertSource(db, site);
 
 	const report = await recordRun(db, source.id, options, async (run) => {
+		// Sweeps with sightings of its own, below (`markGoneUpstream`), over a listing it reads whole.
+		run.sweep = 'self';
 		let skipped = 0;
 
 		const payload = await fetcher(site);
