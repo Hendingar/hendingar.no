@@ -1,4 +1,4 @@
-import { eq, inArray } from 'drizzle-orm';
+import { and, eq, inArray } from 'drizzle-orm';
 import { createDb, type Db } from '@hendingar/core/db';
 import {
 	ingestEach,
@@ -10,7 +10,13 @@ import {
 import { events, venues } from '@hendingar/core/schema';
 import { fetchListing, parseListing, type FetchListing } from './api.ts';
 import { INSTANCES, type MecInstance } from './instances.ts';
-import { isFailure, isSupersededOccurrenceId, mapEvent, type MappedEvent } from './map.ts';
+import {
+	isFailure,
+	isSupersededOccurrenceId,
+	MEC_SAMPLE_TITLES,
+	mapEvent,
+	type MappedEvent
+} from './map.ts';
 
 /**
  * Deterministic: fetch → parse → validate → upsert. No language model touches this path.
@@ -86,6 +92,20 @@ async function dropSupersededOccurrences(db: Db, sourceId: number): Promise<numb
 	return stale.length;
 }
 
+/**
+ * Rows already written for MEC's sample events, from before `mapEvent` refused them. The importer
+ * never prunes (see above), so without this they would stay published until each date passed —
+ * and a "daily" one never runs out of dates that have not passed. Like the function above, it can
+ * only match what this importer wrote, and once they are gone it matches nothing.
+ */
+async function dropSampleEvents(db: Db, sourceId: number): Promise<number> {
+	const dropped = await db
+		.delete(events)
+		.where(and(eq(events.sourceId, sourceId), inArray(events.title, [...MEC_SAMPLE_TITLES])))
+		.returning({ id: events.id });
+	return dropped.length;
+}
+
 export async function ingestInstance(
 	connectionString: string,
 	instance: MecInstance,
@@ -104,6 +124,8 @@ export async function ingestInstance(
 		if (!run.dryRun) {
 			const dropped = await dropSupersededOccurrences(db, source.id);
 			if (dropped > 0) run.note(`dropped ${dropped} occurrence(s) under the superseded id`);
+			const samples = await dropSampleEvents(db, source.id);
+			if (samples > 0) run.note(`dropped ${samples} MEC sample event occurrence(s)`);
 		}
 
 		const listing = parseListing(await read(instance));

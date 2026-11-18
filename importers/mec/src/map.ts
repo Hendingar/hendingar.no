@@ -183,6 +183,24 @@ function readEnd(
 }
 
 /**
+ * The events Modern Events Calendar installs as samples, by their exact titles.
+ *
+ * A site that never deleted them publishes them as real events, at its own venue, every few days
+ * for ever — Moster Amfi did, and "Daily each 3 days" filled a square on every third day of our
+ * calendar. They are never anything a person could go to, so they are refused by name. Exact
+ * titles, not a pattern: a real "Weekly yoga on Mondays" must still come through.
+ */
+export const MEC_SAMPLE_TITLES: readonly string[] = [
+	'Daily each 3 days',
+	'Weekly on Mondays',
+	'Monthly on 27th'
+];
+
+export function isMecSampleTitle(title: string): boolean {
+	return MEC_SAMPLE_TITLES.includes(title.trim());
+}
+
+/**
  * One occurrence → our shape, or the reason it cannot be.
  *
  * `card` is the clock the page prints for this occurrence, paired in `parseListing`. It is the
@@ -222,6 +240,9 @@ export function mapEvent(
 	}
 	if (!title) {
 		return { externalId: postId ?? '', title: '', problem: 'empty title' };
+	}
+	if (isMecSampleTitle(title)) {
+		return { externalId: postId ?? title, title, problem: 'MEC sample event, not a real one' };
 	}
 	/*
 	 * Without a post id there is no stable identity, and inventing one from the title would

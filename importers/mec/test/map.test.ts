@@ -482,3 +482,33 @@ describe('an Event subtype', () => {
 		expect(subtyped.occurrences.length).toBeGreaterThan(0);
 	});
 });
+
+describe('mapEvent: MEC sample events', () => {
+	const moster = instanceBySlug('mosteramfi');
+	if (!moster) throw new Error('mosteramfi is configured');
+	const real = parseListing(
+		readFileSync(
+			fileURLToPath(new URL('./fixtures/mosteramfi-kva-skjer.html', import.meta.url)),
+			'utf8'
+		)
+	).occurrences[0];
+	if (!real) throw new Error('fixture has occurrences');
+
+	it.each(['Daily each 3 days', 'Weekly on Mondays', 'Monthly on 27th'])(
+		'refuses "%s", which MEC installs and Moster Amfi never deleted',
+		(name) => {
+			const mapped = mapEvent({ ...real.event, name }, '9001', real.card, moster);
+			expect(isFailure(mapped) && mapped.problem).toBe('MEC sample event, not a real one');
+		}
+	);
+
+	it('lets a real event with a similar title through', () => {
+		const mapped = mapEvent(
+			{ ...real.event, name: 'Yoga weekly on Mondays' },
+			'9001',
+			real.card,
+			moster
+		);
+		expect(isFailure(mapped)).toBe(false);
+	});
+});
