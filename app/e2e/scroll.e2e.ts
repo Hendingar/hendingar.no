@@ -45,6 +45,25 @@ test('scrolling appends more events without repeating any', async ({ page }) => 
 
 test('there is a real button, not only a scroll trigger', async ({ page }) => {
 	// Someone on a keyboard, or a browser that never fires the observer, still needs a way down.
+	/*
+	 * And that browser is the one tested, literally. With a live observer, scrolling the button
+	 * into view to click it fires the scroll trigger too, which loads the next page and replaces
+	 * the button under the click — on a short seed, removes it — and the click waits out the test.
+	 * That flaked in CI; an observer that never fires is the case this test is about anyway.
+	 */
+	await page.addInitScript(() => {
+		window.IntersectionObserver = class {
+			readonly root = null;
+			readonly rootMargin = '';
+			readonly thresholds = [];
+			observe() {}
+			unobserve() {}
+			disconnect() {}
+			takeRecords() {
+				return [];
+			}
+		};
+	});
 	await page.goto('/hendingar');
 	const more = page.getByRole('button', { name: /vis fleire/i });
 	if ((await more.count()) === 0) return; // the seed can be shorter than one page
