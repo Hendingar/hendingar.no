@@ -6,6 +6,17 @@ import { RECURRENCE_FREQUENCIES, WEEKDAYS } from './recurrence.ts';
 import { searchTermSchema } from './search.ts';
 
 /**
+ * The largest id an `events` row can have: `serial` is a 32-bit integer.
+ *
+ * Anything above it cannot name a row, and passed on to Postgres it fails as "out of range for
+ * type integer" — a 500 for what is really just an id that does not exist.
+ */
+export const MAX_EVENT_ID = 2_147_483_647;
+
+/** An event id as it arrives from a client. */
+export const eventIdSchema = z.number().int().positive().max(MAX_EVENT_ID);
+
+/**
  * The browser's own opaque id: what lets one browser find its submissions and hearts again.
  *
  * One definition because every path that reads it — `/ko`, the appeal, the photo upload, hearts —
@@ -625,6 +636,7 @@ export const eventFormSchema = z
 		revisionOf: z
 			.string()
 			.regex(/^\d+$/, 'må vere ein id')
+			.refine((id) => Number(id) <= MAX_EVENT_ID, 'må vere ein id')
 			.optional()
 			.or(z.literal('').transform(() => undefined)),
 		/**
@@ -641,6 +653,7 @@ export const eventFormSchema = z
 		contributeTo: z
 			.string()
 			.regex(/^\d+$/, 'må vere ein id')
+			.refine((id) => Number(id) <= MAX_EVENT_ID, 'må vere ein id')
 			.optional()
 			.or(z.literal('').transform(() => undefined)),
 		/**
